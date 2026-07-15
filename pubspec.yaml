@@ -83,6 +83,8 @@ dependencies:
     path: plugins/rust_api
   setup:
     path: plugins/setup
+  flutter_xboard_sdk:
+    path: lib/sdk/flutter_xboard_sdk
 dev_dependencies:
   flutter_test:
     sdk: flutter
