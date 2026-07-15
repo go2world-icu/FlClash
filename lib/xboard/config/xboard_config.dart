@@ -44,6 +44,7 @@ import 'models/websocket_info.dart';
 import 'models/update_info.dart';
 import 'models/subscription_info.dart';
 import '../infrastructure/infrastructure.dart';
+import 'utils/config_file_loader.dart';
 
 import 'interface/config_provider_interface.dart';
 
@@ -155,7 +156,7 @@ class XBoardConfig {
     String provider = 'Flclash',
     ConfigSettings? settings,
   }) async {
-    final config = settings ?? ConfigSettings(currentProvider: provider);
+    final config = settings ?? await ConfigFileLoader.loadFromFile();
     
     _instance = await ModuleInitializer.createConfigAccessor(
       settings: config,

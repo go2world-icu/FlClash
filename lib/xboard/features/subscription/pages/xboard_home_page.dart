@@ -164,18 +164,18 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
                             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                             child: _buildUsageSection(),
                           ),
-                          SizedBox(height: sectionSpacing),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: _buildProxyModeSection(),
-                          ),
-                          SizedBox(height: sectionSpacing),
-                          const NodeSelectorBar(),
-                          SizedBox(height: sectionSpacing),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: _buildConnectionSection(),
-                          ),
+                          // SizedBox(height: sectionSpacing),
+                          // Padding(
+                          //   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                          //   child: _buildProxyModeSection(),
+                          // ),
+                          // SizedBox(height: sectionSpacing),
+                          // const NodeSelectorBar(),
+                          // SizedBox(height: sectionSpacing),
+                          // Padding(
+                          //   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                          //   child: _buildConnectionSection(),
+                          // ),
                           // 底部弹性空间
                           if (availableHeight > 600) const Spacer(),
                         ],
