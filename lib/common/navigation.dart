@@ -1,6 +1,7 @@
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/views.dart';
+import 'package:fl_clash/xboard/bridge.dart';
 import 'package:flutter/material.dart';
 
 class Navigation {
@@ -9,8 +10,9 @@ class Navigation {
   List<NavigationItem> getItems({
     bool openLogs = false,
     bool hasProxies = false,
+    bool hasXboard = false,
   }) {
-    return [
+    final items = <NavigationItem>[
       NavigationItem(
         keep: false,
         icon: const Icon(Icons.space_dashboard),
@@ -27,12 +29,19 @@ class Navigation {
             ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
             : [],
       ),
-      NavigationItem(
-        icon: const Icon(Icons.folder),
-        label: PageLabel.profiles,
-        builder: (_) =>
-            const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
-      ),
+      if (hasXboard)
+        NavigationItem(
+          icon: const Icon(Icons.person),
+          label: PageLabel.xboard,
+          builder: (_) => const XBoardPage(),
+        ),
+      if (!hasXboard)
+        NavigationItem(
+          icon: const Icon(Icons.folder),
+          label: PageLabel.profiles,
+          builder: (_) =>
+              const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
+        ),
       NavigationItem(
         icon: const Icon(Icons.view_timeline),
         label: PageLabel.requests,
@@ -73,6 +82,7 @@ class Navigation {
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
     ];
+    return items;
   }
 
   Navigation._internal();

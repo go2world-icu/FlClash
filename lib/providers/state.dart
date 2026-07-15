@@ -5,6 +5,7 @@ import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/config_check.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -53,10 +54,12 @@ NavigationItemsState navigationItemsState(Ref ref) {
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
   final isInit = ref.watch(initProvider);
+  final hasXboard = ref.watch(xboardEnabledProvider);
   return NavigationItemsState(
     value: navigation.getItems(
       openLogs: openLogs,
       hasProxies: !isInit ? hasProfiles : hasProxies,
+      hasXboard: hasXboard,
     ),
   );
 }

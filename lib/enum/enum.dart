@@ -374,6 +374,7 @@ enum PageLabel {
   requests,
   resources,
   connections,
+  xboard,
 }
 
 enum RuleAction {

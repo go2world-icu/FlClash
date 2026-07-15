@@ -6,27 +6,53 @@ part of '../payment_state.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$getPaymentMethodsHash() => r'4041b697796dfd399ba4b6ff28f467cf9ef5aeac';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// 支付状态管理
+/// 获取支付方式列表
+
+@ProviderFor(getPaymentMethods)
+final getPaymentMethodsProvider = GetPaymentMethodsProvider._();
 
 /// 支付状态管理
 /// 获取支付方式列表
-///
-/// Copied from [getPaymentMethods].
-@ProviderFor(getPaymentMethods)
-final getPaymentMethodsProvider =
-    AutoDisposeFutureProvider<List<PaymentMethodModel>>.internal(
-  getPaymentMethods,
-  name: r'getPaymentMethodsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$getPaymentMethodsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef GetPaymentMethodsRef
-    = AutoDisposeFutureProviderRef<List<PaymentMethodModel>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class GetPaymentMethodsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<PaymentMethodModel>>,
+          List<PaymentMethodModel>,
+          FutureOr<List<PaymentMethodModel>>
+        >
+    with
+        $FutureModifier<List<PaymentMethodModel>>,
+        $FutureProvider<List<PaymentMethodModel>> {
+  /// 支付状态管理
+  /// 获取支付方式列表
+  GetPaymentMethodsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'getPaymentMethodsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$getPaymentMethodsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<PaymentMethodModel>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<PaymentMethodModel>> create(Ref ref) {
+    return getPaymentMethods(ref);
+  }
+}
+
+String _$getPaymentMethodsHash() => r'4041b697796dfd399ba4b6ff28f467cf9ef5aeac';

@@ -5,4 +5,4 @@
 [submodule "lib/sdk/flutter_xboard_sdk"]
 	path = lib/sdk/flutter_xboard_sdk
 	url = git@github.com:go2world-icu/flutter_xboard_sdk.git
-	branch = update_self
+	branch = flclash
