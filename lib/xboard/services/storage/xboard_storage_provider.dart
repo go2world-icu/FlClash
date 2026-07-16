@@ -3,24 +3,23 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/infrastructure/infrastructure.dart';
+import 'package:fl_clash/xboard/infrastructure/storage/file_storage.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'xboard_storage_service.dart';
 
-/// Storage 接口 FutureProvider
-/// 提供默认的 SharedPreferences 实现
-/// 如需自定义实现，可在应用初始化时使用ProviderScope.overrides覆盖此provider
-final storageProvider = FutureProvider<StorageInterface>((ref) async {
-  return await SharedPrefsStorage.create();
-});
+/// Storage 实例（由 _preloadXBoard 在启动时初始化）
+StorageInterface? _storageInstance;
+
+/// 预热 xboard 存储（启动时调用）
+Future<void> warmUpXBoardStorage() async {
+  _storageInstance = await FileStorage.create();
+}
 
 /// XBoard Storage Service Provider
+///
+/// 启动时由 _preloadXBoard 预热，之后立即可用。
 final storageServiceProvider = Provider<XBoardStorageService>((ref) {
-  final storageAsync = ref.watch(storageProvider);
-  // 如果存储还未初始化，使用一个临时的空实现
-  final storage = storageAsync.maybeWhen(
-    data: (storage) => storage,
-    orElse: () => _PlaceholderStorage(),
-  );
+  final storage = _storageInstance ?? _PlaceholderStorage();
   return XBoardStorageService(storage);
 });
 

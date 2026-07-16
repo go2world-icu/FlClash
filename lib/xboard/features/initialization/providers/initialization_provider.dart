@@ -3,6 +3,7 @@ import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/features/domain_status/providers/domain_status_provider.dart';
 import 'package:fl_clash/xboard/features/domain_status/models/domain_status_state.dart';
 import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
+import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 
 import '../models/initialization_state.dart';
 
@@ -84,7 +85,9 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
 
       _logger.info('[Initialization] ✅ SDK 初始化完成');
 
-      // ========== 完成 ==========
+      // ========== 自动恢复登录态 ==========
+      await ref.read(xboardUserAuthProvider.notifier).autoAuth();
+
       _logger.info('[Initialization] 🎉 初始化流程完成');
       state = state.copyWith(
         status: InitializationStatus.ready,
