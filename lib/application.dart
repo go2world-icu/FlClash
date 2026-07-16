@@ -10,6 +10,8 @@ import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/config_check.dart';
+import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,7 +57,13 @@ class ApplicationState extends ConsumerState<Application> {
       _autoUpdateProfilesTask();
       _initLink();
       app?.initShortcuts();
+      _preloadXBoard();
     });
+  }
+
+  void _preloadXBoard() {
+    if (!hasXboardConfig) return;
+    ref.read(initializationProvider.notifier).initialize().catchError((_) {});
   }
 
   void _initLink() {
