@@ -7884,9 +7884,9 @@ class AppLocalizations {
     return Intl.message('Invite', name: 'invite', desc: '', args: []);
   }
 
-  /// `Home`
+  /// `My`
   String get xboard {
-    return Intl.message('Home', name: 'xboard', desc: '', args: []);
+    return Intl.message('My', name: 'xboard', desc: '', args: []);
   }
 
   /// `Home`

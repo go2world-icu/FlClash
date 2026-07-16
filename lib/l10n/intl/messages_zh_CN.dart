@@ -1122,7 +1122,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "withdrawCommission": MessageLookupByLibrary.simpleMessage("提现佣金"),
     "withdrawableAmount": m49,
     "withdrawalAvailable": MessageLookupByLibrary.simpleMessage("可用佣金可申请提现"),
-    "xboard": MessageLookupByLibrary.simpleMessage("首页"),
+    "xboard": MessageLookupByLibrary.simpleMessage("我的"),
     "xboard24HourCustomerService": MessageLookupByLibrary.simpleMessage(
       "24小时客服支持",
     ),

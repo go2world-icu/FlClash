@@ -1626,7 +1626,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "withdrawalAvailable": MessageLookupByLibrary.simpleMessage(
       "Available commission can be withdrawn",
     ),
-    "xboard": MessageLookupByLibrary.simpleMessage("Home"),
+    "xboard": MessageLookupByLibrary.simpleMessage("My"),
     "xboard24HourCustomerService": MessageLookupByLibrary.simpleMessage(
       "24-hour customer service support",
     ),

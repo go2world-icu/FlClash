@@ -29,12 +29,6 @@ class Navigation {
             ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
             : [],
       ),
-      if (hasXboard)
-        NavigationItem(
-          icon: const Icon(Icons.person),
-          label: PageLabel.xboard,
-          builder: (_) => const XBoardPage(),
-        ),
       if (!hasXboard)
         NavigationItem(
           icon: const Icon(Icons.folder),
@@ -81,6 +75,12 @@ class Navigation {
         builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
+      if (hasXboard)
+        NavigationItem(
+          icon: const Icon(Icons.person),
+          label: PageLabel.xboard,
+          builder: (_) => const XBoardPage(),
+        ),
     ];
     return items;
   }
