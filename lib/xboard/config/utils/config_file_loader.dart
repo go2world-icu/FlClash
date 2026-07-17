@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:yaml/yaml.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import '../core/config_settings.dart';
 import '../../core/core.dart';
 
