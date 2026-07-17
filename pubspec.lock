@@ -121,6 +121,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.2.4"
+  board_sdk:
+    dependency: "direct main"
+    description:
+      path: "lib/sdk/board_sdk"
+      relative: true
+    source: path
+    version: "0.0.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -645,13 +652,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.17.2"
-  flutter_xboard_sdk:
-    dependency: "direct main"
-    description:
-      path: "lib/sdk/flutter_xboard_sdk"
-      relative: true
-    source: path
-    version: "0.0.1"
   fractional_indexing:
     dependency: "direct main"
     description:

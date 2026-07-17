@@ -1,12 +1,12 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/state/plan_state.dart';
 
-// 初始化文件级日志器
+// 鍒濆鍖栨枃浠剁骇鏃ュ織鍣?
 final _logger = FileLogger('xboard_subscription_provider.dart');
 
 class XBoardSubscriptionNotifier extends Notifier<List<DomainPlan>> {
@@ -21,25 +21,25 @@ class XBoardSubscriptionNotifier extends Notifier<List<DomainPlan>> {
         _clearPlans();
       }
     });
-    return const <DomainPlan>[];  // 明确指定类型
+    return const <DomainPlan>[];  // 鏄庣‘鎸囧畾绫诲瀷
   }
   Future<void> loadPlans() async {
     final userAuthState = ref.read(xboardUserAuthProvider);
     if (!userAuthState.isAuthenticated) {
       state = <DomainPlan>[];
       ref.read(userUIStateProvider.notifier).state = const UIState(
-        errorMessage: '请先登录',
+        errorMessage: '璇峰厛鐧诲綍',
       );
       return;
     }
     ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: true);
     try {
-      _logger.info('开始加载套餐列表...');
-      _logger.info('开始加载套餐列表...');
+      _logger.info('寮€濮嬪姞杞藉椁愬垪琛?..');
+      _logger.info('寮€濮嬪姞杞藉椁愬垪琛?..');
       final planModels = await ref.read(getPlansProvider.future);
       final plans = (planModels as List<PlanModel>?)?.map(_mapPlan).toList() ?? [];
       final visiblePlans = plans.where((plan) => plan.isVisible).toList();
-      // 按 sort 字段排序（升序），null 值排在最后
+      // 鎸?sort 瀛楁鎺掑簭锛堝崌搴忥級锛宯ull 鍊兼帓鍦ㄦ渶鍚?
       visiblePlans.sort((a, b) {
         if (a.sort == null && b.sort == null) return 0;
         if (a.sort == null) return 1;
@@ -51,9 +51,9 @@ class XBoardSubscriptionNotifier extends Notifier<List<DomainPlan>> {
         isLoading: false,
         lastUpdated: DateTime.now(),
       );
-      _logger.info('套餐列表加载成功，共 ${visiblePlans.length} 个可见套餐');
+      _logger.info('濂楅鍒楄〃鍔犺浇鎴愬姛锛屽叡 ${visiblePlans.length} 涓彲瑙佸椁?);
     } catch (e) {
-      _logger.info('加载套餐列表失败: $e');
+      _logger.info('鍔犺浇濂楅鍒楄〃澶辫触: $e');
       ref.read(userUIStateProvider.notifier).state = UIState(
         isLoading: false,
         errorMessage: e.toString(),
@@ -61,7 +61,7 @@ class XBoardSubscriptionNotifier extends Notifier<List<DomainPlan>> {
     }
   }
   Future<void> refreshPlans() async {
-    _logger.info('刷新套餐列表...');
+    _logger.info('鍒锋柊濂楅鍒楄〃...');
     await loadPlans();
   }
   DomainPlan? getPlanById(int planId) {
@@ -79,7 +79,7 @@ class XBoardSubscriptionNotifier extends Notifier<List<DomainPlan>> {
     return state.where((plan) => plan.isVisible && plan.hasPrice).take(3).toList();
   }
   void _clearPlans() {
-    _logger.info('清空套餐列表');
+    _logger.info('娓呯┖濂楅鍒楄〃');
     state = <DomainPlan>[];
     ref.read(userUIStateProvider.notifier).state = const UIState();
   }
@@ -94,7 +94,7 @@ class XBoardSubscriptionNotifier extends Notifier<List<DomainPlan>> {
     if (uiState.lastUpdated == null) return true;
     final now = DateTime.now();
     final diff = now.difference(uiState.lastUpdated!);
-    return diff.inMinutes > 10; // 10分钟后需要刷新
+    return diff.inMinutes > 10; // 10鍒嗛挓鍚庨渶瑕佸埛鏂?
   }
   Future<void> autoRefreshIfNeeded() async {
     final uiState = ref.read(userUIStateProvider);

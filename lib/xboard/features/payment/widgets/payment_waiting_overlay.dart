@@ -1,13 +1,13 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import '../models/payment_step.dart';
 
-// 初始化文件级日志器
+// 鍒濆鍖栨枃浠剁骇鏃ュ織鍣?
 final _logger = FileLogger('payment_waiting_overlay.dart');
 class PaymentWaitingOverlay extends ConsumerStatefulWidget {
   final VoidCallback? onClose;
@@ -96,10 +96,10 @@ class _PaymentWaitingOverlayState extends ConsumerState<PaymentWaitingOverlay>
     }
   }
   void _startPaymentStatusCheck() {
-    _logger.info('[PaymentWaiting] 开始定时检测支付状态，订单号: $_currentTradeNo');
+    _logger.info('[PaymentWaiting] 寮€濮嬪畾鏃舵娴嬫敮浠樼姸鎬侊紝璁㈠崟鍙? $_currentTradeNo');
     _paymentCheckTimer?.cancel();
     
-    // 立即执行一次检查
+    // 绔嬪嵆鎵ц涓€娆℃鏌?
     _checkPaymentStatus();
     
     _paymentCheckTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
@@ -114,24 +114,24 @@ class _PaymentWaitingOverlayState extends ConsumerState<PaymentWaitingOverlay>
     }
 
     try {
-      _logger.info('[PaymentWaiting] ===== 开始检测支付状态 =====');
-      _logger.info('[PaymentWaiting] 订单号: $_currentTradeNo');
+      _logger.info('[PaymentWaiting] ===== 寮€濮嬫娴嬫敮浠樼姸鎬?=====');
+      _logger.info('[PaymentWaiting] 璁㈠崟鍙? $_currentTradeNo');
       
-      // 使用 SDK 检查订单状态
+      // 浣跨敤 SDK 妫€鏌ヨ鍗曠姸鎬?
       final orderModels = await XBoardSDK.instance.order.getOrders();
       final orderData = orderModels.firstWhere(
         (o) => o.tradeNo == _currentTradeNo,
         orElse: () => const OrderModel(status: -1),
       );
       
-      _logger.info('[PaymentWaiting] API 调用完成，订单状态: ${orderData.status}');
+      _logger.info('[PaymentWaiting] API 璋冪敤瀹屾垚锛岃鍗曠姸鎬? ${orderData.status}');
       
       if (orderData.status != -1) {
-        // 检查订单状态
-        // 状态值: 0=待付款, 1=开通中, 2=已取消, 3=已完成, 4=已折抵
+        // 妫€鏌ヨ鍗曠姸鎬?
+        // 鐘舵€佸€? 0=寰呬粯娆? 1=寮€閫氫腑, 2=宸插彇娑? 3=宸插畬鎴? 4=宸叉姌鎶?
         if (orderData.status == 3) {
-          // 支付成功，立即执行成功回调
-          _logger.info('[PaymentWaiting] ===== 检测到支付成功！状态: ${orderData.status} =====');
+          // 鏀粯鎴愬姛锛岀珛鍗虫墽琛屾垚鍔熷洖璋?
+          _logger.info('[PaymentWaiting] ===== 妫€娴嬪埌鏀粯鎴愬姛锛佺姸鎬? ${orderData.status} =====');
           _paymentCheckTimer?.cancel();
           if (mounted) {
             setState(() {
@@ -139,34 +139,34 @@ class _PaymentWaitingOverlayState extends ConsumerState<PaymentWaitingOverlay>
             });
             _pulseController.stop();
             
-            // 立即执行成功回调
+            // 绔嬪嵆鎵ц鎴愬姛鍥炶皟
             if (widget.onPaymentSuccess != null) {
               widget.onPaymentSuccess?.call();
             }
           }
         } else if (orderData.status == 0 || orderData.status == 1) {
-          // 仍在等待支付 (0: 待付款, 1: 开通中)
-          _logger.info('[PaymentWaiting] 支付仍在等待中 (状态: ${orderData.status})...');
+          // 浠嶅湪绛夊緟鏀粯 (0: 寰呬粯娆? 1: 寮€閫氫腑)
+          _logger.info('[PaymentWaiting] 鏀粯浠嶅湪绛夊緟涓?(鐘舵€? ${orderData.status})...');
         } else {
-          // 其他状态视为失败 (2: 已取消, 4: 已折抵)
-          _logger.info('[PaymentWaiting] 支付视为失败/结束，状态: ${orderData.status}');
+          // 鍏朵粬鐘舵€佽涓哄け璐?(2: 宸插彇娑? 4: 宸叉姌鎶?
+          _logger.info('[PaymentWaiting] 鏀粯瑙嗕负澶辫触/缁撴潫锛岀姸鎬? ${orderData.status}');
           _paymentCheckTimer?.cancel();
           if (mounted) {
             widget.onClose?.call();
           }
         }
       } else {
-        _logger.info('[PaymentWaiting] 获取订单状态失败：订单不存在');
+        _logger.info('[PaymentWaiting] 鑾峰彇璁㈠崟鐘舵€佸け璐ワ細璁㈠崟涓嶅瓨鍦?);
       }
     } catch (e) {
-      _logger.info('[PaymentWaiting] 检测支付状态异常: $e');
+      _logger.info('[PaymentWaiting] 妫€娴嬫敮浠樼姸鎬佸紓甯? $e');
     }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _logger.info('[PaymentWaiting] 应用回到前台，立即检测支付状态');
+      _logger.info('[PaymentWaiting] 搴旂敤鍥炲埌鍓嶅彴锛岀珛鍗虫娴嬫敮浠樼姸鎬?);
       if (_currentStep == PaymentStep.waitingPayment && _currentTradeNo != null) {
         _checkPaymentStatus();
       }
@@ -175,7 +175,7 @@ class _PaymentWaitingOverlayState extends ConsumerState<PaymentWaitingOverlay>
   String _getStepTitle(PaymentStep step) {
     switch (step) {
       case PaymentStep.cancelingOrders:
-        return '清理旧订单';
+        return '娓呯悊鏃ц鍗?;
       case PaymentStep.createOrder:
         return AppLocalizations.of(context).xboardCreatingOrder;
       case PaymentStep.loadingPayment:
@@ -191,7 +191,7 @@ class _PaymentWaitingOverlayState extends ConsumerState<PaymentWaitingOverlay>
   String _getStepDescription(PaymentStep step) {
     switch (step) {
       case PaymentStep.cancelingOrders:
-        return '正在清理之前的待支付订单...';
+        return '姝ｅ湪娓呯悊涔嬪墠鐨勫緟鏀粯璁㈠崟...';
       case PaymentStep.createOrder:
         return AppLocalizations.of(context).xboardCreatingOrderPleaseWait;
       case PaymentStep.loadingPayment:
@@ -199,7 +199,7 @@ class _PaymentWaitingOverlayState extends ConsumerState<PaymentWaitingOverlay>
       case PaymentStep.verifyPayment:
         return AppLocalizations.of(context).xboardPaymentMethodVerifiedPreparing;
       case PaymentStep.waitingPayment:
-        return '支付页面已打开，支付链接已复制到剪贴板。如果没有自动跳转，请手动粘贴到浏览器打开。';
+        return '鏀粯椤甸潰宸叉墦寮€锛屾敮浠橀摼鎺ュ凡澶嶅埗鍒板壀璐存澘銆傚鏋滄病鏈夎嚜鍔ㄨ烦杞紝璇锋墜鍔ㄧ矘璐村埌娴忚鍣ㄦ墦寮€銆?;
       case PaymentStep.paymentSuccess:
         return AppLocalizations.of(context).xboardCongratulationsSubscriptionActivated;
     }
@@ -355,13 +355,13 @@ class PaymentWaitingManager {
     VoidCallback? onPaymentSuccess,
     String? tradeNo,
   }) {
-    _logger.debug('[PaymentWaitingManager.show] 准备显示支付等待弹窗');
-    _logger.debug('[PaymentWaitingManager.show] onClose 是否为 null: ${onClose == null}');
-    _logger.debug('[PaymentWaitingManager.show] onPaymentSuccess 是否为 null: ${onPaymentSuccess == null}');
-    hide(); // 确保之前的overlay被清除
+    _logger.debug('[PaymentWaitingManager.show] 鍑嗗鏄剧ず鏀粯绛夊緟寮圭獥');
+    _logger.debug('[PaymentWaitingManager.show] onClose 鏄惁涓?null: ${onClose == null}');
+    _logger.debug('[PaymentWaitingManager.show] onPaymentSuccess 鏄惁涓?null: ${onPaymentSuccess == null}');
+    hide(); // 纭繚涔嬪墠鐨刼verlay琚竻闄?
     _onClose = onClose;
     _onPaymentSuccess = onPaymentSuccess;
-    _logger.debug('[PaymentWaitingManager.show] 静态变量已设置，_onPaymentSuccess 是否为 null: ${_onPaymentSuccess == null}');
+    _logger.debug('[PaymentWaitingManager.show] 闈欐€佸彉閲忓凡璁剧疆锛宊onPaymentSuccess 鏄惁涓?null: ${_onPaymentSuccess == null}');
     _overlayKey = GlobalKey<_PaymentWaitingOverlayState>();
     _overlayEntry = OverlayEntry(
       builder: (context) => PaymentWaitingOverlay(
@@ -371,18 +371,18 @@ class PaymentWaitingManager {
           _onClose?.call();
         },
         onPaymentSuccess: () {
-          _logger.debug('[PaymentWaitingManager] 收到支付成功通知，准备处理');
-          // 先保存回调，再隐藏弹窗（因为hide()会清空回调）
+          _logger.debug('[PaymentWaitingManager] 鏀跺埌鏀粯鎴愬姛閫氱煡锛屽噯澶囧鐞?);
+          // 鍏堜繚瀛樺洖璋冿紝鍐嶉殣钘忓脊绐楋紙鍥犱负hide()浼氭竻绌哄洖璋冿級
           final callback = _onPaymentSuccess;
-          _logger.debug('[PaymentWaitingManager] 保存的回调是否为 null: ${callback == null}');
+          _logger.debug('[PaymentWaitingManager] 淇濆瓨鐨勫洖璋冩槸鍚︿负 null: ${callback == null}');
           hide();
-          _logger.debug('[PaymentWaitingManager] 弹窗已隐藏，准备调用外部回调');
+          _logger.debug('[PaymentWaitingManager] 寮圭獥宸查殣钘忥紝鍑嗗璋冪敤澶栭儴鍥炶皟');
           if (callback != null) {
-            _logger.debug('[PaymentWaitingManager] 外部回调存在，开始调用');
+            _logger.debug('[PaymentWaitingManager] 澶栭儴鍥炶皟瀛樺湪锛屽紑濮嬭皟鐢?);
             callback.call();
-            _logger.debug('[PaymentWaitingManager] 外部回调调用完成');
+            _logger.debug('[PaymentWaitingManager] 澶栭儴鍥炶皟璋冪敤瀹屾垚');
           } else {
-            _logger.debug('[PaymentWaitingManager] 警告：外部回调为 null');
+            _logger.debug('[PaymentWaitingManager] 璀﹀憡锛氬閮ㄥ洖璋冧负 null');
           }
         },
         tradeNo: tradeNo,

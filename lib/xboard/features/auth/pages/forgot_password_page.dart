@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
@@ -12,8 +12,8 @@ class ForgotPasswordPage extends ConsumerStatefulWidget {
 }
 
 enum ResetPasswordStep {
-  sendCode,    // 发送验证码步骤
-  resetPassword // 重置密码步骤
+  sendCode,    // 鍙戦€侀獙璇佺爜姝ラ
+  resetPassword // 閲嶇疆瀵嗙爜姝ラ
 }
 
 class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
@@ -47,7 +47,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     });
     
     try {
-      // 使用 SDK 发送验证码
+      // 浣跨敤 SDK 鍙戦€侀獙璇佺爜
       await XBoardSDK.instance.auth.sendEmailVerifyCode(_emailController.text);
       
       if (mounted) {
@@ -84,8 +84,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     });
     
     try {
-      // 使用 AuthRepository 重置密码
-      // 使用 SDK 重置密码
+      // 浣跨敤 AuthRepository 閲嶇疆瀵嗙爜
+      // 浣跨敤 SDK 閲嶇疆瀵嗙爜
       final success = await XBoardSDK.instance.auth.forgotPassword(
         _emailController.text,
         _codeController.text,
@@ -93,7 +93,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       );
       
       if (!success) {
-        throw Exception('重置密码失败');
+        throw Exception('閲嶇疆瀵嗙爜澶辫触');
       }
       
       if (mounted) {

@@ -1,28 +1,28 @@
-/// XBoard 数据存储服务
+﻿/// XBoard 鏁版嵁瀛樺偍鏈嶅姟
 ///
-/// 提供XBoard相关数据的存储和读取
+/// 鎻愪緵XBoard鐩稿叧鏁版嵁鐨勫瓨鍌ㄥ拰璇诲彇
 library;
 
 import 'dart:convert';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/infrastructure/infrastructure.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart' as sdk;
+import 'package:board_sdk/flutter_xboard_sdk.dart' as sdk;
 import 'package:fl_clash/xboard/domain/domain.dart';
 
-/// XBoard 存储服务
+/// XBoard 瀛樺偍鏈嶅姟
 ///
-/// 负责存储和读取XBoard相关数据，如用户信息、订阅信息等
+/// 璐熻矗瀛樺偍鍜岃鍙朮Board鐩稿叧鏁版嵁锛屽鐢ㄦ埛淇℃伅銆佽闃呬俊鎭瓑
 class XBoardStorageService {
   final StorageInterface _storage;
   
   XBoardStorageService(this._storage);
 
-  // 存储键定义
+  // 瀛樺偍閿畾涔?
   static const String _userEmailKey = 'xboard_user_email';
-  static const String _userInfoKey = 'xboard_user_info';  // 保留兼容
-  static const String _subscriptionInfoKey = 'xboard_subscription_info';  // 保留兼容
-  static const String _domainUserKey = 'xboard_domain_user';  // 新：领域模型
-  static const String _domainSubscriptionKey = 'xboard_domain_subscription';  // 新：领域模型
+  static const String _userInfoKey = 'xboard_user_info';  // 淇濈暀鍏煎
+  static const String _subscriptionInfoKey = 'xboard_subscription_info';  // 淇濈暀鍏煎
+  static const String _domainUserKey = 'xboard_domain_user';  // 鏂帮細棰嗗煙妯″瀷
+  static const String _domainSubscriptionKey = 'xboard_domain_subscription';  // 鏂帮細棰嗗煙妯″瀷
   static const String _tunFirstUseKey = 'xboard_tun_first_use_shown';
   static const String _savedEmailKey = 'xboard_saved_email';
   static const String _savedPasswordKey = 'xboard_saved_password';
@@ -43,7 +43,7 @@ class XBoardStorageService {
       return await _storage.setString(_domainUserKey, userJson);
     } catch (e, stackTrace) {
       return Result.failure(XBoardStorageException(
-        message: '保存领域用户信息失败',
+        message: '淇濆瓨棰嗗煙鐢ㄦ埛淇℃伅澶辫触',
         operation: 'write',
         key: _domainUserKey,
         originalError: e,
@@ -62,7 +62,7 @@ class XBoardStorageService {
           return Result.success(DomainUser.fromJson(userMap));
         } catch (e, stackTrace) {
           return Result.failure(XBoardParseException(
-            message: '解析领域用户信息失败',
+            message: '瑙ｆ瀽棰嗗煙鐢ㄦ埛淇℃伅澶辫触',
             dataType: 'DomainUser',
             originalError: e,
             stackTrace: stackTrace,
@@ -73,7 +73,7 @@ class XBoardStorageService {
     );
   }
 
-  // ===== 领域模型：订阅信息 =====
+  // ===== 棰嗗煙妯″瀷锛氳闃呬俊鎭?=====
 
   Future<Result<bool>> saveDomainSubscription(DomainSubscription subscription) async {
     try {
@@ -81,7 +81,7 @@ class XBoardStorageService {
       return await _storage.setString(_domainSubscriptionKey, subscriptionJson);
     } catch (e, stackTrace) {
       return Result.failure(XBoardStorageException(
-        message: '保存领域订阅信息失败',
+        message: '淇濆瓨棰嗗煙璁㈤槄淇℃伅澶辫触',
         operation: 'write',
         key: _domainSubscriptionKey,
         originalError: e,
@@ -100,7 +100,7 @@ class XBoardStorageService {
           return Result.success(DomainSubscription.fromJson(subscriptionMap));
         } catch (e, stackTrace) {
           return Result.failure(XBoardParseException(
-            message: '解析领域订阅信息失败',
+            message: '瑙ｆ瀽棰嗗煙璁㈤槄淇℃伅澶辫触',
             dataType: 'DomainSubscription',
             originalError: e,
             stackTrace: stackTrace,
@@ -111,24 +111,24 @@ class XBoardStorageService {
     );
   }
 
-  // ===== 订阅信息（已移除，使用DomainSubscription代替） =====
+  // ===== 璁㈤槄淇℃伅锛堝凡绉婚櫎锛屼娇鐢―omainSubscription浠ｆ浛锛?=====
 
-  // ===== 认证数据清理 =====
+  // ===== 璁よ瘉鏁版嵁娓呯悊 =====
 
   Future<Result<bool>> clearAuthData() async {
     final results = await Future.wait([
       _storage.remove(_userEmailKey),
       _storage.remove(_userInfoKey),
       _storage.remove(_subscriptionInfoKey),
-      _storage.remove(_domainUserKey),  // 清理领域模型
-      _storage.remove(_domainSubscriptionKey),  // 清理领域模型
+      _storage.remove(_domainUserKey),  // 娓呯悊棰嗗煙妯″瀷
+      _storage.remove(_domainSubscriptionKey),  // 娓呯悊棰嗗煙妯″瀷
     ]);
     
     final allSuccess = results.every((r) => r.dataOrNull == true);
     return Result.success(allSuccess);
   }
 
-  // ===== TUN 首次使用标记 =====
+  // ===== TUN 棣栨浣跨敤鏍囪 =====
 
   Future<Result<bool>> hasTunFirstUseShown() async {
     final result = await _storage.getBool(_tunFirstUseKey);
@@ -139,7 +139,7 @@ class XBoardStorageService {
     return await _storage.setBool(_tunFirstUseKey, true);
   }
 
-  // ===== 登录凭据 =====
+  // ===== 鐧诲綍鍑嵁 =====
 
   Future<Result<bool>> saveCredentials(
     String email,
@@ -168,7 +168,7 @@ class XBoardStorageService {
     });
   }
 
-  // 便捷方法：获取单个保存的凭据字段
+  // 渚挎嵎鏂规硶锛氳幏鍙栧崟涓繚瀛樼殑鍑嵁瀛楁
   Future<String?> getSavedEmail() async {
     final result = await _storage.getString(_savedEmailKey);
     return result.dataOrNull;

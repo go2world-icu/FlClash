@@ -1,12 +1,12 @@
-import 'package:fl_clash/xboard/features/auth/auth.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+﻿import 'package:fl_clash/xboard/features/auth/auth.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/services/services.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart' show ConfigModel;
+import 'package:board_sdk/flutter_xboard_sdk.dart' show ConfigModel;
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
   @override
@@ -34,21 +34,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
   Future<void> _register() async {
-    // 获取配置
+    // 鑾峰彇閰嶇疆
     final configAsync = ref.read(configProvider);
     final config = configAsync.value;
     final isInviteForce = config?.isInviteForce ?? false;
     final isEmailVerify = config?.isEmailVerify ?? false;
     
-    // 检查邮请码是否必填
+    // 妫€鏌ラ偖璇风爜鏄惁蹇呭～
     if (isInviteForce && _inviteCodeController.text.trim().isEmpty) {
       _showInviteCodeDialog();
       return;
     }
     
-    // 检查邮箱验证码是否必填
+    // 妫€鏌ラ偖绠遍獙璇佺爜鏄惁蹇呭～
     if (isEmailVerify && _emailCodeController.text.trim().isEmpty) {
-      XBoardNotification.showError('请输入邮箱验证码');
+      XBoardNotification.showError('璇疯緭鍏ラ偖绠遍獙璇佺爜');
       return;
     }
 
@@ -57,8 +57,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         _isRegistering = true;
       });
       try {
-        // 使用 AuthRepository 注册
-        // 使用 SDK 注册
+        // 浣跨敤 AuthRepository 娉ㄥ唽
+        // 浣跨敤 SDK 娉ㄥ唽
         final success = await XBoardSDK.instance.auth.register(
           _emailController.text,
           _passwordController.text,
@@ -71,16 +71,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         );
         
         if (!success) {
-          throw Exception('注册失败');
+          throw Exception('娉ㄥ唽澶辫触');
         }
         
-        // 注册成功
+        // 娉ㄥ唽鎴愬姛
         if (mounted) {
           final storageService = ref.read(storageServiceProvider);
           await storageService.saveCredentials(
             _emailController.text,
             _passwordController.text,
-            true, // 启用记住密码
+            true, // 鍚敤璁颁綇瀵嗙爜
           );
           if (mounted) {
             XBoardNotification.showSuccess(appLocalizations.xboardRegisterSuccess);
@@ -93,36 +93,36 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         }
       } catch (e) {
         if (mounted) {
-          // 提取详细的错误信息
-          String errorMessage = '注册失败';
+          // 鎻愬彇璇︾粏鐨勯敊璇俊鎭?
+          String errorMessage = '娉ㄥ唽澶辫触';
           
           final errorStr = e.toString();
           
-          // 尝试提取具体的错误信息
+          // 灏濊瘯鎻愬彇鍏蜂綋鐨勯敊璇俊鎭?
           if (errorStr.contains('XBoardException')) {
-            // 格式1: XBoardException(400): 具体错误信息
+            // 鏍煎紡1: XBoardException(400): 鍏蜂綋閿欒淇℃伅
             if (errorStr.contains('): ')) {
               final parts = errorStr.split('): ');
               if (parts.length > 1) {
                 errorMessage = parts.sublist(1).join('): ').trim();
               }
             } 
-            // 格式2: XBoardException: 具体错误信息
+            // 鏍煎紡2: XBoardException: 鍏蜂綋閿欒淇℃伅
             else if (errorStr.contains('XBoardException: ')) {
               errorMessage = errorStr.split('XBoardException: ').last.trim();
             }
           } else {
-            // 其他类型的错误，直接使用错误文本
+            // 鍏朵粬绫诲瀷鐨勯敊璇紝鐩存帴浣跨敤閿欒鏂囨湰
             errorMessage = errorStr;
           }
           
-          // 移除可能的 "Error: " 前缀
+          // 绉婚櫎鍙兘鐨?"Error: " 鍓嶇紑
           if (errorMessage.startsWith('Error: ')) {
             errorMessage = errorMessage.substring(7);
           }
           
-          // 500错误或通用错误提示：可能是邀请码问题
-          if (errorMessage.contains('遇到了些问题') || errorMessage.contains('500')) {
+          // 500閿欒鎴栭€氱敤閿欒鎻愮ず锛氬彲鑳芥槸閭€璇风爜闂
+          if (errorMessage.contains('閬囧埌浜嗕簺闂') || errorMessage.contains('500')) {
             errorMessage = appLocalizations.inviteCodeIncorrect;
           }
           
@@ -154,8 +154,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     });
 
     try {
-      // 使用 AuthRepository 发送验证码
-      // 使用 SDK 发送验证码
+      // 浣跨敤 AuthRepository 鍙戦€侀獙璇佺爜
+      // 浣跨敤 SDK 鍙戦€侀獙璇佺爜
       await XBoardSDK.instance.auth.sendEmailVerifyCode(_emailController.text);
 
       if (mounted) {
@@ -198,7 +198,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final configAsync = ref.watch(configProvider);
     
-    // 处理异步加载状态
+    // 澶勭悊寮傛鍔犺浇鐘舵€?
     return configAsync.when(
       loading: () => const SizedBox.shrink(), // Or a placeholder
       error: (error, stack) => const SizedBox.shrink(), // Or an error message
@@ -219,7 +219,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final configAsync = ref.watch(configProvider);
     
-    // 处理异步加载状态
+    // 澶勭悊寮傛鍔犺浇鐘舵€?
     return configAsync.when(
       loading: () => Scaffold(
         backgroundColor: colorScheme.surface,
@@ -350,7 +350,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           },
                         ),
                         const SizedBox(height: 20),
-                        // 根据配置决定是否显示邮箱验证码字段
+                        // 鏍规嵁閰嶇疆鍐冲畾鏄惁鏄剧ず閭楠岃瘉鐮佸瓧娈?
                         if (config?.isEmailVerify == true)
                           Column(
                             children: [
@@ -383,7 +383,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                   const SizedBox(height: 20),
                             ],
                           ),
-                        // 邀请码：始终显示，根据配置改变标签（必填 vs 可选）
+                        // 閭€璇风爜锛氬缁堟樉绀猴紝鏍规嵁閰嶇疆鏀瑰彉鏍囩锛堝繀濉?vs 鍙€夛級
                         XBInputField(
                           controller: _inviteCodeController,
                           labelText: (config?.isInviteForce ?? false)

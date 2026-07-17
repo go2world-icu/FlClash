@@ -1,10 +1,10 @@
-import 'package:fl_clash/widgets/widgets.dart';
+﻿import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 class PaymentGatewayPage extends ConsumerStatefulWidget {
   final String paymentUrl;
   final String tradeNo;
@@ -49,24 +49,24 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
     try {
       final uri = Uri.parse(widget.paymentUrl);
       if (!await canLaunchUrl(uri)) {
-        throw Exception('无法打开支付链接: ${widget.paymentUrl}');
+        throw Exception('鏃犳硶鎵撳紑鏀粯閾炬帴: ${widget.paymentUrl}');
       }
       final launched = await launchUrl(
         uri,
-        mode: LaunchMode.externalApplication, // 强制在外部浏览器打开
+        mode: LaunchMode.externalApplication, // 寮哄埗鍦ㄥ閮ㄦ祻瑙堝櫒鎵撳紑
       );
       if (!launched) {
-        throw Exception('无法启动外部浏览器');
+        throw Exception('鏃犳硶鍚姩澶栭儴娴忚鍣?);
       }
       if (mounted) {
         XBoardNotification.showInfo(isAutomatic
-            ? '🚀 正在自动打开支付页面，完成支付后请返回应用'
-            : '已在浏览器中打开支付页面，完成支付后请返回应用');
+            ? '馃殌 姝ｅ湪鑷姩鎵撳紑鏀粯椤甸潰锛屽畬鎴愭敮浠樺悗璇疯繑鍥炲簲鐢?
+            : '宸插湪娴忚鍣ㄤ腑鎵撳紑鏀粯椤甸潰锛屽畬鎴愭敮浠樺悗璇疯繑鍥炲簲鐢?);
         _startAutoPolling();
       }
     } catch (e) {
       if (mounted) {
-        XBoardNotification.showError('打开支付链接失败: $e');
+        XBoardNotification.showError('鎵撳紑鏀粯閾炬帴澶辫触: $e');
       }
     }
   }
@@ -74,11 +74,11 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
     try {
       await Clipboard.setData(ClipboardData(text: widget.paymentUrl));
       if (mounted) {
-        XBoardNotification.showSuccess('支付链接已复制到剪贴板');
+        XBoardNotification.showSuccess('鏀粯閾炬帴宸插鍒跺埌鍓创鏉?);
       }
     } catch (e) {
       if (mounted) {
-        XBoardNotification.showError('复制失败: $e');
+        XBoardNotification.showError('澶嶅埗澶辫触: $e');
       }
     }
   }
@@ -115,7 +115,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
       _isCheckingPayment = true;
     });
     try {
-      // 使用 SDK 查询订单状态
+      // 浣跨敤 SDK 鏌ヨ璁㈠崟鐘舵€?
       final orderModels = await XBoardSDK.instance.order.getOrders();
       // SDK getOrder(tradeNo) might not exist, getOrders() returns list.
       // Need to find by tradeNo.
@@ -152,7 +152,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
           // status: 0=pending, 1=processing, 2=canceled, 3=completed
           if (order.status == 3) {
             _stopAutoPolling();
-            XBoardNotification.showSuccess('🎉 支付成功！');
+            XBoardNotification.showSuccess('馃帀 鏀粯鎴愬姛锛?);
             Future.delayed(const Duration(seconds: 1), () {
               if (mounted) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
@@ -161,16 +161,16 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
           } else if (order.status == 2) {
             _stopAutoPolling();
             if (!silent) {
-              XBoardNotification.showInfo('支付已取消');
+              XBoardNotification.showInfo('鏀粯宸插彇娑?);
             }
           } else if (order.status == 0 || order.status == 1) {
             if (!silent) {
-              XBoardNotification.showInfo(_autoPollingEnabled ? '正在等待支付...' : '订单状态：待支付');
+              XBoardNotification.showInfo(_autoPollingEnabled ? '姝ｅ湪绛夊緟鏀粯...' : '璁㈠崟鐘舵€侊細寰呮敮浠?);
             }
           }
         } else {
           if (!silent) {
-            XBoardNotification.showError('未找到订单信息');
+            XBoardNotification.showError('鏈壘鍒拌鍗曚俊鎭?);
           }
         }
       }
@@ -180,13 +180,13 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
           _isCheckingPayment = false;
         });
         if (!silent) {
-          XBoardNotification.showError('检查支付状态失败: $e');
+          XBoardNotification.showError('妫€鏌ユ敮浠樼姸鎬佸け璐? $e');
         }
       }
     }
   }
   void _completePayment() {
-    XBoardNotification.showSuccess('支付完成！');
+    XBoardNotification.showSuccess('鏀粯瀹屾垚锛?);
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
   void _cancelPayment() {
@@ -195,7 +195,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
-      title: '支付网关',
+      title: '鏀粯缃戝叧',
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
@@ -209,7 +209,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('返回'),
+                        child: const Text('杩斿洖'),
                       ),
                     ],
                   ),
@@ -226,7 +226,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                '支付信息',
+                                '鏀粯淇℃伅',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -235,7 +235,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                               const SizedBox(height: 16),
                               Row(
                                 children: [
-                                  const Text('订单号: '),
+                                  const Text('璁㈠崟鍙? '),
                                   Expanded(
                                     child: Text(
                                       widget.tradeNo,
@@ -266,7 +266,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                                             Row(
                                               children: [
                                                 const Text(
-                                                  '支付链接',
+                                                  '鏀粯閾炬帴',
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.blue,
@@ -280,7 +280,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  '点击复制',
+                                                  '鐐瑰嚮澶嶅埗',
                                                   style: TextStyle(
                                                     fontSize: 10,
                                                     color: Colors.blue.shade600,
@@ -326,14 +326,14 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        '自动检测支付状态',
+                                        '鑷姩妫€娴嬫敮浠樼姸鎬?,
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.green.shade800,
                                         ),
                                       ),
                                       Text(
-                                        '系统每5秒自动检查一次，支付完成后会自动跳转',
+                                        '绯荤粺姣?绉掕嚜鍔ㄦ鏌ヤ竴娆★紝鏀粯瀹屾垚鍚庝細鑷姩璺宠浆',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: Colors.green.shade600,
@@ -345,7 +345,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                                 TextButton(
                                   onPressed: _stopAutoPolling,
                                   child: Text(
-                                    '停止',
+                                    '鍋滄',
                                     style: TextStyle(color: Colors.green.shade700),
                                   ),
                                 ),
@@ -361,17 +361,17 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                '操作提示',
+                                '鎿嶄綔鎻愮ず',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              const Text('1. 系统已自动为您打开支付页面'),
-                              const Text('2. 请在浏览器中完成支付操作'),
-                              const Text('3. 支付完成后返回应用，系统将自动检测'),
-                              const Text('4. 如需重新打开，可点击下方"重新打开"按钮'),
+                              const Text('1. 绯荤粺宸茶嚜鍔ㄤ负鎮ㄦ墦寮€鏀粯椤甸潰'),
+                              const Text('2. 璇峰湪娴忚鍣ㄤ腑瀹屾垚鏀粯鎿嶄綔'),
+                              const Text('3. 鏀粯瀹屾垚鍚庤繑鍥炲簲鐢紝绯荤粺灏嗚嚜鍔ㄦ娴?),
+                              const Text('4. 濡傞渶閲嶆柊鎵撳紑锛屽彲鐐瑰嚮涓嬫柟"閲嶆柊鎵撳紑"鎸夐挳'),
                               const SizedBox(height: 8),
                               Container(
                                 padding: const EdgeInsets.all(8),
@@ -386,7 +386,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        '提示：如果浏览器未自动打开，可以点击"重新打开"或复制链接手动打开',
+                                        '鎻愮ず锛氬鏋滄祻瑙堝櫒鏈嚜鍔ㄦ墦寮€锛屽彲浠ョ偣鍑?閲嶆柊鎵撳紑"鎴栧鍒堕摼鎺ユ墜鍔ㄦ墦寮€',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: Colors.amber.shade700,
@@ -407,7 +407,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                             child: ElevatedButton.icon(
                               onPressed: () => _launchPaymentUrl(isAutomatic: false),
                               icon: const Icon(Icons.open_in_browser),
-                              label: const Text('重新打开'),
+                              label: const Text('閲嶆柊鎵撳紑'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                                 foregroundColor: Colors.white,
@@ -420,7 +420,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                             child: ElevatedButton.icon(
                               onPressed: _copyPaymentUrl,
                               icon: const Icon(Icons.copy),
-                              label: const Text('复制链接'),
+                              label: const Text('澶嶅埗閾炬帴'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.purple,
                                 foregroundColor: Colors.white,
@@ -442,7 +442,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                                       ),
                                     )
                                   : const Icon(Icons.refresh),
-                              label: Text(_isCheckingPayment ? '检查中...' : '检查状态'),
+                              label: Text(_isCheckingPayment ? '妫€鏌ヤ腑...' : '妫€鏌ョ姸鎬?),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
                                 foregroundColor: Colors.white,
@@ -459,7 +459,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                             child: ElevatedButton.icon(
                               onPressed: _completePayment,
                               icon: const Icon(Icons.check_circle),
-                              label: const Text('支付完成'),
+                              label: const Text('鏀粯瀹屾垚'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                                 foregroundColor: Colors.white,
@@ -472,7 +472,7 @@ class _PaymentGatewayPageState extends ConsumerState<PaymentGatewayPage> {
                             child: ElevatedButton.icon(
                               onPressed: _cancelPayment,
                               icon: const Icon(Icons.cancel),
-                              label: const Text('取消支付'),
+                              label: const Text('鍙栨秷鏀粯'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.grey,
                                 foregroundColor: Colors.white,

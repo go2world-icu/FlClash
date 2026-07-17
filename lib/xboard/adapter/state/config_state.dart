@@ -1,13 +1,13 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+﻿import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/config_state.g.dart';
 
-/// 配置状态管理
+/// 閰嶇疆鐘舵€佺鐞?
 
-/// 获取配置
+/// 鑾峰彇閰嶇疆
 @riverpod
 Future<ConfigModel> getConfig(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

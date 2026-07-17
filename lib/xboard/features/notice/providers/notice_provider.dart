@@ -1,14 +1,12 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/state/notice_state.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 
-// 初始化文件级日志器
-final _logger = FileLogger('notice_provider.dart');
+// 鍒濆鍖栨枃浠剁骇鏃ュ織鍣?final _logger = FileLogger('notice_provider.dart');
 
-/// 公告状态
-class NoticeState {
+/// 鍏憡鐘舵€?class NoticeState {
   final List<DomainNotice> notices;
   final bool isLoading;
   final String? error;
@@ -21,7 +19,7 @@ class NoticeState {
     this.dismissedIndices = const {},
   });
 
-  /// 获取可见的公告列表（未被关闭的）
+  /// 鑾峰彇鍙鐨勫叕鍛婂垪琛紙鏈鍏抽棴鐨勶級
   List<DomainNotice> get visibleNotices {
     return notices
         .asMap()
@@ -46,12 +44,12 @@ class NoticeState {
   }
 }
 
-/// 公告Provider
+/// 鍏憡Provider
 class NoticeNotifier extends Notifier<NoticeState> {
   @override
   NoticeState build() => const NoticeState();
 
-  /// 获取公告列表
+  /// 鑾峰彇鍏憡鍒楄〃
   Future<void> fetchNotices() async {
     if (state.isLoading) return;
 
@@ -65,7 +63,7 @@ class NoticeNotifier extends Notifier<NoticeState> {
         isLoading: false,
       );
     } catch (e) {
-      _logger.error('获取公告列表失败', e);
+      _logger.error('鑾峰彇鍏憡鍒楄〃澶辫触', e);
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
@@ -73,19 +71,18 @@ class NoticeNotifier extends Notifier<NoticeState> {
     }
   }
 
-  /// 标记公告为已读
-  void markAsRead(int index) {
-    // 实现公告已读逻辑（可选）
+  /// 鏍囪鍏憡涓哄凡璇?  void markAsRead(int index) {
+    // 瀹炵幇鍏憡宸茶閫昏緫锛堝彲閫夛級
   }
 
-  /// 关闭公告横幅
+  /// 鍏抽棴鍏憡妯箙
   void dismissBanner(int index) {
     final newDismissed = Set<int>.from(state.dismissedIndices)..add(index);
     state = state.copyWith(dismissedIndices: newDismissed);
   }
 }
 
-/// 公告Provider实例
+/// 鍏憡Provider瀹炰緥
 final noticeProvider = NotifierProvider<NoticeNotifier, NoticeState>(NoticeNotifier.new);
 
 DomainNotice _mapNotice(NoticeModel notice) {

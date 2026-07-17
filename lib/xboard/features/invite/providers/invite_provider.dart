@@ -1,11 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
-import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/state/invite_state.dart';
 import 'package:fl_clash/xboard/adapter/state/user_state.dart';
 
-// 初始化文件级日志器
+// 鍒濆鍖栨枃浠剁骇鏃ュ織鍣?
 final _logger = FileLogger('invite_provider.dart');
 
 class InviteState {
@@ -75,9 +75,9 @@ class InviteState {
   String _formatCommissionAmount(double amount) {
     final value = amount;
     if (value >= 1000) {
-      return '¥${(value / 1000).toStringAsFixed(1)}k';
+      return '楼${(value / 1000).toStringAsFixed(1)}k';
     } else {
-      return '¥${value.toStringAsFixed(2)}';
+      return '楼${value.toStringAsFixed(2)}';
     }
   }
 }
@@ -94,8 +94,8 @@ class InviteNotifier extends Notifier<InviteState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      _logger.info('加载邀请信息...');
-      _logger.info('加载邀请信息...');
+      _logger.info('鍔犺浇閭€璇蜂俊鎭?..');
+      _logger.info('鍔犺浇閭€璇蜂俊鎭?..');
       final inviteInfoModel = await ref.read(getInviteInfoProvider.future) as InviteInfoModel;
       final inviteData = _mapInviteInfo(inviteInfoModel);
 
@@ -104,9 +104,9 @@ class InviteNotifier extends Notifier<InviteState> {
         isLoading: false,
       );
 
-      _logger.info('邀请信息加载成功');
+      _logger.info('閭€璇蜂俊鎭姞杞芥垚鍔?);
     } catch (e) {
-      _logger.info('加载邀请信息失败: $e');
+      _logger.info('鍔犺浇閭€璇蜂俊鎭け璐? $e');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -120,18 +120,18 @@ class InviteNotifier extends Notifier<InviteState> {
     state = state.copyWith(isLoadingHistory: true);
 
     try {
-      _logger.info('加载佣金历史... 页码: $page');
-      _logger.info('加载佣金历史... 页码: $page');
+      _logger.info('鍔犺浇浣ｉ噾鍘嗗彶... 椤电爜: $page');
+      _logger.info('鍔犺浇浣ｉ噾鍘嗗彶... 椤电爜: $page');
       final commissionList = await getCommissionDetails(ref, page: page);
       final newHistory = commissionList.map(_mapCommission).toList();
 
 
       List<DomainCommission> updatedHistory;
       if (append && newHistory.isNotEmpty) {
-        // 追加到现有列表
+        // 杩藉姞鍒扮幇鏈夊垪琛?
         updatedHistory = [...state.commissionHistory, ...newHistory];
       } else {
-        // 替换整个列表
+        // 鏇挎崲鏁翠釜鍒楄〃
         updatedHistory = newHistory;
       }
 
@@ -142,9 +142,9 @@ class InviteNotifier extends Notifier<InviteState> {
         isLoadingHistory: false,
       );
 
-      _logger.info('佣金历史加载成功: 第$page页，${newHistory.length} 条记录');
+      _logger.info('浣ｉ噾鍘嗗彶鍔犺浇鎴愬姛: 绗?page椤碉紝${newHistory.length} 鏉¤褰?);
     } catch (e) {
-      _logger.info('加载佣金历史失败: $e');
+      _logger.info('鍔犺浇浣ｉ噾鍘嗗彶澶辫触: $e');
       state = state.copyWith(isLoadingHistory: false);
     }
   }
@@ -160,14 +160,14 @@ class InviteNotifier extends Notifier<InviteState> {
 
   Future<void> loadUserInfo() async {
     try {
-      _logger.info('加载用户信息...');
-      _logger.info('加载用户信息...');
+      _logger.info('鍔犺浇鐢ㄦ埛淇℃伅...');
+      _logger.info('鍔犺浇鐢ㄦ埛淇℃伅...');
       final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
       final userInfo = _mapUser(userModel);
       state = state.copyWith(userInfo: userInfo);
-      _logger.info('用户信息加载成功: 钱包余额 ¥${(userInfo?.balanceInCents ?? 0) / 100.0}');
+      _logger.info('鐢ㄦ埛淇℃伅鍔犺浇鎴愬姛: 閽卞寘浣欓 楼${(userInfo?.balanceInCents ?? 0) / 100.0}');
     } catch (e) {
-      _logger.info('加载用户信息失败: $e');
+      _logger.info('鍔犺浇鐢ㄦ埛淇℃伅澶辫触: $e');
     }
   }
 
@@ -177,15 +177,15 @@ class InviteNotifier extends Notifier<InviteState> {
     state = state.copyWith(isGenerating: true, errorMessage: null);
 
     try {
-      _logger.info('生成邀请码...');
-      _logger.info('生成邀请码...');
+      _logger.info('鐢熸垚閭€璇风爜...');
+      _logger.info('鐢熸垚閭€璇风爜...');
       final codeString = await XBoardSDK.instance.invite.generateInviteCode();
       
       // SDK returns String, we need to wrap it or reload data
       // Assuming generateInviteCode returns the code string
       // But DomainInviteCode is an object.
       // We should reload invite data to get the new code in the list.
-      // 更新本地状态
+      // 鏇存柊鏈湴鐘舵€?
       final newInviteCode = DomainInviteCode(
         code: codeString,
         status: 0,
@@ -194,10 +194,10 @@ class InviteNotifier extends Notifier<InviteState> {
       await loadInviteData();
 
       state = state.copyWith(isGenerating: false);
-      _logger.info('邀请码生成成功: $newInviteCode');
+      _logger.info('閭€璇风爜鐢熸垚鎴愬姛: $newInviteCode');
       return newInviteCode;
     } catch (e) {
-      _logger.info('生成邀请码失败: $e');
+      _logger.info('鐢熸垚閭€璇风爜澶辫触: $e');
       state = state.copyWith(
         isGenerating: false,
         errorMessage: e.toString(),
@@ -215,10 +215,10 @@ class InviteNotifier extends Notifier<InviteState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      _logger.info('提现佣金: 方式=$withdrawMethod, 账号=$withdrawAccount');
+      _logger.info('鎻愮幇浣ｉ噾: 鏂瑰紡=$withdrawMethod, 璐﹀彿=$withdrawAccount');
       final availableAmount = state.inviteData?.stats.availableCommission ?? 0.0;
       if (availableAmount <= 0) {
-        throw Exception('可提现金额不足');
+        throw Exception('鍙彁鐜伴噾棰濅笉瓒?);
       }
 
       final success = await XBoardSDK.instance.invite.withdrawCommission(
@@ -228,17 +228,17 @@ class InviteNotifier extends Notifier<InviteState> {
       );
 
       if (!success) {
-        throw Exception('提现申请失败');
+        throw Exception('鎻愮幇鐢宠澶辫触');
       }
 
       await loadInviteData();
       await refreshCommissionHistory();
 
       state = state.copyWith(isLoading: false);
-      _logger.info('提现申请提交成功');
+      _logger.info('鎻愮幇鐢宠鎻愪氦鎴愬姛');
       return true;
     } catch (e) {
-      _logger.info('提现申请失败: $e');
+      _logger.info('鎻愮幇鐢宠澶辫触: $e');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -253,11 +253,11 @@ class InviteNotifier extends Notifier<InviteState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     
     try {
-      _logger.info('划转佣金到钱包: ¥$amount');
+      _logger.info('鍒掕浆浣ｉ噾鍒伴挶鍖? 楼$amount');
       final success = await XBoardSDK.instance.invite.transferCommissionToBalance(amount);
       
       if (!success) {
-        throw Exception('划转失败');
+        throw Exception('鍒掕浆澶辫触');
       }
       
       await Future.wait([
@@ -266,10 +266,10 @@ class InviteNotifier extends Notifier<InviteState> {
       ]);
       
       state = state.copyWith(isLoading: false);
-      _logger.info('划转成功');
+      _logger.info('鍒掕浆鎴愬姛');
       return true;
     } catch (e) {
-      _logger.info('划转失败: $e');
+      _logger.info('鍒掕浆澶辫触: $e');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -309,7 +309,7 @@ DomainInvite _mapInviteInfo(InviteInfoModel info) {
       invitedCount: info.totalInvites,
       totalCommission: info.totalCommission / 100.0,
       pendingCommission: info.pendingCommission / 100.0,
-      commissionRate: info.commissionRatePercent,  // 已经是百分比，不需要再除以 100
+      commissionRate: info.commissionRatePercent,  // 宸茬粡鏄櫨鍒嗘瘮锛屼笉闇€瑕佸啀闄や互 100
       availableCommission: info.availableCommission / 100.0,
     ),
   );

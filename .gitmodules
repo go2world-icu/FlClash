@@ -2,7 +2,7 @@
 	path = core/Clash.Meta
 	url = git@github.com:chen08209/Clash.Meta.git
 	branch = FlClash
-[submodule "lib/sdk/flutter_xboard_sdk"]
-	path = lib/sdk/flutter_xboard_sdk
-	url = git@github.com:go2world-icu/flutter_xboard_sdk.git
-	branch = flclash
+[submodule "lib/sdk/board_sdk"]
+	path = lib/sdk/board_sdk
+	url = git@github.com:go2world-icu/board_sdk.git
+	branch = main
