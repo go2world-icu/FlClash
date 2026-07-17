@@ -8,14 +8,14 @@ part of '../payment_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 鏀粯鐘舵€佺鐞?
-/// 鑾峰彇鏀粯鏂瑰紡鍒楄〃
+/// 支付状态管理
+/// 获取支付方式列表
 
 @ProviderFor(getPaymentMethods)
 final getPaymentMethodsProvider = GetPaymentMethodsProvider._();
 
-/// 鏀粯鐘舵€佺鐞?
-/// 鑾峰彇鏀粯鏂瑰紡鍒楄〃
+/// 支付状态管理
+/// 获取支付方式列表
 
 final class GetPaymentMethodsProvider
     extends
@@ -27,8 +27,8 @@ final class GetPaymentMethodsProvider
     with
         $FutureModifier<List<PaymentMethodModel>>,
         $FutureProvider<List<PaymentMethodModel>> {
-  /// 鏀粯鐘舵€佺鐞?
-  /// 鑾峰彇鏀粯鏂瑰紡鍒楄〃
+  /// 支付状态管理
+  /// 获取支付方式列表
   GetPaymentMethodsProvider._()
     : super(
         from: null,

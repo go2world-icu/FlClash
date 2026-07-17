@@ -8,14 +8,14 @@ part of '../invite_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 閭€璇风姸鎬佺鐞?
-/// 鑾峰彇閭€璇蜂俊鎭?
+/// 邀请状态管理
+/// 获取邀请信息
 
 @ProviderFor(getInviteInfo)
 final getInviteInfoProvider = GetInviteInfoProvider._();
 
-/// 閭€璇风姸鎬佺鐞?
-/// 鑾峰彇閭€璇蜂俊鎭?
+/// 邀请状态管理
+/// 获取邀请信息
 
 final class GetInviteInfoProvider
     extends
@@ -25,8 +25,8 @@ final class GetInviteInfoProvider
           FutureOr<InviteInfoModel>
         >
     with $FutureModifier<InviteInfoModel>, $FutureProvider<InviteInfoModel> {
-  /// 閭€璇风姸鎬佺鐞?
-  /// 鑾峰彇閭€璇蜂俊鎭?
+  /// 邀请状态管理
+  /// 获取邀请信息
   GetInviteInfoProvider._()
     : super(
         from: null,
@@ -55,12 +55,12 @@ final class GetInviteInfoProvider
 
 String _$getInviteInfoHash() => r'74c10a237ebcd8842fec1d4ea506bea75c40423a';
 
-/// 鑾峰彇閭€璇风爜鍒楄〃
+/// 获取邀请码列表
 
 @ProviderFor(getInviteCodes)
 final getInviteCodesProvider = GetInviteCodesProvider._();
 
-/// 鑾峰彇閭€璇风爜鍒楄〃
+/// 获取邀请码列表
 
 final class GetInviteCodesProvider
     extends
@@ -72,7 +72,7 @@ final class GetInviteCodesProvider
     with
         $FutureModifier<List<InviteCodeModel>>,
         $FutureProvider<List<InviteCodeModel>> {
-  /// 鑾峰彇閭€璇风爜鍒楄〃
+  /// 获取邀请码列表
   GetInviteCodesProvider._()
     : super(
         from: null,
@@ -101,12 +101,12 @@ final class GetInviteCodesProvider
 
 String _$getInviteCodesHash() => r'676cbfe101ebba153b35db651d763f4fefdcafd2';
 
-/// 鑾峰彇浣ｉ噾璇︽儏
+/// 获取佣金详情
 
 @ProviderFor(getCommissionDetails)
 final getCommissionDetailsProvider = GetCommissionDetailsFamily._();
 
-/// 鑾峰彇浣ｉ噾璇︽儏
+/// 获取佣金详情
 
 final class GetCommissionDetailsProvider
     extends
@@ -118,7 +118,7 @@ final class GetCommissionDetailsProvider
     with
         $FutureModifier<List<CommissionDetailModel>>,
         $FutureProvider<List<CommissionDetailModel>> {
-  /// 鑾峰彇浣ｉ噾璇︽儏
+  /// 获取佣金详情
   GetCommissionDetailsProvider._({
     required GetCommissionDetailsFamily super.from,
     required int super.argument,
@@ -166,7 +166,7 @@ final class GetCommissionDetailsProvider
 String _$getCommissionDetailsHash() =>
     r'346bcab5827cfa18d54c25999ee34d21ab15b315';
 
-/// 鑾峰彇浣ｉ噾璇︽儏
+/// 获取佣金详情
 
 final class GetCommissionDetailsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<CommissionDetailModel>>, int> {
@@ -179,7 +179,7 @@ final class GetCommissionDetailsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// 鑾峰彇浣ｉ噾璇︽儏
+  /// 获取佣金详情
 
   GetCommissionDetailsProvider call({int page = 1}) =>
       GetCommissionDetailsProvider._(argument: page, from: this);
