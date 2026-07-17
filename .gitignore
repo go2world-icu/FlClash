@@ -75,3 +75,6 @@ devtools_options.yaml
 # FVM Version Cache
 .fvm/
 .fvmrc
+
+# XBoard config (contains sensitive keys)
+assets/config/xboard.config.yaml
