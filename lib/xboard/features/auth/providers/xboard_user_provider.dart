@@ -7,6 +7,7 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:flutter_xboard_sdk/flutter_xboard_sdk.dart' hide XBoardException;
 import 'package:fl_clash/xboard/adapter/state/user_state.dart';
 import 'package:fl_clash/xboard/adapter/state/subscription_state.dart';
+import 'package:fl_clash/providers/providers.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_user_provider.dart');
@@ -471,14 +472,22 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   }
   Future<void> logout() async {
     _logger.info('用户登出');
-    
-    _logger.info('用户登出');
-    
+
     await XBoardSDK.instance.logout();
     await _storageService.clearAuthData();
-    
+
+    // 清理 xboard 导入的订阅配置
+    try {
+      final profiles = ref.read(profilesProvider);
+      for (final profile in profiles.toList()) {
+        await ref.read(profilesActionProvider.notifier).deleteProfile(profile.id);
+      }
+    } catch (e) {
+      _logger.info('清理订阅配置失败: $e');
+    }
+
     state = const UserAuthState(
-      isInitialized: true, // 登出后保持初始化状态，只重置认证信息
+      isInitialized: true,
     );
   }
   String? get currentAuthToken => null; // Token管理已委托给域名服务

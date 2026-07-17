@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:fl_clash/common/common.dart';
+import 'dart:math';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/core/core.dart';
@@ -17,8 +17,16 @@ import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/features/latency/services/auto_latency_service.dart';
 import 'package:fl_clash/xboard/features/subscription/services/subscription_status_checker.dart';
 import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import '../widgets/subscription_usage_card.dart';
-import '../widgets/xboard_connect_button.dart';
+import 'package:fl_clash/xboard/features/invite/widgets/error_card.dart';
+import 'package:fl_clash/xboard/features/invite/widgets/invite_rules_card.dart';
+import 'package:fl_clash/xboard/features/invite/widgets/invite_qr_card.dart';
+import 'package:fl_clash/xboard/features/invite/widgets/invite_stats_card.dart';
+import 'package:fl_clash/xboard/features/invite/widgets/wallet_details_card.dart';
+import 'package:fl_clash/xboard/features/invite/widgets/commission_history_card.dart';
+import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 class XBoardHomePage extends ConsumerStatefulWidget {
   const XBoardHomePage({super.key});
   @override
@@ -45,6 +53,8 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       if (userState.isAuthenticated) {
         // 等待订阅导入完成后再检查订阅状态
         _waitForSubscriptionImportThenCheck();
+        // 异步加载邀请数据
+        _loadInviteData();
       }
       autoLatencyService.initialize(ref);
       _waitForGroupsAndStartTesting();
@@ -150,37 +160,23 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(vertical: verticalPadding),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight - (2 * verticalPadding),
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const NoticeBanner(),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                            child: _buildUsageSection(),
-                          ),
-                          // SizedBox(height: sectionSpacing),
-                          // Padding(
-                          //   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                          //   child: _buildProxyModeSection(),
-                          // ),
-                          // SizedBox(height: sectionSpacing),
-                          // const NodeSelectorBar(),
-                          // SizedBox(height: sectionSpacing),
-                          // Padding(
-                          //   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                          //   child: _buildConnectionSection(),
-                          // ),
-                          // 底部弹性空间
-                          if (availableHeight > 600) const Spacer(),
-                        ],
-                      ),
-                    ),
+                  padding: EdgeInsets.symmetric(
+                    vertical: verticalPadding,
+                    horizontal: horizontalPadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const NoticeBanner(),
+                      SizedBox(height: sectionSpacing),
+                      _buildUsageGrid(context, availableHeight),
+                      SizedBox(height: sectionSpacing),
+                      _buildInviteSection(),
+                      SizedBox(height: sectionSpacing),
+                      _buildLogUploadRow(),
+                      SizedBox(height: sectionSpacing),
+                      _buildLogoutButton(),
+                    ],
                   ),
                 );
               },
@@ -189,7 +185,6 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         );
         },
       ),
-      bottomNavigationBar: _buildLogUploadFooter(),
     );
   }
 
@@ -198,35 +193,68 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       .colorScheme.onSurfaceVariant
       .withValues(alpha: _hasUploaded ? 0.4 : 0.5);
 
-  /// 构建日志上报底栏（固定在页面右下角）
-  Widget _buildLogUploadFooter() {
+  /// 异步加载邀请数据
+  Future<void> _loadInviteData() async {
+    try {
+      await ref.read(inviteProvider.notifier).refresh();
+      if (!mounted) return;
+      final inviteState = ref.read(inviteProvider);
+      if (!inviteState.hasInviteData || inviteState.inviteData!.codes.isEmpty) {
+        await ref.read(inviteProvider.notifier).generateInviteCode();
+      }
+    } catch (_) {}
+  }
+
+  /// 构建邀请页面内容
+  Widget _buildInviteSection() {
+    return Consumer(
+      builder: (_, ref, __) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            ErrorCard(),
+            SizedBox(height: 16),
+            InviteRulesCard(),
+            SizedBox(height: 16),
+            InviteQrCard(),
+            SizedBox(height: 16),
+            InviteStatsCard(),
+            SizedBox(height: 16),
+            WalletDetailsCard(),
+            SizedBox(height: 16),
+            CommissionHistoryCard(),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 构建日志上报行（内嵌在滚动内容中）
+  Widget _buildLogUploadRow() {
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             '遇到问题？',
             style: TextStyle(
-              color: _hasUploaded
-                  ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 13,
             ),
           ),
-          const SizedBox(width: 4),
           GestureDetector(
             onTap: (_isUploading || _hasUploaded) ? null : _uploadLogs,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!_hasUploaded)
-                  Icon(
-                    Icons.bug_report,
-                    size: 14,
-                    color: _disabledColor,
-                  ),
+                  Icon(Icons.bug_report, size: 14, color: _disabledColor),
                 if (!_hasUploaded) const SizedBox(width: 4),
                 Text(
                   _isUploading ? '上传中...' : (_hasUploaded ? '已上报' : '日志上报'),
@@ -234,9 +262,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
                     color: _disabledColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    decoration: (_isUploading || _hasUploaded)
-                        ? null
-                        : TextDecoration.underline,
+                    decoration: (_isUploading || _hasUploaded) ? null : TextDecoration.underline,
                   ),
                 ),
               ],
@@ -247,6 +273,33 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     );
   }
 
+  /// 构建退出登录按钮
+  Widget _buildLogoutButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showLogoutDialog(),
+        icon: const Icon(Icons.logout, color: Colors.red),
+        label: Text(
+          AppLocalizations.of(context).logout,
+          style: const TextStyle(color: Colors.red),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.red.shade300),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
+  }
+
+  /// 显示退出确认对话框
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const LogoutDialog(),
+    );
+  }
   /// 上传日志到服务端
   Future<void> _uploadLogs() async {
     final fileOutput = XBoardLogger.fileOutput;
@@ -315,29 +368,34 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       ),
     );
   }
-  Widget _buildUsageSection() {
+  Widget _buildUsageGrid(BuildContext context, double availableHeight) {
+    final spacing = 14.0;
+    // 和仪表盘一样基于宽度算列数，每 280px 为一组（4列），至少 8 列
+    final screenWidth = MediaQuery.of(context).size.width;
+    final columns = max(4 * ((screenWidth / 280).ceil()), 8);
     return Consumer(
       builder: (context, ref, child) {
-        final userInfo = ref.userInfo;
-        final subscriptionInfo = ref.subscriptionInfo;
+        // 直接 watch provider（不要用 ref.userInfo 扩展，它用的是 read）
+        final userInfo = ref.watch(userInfoProvider);
+        final subscriptionInfo = ref.watch(subscriptionInfoProvider);
         final currentProfile = ref.watch(currentProfileProvider);
-        return SubscriptionUsageCard(
-          subscriptionInfo: subscriptionInfo,
-          userInfo: userInfo,
-          profileSubscriptionInfo: currentProfile?.subscriptionInfo,
+        return Grid(
+          crossAxisCount: columns,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+          children: [
+            GridItem(
+              crossAxisCellCount: columns,
+              child: SubscriptionUsageCard(
+                subscriptionInfo: subscriptionInfo,
+                userInfo: userInfo,
+                profileSubscriptionInfo: currentProfile?.subscriptionInfo,
+              ),
+            ),
+          ],
         );
       },
     );
-  }
-  Widget _buildConnectionSection() {
-    return Consumer(
-      builder: (context, ref, child) {
-        return const XBoardConnectButton(isFloating: false);
-      },
-    );
-  }
-  Widget _buildProxyModeSection() {
-    return const XBoardOutboundMode();
   }
   /// 等待订阅导入完成后再检查订阅状态（备用方案）
   /// 如果3秒后还没有触发导入完成监听器，则主动检查
