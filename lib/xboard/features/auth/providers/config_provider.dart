@@ -1,20 +1,20 @@
 ﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 
-/// 閰嶇疆鏁版嵁Provider
-/// 鑾峰彇绯荤粺閰嶇疆淇℃伅锛屽閭楠岃瘉銆侀個璇风爜绛夎缃?
-/// 浣跨敤 autoDispose 纭繚姣忔杩涘叆娉ㄥ唽椤甸潰閮介噸鏂拌幏鍙栨渶鏂伴厤缃?
+/// 配置数据Provider
+/// 获取系统配置信息，如邮箱验证、邀请码等设置
+/// 使用 autoDispose 确保每次进入注册页面都重新获取最新配置
 final configProvider = FutureProvider.autoDispose<ConfigModel?>((ref) async {
   try {
     return await XBoardSDK.instance.config.getConfig();
   } catch (e) {
-    // 閰嶇疆鑾峰彇澶辫触鏃惰繑鍥瀗ull锛屼娇鐢ㄩ粯璁ゅ€?
+    // 配置获取失败时返回null，使用默认值
     return null;
   }
 });
 
-/// 閰嶇疆鐘舵€丳rovider
-/// 鎻愪緵閰嶇疆鐨勫姞杞界姸鎬佸拰閿欒淇℃伅
+/// 配置状态Provider
+/// 提供配置的加载状态和错误信息
 final configStateProvider = NotifierProvider<ConfigStateNotifier, ConfigState>(
   ConfigStateNotifier.new,
 );

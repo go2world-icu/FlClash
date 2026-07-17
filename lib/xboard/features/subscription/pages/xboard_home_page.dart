@@ -41,7 +41,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
   bool _hasUploaded = false;
   
   @override
-  bool get wantKeepAlive => true;  // 淇濇寔椤甸潰鐘舵€侊紝闃叉閲嶅缓
+  bool get wantKeepAlive => true;  // 保持页面状态，防止重建
   
   @override
   void initState() {
@@ -51,9 +51,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       _hasInitialized = true;
       final userState = ref.read(xboardUserProvider);
       if (userState.isAuthenticated) {
-        // 绛夊緟璁㈤槄瀵煎叆瀹屾垚鍚庡啀妫€鏌ヨ闃呯姸鎬?
+        // 等待订阅导入完成后再检查订阅状态
         _waitForSubscriptionImportThenCheck();
-        // 寮傛鍔犺浇閭€璇锋暟鎹?
+        // 异步加载邀请数据
         _loadInviteData();
       }
       autoLatencyService.initialize(ref);
@@ -67,9 +67,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       }
     });
     
-    // 鐩戝惉璁㈤槄瀵煎叆瀹屾垚浜嬩欢
+    // 监听订阅导入完成事件
     ref.listenManual(profileImportProvider, (previous, next) {
-      // 浠庡鍏ヤ腑鍙樹负瀹屾垚锛堟垚鍔熸垨澶辫触锛?
+      // 从导入中变为完成（成功或失败）
       if (previous?.isImporting == true && !next.isImporting && !_hasCheckedSubscriptionStatus) {
         _hasCheckedSubscriptionStatus = true;
         Future.delayed(const Duration(milliseconds: 500), () {
@@ -93,11 +93,11 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       if ((previous?.isEmpty ?? true) && next.isNotEmpty && !_hasStartedLatencyTesting) {
         _hasStartedLatencyTesting = true;
         Future.delayed(const Duration(seconds: 2), () {
-          // 浣跨敤 ref.maybeRead 瀹夊叏璇诲彇锛岄伩鍏嶅湪 dispose 鍚庝娇鐢?
+          // 使用 ref.maybeRead 安全读取，避免在 dispose 后使用
           try {
             _performInitialLatencyTest();
           } catch (e) {
-            // 蹇界暐 ref 閿欒
+            // 忽略 ref 错误
           }
         });
       }
@@ -105,9 +105,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
   }
   @override
   Widget build(BuildContext context) {
-    super.build(context);  // 蹇呴』璋冪敤锛岄厤鍚?AutomaticKeepAliveClientMixin
+    super.build(context);  // 必须调用，配合 AutomaticKeepAliveClientMixin
     
-    // 鏍规嵁鎿嶄綔绯荤粺骞冲彴鍒ゆ柇璁惧绫诲瀷
+    // 根据操作系统平台判断设备类型
     final isDesktop = Platform.isLinux || Platform.isWindows || Platform.isMacOS;
     
     return Scaffold(
@@ -116,30 +116,30 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       ),
       body: Consumer(
         builder: (_, ref, __) {
-          // 鑾峰彇灞忓箷楂樺害骞惰绠楄嚜閫傚簲闂磋窛
+          // 获取屏幕高度并计算自适应间距
           final screenHeight = MediaQuery.of(context).size.height;
         final appBarHeight = kToolbarHeight;
         final statusBarHeight = MediaQuery.of(context).padding.top;
-        final bottomNavHeight = 60.0; // 搴曢儴瀵艰埅鏍忛珮搴?
+        final bottomNavHeight = 60.0; // 底部导航栏高度
         final availableHeight = screenHeight - appBarHeight - statusBarHeight - bottomNavHeight;
         
-        // 鏍规嵁鍙敤楂樺害璋冩暣闂磋窛
+        // 根据可用高度调整间距
         double sectionSpacing;
         double verticalPadding;
         double horizontalPadding;
         
         if (availableHeight < 500) {
-          // 灏忓睆骞曪細绱у噾甯冨眬
+          // 小屏幕：紧凑布局
           sectionSpacing = 8.0;
           verticalPadding = 8.0;
           horizontalPadding = 12.0;
         } else if (availableHeight < 650) {
-          // 涓瓑灞忓箷锛氶€備腑甯冨眬
+          // 中等屏幕：适中布局
           sectionSpacing = 10.0;
           verticalPadding = 10.0;
           horizontalPadding = 16.0;
         } else {
-          // 澶у睆骞曪細鏍囧噯甯冨眬
+          // 大屏幕：标准布局
           sectionSpacing = 14.0;
           verticalPadding = 12.0;
           horizontalPadding = 16.0;
@@ -188,12 +188,12 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     );
   }
 
-  /// 绂佺敤鎬侀鑹诧紙涓婁紶涓垨宸蹭笂鎶ワ級
+  /// 禁用态颜色（上传中或已上报）
   Color get _disabledColor => Theme.of(context)
       .colorScheme.onSurfaceVariant
       .withValues(alpha: _hasUploaded ? 0.4 : 0.5);
 
-  /// 寮傛鍔犺浇閭€璇锋暟鎹?
+  /// 异步加载邀请数据
   Future<void> _loadInviteData() async {
     try {
       await ref.read(inviteProvider.notifier).refresh();
@@ -205,7 +205,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     } catch (_) {}
   }
 
-  /// 鏋勫缓閭€璇烽〉闈㈠唴瀹?
+  /// 构建邀请页面内容
   Widget _buildInviteSection() {
     return Consumer(
       builder: (_, ref, __) {
@@ -229,7 +229,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     );
   }
 
-  /// 鏋勫缓鏃ュ織涓婃姤琛岋紙鍐呭祵鍦ㄦ粴鍔ㄥ唴瀹逛腑锛?
+  /// 构建日志上报行（内嵌在滚动内容中）
   Widget _buildLogUploadRow() {
     return Container(
       width: double.infinity,
@@ -242,7 +242,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '閬囧埌闂锛?,
+            '遇到问题？',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 13,
@@ -257,7 +257,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
                   Icon(Icons.bug_report, size: 14, color: _disabledColor),
                 if (!_hasUploaded) const SizedBox(width: 4),
                 Text(
-                  _isUploading ? '涓婁紶涓?..' : (_hasUploaded ? '宸蹭笂鎶? : '鏃ュ織涓婃姤'),
+                  _isUploading ? '上传中...' : (_hasUploaded ? '已上报' : '日志上报'),
                   style: TextStyle(
                     color: _disabledColor,
                     fontSize: 13,
@@ -273,7 +273,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     );
   }
 
-  /// 鏋勫缓閫€鍑虹櫥褰曟寜閽?
+  /// 构建退出登录按钮
   Widget _buildLogoutButton() {
     return SizedBox(
       width: double.infinity,
@@ -293,28 +293,28 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     );
   }
 
-  /// 鏄剧ず閫€鍑虹‘璁ゅ璇濇
+  /// 显示退出确认对话框
   void _showLogoutDialog() {
     showDialog(
       context: context,
       builder: (context) => const LogoutDialog(),
     );
   }
-  /// 涓婁紶鏃ュ織鍒版湇鍔＄
+  /// 上传日志到服务端
   Future<void> _uploadLogs() async {
     final fileOutput = XBoardLogger.fileOutput;
     if (fileOutput == null) {
-      _showSnackBar('鏃ュ織鏈惎鐢?);
+      _showSnackBar('日志未启用');
       return;
     }
 
     setState(() => _isUploading = true);
 
     try {
-      // 璇诲彇鏈€鏂扮殑鏃ュ織鏂囦欢
+      // 读取最新的日志文件
       final logFiles = await fileOutput.getLogFiles();
       if (logFiles.isEmpty) {
-        _showSnackBar('鏆傛棤鏃ュ織鏂囦欢');
+        _showSnackBar('暂无日志文件');
         return;
       }
       logFiles.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
@@ -322,7 +322,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       final fileBytes = await latestFile.readAsBytes();
       final filename = latestFile.path.split(Platform.pathSeparator).last;
 
-      // 璁惧淇℃伅
+      // 设备信息
       final deviceInfoResult = await DeviceInfoService.collectBasicDeviceInfo();
       final deviceInfoJson = deviceInfoResult['status'] == 'success'
           ? jsonEncode(deviceInfoResult['device_info'])
@@ -330,7 +330,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
 
       final reportUrl = XBoardConfig.reportLogUrl;
       if (reportUrl == null || reportUrl.isEmpty) {
-        _showSnackBar('鏈厤缃棩蹇椾笂鎶ユ湇鍔″櫒鍦板潃');
+        _showSnackBar('未配置日志上报服务器地址');
         return;
       }
 
@@ -345,19 +345,19 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
 
       if (success) {
         _hasUploaded = true;
-        _showSnackBar('鏃ュ織涓婃姤鎴愬姛 鉁?);
+        _showSnackBar('日志上报成功 ✓');
       } else {
-        _showSnackBar('鏃ュ織涓婃姤澶辫触');
+        _showSnackBar('日志上报失败');
       }
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar('涓婃姤寮傚父: $e');
+      _showSnackBar('上报异常: $e');
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
   }
 
-  /// 鏄剧ず SnackBar 鎻愮ず
+  /// 显示 SnackBar 提示
   void _showSnackBar(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -370,12 +370,12 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
   }
   Widget _buildUsageGrid(BuildContext context, double availableHeight) {
     final spacing = 14.0;
-    // 鍜屼华琛ㄧ洏涓€鏍峰熀浜庡搴︾畻鍒楁暟锛屾瘡 280px 涓轰竴缁勶紙4鍒楋級锛岃嚦灏?8 鍒?
+    // 和仪表盘一样基于宽度算列数，每 280px 为一组（4列），至少 8 列
     final screenWidth = MediaQuery.of(context).size.width;
     final columns = max(4 * ((screenWidth / 280).ceil()), 8);
     return Consumer(
       builder: (context, ref, child) {
-        // 鐩存帴 watch provider锛堜笉瑕佺敤 ref.userInfo 鎵╁睍锛屽畠鐢ㄧ殑鏄?read锛?
+        // 直接 watch provider（不要用 ref.userInfo 扩展，它用的是 read）
         final userInfo = ref.watch(userInfoProvider);
         final subscriptionInfo = ref.watch(subscriptionInfoProvider);
         final currentProfile = ref.watch(currentProfileProvider);
@@ -397,12 +397,12 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       },
     );
   }
-  /// 绛夊緟璁㈤槄瀵煎叆瀹屾垚鍚庡啀妫€鏌ヨ闃呯姸鎬侊紙澶囩敤鏂规锛?
-  /// 濡傛灉3绉掑悗杩樻病鏈夎Е鍙戝鍏ュ畬鎴愮洃鍚櫒锛屽垯涓诲姩妫€鏌?
+  /// 等待订阅导入完成后再检查订阅状态（备用方案）
+  /// 如果3秒后还没有触发导入完成监听器，则主动检查
   void _waitForSubscriptionImportThenCheck() async {
     await Future.delayed(const Duration(seconds: 3));
 
-    // 濡傛灉宸茬粡閫氳繃鐩戝惉鍣ㄦ鏌ヨ繃浜嗭紝灏变笉鍐嶆鏌?
+    // 如果已经通过监听器检查过了，就不再检查
     if (_hasCheckedSubscriptionStatus || !mounted) {
       return;
     }
@@ -430,15 +430,15 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         actions: [
           TextButton(
             onPressed: () async {
-              // 鍏堝叧闂璇濇
+              // 先关闭对话框
               if (context.mounted) {
                 Navigator.of(context).pop();
               }
-              // 娓呴櫎閿欒鐘舵€?
+              // 清除错误状态
               userNotifier.clearTokenExpiredError();
-              // 澶勭悊 Token 杩囨湡锛堟竻闄ゆ暟鎹級
+              // 处理 Token 过期（清除数据）
               await userNotifier.handleTokenExpired();
-              // 瀵艰埅鍒扮櫥褰曢〉
+              // 导航到登录页
               if (context.mounted) {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -473,7 +473,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
           });
         }
       } catch (e) {
-        // 蹇界暐鍙兘鐨?StateError
+        // 忽略可能的 StateError
         timer.cancel();
       }
     });

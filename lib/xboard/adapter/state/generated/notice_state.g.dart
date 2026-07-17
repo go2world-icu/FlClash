@@ -8,14 +8,14 @@ part of '../notice_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 公告状态管理
-/// 获取公告列表
+/// 鍏憡鐘舵€佺鐞?
+/// 鑾峰彇鍏憡鍒楄〃
 
 @ProviderFor(getNotices)
 final getNoticesProvider = GetNoticesProvider._();
 
-/// 公告状态管理
-/// 获取公告列表
+/// 鍏憡鐘舵€佺鐞?
+/// 鑾峰彇鍏憡鍒楄〃
 
 final class GetNoticesProvider
     extends
@@ -27,8 +27,8 @@ final class GetNoticesProvider
     with
         $FutureModifier<List<NoticeModel>>,
         $FutureProvider<List<NoticeModel>> {
-  /// 公告状态管理
-  /// 获取公告列表
+  /// 鍏憡鐘舵€佺鐞?
+  /// 鑾峰彇鍏憡鍒楄〃
   GetNoticesProvider._()
     : super(
         from: null,

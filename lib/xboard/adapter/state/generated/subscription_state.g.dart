@@ -8,14 +8,14 @@ part of '../subscription_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 订阅状态管理
-/// 获取订阅信息
+/// 璁㈤槄鐘舵€佺鐞?
+/// 鑾峰彇璁㈤槄淇℃伅
 
 @ProviderFor(getSubscription)
 final getSubscriptionProvider = GetSubscriptionProvider._();
 
-/// 订阅状态管理
-/// 获取订阅信息
+/// 璁㈤槄鐘舵€佺鐞?
+/// 鑾峰彇璁㈤槄淇℃伅
 
 final class GetSubscriptionProvider
     extends
@@ -27,8 +27,8 @@ final class GetSubscriptionProvider
     with
         $FutureModifier<SubscriptionModel>,
         $FutureProvider<SubscriptionModel> {
-  /// 订阅状态管理
-  /// 获取订阅信息
+  /// 璁㈤槄鐘舵€佺鐞?
+  /// 鑾峰彇璁㈤槄淇℃伅
   GetSubscriptionProvider._()
     : super(
         from: null,
@@ -57,17 +57,17 @@ final class GetSubscriptionProvider
 
 String _$getSubscriptionHash() => r'd07a7f196c50dba9384d2417bdcb5b2367b5e968';
 
-/// 获取订阅链接
+/// 鑾峰彇璁㈤槄閾炬帴
 
 @ProviderFor(getSubscribeUrl)
 final getSubscribeUrlProvider = GetSubscribeUrlProvider._();
 
-/// 获取订阅链接
+/// 鑾峰彇璁㈤槄閾炬帴
 
 final class GetSubscribeUrlProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
-  /// 获取订阅链接
+  /// 鑾峰彇璁㈤槄閾炬帴
   GetSubscribeUrlProvider._()
     : super(
         from: null,

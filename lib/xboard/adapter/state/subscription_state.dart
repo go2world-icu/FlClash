@@ -5,16 +5,16 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/subscription_state.g.dart';
 
-/// 璁㈤槄鐘舵€佺鐞?
+/// 订阅状态管理
 
-/// 鑾峰彇璁㈤槄淇℃伅
+/// 获取订阅信息
 @riverpod
 Future<SubscriptionModel> getSubscription(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.subscription.getSubscription();
 }
 
-/// 鑾峰彇璁㈤槄閾炬帴
+/// 获取订阅链接
 @riverpod
 Future<String> getSubscribeUrl(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

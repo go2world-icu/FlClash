@@ -6,7 +6,8 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/state/payment_state.dart';
 
-// 鍒濆鍖栨枃浠剁骇鏃ュ織鍣?final _logger = FileLogger('xboard_payment_provider.dart');
+// 初始化文件级日志器
+final _logger = FileLogger('xboard_payment_provider.dart');
 
 class _PendingOrdersHolder extends Notifier<List<DomainOrder>> {
   @override
@@ -33,48 +34,50 @@ final paymentProcessStateProvider = NotifierProvider<_PaymentProcessStateHolder,
 class XBoardPaymentNotifier extends Notifier<void> {
   @override
   void build() {
-    // 1. 鐩戝惉璁よ瘉鐘舵€佸彉鍖?    ref.listen(xboardUserAuthProvider, (previous, next) {
-      _logger.info('馃搵 [Payment] 馃懁 璁よ瘉鐘舵€佸彉鍖? ${previous?.isAuthenticated} -> ${next.isAuthenticated}');
+    // 1. 监听认证状态变化
+    ref.listen(xboardUserAuthProvider, (previous, next) {
+      _logger.info('📋 [Payment] 👤 认证状态变化: ${previous?.isAuthenticated} -> ${next.isAuthenticated}');
 
       if (next.isAuthenticated) {
         if (previous?.isAuthenticated != true) {
-          _logger.info('馃搵 [Payment] 馃幆 鐢ㄦ埛鍒氱櫥褰曪紝瑙﹀彂鍒濆鏁版嵁鍔犺浇');
+          _logger.info('📋 [Payment] 🎯 用户刚登录，触发初始数据加载');
           _loadInitialData();
         }
       } else if (!next.isAuthenticated) {
-        _logger.warning('馃搵 [Payment] 馃毆 鐢ㄦ埛宸茬櫥鍑猴紝娓呯┖鏀粯鏁版嵁');
+        _logger.warning('📋 [Payment] 🚪 用户已登出，清空支付数据');
         _clearPaymentData();
       }
     });
 
-    // 2. 妫€鏌ュ綋鍓嶇姸鎬侊紙澶勭悊 Provider 鍒濆鍖栨椂鐢ㄦ埛宸茬櫥褰曠殑鎯呭喌锛?    final authState = ref.read(xboardUserAuthProvider);
+    // 2. 检查当前状态（处理 Provider 初始化时用户已登录的情况）
+    final authState = ref.read(xboardUserAuthProvider);
     if (authState.isAuthenticated) {
-      _logger.info('馃搵 [Payment] 馃殌 Provider 鍒濆鍖栨椂鐢ㄦ埛宸茶璇侊紝瑙﹀彂鍒濆鏁版嵁鍔犺浇');
-      // 浣跨敤 microtask 閬垮厤鍦?build 杩囩▼涓慨鏀?state
+      _logger.info('📋 [Payment] 🚀 Provider 初始化时用户已认证，触发初始数据加载');
+      // 使用 microtask 避免在 build 过程中修改 state
       Future.microtask(() => _loadInitialData());
     }
   }
   Future<void> _loadInitialData() async {
-    _logger.info('馃搵 [Payment] 馃攧 寮€濮嬪姞杞藉垵濮嬫敮浠樻暟鎹?..');
+    _logger.info('📋 [Payment] 🔄 开始加载初始支付数据...');
 
     final userAuthState = ref.read(xboardUserAuthProvider);
-    _logger.info('馃搵 [Payment] 鐢ㄦ埛璁よ瘉鐘舵€? ${userAuthState.isAuthenticated}');
+    _logger.info('📋 [Payment] 用户认证状态: ${userAuthState.isAuthenticated}');
 
     if (!userAuthState.isAuthenticated) {
-      _logger.warning('馃搵 [Payment] 鈿狅笍 鐢ㄦ埛鏈璇侊紝璺宠繃鏁版嵁鍔犺浇');
+      _logger.warning('📋 [Payment] ⚠️ 用户未认证，跳过数据加载');
       return;
     }
 
     try {
-      _logger.info('馃搵 [Payment] 骞惰鍔犺浇锛氬緟鏀粯璁㈠崟 + 鏀粯鏂瑰紡');
+      _logger.info('📋 [Payment] 并行加载：待支付订单 + 支付方式');
       await Future.wait([
         loadPendingOrders(),
         loadPaymentMethods(),
       ]);
-      _logger.info('馃搵 [Payment] 鉁?鍒濆鏁版嵁鍔犺浇瀹屾垚');
+      _logger.info('📋 [Payment] ✅ 初始数据加载完成');
     } catch (e, stackTrace) {
-      _logger.error('馃搵 [Payment] 鉂?鍔犺浇鏀粯鍒濆鏁版嵁澶辫触: $e');
-      _logger.error('馃搵 [Payment] 閿欒鍫嗘爤: $stackTrace');
+      _logger.error('📋 [Payment] ❌ 加载支付初始数据失败: $e');
+      _logger.error('📋 [Payment] 错误堆栈: $stackTrace');
     }
   }
   Future<void> loadPendingOrders() async {
@@ -85,19 +88,21 @@ class XBoardPaymentNotifier extends Notifier<void> {
     }
     ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: true);
     try {
-      _logger.info('鍔犺浇寰呮敮浠樿鍗?..');
-      _logger.info('鍔犺浇寰呮敮浠樿鍗?..');
+      _logger.info('加载待支付订单...');
+      _logger.info('加载待支付订单...');
       final orderModels = await XBoardSDK.instance.order.getOrders();
       final orders = orderModels.map(_mapOrder).toList();
 
-      // status: 0=寰呬粯娆? 1=寮€閫氫腑, 2=宸插彇娑? 3=宸插畬鎴? 4=宸叉姌鎶?      // 鏄剧ず"寰呬粯娆?鍜?寮€閫氫腑"鐨勮鍗?      final pendingOrders = orders.where((order) =>
+      // status: 0=待付款, 1=开通中, 2=已取消, 3=已完成, 4=已折抵
+      // 显示"待付款"和"开通中"的订单
+      final pendingOrders = orders.where((order) =>
         order.status == OrderStatus.pending || order.status == OrderStatus.processing
       ).toList();
       ref.read(pendingOrdersProvider.notifier).set(pendingOrders);
       ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: false);
-      _logger.info('寰呮敮浠樿鍗曞姞杞芥垚鍔燂紝鍏?${pendingOrders.length} 涓?);
+      _logger.info('待支付订单加载成功，共 ${pendingOrders.length} 个');
     } catch (e) {
-      _logger.info('鍔犺浇寰呮敮浠樿鍗曞け璐? $e');
+      _logger.info('加载待支付订单失败: $e');
       ref.read(userUIStateProvider.notifier).state = UIState(
         isLoading: false,
         errorMessage: e.toString(),
@@ -106,24 +111,24 @@ class XBoardPaymentNotifier extends Notifier<void> {
     }
   }
   Future<void> loadPaymentMethods() async {
-    _logger.info('馃搵 [Payment] 寮€濮嬪姞杞芥敮浠樻柟寮?..');
+    _logger.info('📋 [Payment] 开始加载支付方式...');
 
     final userAuthState = ref.read(xboardUserAuthProvider);
-    _logger.info('馃搵 [Payment] 鐢ㄦ埛璁よ瘉鐘舵€? ${userAuthState.isAuthenticated}');
+    _logger.info('📋 [Payment] 用户认证状态: ${userAuthState.isAuthenticated}');
 
     if (!userAuthState.isAuthenticated) {
-      _logger.warning('馃搵 [Payment] 鈿狅笍 鐢ㄦ埛鏈璇侊紝娓呯┖鏀粯鏂瑰紡鍒楄〃');
+      _logger.warning('📋 [Payment] ⚠️ 用户未认证，清空支付方式列表');
       ref.read(paymentMethodsProvider.notifier).set([]);
       return;
     }
 
     try {
-      _logger.info('馃搵 [Payment] 璋冪敤 getPaymentMethodsProvider 鑾峰彇鏁版嵁...');
+      _logger.info('📋 [Payment] 调用 getPaymentMethodsProvider 获取数据...');
       final paymentMethodModels = (await ref.read(getPaymentMethodsProvider.future) as List<PaymentMethodModel>?) ?? [];
 
-      _logger.info('馃搵 [Payment] SDK 杩斿洖鏀粯鏂瑰紡鏁伴噺: ${paymentMethodModels.length}');
+      _logger.info('📋 [Payment] SDK 返回支付方式数量: ${paymentMethodModels.length}');
       if (paymentMethodModels.isNotEmpty) {
-        _logger.info('馃搵 [Payment] SDK 杩斿洖鐨勬敮浠樻柟寮?');
+        _logger.info('📋 [Payment] SDK 返回的支付方式:');
         for (var method in paymentMethodModels) {
           _logger.info('   - ${method.name} (id: ${method.id}, paymentMethod: ${method.paymentMethod})');
         }
@@ -132,14 +137,14 @@ class XBoardPaymentNotifier extends Notifier<void> {
       final paymentMethods = paymentMethodModels.map(_mapPaymentMethod).toList();
       ref.read(paymentMethodsProvider.notifier).set(paymentMethods);
 
-      _logger.info('馃搵 [Payment] 鉁?鏀粯鏂瑰紡鍔犺浇鎴愬姛锛屽叡 ${paymentMethods.length} 涓?);
-      _logger.info('馃搵 [Payment] 鏄犲皠鍚庣殑鏀粯鏂瑰紡:');
+      _logger.info('📋 [Payment] ✅ 支付方式加载成功，共 ${paymentMethods.length} 个');
+      _logger.info('📋 [Payment] 映射后的支付方式:');
       for (var method in paymentMethods) {
         _logger.info('   - ${method.name} (id: ${method.id})');
       }
     } catch (e, stackTrace) {
-      _logger.error('馃搵 [Payment] 鉂?鍔犺浇鏀粯鏂瑰紡澶辫触: $e');
-      _logger.error('馃搵 [Payment] 閿欒鍫嗘爤: $stackTrace');
+      _logger.error('📋 [Payment] ❌ 加载支付方式失败: $e');
+      _logger.error('📋 [Payment] 错误堆栈: $stackTrace');
       ref.read(userUIStateProvider.notifier).state = UIState(
         errorMessage: e.toString(),
       );
@@ -153,18 +158,18 @@ class XBoardPaymentNotifier extends Notifier<void> {
     final userAuthState = ref.read(xboardUserAuthProvider);
     if (!userAuthState.isAuthenticated) {
       ref.read(userUIStateProvider.notifier).state = const UIState(
-        errorMessage: '璇峰厛鐧诲綍',
+        errorMessage: '请先登录',
       );
       return null;
     }
     ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: true);
     try {
-      _logger.info('鍒涘缓璁㈠崟: planId=$planId, period=$period, couponCode=$couponCode');
+      _logger.info('创建订单: planId=$planId, period=$period, couponCode=$couponCode');
 
-      // 鍏堝彇娑堝緟鏀粯璁㈠崟
+      // 先取消待支付订单
       await cancelPendingOrders();
 
-      // 璋冪敤 Repository 鍒涘缓璁㈠崟
+      // 调用 Repository 创建订单
       final tradeNo = await XBoardSDK.instance.order.createOrder(
         planId,
         period,
@@ -176,18 +181,18 @@ class XBoardPaymentNotifier extends Notifier<void> {
         ));
         ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: false);
         await loadPendingOrders();
-        _logger.info('璁㈠崟鍒涘缓鎴愬姛: tradeNo=$tradeNo');
-        await Future.delayed(const Duration(seconds: 1)); // 娣诲姞寤惰繜锛岀‘淇濊鍗曞湪鏈嶅姟鍣ㄧ瀹屽叏灏辩华
+        _logger.info('订单创建成功: tradeNo=$tradeNo');
+        await Future.delayed(const Duration(seconds: 1)); // 添加延迟，确保订单在服务器端完全就绪
         return tradeNo;
       } else {
         ref.read(userUIStateProvider.notifier).state = const UIState(
           isLoading: false,
-          errorMessage: '鍒涘缓璁㈠崟澶辫触',
+          errorMessage: '创建订单失败',
         );
         return null;
       }
     } catch (e) {
-      _logger.info('鍒涘缓璁㈠崟澶辫触: $e');
+      _logger.info('创建订单失败: $e');
       ref.read(userUIStateProvider.notifier).state = UIState(
         isLoading: false,
         errorMessage: e.toString(),
@@ -195,17 +200,18 @@ class XBoardPaymentNotifier extends Notifier<void> {
       return null;
     }
   }
-  /// 鎻愪氦鏀粯
+  /// 提交支付
   ///
-  /// 杩斿洖鏀粯缁撴灉锛屽寘鍚?type 鍜?data
-  /// type: -1 琛ㄧず浣欓鏀粯鎴愬姛, 0 琛ㄧず璺宠浆鏀粯, 1 琛ㄧず浜岀淮鐮佹敮浠?  Future<Map<String, dynamic>?> submitPayment({
+  /// 返回支付结果，包含 type 和 data
+  /// type: -1 表示余额支付成功, 0 表示跳转支付, 1 表示二维码支付
+  Future<Map<String, dynamic>?> submitPayment({
     required String tradeNo,
     required String method,
   }) async {
     final userAuthState = ref.read(xboardUserAuthProvider);
     if (!userAuthState.isAuthenticated) {
       ref.read(userUIStateProvider.notifier).state = const UIState(
-        errorMessage: '璇峰厛鐧诲綍',
+        errorMessage: '请先登录',
       );
       return null;
     }
@@ -213,9 +219,10 @@ class XBoardPaymentNotifier extends Notifier<void> {
       isProcessingPayment: true,
     ));
     try {
-      _logger.info('鎻愪氦鏀粯: tradeNo=$tradeNo, method=$method');
+      _logger.info('提交支付: tradeNo=$tradeNo, method=$method');
 
-      // 璋冪敤 Repository 鎻愪氦鏀粯锛岃繑鍥炴敮浠樼粨鏋?      final paymentResultModel = await XBoardSDK.instance.order.checkoutOrder(
+      // 调用 Repository 提交支付，返回支付结果
+      final paymentResultModel = await XBoardSDK.instance.order.checkoutOrder(
         tradeNo,
         method,
       );
@@ -227,12 +234,12 @@ class XBoardPaymentNotifier extends Notifier<void> {
       final paymentResult = _mapPaymentResult(paymentResultModel);
       if (paymentResult != null) {
         await loadPendingOrders();
-        _logger.info('鏀粯鎻愪氦鎴愬姛锛岀粨鏋? $paymentResult');
+        _logger.info('支付提交成功，结果: $paymentResult');
         return paymentResult;
       }
       return null;
     } catch (e) {
-      _logger.info('鏀粯鎻愪氦澶辫触: $e');
+      _logger.info('支付提交失败: $e');
       ref.read(paymentProcessStateProvider.notifier).set(const PaymentProcessState(
         isProcessingPayment: false,
       ));
@@ -246,15 +253,17 @@ class XBoardPaymentNotifier extends Notifier<void> {
     final userAuthState = ref.read(xboardUserAuthProvider);
     if (!userAuthState.isAuthenticated) {
       ref.read(userUIStateProvider.notifier).state = const UIState(
-        errorMessage: '璇峰厛鐧诲綍',
+        errorMessage: '请先登录',
       );
       return 0;
     }
     ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: true);
     try {
-      // 鑾峰彇鎵€鏈夎鍗曞苟绛涢€夊緟鏀粯鐨?      final orderModels = await XBoardSDK.instance.order.getOrders();
+      // 获取所有订单并筛选待支付的
+      final orderModels = await XBoardSDK.instance.order.getOrders();
       final orders = orderModels.map(_mapOrder).toList();
-      // 绛涢€夐渶瑕佸湪鍒涘缓鏂拌鍗曞墠鑷姩鍙栨秷鐨勮鍗曪紙寰呬粯娆惧拰寮€閫氫腑锛?      final ordersToCancel = orders.where((order) => order.shouldAutoCancelBeforeNewOrder).toList();
+      // 筛选需要在创建新订单前自动取消的订单（待付款和开通中）
+      final ordersToCancel = orders.where((order) => order.shouldAutoCancelBeforeNewOrder).toList();
 
       int canceledCount = 0;
       for (final order in ordersToCancel) {
@@ -265,17 +274,17 @@ class XBoardPaymentNotifier extends Notifier<void> {
               canceledCount++;
             }
           } catch (e) {
-            _logger.info('鍙栨秷璁㈠崟澶辫触: ${order.tradeNo}, 閿欒: $e');
+            _logger.info('取消订单失败: ${order.tradeNo}, 错误: $e');
           }
         }
       }
 
       ref.read(userUIStateProvider.notifier).state = const UIState(isLoading: false);
       await loadPendingOrders();
-      _logger.info('鍙栨秷璁㈠崟鎴愬姛锛屽叡鍙栨秷 $canceledCount 涓鍗?);
+      _logger.info('取消订单成功，共取消 $canceledCount 个订单');
       return canceledCount;
     } catch (e) {
-      _logger.info('鍙栨秷璁㈠崟澶辫触: $e');
+      _logger.info('取消订单失败: $e');
       ref.read(userUIStateProvider.notifier).state = UIState(
         isLoading: false,
         errorMessage: e.toString(),
@@ -298,7 +307,8 @@ final xboardPaymentProvider = NotifierProvider<XBoardPaymentNotifier, void>(
 );
 final xboardAvailablePaymentMethodsProvider = Provider<List<DomainPaymentMethod>>((ref) {
   final paymentMethods = ref.watch(paymentMethodsProvider);
-  // 杩斿洖鎵€鏈夋敮浠樻柟寮?  return paymentMethods;
+  // 返回所有支付方式
+  return paymentMethods;
 });
 final xboardPaymentMethodProvider = Provider.family<DomainPaymentMethod?, String>((ref, methodId) {
   final paymentMethods = ref.watch(paymentMethodsProvider);

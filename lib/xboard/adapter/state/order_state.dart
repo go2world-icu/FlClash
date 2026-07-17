@@ -5,30 +5,30 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/order_state.g.dart';
 
-/// 璁㈠崟鐘舵€佺鐞?
+/// 订单状态管理
 
-/// 鑾峰彇璁㈠崟鍒楄〃
+/// 获取订单列表
 @riverpod
 Future<List<OrderModel>> getOrders(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.order.getOrders();
 }
 
-/// 鑾峰彇鍗曚釜璁㈠崟
+/// 获取单个订单
 @riverpod
 Future<OrderModel?> getOrder(Ref ref, String tradeNo) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.order.getOrder(tradeNo);
 }
 
-/// 鑾峰彇璁㈠崟鏀粯鏂瑰紡
+/// 获取订单支付方式
 @riverpod
 Future<List<PaymentMethodModel>> getOrderPaymentMethods(Ref ref, String tradeNo) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.order.getPaymentMethods(tradeNo);
 }
 
-/// 妫€鏌ヤ紭鎯犲埜
+/// 检查优惠券
 @riverpod
 Future<CouponModel?> checkCoupon(Ref ref, {required String code, required int planId}) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

@@ -8,14 +8,14 @@ part of '../config_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 配置状态管理
-/// 获取配置
+/// 閰嶇疆鐘舵€佺鐞?
+/// 鑾峰彇閰嶇疆
 
 @ProviderFor(getConfig)
 final getConfigProvider = GetConfigProvider._();
 
-/// 配置状态管理
-/// 获取配置
+/// 閰嶇疆鐘舵€佺鐞?
+/// 鑾峰彇閰嶇疆
 
 final class GetConfigProvider
     extends
@@ -25,8 +25,8 @@ final class GetConfigProvider
           FutureOr<ConfigModel>
         >
     with $FutureModifier<ConfigModel>, $FutureProvider<ConfigModel> {
-  /// 配置状态管理
-  /// 获取配置
+  /// 閰嶇疆鐘舵€佺鐞?
+  /// 鑾峰彇閰嶇疆
   GetConfigProvider._()
     : super(
         from: null,

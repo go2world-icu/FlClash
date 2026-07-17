@@ -20,14 +20,14 @@ import '../widgets/price_summary_card.dart';
 import '../models/payment_step.dart';
 import '../utils/price_calculator.dart';
 
-// 鍒濆鍖栨枃浠剁骇鏃ュ織鍣?
+// 初始化文件级日志器
 final _logger = FileLogger('plan_purchase_page.dart');
 
-/// 濂楅璐拱椤甸潰
+/// 套餐购买页面
 class PlanPurchasePage extends ConsumerStatefulWidget {
   final DomainPlan plan;
-  final bool embedded; // 鏄惁涓哄祵鍏ユā寮忥紙妗岄潰绔〉闈㈠唴鍒囨崲鏃朵娇鐢級
-  final VoidCallback? onBack; // 杩斿洖鍥炶皟
+  final bool embedded; // 是否为嵌入模式（桌面端页面内切换时使用）
+  final VoidCallback? onBack; // 返回回调
 
   const PlanPurchasePage({
     super.key,
@@ -41,10 +41,10 @@ class PlanPurchasePage extends ConsumerStatefulWidget {
 }
 
 class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
-  // 鍛ㄦ湡閫夋嫨
+  // 周期选择
   String? _selectedPeriod;
 
-  // 浼樻儬鍒哥浉鍏?
+  // 优惠券相关
   final _couponController = TextEditingController();
   bool _isCouponValidating = false;
   bool? _isCouponValid;
@@ -55,14 +55,14 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
   double? _discountAmount;
   double? _finalPrice;
 
-  // 鐢ㄦ埛浣欓
+  // 用户余额
   double? _userBalance;
   bool _isLoadingBalance = false;
 
   @override
   void initState() {
     super.initState();
-    // 纭繚 PaymentProvider 琚垵濮嬪寲锛屼互渚垮紑濮嬪姞杞芥敮浠樻柟寮?
+    // 确保 PaymentProvider 被初始化，以便开始加载支付方式
     ref.read(xboardPaymentProvider);
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -82,19 +82,19 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
     super.dispose();
   }
 
-  // ========== 鏁版嵁鍔犺浇 ==========
+  // ========== 数据加载 ==========
 
   Future<void> _loadUserBalance() async {
     setState(() => _isLoadingBalance = true);
     try {
-      // 浣跨敤 xboardUserProvider 鑾峰彇鐢ㄦ埛淇℃伅
+      // 使用 xboardUserProvider 获取用户信息
       final userInfo = ref.read(xboardUserProvider).userInfo;
       
       if (mounted) {
         setState(() => _userBalance = userInfo?.balanceInYuan);
       }
     } catch (e) {
-      _logger.debug('[璐拱] 鍔犺浇鐢ㄦ埛浣欓澶辫触: $e');
+      _logger.debug('[购买] 加载用户余额失败: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoadingBalance = false);
@@ -177,7 +177,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
     return selectedPeriod['price']?.toDouble() ?? 0.0;
   }
 
-  // ========== 浼樻儬鍒搁獙璇?==========
+  // ========== 优惠券验证 ==========
 
   Future<void> _validateCoupon() async {
     if (_couponController.text.trim().isEmpty) {
@@ -193,7 +193,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
 
     try {
       final couponCode = _couponController.text.trim();
-      // TODO: 灏嗘潵娣诲姞鍒?PaymentRepository锛岀洰鍓嶄繚鐣欎娇鐢?SDK
+      // TODO: 将来添加到 PaymentRepository，目前保留使用 SDK
       final couponData = await XBoardSDK.instance.order.checkCoupon(
         _couponController.text.trim(),
         widget.plan.id,
@@ -285,7 +285,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
     });
   }
 
-  // ========== 璐拱娴佺▼ ==========
+  // ========== 购买流程 ==========
 
   Future<void> _proceedToPurchase() async {
     if (_selectedPeriod == null) {
@@ -295,16 +295,16 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
 
     try {
       String? tradeNo;
-      _logger.debug('[璐拱] 寮€濮嬭喘涔版祦绋嬶紝濂楅ID: ${widget.plan.id}, 鍛ㄦ湡: $_selectedPeriod');
+      _logger.debug('[购买] 开始购买流程，套餐ID: ${widget.plan.id}, 周期: $_selectedPeriod');
 
-      // 鏄剧ず鏀粯绛夊緟椤甸潰
+      // 显示支付等待页面
       if (mounted) {
         _showPaymentWaiting(null);
         PaymentWaitingManager.updateStep(PaymentStep.cancelingOrders);
       }
 
-      // 鍒涘缓璁㈠崟
-      _logger.debug('[璐拱] 鍒涘缓璁㈠崟');
+      // 创建订单
+      _logger.debug('[购买] 创建订单');
       PaymentWaitingManager.updateStep(PaymentStep.createOrder);
       
       final paymentNotifier = ref.read(xboardPaymentProvider.notifier);
@@ -319,58 +319,58 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
         throw Exception('${AppLocalizations.of(context).xboardOrderCreationFailed}: $errorMessage');
       }
 
-      _logger.debug('[璐拱] 璁㈠崟鍒涘缓鎴愬姛: $tradeNo');
+      _logger.debug('[购买] 订单创建成功: $tradeNo');
       PaymentWaitingManager.updateTradeNo(tradeNo);
 
-      // 璁＄畻瀹炰粯閲戦
+      // 计算实付金额
       final displayFinalPrice = _finalPrice ?? _getCurrentPrice();
       final balanceToUse = _userBalance != null && _userBalance! > 0
           ? (_userBalance! > displayFinalPrice ? displayFinalPrice : _userBalance!)
           : 0.0;
       final actualPayAmount = displayFinalPrice - balanceToUse;
 
-      _logger.debug('[璐拱] 瀹炰粯閲戦: $actualPayAmount (浼樻儬鍚庝环鏍? $displayFinalPrice, 浣欓鎶垫墸: $balanceToUse)');
+      _logger.debug('[购买] 实付金额: $actualPayAmount (优惠后价格: $displayFinalPrice, 余额抵扣: $balanceToUse)');
 
-      // 浣跨敤 xboardAvailablePaymentMethodsProvider 鑾峰彇鏀粯鏂瑰紡
+      // 使用 xboardAvailablePaymentMethodsProvider 获取支付方式
       final paymentMethods = ref.read(xboardAvailablePaymentMethodsProvider);
       
-      _logger.info('[璐拱] 鑾峰彇鍒扮殑鏀粯鏂瑰紡鏁伴噺: ${paymentMethods.length}');
+      _logger.info('[购买] 获取到的支付方式数量: ${paymentMethods.length}');
       if (paymentMethods.isNotEmpty) {
-        _logger.info('[璐拱] 鏀粯鏂瑰紡鍒楄〃:');
+        _logger.info('[购买] 支付方式列表:');
         for (var method in paymentMethods) {
           _logger.info('  - ${method.name} (id: ${method.id})');
         }
       } else {
-        _logger.error('[璐拱] 鈿狅笍 鏀粯鏂瑰紡鍒楄〃涓虹┖锛?);
+        _logger.error('[购买] ⚠️ 支付方式列表为空！');
       }
       
       if (paymentMethods.isEmpty) {
-        throw Exception('鏆傛棤鍙敤鐨勬敮浠樻柟寮?);
+        throw Exception('暂无可用的支付方式');
       }
       
       DomainPaymentMethod? selectedMethod;
       
-      // 濡傛灉瀹炰粯閲戦涓?锛堜綑棰濆畬鍏ㄦ姷鎵ｏ級锛岃嚜鍔ㄩ€夋嫨绗竴涓敮浠樻柟寮忥紝璺宠繃鐢ㄦ埛閫夋嫨
+      // 如果实付金额为0（余额完全抵扣），自动选择第一个支付方式，跳过用户选择
       if (actualPayAmount <= 0) {
-        _logger.debug('[璐拱] 瀹炰粯閲戦涓?锛岃嚜鍔ㄩ€夋嫨绗竴涓敮浠樻柟寮?);
+        _logger.debug('[购买] 实付金额为0，自动选择第一个支付方式');
         selectedMethod = paymentMethods.first;
-        // 鏄剧ず鏀粯绛夊緟椤甸潰
+        // 显示支付等待页面
         if (mounted) {
           _showPaymentWaiting(tradeNo);
         }
       } else {
-        // 闇€瑕佸疄闄呮敮浠橈紝璁╃敤鎴烽€夋嫨鏀粯鏂瑰紡
+        // 需要实际支付，让用户选择支付方式
         selectedMethod = await _selectPaymentMethod(paymentMethods, tradeNo);
         if (selectedMethod == null) return;
       }
 
-      // 鎻愪氦鏀粯
+      // 提交支付
       await _submitPayment(tradeNo, selectedMethod);
     } catch (e) {
-      _logger.error('璐拱娴佺▼鍑洪敊: $e');
+      _logger.error('购买流程出错: $e');
         if (mounted) {
         PaymentWaitingManager.hide();
-        XBoardNotification.showError('鎿嶄綔澶辫触: ${e.toString()}');
+        XBoardNotification.showError('操作失败: ${e.toString()}');
       }
     }
   }
@@ -385,12 +385,12 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
   }
 
   void _handlePaymentSuccess() {
-    _logger.info('[鏀粯鎴愬姛] 澶勭悊鏀粯鎴愬姛鍥炶皟');
+    _logger.info('[支付成功] 处理支付成功回调');
     try {
       final userProvider = ref.read(xboardUserProvider.notifier);
       userProvider.refreshSubscriptionInfoAfterPayment();
     } catch (e) {
-      _logger.info('[鏀粯鎴愬姛] 鍒锋柊璁㈤槄淇℃伅澶辫触: $e');
+      _logger.info('[支付成功] 刷新订阅信息失败: $e');
     }
 
     if (mounted) {
@@ -402,7 +402,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
         try {
           Navigator.of(context).popUntil((route) => route.isFirst);
         } catch (e) {
-          _logger.info('[鏀粯鎴愬姛] 瀵艰埅澶辫触: $e');
+          _logger.info('[支付成功] 导航失败: $e');
         }
       }
     });
@@ -413,7 +413,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
     String tradeNo,
   ) async {
     if (methods.length == 1) {
-      // 鍗曚竴鏀粯鏂瑰紡锛岀洿鎺ユ樉绀虹瓑寰呴〉闈㈠苟杩斿洖
+      // 单一支付方式，直接显示等待页面并返回
       if (mounted) {
         _showPaymentWaiting(tradeNo);
       }
@@ -429,7 +429,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
     );
 
     if (selected == null) {
-      _logger.debug('[鏀粯] 鐢ㄦ埛鍙栨秷閫夋嫨鏀粯鏂瑰紡');
+      _logger.debug('[支付] 用户取消选择支付方式');
       return null;
     }
 
@@ -441,7 +441,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
   }
 
   Future<void> _submitPayment(String tradeNo, DomainPaymentMethod method) async {
-    _logger.debug('[鏀粯] 鎻愪氦鏀粯: $tradeNo, 鏂瑰紡: ${method.id}');
+    _logger.debug('[支付] 提交支付: $tradeNo, 方式: ${method.id}');
       PaymentWaitingManager.updateStep(PaymentStep.loadingPayment);
       PaymentWaitingManager.updateStep(PaymentStep.verifyPayment);
 
@@ -452,7 +452,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
       );
       
     if (paymentResult == null) {
-      throw Exception('鏀粯澶辫触: 鏀粯璇锋眰杩斿洖绌虹粨鏋?);
+      throw Exception('支付失败: 支付请求返回空结果');
     }
       
     if (!mounted) return;
@@ -460,36 +460,36 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
     final paymentType = paymentResult['type'] as int? ?? 0;
     final paymentData = paymentResult['data'];
         
-    _logger.debug('[鏀粯] type=$paymentType, data=$paymentData (${paymentData.runtimeType})');
+    _logger.debug('[支付] type=$paymentType, data=$paymentData (${paymentData.runtimeType})');
         
-    // type: -1 浣欓鏀粯鎴愬姛锛坉ata 鏄?bool锛?
-    // type: 0 璺宠浆鏀粯锛坉ata 鏄?String锛?
-    // type: 1 浜岀淮鐮佹敮浠橈紙data 鏄?String锛?
+    // type: -1 余额支付成功（data 是 bool）
+    // type: 0 跳转支付（data 是 String）
+    // type: 1 二维码支付（data 是 String）
     if (paymentType == -1) {
-      // 鍏嶈垂璁㈠崟/浣欓鏀粯锛宒ata 鏄?bool
+      // 免费订单/余额支付，data 是 bool
       if (paymentData == true) {
         await _handleBalancePaymentSuccess();
       } else {
-        throw Exception('鏀粯澶辫触: 浣欓鏀粯鏈垚鍔?(data=$paymentData)');
+        throw Exception('支付失败: 余额支付未成功 (data=$paymentData)');
       }
     } else if (paymentData != null && paymentData is String && paymentData.isNotEmpty) {
-      // 浠樿垂璁㈠崟锛宒ata 鏄敮浠楿RL锛圫tring锛?
+      // 付费订单，data 是支付URL（String）
       PaymentWaitingManager.updateStep(PaymentStep.waitingPayment);
       await _launchPaymentUrl(paymentData, tradeNo);
     } else {
-      throw Exception('鏀粯澶辫触: 鏈幏鍙栧埌鏈夋晥鐨勬敮浠樻暟鎹?(type=$paymentType, data=$paymentData)');
+      throw Exception('支付失败: 未获取到有效的支付数据 (type=$paymentType, data=$paymentData)');
     }
   }
 
   Future<void> _handleBalancePaymentSuccess() async {
-    _logger.debug('[鏀粯] 浣欓鏀粯鎴愬姛');
+    _logger.debug('[支付] 余额支付成功');
           PaymentWaitingManager.hide();
           
           try {
             final userProvider = ref.read(xboardUserProvider.notifier);
             userProvider.refreshSubscriptionInfoAfterPayment();
           } catch (e) {
-      _logger.debug('[浣欓鏀粯] 鍒锋柊璁㈤槄淇℃伅澶辫触: $e');
+      _logger.debug('[余额支付] 刷新订阅信息失败: $e');
           }
           
           if (mounted) {
@@ -500,7 +500,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
                 try {
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 } catch (e) {
-            _logger.debug('[浣欓鏀粯] 瀵艰埅澶辫触: $e');
+            _logger.debug('[余额支付] 导航失败: $e');
                 }
               }
             });
@@ -515,7 +515,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
         final uri = Uri.parse(url);
 
         if (!await canLaunchUrl(uri)) {
-          throw Exception('鏃犳硶鎵撳紑鏀粯閾炬帴');
+          throw Exception('无法打开支付链接');
         }
 
         final launched = await launchUrl(
@@ -524,25 +524,25 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
         );
 
         if (!launched) {
-          throw Exception('鏃犳硶鍚姩澶栭儴娴忚鍣?);
+          throw Exception('无法启动外部浏览器');
       }
 
-      _logger.debug('[鏀粯] 鏀粯椤甸潰宸插湪娴忚鍣ㄤ腑鎵撳紑: $tradeNo');
+      _logger.debug('[支付] 支付页面已在浏览器中打开: $tradeNo');
     } catch (e) {
       if (mounted) {
         PaymentWaitingManager.hide();
-        XBoardNotification.showError('鎵撳紑鏀粯椤甸潰澶辫触: ${e.toString()}');
+        XBoardNotification.showError('打开支付页面失败: ${e.toString()}');
       }
     }
   }
 
-  // ========== UI 鏋勫缓 ==========
+  // ========== UI 构建 ==========
 
   @override
   Widget build(BuildContext context) {
     final periods = _getAvailablePeriods(context);
     final currentPrice = _getCurrentPrice();
-    // 鐢ㄤ簬鍒ゆ柇骞冲彴绫诲瀷
+    // 用于判断平台类型
     final isPlatformDesktop = Platform.isLinux || Platform.isWindows || Platform.isMacOS;
 
     final content = Align(
@@ -556,11 +556,11 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              // 濂楅淇℃伅鍗＄墖
+              // 套餐信息卡片
               PlanHeaderCard(plan: widget.plan),
               const SizedBox(height: 20),
 
-              // 鍛ㄦ湡閫夋嫨鍣?
+              // 周期选择器
               PeriodSelector(
                 periods: periods,
                 selectedPeriod: _selectedPeriod,
@@ -577,7 +577,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
               ),
               const SizedBox(height: 20),
 
-              // 浼樻儬鍒歌緭鍏?
+              // 优惠券输入
               CouponInputSection(
                 controller: _couponController,
                 isValidating: _isCouponValidating,
@@ -589,7 +589,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
               ),
               const SizedBox(height: 20),
 
-              // 浠锋牸姹囨€?
+              // 价格汇总
               if (_selectedPeriod != null)
                 PriceSummaryCard(
                   originalPrice: currentPrice,
@@ -599,7 +599,7 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
                 ),
               const SizedBox(height: 20),
 
-              // 纭璐拱鎸夐挳
+              // 确认购买按钮
             SizedBox(
               width: double.infinity,
                 height: 54,
@@ -654,12 +654,12 @@ class _PlanPurchasePageState extends ConsumerState<PlanPurchasePage> {
       ),
     );
 
-    // 妗岄潰绔祵鍏ユā寮忥細鍙繑鍥炲唴瀹癸紙澶栧眰宸叉湁 Scaffold锛?
+    // 桌面端嵌入模式：只返回内容（外层已有 Scaffold）
     if (widget.embedded) {
       return content;
     }
 
-    // 绉诲姩绔叏灞忔垨鐙珛椤甸潰锛氬甫 AppBar 鐨?Scaffold
+    // 移动端全屏或独立页面：带 AppBar 的 Scaffold
     return Scaffold(
       appBar: isPlatformDesktop ? null : AppBar(
         title: Text(AppLocalizations.of(context).xboardPurchaseSubscription),

@@ -8,14 +8,14 @@ part of '../user_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 用户状态管理
-/// 获取用户信息
+/// 鐢ㄦ埛鐘舵€佺鐞?
+/// 鑾峰彇鐢ㄦ埛淇℃伅
 
 @ProviderFor(getUserInfo)
 final getUserInfoProvider = GetUserInfoProvider._();
 
-/// 用户状态管理
-/// 获取用户信息
+/// 鐢ㄦ埛鐘舵€佺鐞?
+/// 鑾峰彇鐢ㄦ埛淇℃伅
 
 final class GetUserInfoProvider
     extends
@@ -25,8 +25,8 @@ final class GetUserInfoProvider
           FutureOr<UserModel>
         >
     with $FutureModifier<UserModel>, $FutureProvider<UserModel> {
-  /// 用户状态管理
-  /// 获取用户信息
+  /// 鐢ㄦ埛鐘舵€佺鐞?
+  /// 鑾峰彇鐢ㄦ埛淇℃伅
   GetUserInfoProvider._()
     : super(
         from: null,

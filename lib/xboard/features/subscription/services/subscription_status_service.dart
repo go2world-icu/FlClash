@@ -38,7 +38,7 @@ class SubscriptionStatusService {
     fl_models.SubscriptionInfo? profileSubscriptionInfo,
     bool isRefreshing = false,
   }) {
-    // 馃敡 DEBUG: 寮哄埗鏄剧ず杩囨湡鎻愰啋瀵硅瘽妗嗭紝鏂逛究璋冭瘯
+    // 🔧 DEBUG: 强制显示过期提醒对话框，方便调试
     const bool debugForceExpired = false;
     if (debugForceExpired && userState.isAuthenticated) {
       return SubscriptionStatusResult(
@@ -60,9 +60,9 @@ class SubscriptionStatusService {
       );
     }
     
-    // 鍙娇鐢?profileSubscriptionInfo 浣滀负鏁版嵁婧?
+    // 只使用 profileSubscriptionInfo 作为数据源
     if (profileSubscriptionInfo == null) {
-      // 濡傛灉姝ｅ湪鍒锋柊璁㈤槄锛岃繑鍥?鍒锋柊涓?鐘舵€佽€岄潪"鏃犺闃?锛岄伩鍏?UI 鐭殏鏄剧ず璐拱璁㈤槄
+      // 如果正在刷新订阅，返回"刷新中"状态而非"无订阅"，避免 UI 短暂显示购买订阅
       if (isRefreshing) {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.valid,
@@ -79,7 +79,7 @@ class SubscriptionStatusService {
       );
     }
     
-    // 妫€鏌ヨ繃鏈熸椂闂?
+    // 检查过期时间
     final expiredAt = _getExpiredAt(profileSubscriptionInfo);
     if (expiredAt != null) {
       final now = DateTime.now();
@@ -112,12 +112,12 @@ class SubscriptionStatusService {
           detailMessageBuilder: (context) => AppLocalizations.of(context).subscriptionExpiringInDaysDetail(remainingDays),
           expiredAt: expiredAt,
           remainingDays: remainingDays,
-          needsDialog: false, // 鍗冲皢杩囨湡涓嶅己鍒跺脊绐?
+          needsDialog: false, // 即将过期不强制弹窗
         );
       }
     }
     
-    // 妫€鏌ユ祦閲忕姸鎬?
+    // 检查流量状态
     final trafficStatus = _checkTrafficStatus(profileSubscriptionInfo);
     if (trafficStatus != null) {
       return trafficStatus;
@@ -168,7 +168,7 @@ class SubscriptionStatusService {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
   bool shouldShowStartupDialog(SubscriptionStatusResult result) {
-    // 棣栭〉濂楅鍗＄墖宸茬粡灞曠ず浜嗘墍鏈夎闃呯姸鎬侊紝杩欓噷涓嶅啀寮硅闃呯姸鎬佸脊绐?
+    // 首页套餐卡片已经展示了所有订阅状态，这里不再弹订阅状态弹窗
     return false;
   }
 }

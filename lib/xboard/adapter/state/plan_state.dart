@@ -5,16 +5,16 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/plan_state.g.dart';
 
-/// 濂楅鐘舵€佺鐞?
+/// 套餐状态管理
 
-/// 鑾峰彇濂楅鍒楄〃
+/// 获取套餐列表
 @riverpod
 Future<List<PlanModel>> getPlans(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.plan.getPlans();
 }
 
-/// 鑾峰彇鍗曚釜濂楅
+/// 获取单个套餐
 @riverpod
 Future<PlanModel?> getPlan(Ref ref, int id) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

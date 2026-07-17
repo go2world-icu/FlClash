@@ -8,14 +8,14 @@ part of '../plan_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 套餐状态管理
-/// 获取套餐列表
+/// 濂楅鐘舵€佺鐞?
+/// 鑾峰彇濂楅鍒楄〃
 
 @ProviderFor(getPlans)
 final getPlansProvider = GetPlansProvider._();
 
-/// 套餐状态管理
-/// 获取套餐列表
+/// 濂楅鐘舵€佺鐞?
+/// 鑾峰彇濂楅鍒楄〃
 
 final class GetPlansProvider
     extends
@@ -25,8 +25,8 @@ final class GetPlansProvider
           FutureOr<List<PlanModel>>
         >
     with $FutureModifier<List<PlanModel>>, $FutureProvider<List<PlanModel>> {
-  /// 套餐状态管理
-  /// 获取套餐列表
+  /// 濂楅鐘舵€佺鐞?
+  /// 鑾峰彇濂楅鍒楄〃
   GetPlansProvider._()
     : super(
         from: null,
@@ -55,12 +55,12 @@ final class GetPlansProvider
 
 String _$getPlansHash() => r'fa708ce102b2591f31f294a416a97ecc19f2ab6d';
 
-/// 获取单个套餐
+/// 鑾峰彇鍗曚釜濂楅
 
 @ProviderFor(getPlan)
 final getPlanProvider = GetPlanFamily._();
 
-/// 获取单个套餐
+/// 鑾峰彇鍗曚釜濂楅
 
 final class GetPlanProvider
     extends
@@ -70,7 +70,7 @@ final class GetPlanProvider
           FutureOr<PlanModel?>
         >
     with $FutureModifier<PlanModel?>, $FutureProvider<PlanModel?> {
-  /// 获取单个套餐
+  /// 鑾峰彇鍗曚釜濂楅
   GetPlanProvider._({
     required GetPlanFamily super.from,
     required int super.argument,
@@ -116,7 +116,7 @@ final class GetPlanProvider
 
 String _$getPlanHash() => r'8b839686c467cf4fea1a6a75b0370d84a8166105';
 
-/// 获取单个套餐
+/// 鑾峰彇鍗曚釜濂楅
 
 final class GetPlanFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PlanModel?>, int> {
@@ -129,7 +129,7 @@ final class GetPlanFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// 获取单个套餐
+  /// 鑾峰彇鍗曚釜濂楅
 
   GetPlanProvider call(int id) => GetPlanProvider._(argument: id, from: this);
 

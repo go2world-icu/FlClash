@@ -5,9 +5,9 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/config_state.g.dart';
 
-/// 閰嶇疆鐘舵€佺鐞?
+/// 配置状态管理
 
-/// 鑾峰彇閰嶇疆
+/// 获取配置
 @riverpod
 Future<ConfigModel> getConfig(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

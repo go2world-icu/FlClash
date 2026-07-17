@@ -5,16 +5,16 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/ticket_state.g.dart';
 
-/// 宸ュ崟鐘舵€佺鐞?
+/// 工单状态管理
 
-/// 鑾峰彇宸ュ崟鍒楄〃
+/// 获取工单列表
 @riverpod
 Future<List<TicketModel>> getTickets(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.ticket.getTickets();
 }
 
-/// 鑾峰彇鍗曚釜宸ュ崟
+/// 获取单个工单
 @riverpod
 Future<TicketDetailModel> getTicket(Ref ref, int id) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

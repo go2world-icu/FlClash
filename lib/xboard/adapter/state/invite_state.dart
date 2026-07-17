@@ -5,23 +5,23 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/invite_state.g.dart';
 
-/// 閭€璇风姸鎬佺鐞?
+/// 邀请状态管理
 
-/// 鑾峰彇閭€璇蜂俊鎭?
+/// 获取邀请信息
 @riverpod
 Future<InviteInfoModel> getInviteInfo(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.invite.getInviteInfo();
 }
 
-/// 鑾峰彇閭€璇风爜鍒楄〃
+/// 获取邀请码列表
 @riverpod
 Future<List<InviteCodeModel>> getInviteCodes(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.invite.getInviteCodes();
 }
 
-/// 鑾峰彇浣ｉ噾璇︽儏
+/// 获取佣金详情
 @riverpod
 Future<List<CommissionDetailModel>> getCommissionDetails(Ref ref, {int page = 1}) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

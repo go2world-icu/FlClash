@@ -8,14 +8,14 @@ part of '../ticket_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 工单状态管理
-/// 获取工单列表
+/// 宸ュ崟鐘舵€佺鐞?
+/// 鑾峰彇宸ュ崟鍒楄〃
 
 @ProviderFor(getTickets)
 final getTicketsProvider = GetTicketsProvider._();
 
-/// 工单状态管理
-/// 获取工单列表
+/// 宸ュ崟鐘舵€佺鐞?
+/// 鑾峰彇宸ュ崟鍒楄〃
 
 final class GetTicketsProvider
     extends
@@ -27,8 +27,8 @@ final class GetTicketsProvider
     with
         $FutureModifier<List<TicketModel>>,
         $FutureProvider<List<TicketModel>> {
-  /// 工单状态管理
-  /// 获取工单列表
+  /// 宸ュ崟鐘舵€佺鐞?
+  /// 鑾峰彇宸ュ崟鍒楄〃
   GetTicketsProvider._()
     : super(
         from: null,
@@ -57,12 +57,12 @@ final class GetTicketsProvider
 
 String _$getTicketsHash() => r'bd1393823d8a9f11d9f583b90549dba1016912e9';
 
-/// 获取单个工单
+/// 鑾峰彇鍗曚釜宸ュ崟
 
 @ProviderFor(getTicket)
 final getTicketProvider = GetTicketFamily._();
 
-/// 获取单个工单
+/// 鑾峰彇鍗曚釜宸ュ崟
 
 final class GetTicketProvider
     extends
@@ -74,7 +74,7 @@ final class GetTicketProvider
     with
         $FutureModifier<TicketDetailModel>,
         $FutureProvider<TicketDetailModel> {
-  /// 获取单个工单
+  /// 鑾峰彇鍗曚釜宸ュ崟
   GetTicketProvider._({
     required GetTicketFamily super.from,
     required int super.argument,
@@ -121,7 +121,7 @@ final class GetTicketProvider
 
 String _$getTicketHash() => r'dec5bf7896fd9c8d10bd3a39d6b6e099dc19fe3a';
 
-/// 获取单个工单
+/// 鑾峰彇鍗曚釜宸ュ崟
 
 final class GetTicketFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<TicketDetailModel>, int> {
@@ -134,7 +134,7 @@ final class GetTicketFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// 获取单个工单
+  /// 鑾峰彇鍗曚釜宸ュ崟
 
   GetTicketProvider call(int id) =>
       GetTicketProvider._(argument: id, from: this);

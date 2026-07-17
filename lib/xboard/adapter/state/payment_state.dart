@@ -5,9 +5,9 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/payment_state.g.dart';
 
-/// 鏀粯鐘舵€佺鐞?
+/// 支付状态管理
 
-/// 鑾峰彇鏀粯鏂瑰紡鍒楄〃
+/// 获取支付方式列表
 @riverpod
 Future<List<PaymentMethodModel>> getPaymentMethods(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

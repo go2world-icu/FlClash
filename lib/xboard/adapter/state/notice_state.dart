@@ -5,9 +5,9 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/notice_state.g.dart';
 
-/// 鍏憡鐘舵€佺鐞?
+/// 公告状态管理
 
-/// 鑾峰彇鍏憡鍒楄〃
+/// 获取公告列表
 @riverpod
 Future<List<NoticeModel>> getNotices(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);

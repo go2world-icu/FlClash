@@ -5,9 +5,9 @@ import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 part 'generated/user_state.g.dart';
 
-/// 鐢ㄦ埛鐘舵€佺鐞?
+/// 用户状态管理
 
-/// 鑾峰彇鐢ㄦ埛淇℃伅
+/// 获取用户信息
 @riverpod
 Future<UserModel> getUserInfo(Ref ref) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
