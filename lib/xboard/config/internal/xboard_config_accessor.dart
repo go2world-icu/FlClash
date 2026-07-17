@@ -6,7 +6,7 @@ import '../models/websocket_info.dart';
 import '../models/update_info.dart';
 import '../models/online_support_info.dart';
 import '../models/subscription_info.dart';
-import '../fetchers/remote_config_manager.dart';
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import '../../core/core.dart';
 import '../parsers/configuration_parser.dart';
 import '../services/panel_service.dart';

@@ -1,3 +1,5 @@
+import 'package:board_sdk/flutter_xboard_sdk.dart';
+
 /// 配置设置
 ///
 /// 包含模块的各种配置参数
@@ -22,8 +24,14 @@ class ConfigSettings {
   factory ConfigSettings.fromJson(Map<String, dynamic> json) {
     return ConfigSettings(
       currentProvider: json['currentProvider'] as String? ?? 'Flclash',
-      remoteConfig: RemoteConfigSettings.fromJson(
-          json['remoteConfig'] as Map<String, dynamic>? ?? {}),
+      remoteConfig: RemoteConfigSettings(
+        sources: (json['sources'] as List<dynamic>? ?? [])
+            .map((e) => RemoteSourceConfig.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        maxRetries: json['maxRetries'] as int? ?? 3,
+        timeout: Duration(seconds: json['timeoutSeconds'] as int? ?? 10),
+        retryDelay: Duration(seconds: json['retryDelaySeconds'] as int? ?? 2),
+      ),
       subscription: SubscriptionSettings.fromJson(
           json['subscription'] as Map<String, dynamic>? ?? {}),
       log: LogSettings.fromJson(json['log'] as Map<String, dynamic>? ?? {}),
@@ -36,7 +44,10 @@ class ConfigSettings {
   Map<String, dynamic> toJson() {
     return {
       'currentProvider': currentProvider,
-      'remoteConfig': remoteConfig.toJson(),
+      'sources': remoteConfig.sources.map((s) => s.toJson()).toList(),
+      'maxRetries': remoteConfig.maxRetries,
+      'timeoutSeconds': remoteConfig.timeout.inSeconds,
+      'retryDelaySeconds': remoteConfig.retryDelay.inSeconds,
       'subscription': subscription.toJson(),
       'log': log.toJson(),
       'website': website,
@@ -58,7 +69,7 @@ class ConfigSettings {
     // 移除 provider 硬编码限制
     // provider 仅作为 key 从远程配置的 panels 对象中选择数据
 
-    errors.addAll(remoteConfig.getValidationErrors());
+    errors.addAll(remoteConfig.getValidationErrors()); // 来自 RemoteConfigSettingsValidation 扩展
     errors.addAll(subscription.getValidationErrors());
     errors.addAll(log.getValidationErrors());
 
@@ -71,44 +82,8 @@ class ConfigSettings {
   }
 }
 
-/// 远程配置设置
-class RemoteConfigSettings {
-  final List<RemoteSourceConfig> sources;
-  final int maxRetries;
-  final Duration timeout;
-  final Duration retryDelay;
-
-  const RemoteConfigSettings({
-    this.sources = const [],
-    this.maxRetries = 3,
-    this.timeout = const Duration(seconds: 10),
-    this.retryDelay = const Duration(seconds: 2),
-  });
-
-  factory RemoteConfigSettings.fromJson(Map<String, dynamic> json) {
-    final sourcesList = json['sources'] as List<dynamic>? ?? [];
-    final sources = sourcesList
-        .map(
-            (item) => RemoteSourceConfig.fromJson(item as Map<String, dynamic>))
-        .toList();
-
-    return RemoteConfigSettings(
-      sources: sources,
-      maxRetries: json['maxRetries'] as int? ?? 3,
-      timeout: Duration(seconds: json['timeoutSeconds'] as int? ?? 10),
-      retryDelay: Duration(seconds: json['retryDelaySeconds'] as int? ?? 2),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'sources': sources.map((s) => s.toJson()).toList(),
-      'maxRetries': maxRetries,
-      'timeoutSeconds': timeout.inSeconds,
-      'retryDelaySeconds': retryDelay.inSeconds,
-    };
-  }
-
+/// 远程设置验证扩展
+extension RemoteConfigSettingsValidation on RemoteConfigSettings {
   bool validate() {
     return sources.isNotEmpty &&
         maxRetries > 0 &&
@@ -118,116 +93,21 @@ class RemoteConfigSettings {
 
   List<String> getValidationErrors() {
     final errors = <String>[];
-
-    if (sources.isEmpty) {
-      errors.add('Remote config sources cannot be empty');
-    }
-
-    if (maxRetries <= 0) {
-      errors.add('Max retries must be greater than 0');
-    }
-
-    if (timeout.inSeconds <= 0) {
-      errors.add('Timeout must be greater than 0');
-    }
-
+    if (sources.isEmpty) errors.add('Remote config sources cannot be empty');
+    if (maxRetries <= 0) errors.add('Max retries must be greater than 0');
+    if (timeout.inSeconds <= 0) errors.add('Timeout must be greater than 0');
     for (int i = 0; i < sources.length; i++) {
-      final sourceErrors = sources[i].getValidationErrors();
-      errors.addAll(sourceErrors.map((e) => 'sources[$i]: $e'));
-    }
-
-    return errors;
-  }
-}
-
-/// 远程源鉴权配置
-class SourceAuthConfig {
-  final String type;
-  final String pkey;
-
-  const SourceAuthConfig({
-    required this.type,
-    required this.pkey,
-  });
-
-  factory SourceAuthConfig.fromJson(Map<String, dynamic> json) {
-    return SourceAuthConfig(
-      type: json['type'] as String? ?? '',
-      pkey: json['pkey'] as String? ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'type': type,
-        'pkey': pkey,
-      };
-}
-
-/// 远程源配置
-class RemoteSourceConfig {
-  final String name;
-  final String url;
-  final Map<String, String>? headers;
-  final Duration? timeout;
-  final String? encryptionKey; // 加密密钥（用于gitee源）
-  final SourceAuthConfig? auth; // 鉴权配置
-
-  const RemoteSourceConfig({
-    required this.name,
-    required this.url,
-    this.headers,
-    this.timeout,
-    this.encryptionKey,
-    this.auth,
-  });
-
-  factory RemoteSourceConfig.fromJson(Map<String, dynamic> json) {
-    final headersData = json['headers'] as Map<String, dynamic>?;
-    final timeoutSeconds = json['timeoutSeconds'] as int?;
-    final authData = json['auth'] as Map<String, dynamic>?;
-
-    return RemoteSourceConfig(
-      name: json['name'] as String? ?? '',
-      url: json['url'] as String? ?? '',
-      headers: headersData?.cast<String, String>(),
-      timeout:
-          timeoutSeconds != null ? Duration(seconds: timeoutSeconds) : null,
-      encryptionKey: json['encryptionKey'] as String?,
-      auth: authData != null ? SourceAuthConfig.fromJson(authData) : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'url': url,
-      if (headers != null) 'headers': headers,
-      if (timeout != null) 'timeoutSeconds': timeout!.inSeconds,
-      if (encryptionKey != null) 'encryptionKey': encryptionKey,
-      if (auth != null) 'auth': auth!.toJson(),
-    };
-  }
-
-  List<String> getValidationErrors() {
-    final errors = <String>[];
-
-    if (name.isEmpty) {
-      errors.add('Source name cannot be empty');
-    }
-
-    if (url.isEmpty) {
-      errors.add('Source URL cannot be empty');
-    } else {
-      try {
-        final uri = Uri.parse(url);
-        if (!uri.hasScheme || !uri.host.isNotEmpty) {
-          errors.add('Invalid URL format: $url');
+      final src = sources[i];
+      if (src.name.isEmpty) errors.add('sources[$i]: Source name cannot be empty');
+      if (src.url.isEmpty) {
+        errors.add('sources[$i]: Source URL cannot be empty');
+      } else {
+        final uri = Uri.tryParse(src.url);
+        if (uri == null || !uri.hasScheme || !uri.host.isNotEmpty) {
+          errors.add('sources[$i]: Invalid URL format: ${src.url}');
         }
-      } catch (e) {
-        errors.add('Invalid URL: $url');
       }
     }
-
     return errors;
   }
 }

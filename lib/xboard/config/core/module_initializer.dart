@@ -1,6 +1,6 @@
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'service_locator.dart';
 import 'config_settings.dart';
-import '../fetchers/remote_config_manager.dart';
 import '../parsers/configuration_parser.dart';
 import '../internal/xboard_config_accessor.dart';
 import '../services/online_support_service.dart';
