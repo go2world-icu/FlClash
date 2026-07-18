@@ -36,13 +36,15 @@ class EncryptedFileLogOutput extends LogOutput {
   /// [appKey] 用于派生加密密钥的应用密钥
   EncryptedFileLogOutput({this.appKey = 'xboard_default_key'});
 
+  /// [baseDir] — custom log directory (e.g. App Group on iOS).  Falls back
+  /// to `getApplicationDocumentsDirectory()` when omitted.
   @override
-  Future<void> init() async {
+  Future<void> init({String? baseDir}) async {
     if (_initialized) return;
     super.init();
 
-    final appDir = await getApplicationDocumentsDirectory();
-    _logDir = Directory('${appDir.path}/$_logDirName');
+    final dirPath = baseDir ?? (await getApplicationDocumentsDirectory()).path;
+    _logDir = Directory('$dirPath/$_logDirName');
 
     if (!await _logDir.exists()) {
       await _logDir.create(recursive: true);

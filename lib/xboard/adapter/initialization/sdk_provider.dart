@@ -74,6 +74,8 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
       panelType: panelType,
       proxyUrl: proxyUrl,
       httpConfig: httpConfig,
+      enableLogging: true,
+      logOutput: (line) => XBoardLogger.info('[SDK] $line'),
     );
     
     _logger.info('[XBoardSdkProvider] SDK初始化成功');

@@ -1,4 +1,5 @@
 import 'package:board_sdk/flutter_xboard_sdk.dart';
+import 'package:fl_clash/common/common.dart';
 import 'service_locator.dart';
 import 'config_settings.dart';
 import '../parsers/configuration_parser.dart';
@@ -80,13 +81,17 @@ class ModuleInitializer {
 
     final level = _parseLogLevel(logSettings.level);
 
+    // iOS: write encrypted logs into the App Group container so both
+    // the main app and the PacketTunnel extension can read/write them.
+    final logDir = system.isIOS ? await appPath.homeDirPath : null;
+
     await XBoardLogger.configure(
       LoggerConfig(
         minLevel: level,
         enableConsole: true,
         enableFile: true,
         encryptionKey: provider,
-        consoleColors: true,
+        logDir: logDir,
       ),
     );
 
