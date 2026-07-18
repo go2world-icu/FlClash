@@ -502,7 +502,7 @@
 		};
 		B9B14E1947C26C9F4945FF5A /* Build Go Core */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
+			alwaysOutOfDate = 0;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -517,7 +517,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "bash \"${SRCROOT}/../plugins/setup/buildkit/build_pod.sh\"";
+			shellScript = "if [ -d \"${SRCROOT}/../libclash/ios/Libclash.xcframework\" ]; then exit 0; fi\nbash \"${SRCROOT}/../plugins/setup/buildkit/build_pod.sh\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -599,6 +599,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = PacketTunnel/PacketTunnel.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9ZKNBU3VL4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = PacketTunnel/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -756,6 +757,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = PacketTunnel/PacketTunnel.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 9ZKNBU3VL4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = PacketTunnel/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
