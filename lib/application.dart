@@ -33,6 +33,7 @@ class ApplicationState extends ConsumerState<Application> {
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
       TargetPlatform.android: commonSharedXPageTransitions,
+      TargetPlatform.iOS: commonSharedXPageTransitions,
       TargetPlatform.windows: commonSharedXPageTransitions,
       TargetPlatform.linux: commonSharedXPageTransitions,
       TargetPlatform.macOS: commonSharedXPageTransitions,
@@ -108,7 +109,10 @@ class ApplicationState extends ConsumerState<Application> {
         ),
       );
     }
-    return AndroidManager(child: TileManager(child: child));
+    if (system.isAndroid) {
+      return AndroidManager(child: TileManager(child: child));
+    }
+    return IosManager(child: child);
   }
 
   Widget _buildState({required Widget child}) {

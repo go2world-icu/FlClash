@@ -77,4 +77,4 @@ devtools_options.yaml
 .fvmrc
 
 # XBoard config (contains sensitive keys)
-assets/config/xboard.config.yaml
+assets/config/xboard.config.yamlcore/core

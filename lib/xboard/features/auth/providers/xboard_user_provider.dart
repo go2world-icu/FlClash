@@ -1,4 +1,6 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'dart:io';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
@@ -8,6 +10,7 @@ import 'package:board_sdk/flutter_xboard_sdk.dart' hide XBoardException;
 import 'package:fl_clash/xboard/adapter/state/user_state.dart';
 import 'package:fl_clash/xboard/adapter/state/subscription_state.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/common/common.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_user_provider.dart');
@@ -476,11 +479,19 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     await XBoardSDK.instance.logout();
     await _storageService.clearAuthData();
 
-    // 清理 xboard 导入的订阅配置
+    // 清理 xboard 导入的订阅配置 + App Group 残留文件
     try {
       final profiles = ref.read(profilesProvider);
       for (final profile in profiles.toList()) {
         await ref.read(profilesActionProvider.notifier).deleteProfile(profile.id);
+      }
+      // iOS: delete config.yaml + shared_state.json from App Group
+      // so the dashboard doesn't show a stale start button after logout.
+      if (system.isIOS) {
+        final configPath = await appPath.configFilePath;
+        await File(configPath).safeDelete();
+        final sharedPath = await appPath.sharedFilePath;
+        await File(sharedPath).safeDelete();
       }
     } catch (e) {
       _logger.info('清理订阅配置失败: $e');

@@ -16,7 +16,7 @@ class CoreController {
   late CoreHandlerInterface _interface;
 
   CoreController._internal() {
-    if (system.isAndroid) {
+    if (system.isMobile) {
       _interface = coreLib!;
     } else {
       _interface = coreService!;
@@ -136,6 +136,9 @@ class CoreController {
 
   Future<List<TrackerInfo>> getConnections() async {
     final res = await _interface.getConnections();
+    if (res.isEmpty) {
+      return [];
+    }
     final connectionsData = json.decode(res) as Map;
     final connectionsRaw = connectionsData['connections'] as List? ?? [];
     return connectionsRaw.map((e) => TrackerInfo.fromJson(e)).toList();
@@ -205,6 +208,9 @@ class CoreController {
 
   Future<Delay> getDelay(String url, String proxyName) async {
     final data = await _interface.asyncTestDelay(url, proxyName);
+    if (data.isEmpty) {
+      return Delay(name: proxyName, url: url);
+    }
     return Delay.fromJson(json.decode(data));
   }
 

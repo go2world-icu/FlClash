@@ -169,7 +169,7 @@ class SetupAction extends _$SetupAction {
       return;
     }
     commonPrint.log('init status');
-    if (system.isAndroid) {
+    if (system.isMobile) {
       await _updateStartTime();
     }
     final status = isStart == true
@@ -387,10 +387,14 @@ class SetupAction extends _$SetupAction {
     final realTunEnable = ref.read(realTunEnableProvider);
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
     final setupState = await ref.read(setupStateProvider(profile?.id).future);
-    if (system.isAndroid) {
+    if (system.isMobile) {
       globalState.lastVpnState = ref.read(vpnStateProvider);
       final sharedState = ref.read(sharedStateProvider);
-      preferences.saveShareState(sharedState);
+      if (system.isIOS) {
+        await service?.saveState(sharedState);
+      } else {
+        preferences.saveShareState(sharedState);
+      }
     }
     final vm2 = await getProfile(
       setupState: setupState,

@@ -54,6 +54,9 @@ jobs:
           - platform: macos
             os: macos-latest
             arch: arm64
+          - platform: ios
+            os: macos-latest
+            arch: arm64
           - platform: windows
             os: windows-11-arm
             arch: arm64
@@ -125,7 +128,16 @@ jobs:
           flutter pub get
 
       - name: Setup
+        if: ${{ !startsWith(matrix.platform, 'ios') }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
+
+      - name: Build iOS
+        if: startsWith(matrix.platform, 'ios')
+        run: |
+          make core-ios
+          flutter build ios --no-codesign --debug
+          mkdir -p dist/ios
+          cp -R build/ios/iphoneos/Runner.app dist/ios/
 
       - name: Upload
         uses: actions/upload-artifact@v4

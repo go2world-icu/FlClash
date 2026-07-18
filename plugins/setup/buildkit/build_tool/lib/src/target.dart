@@ -8,12 +8,16 @@ class Target {
   final bool isLib;
   final String? flutterPlatform;
 
+  /// Apple SDK name (iOS only): iphoneos / iphonesimulator.
+  final String? sdk;
+
   const Target({
     required this.goos,
     required this.goarch,
     this.abi,
     this.isLib = false,
     this.flutterPlatform,
+    this.sdk,
   });
 
   // --- Android (c-shared library) ---
@@ -39,6 +43,22 @@ class Target {
     flutterPlatform: 'android-x64',
   );
 
+  // --- iOS (c-archive static library, packaged as xcframework) ---
+  static const iosArm64 = Target(
+    goos: 'ios',
+    goarch: 'arm64',
+    abi: 'ios-arm64',
+    isLib: true,
+    sdk: 'iphoneos',
+  );
+  static const iosSimArm64 = Target(
+    goos: 'ios',
+    goarch: 'arm64',
+    abi: 'ios-arm64-simulator',
+    isLib: true,
+    sdk: 'iphonesimulator',
+  );
+
   // --- macOS (executable) ---
   static const macosArm64 = Target(goos: 'darwin', goarch: 'arm64');
   static const macosAmd64 = Target(goos: 'darwin', goarch: 'amd64');
@@ -55,6 +75,8 @@ class Target {
     androidArm,
     androidArm64,
     androidAmd64,
+    iosArm64,
+    iosSimArm64,
     macosArm64,
     macosAmd64,
     linuxArm64,
@@ -121,6 +143,11 @@ class Target {
     }
   }
 
+  /// iOS only supports -buildmode=c-archive (static library).
+  String get staticLibExtension => '.a';
+
+  bool get isStaticLib => goos == 'ios';
+
   String get executableExtension => goos == 'windows' ? '.exe' : '';
 
   /// Platform build directory name (maps goos to what platform builds expect).
@@ -129,6 +156,7 @@ class Target {
 
   bool get canBuildOnHost {
     final hostOs = Environment.hostOs;
+    if (goos == 'ios') return hostOs == 'darwin';
     if (isLib) return true;
     return goos == hostOs;
   }

@@ -23,11 +23,15 @@ class System {
 
   bool get isDesktop => isWindows || isMacOS || isLinux;
 
+  bool get isMobile => isAndroid || isIOS;
+
   bool get isWindows => Platform.isWindows;
 
   bool get isMacOS => Platform.isMacOS;
 
   bool get isAndroid => Platform.isAndroid;
+
+  bool get isIOS => Platform.isIOS;
 
   bool get isLinux => Platform.isLinux;
 
@@ -37,6 +41,11 @@ class System {
       'macos' => (deviceInfo as MacOsDeviceInfo).majorVersion,
       'android' => (deviceInfo as AndroidDeviceInfo).version.sdkInt,
       'windows' => (deviceInfo as WindowsDeviceInfo).majorVersion,
+      'ios' =>
+        int.tryParse(
+              (deviceInfo as IosDeviceInfo).systemVersion.split('.').first,
+            ) ??
+            15,
       String() => 0,
     };
   }

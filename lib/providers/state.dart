@@ -55,13 +55,23 @@ NavigationItemsState navigationItemsState(Ref ref) {
   );
   final isInit = ref.watch(initProvider);
   final hasXboard = ref.watch(xboardEnabledProvider);
-  return NavigationItemsState(
-    value: navigation.getItems(
-      openLogs: openLogs,
-      hasProxies: !isInit ? hasProfiles : hasProxies,
-      hasXboard: hasXboard,
-    ),
+  // iOS: requests/connections/logs are only available while the tunnel runs.
+  final iosCoreOff = system.isIOS && !ref.watch(isStartProvider);
+  var navItems = navigation.getItems(
+    openLogs: openLogs,
+    // iOS: the core only lives inside the NE while the tunnel runs, so
+    // groups are empty until started — a profile is enough to show the tab.
+    hasProxies: !isInit || system.isIOS
+        ? hasProfiles
+        : hasProxies,
+    hasXboard: hasXboard,
   );
+  if (iosCoreOff) {
+    navItems = navItems
+        .where((item) => item.modes.isNotEmpty)
+        .toList();
+  }
+  return NavigationItemsState(value: navItems);
 }
 
 @riverpod
@@ -632,7 +642,12 @@ SharedState sharedState(Ref ref) {
     setupParams: SetupParams(selectedMap: selectedMap, testUrl: testUrl),
     vpnOptions: VpnOptions(
       enable: vpnSetting.enable,
-      stack: stack,
+      // NE has a 50MB jetsam limit; gvisor-based stacks are too heavy there.
+      // Map the app default (mixed) to system on iOS; explicit choices of
+      // system/gvisor pass through.
+      stack: system.isIOS && stack == TunStack.mixed.name
+          ? TunStack.system.name
+          : stack,
       systemProxy: vpnSetting.systemProxy,
       port: port,
       ipv6: vpnSetting.ipv6,

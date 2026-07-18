@@ -96,6 +96,14 @@ dependencies:
   socks5_proxy: ^2.1.1
   logger: ^2.0.2+1
   yaml: ^3.1.3
+
+dependency_overrides:
+  # 本地打补丁版本：官方 13.x 的 iOS 端使用 iOS 26.1 SDK API (isiOSAppOnVision)
+  # 且无编译期守卫，旧 Xcode 无法编译。补丁仅加 #if defined(__IPHONE_26_1) 守卫，
+  # 待本地 Xcode 升级到 26.1+ 后可移除此 override 与 third_party 目录。
+  device_info_plus:
+    path: third_party/device_info_plus
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
