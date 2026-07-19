@@ -642,12 +642,9 @@ SharedState sharedState(Ref ref) {
     setupParams: SetupParams(selectedMap: selectedMap, testUrl: testUrl),
     vpnOptions: VpnOptions(
       enable: vpnSetting.enable,
-      // NE has a 50MB jetsam limit; gvisor-based stacks are too heavy there.
-      // Map the app default (mixed) to system on iOS; explicit choices of
-      // system/gvisor pass through.
-      stack: system.isIOS && stack == TunStack.mixed.name
-          ? TunStack.system.name
-          : stack,
+      // system UDP has no iptables support on iOS; gVisor is the only
+      // fully-functional user-space stack for the PacketTunnel utun flow.
+      stack: system.isIOS ? TunStack.gvisor.name : stack,
       systemProxy: vpnSetting.systemProxy,
       port: port,
       ipv6: vpnSetting.ipv6,

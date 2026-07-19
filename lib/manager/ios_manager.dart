@@ -43,9 +43,7 @@ class _IosContainerState extends ConsumerState<IosManager>
       final file = File(join(homeDir, 'ne_stderr.log'));
       if (!await file.exists()) return;
       final lines = await file.readAsLines();
-      final tail = lines.length > 60
-          ? lines.sublist(lines.length - 60)
-          : lines;
+      final tail = lines.length > 60 ? lines.sublist(lines.length - 60) : lines;
       for (final line in tail) {
         commonPrint.log('[NE] $line');
       }
@@ -80,6 +78,8 @@ class _IosContainerState extends ConsumerState<IosManager>
     final setupAction = ref.read(setupActionProvider.notifier);
     switch (status) {
       case 'connected':
+        // debug 临时打印。调试通过后注释
+        _dumpNeStderrLog();
         if (!setupAction.isStart) {
           setupAction.updateStatus(true, isInit: true);
         } else {
@@ -94,6 +94,22 @@ class _IosContainerState extends ConsumerState<IosManager>
         }
     }
     super.onServiceStatus(status, runTime);
+  }
+
+  Future<void> _dumpNeStderrLog() async {
+    try {
+      final dir = await appPath.homeDirPath;
+      final neLog = File(join(dir, 'ne_stderr.log'));
+      if (await neLog.exists()) {
+        final lines = await neLog.readAsLines();
+        final tail = lines.length > 50
+            ? lines.sublist(lines.length - 50)
+            : lines;
+        for (final l in tail) {
+          commonPrint.log(l);
+        }
+      }
+    } catch (_) {}
   }
 
   @override

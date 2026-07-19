@@ -67,9 +67,6 @@ class GoBuilder {
       'GOARCH': target.goarch,
     };
 
-    // go build -tags are additive (GOOS=ios adds the "ios" tag implicitly).
-    // Strip with_gvisor on iOS — the system stack is the default and gvisor
-    // adds >10MB of dead code, which risks the NE 50MB jetsam limit.
     var tags = config.tags;
     if (target.goos == 'ios') {
       final sdk = target.sdk!;
@@ -83,7 +80,8 @@ class GoBuilder {
       env['CC'] = cc;
       env['CGO_CFLAGS'] = cflags;
       env['CGO_LDFLAGS'] = cflags;
-      tags = config.tags.replaceAll('with_gvisor', '').trim();
+      // gVisor is required on iOS — system stack doesn't work without
+      // iptables, and the user-space TCP stack lets MTProto/UDP flow.
     } else if (target.isLib) {
       env['CGO_ENABLED'] = '1';
       env['CC'] = _resolveCc(target);

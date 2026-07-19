@@ -502,7 +502,6 @@
 		};
 		B9B14E1947C26C9F4945FF5A /* Build Go Core */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 0;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -602,7 +601,7 @@
 				DEVELOPMENT_TEAM = 9ZKNBU3VL4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = PacketTunnel/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -760,7 +759,7 @@
 				DEVELOPMENT_TEAM = 9ZKNBU3VL4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = PacketTunnel/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -951,7 +950,7 @@
 				DEVELOPMENT_TEAM = 9ZKNBU3VL4;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = PacketTunnel/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
