@@ -169,7 +169,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
                     children: [
                       const NoticeBanner(),
                       SizedBox(height: sectionSpacing),
-                      _buildUsageGrid(context, availableHeight),
+                      _buildUsageCard(context),
                       SizedBox(height: sectionSpacing),
                       _buildInviteSection(),
                       SizedBox(height: sectionSpacing),
@@ -368,31 +368,18 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       ),
     );
   }
-  Widget _buildUsageGrid(BuildContext context, double availableHeight) {
-    final spacing = 14.0;
-    // 和仪表盘一样基于宽度算列数，每 280px 为一组（4列），至少 8 列
-    final screenWidth = MediaQuery.of(context).size.width;
-    final columns = max(4 * ((screenWidth / 280).ceil()), 8);
+  Widget _buildUsageCard(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        // 直接 watch provider（不要用 ref.userInfo 扩展，它用的是 read）
         final userInfo = ref.watch(userInfoProvider);
         final subscriptionInfo = ref.watch(subscriptionInfoProvider);
         final currentProfile = ref.watch(currentProfileProvider);
-        return Grid(
-          crossAxisCount: columns,
-          mainAxisSpacing: spacing,
-          crossAxisSpacing: spacing,
-          children: [
-            GridItem(
-              crossAxisCellCount: columns,
-              child: SubscriptionUsageCard(
-                subscriptionInfo: subscriptionInfo,
-                userInfo: userInfo,
-                profileSubscriptionInfo: currentProfile?.subscriptionInfo,
-              ),
-            ),
-          ],
+        return Card(
+          child: SubscriptionUsageCard(
+            subscriptionInfo: subscriptionInfo,
+            userInfo: userInfo,
+            profileSubscriptionInfo: currentProfile?.subscriptionInfo,
+          ),
         );
       },
     );
