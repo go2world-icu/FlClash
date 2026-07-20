@@ -15,7 +15,7 @@ library;
 import 'dart:io';
 import 'dart:typed_data';
 
-const sourceAppIcon = 'assets_source/icon';
+const sourceAppIcon = 'assets_source/images/icon/status_3';
 
 // ---- iOS ----
 const iosIconDir = 'ios/Runner/Assets.xcassets/AppIcon.appiconset';
