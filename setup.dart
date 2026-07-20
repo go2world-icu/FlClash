@@ -156,21 +156,25 @@ Future<int> _package(
   final depExit = await _ensureDependencies(platform, arch);
   if (depExit != 0) return depExit;
 
-  final activateResult = await Process.run('dart', [
-    'pub',
-    'global',
-    'activate',
-    '-s',
-    'git',
-    'https://github.com/chen08209/flutter_distributor.git',
-    '--git-ref',
-    'FlClash',
-    '--git-path',
-    'packages/flutter_distributor',
-  ]);
-  if (activateResult.exitCode != 0) {
-    stderr.write(activateResult.stderr);
-    return activateResult.exitCode;
+  // 检查 flutter_distributor 是否已安装，不存在才拉取
+  final hasDistributor = await _hasCommand('flutter_distributor');
+  if (!hasDistributor) {
+    final activateResult = await Process.run('dart', [
+      'pub',
+      'global',
+      'activate',
+      '-s',
+      'git',
+      'https://github.com/chen08209/flutter_distributor.git',
+      '--git-ref',
+      'FlClash',
+      '--git-path',
+      'packages/flutter_distributor',
+    ]);
+    if (activateResult.exitCode != 0) {
+      stderr.write(activateResult.stderr);
+      return activateResult.exitCode;
+    }
   }
 
   final process = await Process.start(
