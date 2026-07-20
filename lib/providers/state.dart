@@ -5,6 +5,7 @@ import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/config_check.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -53,12 +54,24 @@ NavigationItemsState navigationItemsState(Ref ref) {
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
   final isInit = ref.watch(initProvider);
-  return NavigationItemsState(
-    value: navigation.getItems(
-      openLogs: openLogs,
-      hasProxies: !isInit ? hasProfiles : hasProxies,
-    ),
+  final hasXboard = ref.watch(xboardEnabledProvider);
+  // iOS: requests/connections/logs are only available while the tunnel runs.
+  final iosCoreOff = system.isIOS && !ref.watch(isStartProvider);
+  var navItems = navigation.getItems(
+    openLogs: openLogs,
+    // iOS: the core only lives inside the NE while the tunnel runs, so
+    // groups are empty until started — a profile is enough to show the tab.
+    hasProxies: !isInit || system.isIOS
+        ? hasProfiles
+        : hasProxies,
+    hasXboard: hasXboard,
   );
+  if (iosCoreOff) {
+    navItems = navItems
+        .where((item) => item.modes.isNotEmpty)
+        .toList();
+  }
+  return NavigationItemsState(value: navItems);
 }
 
 @riverpod
@@ -629,7 +642,9 @@ SharedState sharedState(Ref ref) {
     setupParams: SetupParams(selectedMap: selectedMap, testUrl: testUrl),
     vpnOptions: VpnOptions(
       enable: vpnSetting.enable,
-      stack: stack,
+      // system UDP has no iptables support on iOS; gVisor is the only
+      // fully-functional user-space stack for the PacketTunnel utun flow.
+      stack: system.isIOS ? TunStack.gvisor.name : stack,
       systemProxy: vpnSetting.systemProxy,
       port: port,
       ipv6: vpnSetting.ipv6,

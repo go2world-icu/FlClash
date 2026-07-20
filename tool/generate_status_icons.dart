@@ -32,14 +32,14 @@ Future<void> main() async {
 
       await _renderSvg(
         rsvgConvert: rsvgConvert,
-        source: source,
+        sourcePath: source.path,
         output: png,
         width: 108,
         height: 108,
       );
       await _renderSvg(
         rsvgConvert: rsvgConvert,
-        source: source,
+        sourcePath: source.path,
         output: icoPng,
         width: 32,
         height: 32,
@@ -65,11 +65,12 @@ Future<String?> _findExecutable(String executable) async {
 
 Future<void> _renderSvg({
   required String rsvgConvert,
-  required File source,
+  required String sourcePath,
   required File output,
   required int width,
   required int height,
 }) async {
+  final rounded = _wrapRounded(sourcePath, width, height);
   final result = await Process.run(rsvgConvert, [
     '-w',
     '$width',
@@ -77,14 +78,34 @@ Future<void> _renderSvg({
     '$height',
     '-o',
     output.path,
-    source.path,
+    rounded,
   ]);
   if (result.exitCode != 0) {
     stderr
-      ..writeln('Failed to render ${source.path} -> ${output.path}')
+      ..writeln('Failed to render $sourcePath -> ${output.path}')
       ..writeln(result.stderr);
     exit(result.exitCode);
   }
+}
+
+/// Inject a rounded-rect clip-path into the source SVG.  The clip rect uses
+/// the SVG's own coordinate space, not the output pixel size.
+String _wrapRounded(String src, int w, int h) {
+  var raw = File(src).readAsStringSync();
+  final vb = RegExp(r'viewBox="\S+\s+\S+\s+(\S+)\s+(\S+)"', multiLine: true).firstMatch(raw);
+  final svgW = int.tryParse(vb?.group(1) ?? '') ?? int.tryParse(
+      RegExp(r'width="(\d+)"', multiLine: true).firstMatch(raw)?.group(1) ?? '') ?? w;
+  final svgH = int.tryParse(vb?.group(2) ?? '') ?? int.tryParse(
+      RegExp(r'height="(\d+)"', multiLine: true).firstMatch(raw)?.group(1) ?? '') ?? h;
+  final r = (svgW * 0.22).round().clamp(4, svgW ~/ 2);
+  raw = raw.replaceFirstMapped(
+    RegExp(r'(<svg[^>]*>)', multiLine: true),
+    (m) => '${m[1]}\n<defs><clipPath id="_round"><rect width="$svgW" height="$svgH" rx="$r" ry="$r"/></clipPath></defs>\n<g clip-path="url(#_round)">',
+  );
+  raw = raw.replaceFirst('</svg>', '</g>\n</svg>');
+  final tmp = File('${Directory.systemTemp.path}/rounded_${w}x$h.svg');
+  tmp.writeAsStringSync(raw);
+  return tmp.path;
 }
 
 Uint8List _buildIco(List<int> pngBytes) {

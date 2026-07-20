@@ -10,6 +10,9 @@ import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/config_check.dart';
+import 'package:fl_clash/xboard/features/initialization/initialization.dart';
+import 'package:fl_clash/xboard/services/storage/xboard_storage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +33,7 @@ class ApplicationState extends ConsumerState<Application> {
   final _pageTransitionsTheme = const PageTransitionsTheme(
     builders: <TargetPlatform, PageTransitionsBuilder>{
       TargetPlatform.android: commonSharedXPageTransitions,
+      TargetPlatform.iOS: commonSharedXPageTransitions,
       TargetPlatform.windows: commonSharedXPageTransitions,
       TargetPlatform.linux: commonSharedXPageTransitions,
       TargetPlatform.macOS: commonSharedXPageTransitions,
@@ -55,6 +59,14 @@ class ApplicationState extends ConsumerState<Application> {
       _autoUpdateProfilesTask();
       _initLink();
       app?.initShortcuts();
+      _preloadXBoard();
+    });
+  }
+
+  void _preloadXBoard() {
+    if (!hasXboardConfig) return;
+    warmUpXBoardStorage().then((_) {
+      ref.read(initializationProvider.notifier).initialize().catchError((_) {});
     });
   }
 
@@ -97,7 +109,10 @@ class ApplicationState extends ConsumerState<Application> {
         ),
       );
     }
-    return AndroidManager(child: TileManager(child: child));
+    if (system.isAndroid) {
+      return AndroidManager(child: TileManager(child: child));
+    }
+    return IosManager(child: child);
   }
 
   Widget _buildState({required Widget child}) {

@@ -172,9 +172,13 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     final state = ref.watch(proxiesTabStateProvider.select((state) => state));
     final groups = state.groups;
     if (groups.isEmpty || _tabController == null) {
+      // iOS: groups stay empty until the NE tunnel boots the core.
+      final needStart = system.isIOS && !ref.watch(isStartProvider);
       return NullStatus(
         illustration: const ProxyEmptyIllustration(),
-        label: appLocalizations.nullTip(appLocalizations.proxies),
+        label: needStart
+            ? appLocalizations.startVpn
+            : appLocalizations.nullTip(appLocalizations.proxies),
       );
     }
     _keyMap = {};

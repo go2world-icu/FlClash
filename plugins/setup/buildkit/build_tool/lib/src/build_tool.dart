@@ -180,6 +180,47 @@ class BuildWindowsCommand extends BuildCommand {
   }
 }
 
+class BuildIosCommand extends BuildCommand {
+  BuildIosCommand() {
+    argParser.addOption(
+      'sdk',
+      valueHelp: 'iphoneos,iphonesimulator',
+      help: 'Apple SDK to build for (omit to build both + xcframework)',
+    );
+  }
+
+  @override
+  final name = 'ios';
+
+  @override
+  final description =
+      'Build iOS Go core (c-archive static library + xcframework)';
+
+  @override
+  Future<void> runBuildCommand() async {
+    final sdkName = argResults?['sdk'] as String?;
+    final config = BuildConfig.load(rootDir: _rootDir);
+
+    var targets = Target.forPlatform('ios');
+    if (sdkName != null) {
+      targets = targets.where((t) => t.sdk == sdkName).toList();
+      if (targets.isEmpty) {
+        throw BuildException('Invalid sdk: $sdkName');
+      }
+    }
+    if (targets.any((t) => !t.canBuildOnHost)) {
+      throw BuildException('iOS core can only be built on macOS');
+    }
+
+    final builder = GoBuilder(rootDir: _rootDir, config: config);
+    final corePaths = await builder.buildAll(targets);
+    final frameworkPath = await builder.createXcframework();
+
+    _log.info('Build complete: $corePaths');
+    _log.info('xcframework: $frameworkPath');
+  }
+}
+
 class BuildMacosCommand extends BuildCommand {
   BuildMacosCommand() {
     argParser.addOption(
@@ -228,7 +269,8 @@ Future<void> runMain(List<String> args) async {
       ..addCommand(BuildAndroidCommand())
       ..addCommand(BuildLinuxCommand())
       ..addCommand(BuildWindowsCommand())
-      ..addCommand(BuildMacosCommand());
+      ..addCommand(BuildMacosCommand())
+      ..addCommand(BuildIosCommand());
 
     final topResults = runner.parse(args);
     _rootDir = (topResults['root-dir'] as String?) ?? _findProjectRoot();

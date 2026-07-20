@@ -10,6 +10,8 @@ import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/config_check.dart';
+import 'package:fl_clash/xboard/subscription_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -167,7 +169,7 @@ class SetupAction extends _$SetupAction {
       return;
     }
     commonPrint.log('init status');
-    if (system.isAndroid) {
+    if (system.isMobile) {
       await _updateStartTime();
     }
     final status = isStart == true
@@ -385,10 +387,14 @@ class SetupAction extends _$SetupAction {
     final realTunEnable = ref.read(realTunEnableProvider);
     final realPatchConfig = patchConfig.copyWith.tun(enable: realTunEnable);
     final setupState = await ref.read(setupStateProvider(profile?.id).future);
-    if (system.isAndroid) {
+    if (system.isMobile) {
       globalState.lastVpnState = ref.read(vpnStateProvider);
       final sharedState = ref.read(sharedStateProvider);
-      preferences.saveShareState(sharedState);
+      if (system.isIOS) {
+        await service?.saveState(sharedState);
+      } else {
+        preferences.saveShareState(sharedState);
+      }
     }
     final vm2 = await getProfile(
       setupState: setupState,
@@ -932,6 +938,16 @@ class ProfilesAction extends _$ProfilesAction {
     if (globalState.navigatorKey.currentState?.canPop() ?? false) {
       globalState.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     }
+
+    // xboard 已启用 → 使用竞速下载器
+    if (ref.read(xboardEnabledProvider)) {
+      final profile = await xboardImportAndSave(ref, url);
+      if (profile != null) {
+        ref.read(currentPageLabelProvider.notifier).value = PageLabel.xboard;
+      }
+      return;
+    }
+
     ref.read(currentPageLabelProvider.notifier).value = PageLabel.profiles;
     final profile = await globalState.loadingRun(
       tag: LoadingTag.profiles,

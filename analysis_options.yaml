@@ -5,8 +5,10 @@ analyzer:
     - lib/l10n/intl/**
     - lib/**/generated/**
     - plugins/**
+    - lib/sdk/**
   errors:
     invalid_annotation_target: ignore
+    non_abstract_class_inherits_abstract_member: ignore
 
 linter:
   rules:

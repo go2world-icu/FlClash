@@ -1,0 +1,29 @@
+xboard:
+  provider: "go2world"
+  remote_config:
+    sources:
+      - name: redirect
+        priority: 100
+        url: https://dwc-1256539025.cos.ap-hongkong.myqcloud.com/gdc_conf/go2world_client.gdjson
+        # url: https://dwc-1256539025.file.myqcloud.com/gdc_conf/go2world_client.gdjson
+        auth:
+          type: TypeA
+
+  app:
+    title: 达世界
+    website: https://toworld.uk
+  
+  
+  subscription:
+    prefer_encrypt: false
+    decrypt_key: your_secret_decrypt_key_here
+
+  security:
+    obfuscation_prefix: YOUR_OBFS_PREFIX_
+    user_agents:
+      api_encrypted: Mozilla/5.0 (compatible; YOUR_ENCRYPTED_STRING_HERE)
+      domain_racing_test: Clash/1.0 (Domain Racing Test)
+    
+
+
+

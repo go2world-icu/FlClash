@@ -1,4 +1,4 @@
-//go:build android && cgo
+//go:build (android || ios) && cgo
 
 package tun
 
@@ -58,6 +58,8 @@ func Start(fd int, stack string, address, dns string) *sing_tun.Listener {
 		Inet6Address:        prefix6,
 		MTU:                 9000,
 		FileDescriptor:      fd,
+		RecvMsgX:            true,
+		SendMsgX:            true,
 	}
 
 	listener, err := sing_tun.New(options, tunnel.Tunnel)

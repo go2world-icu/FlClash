@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/plugins/app.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -15,9 +17,7 @@ class AppPath {
 
   AppPath._internal() {
     appDirPath = join(dirname(Platform.resolvedExecutable));
-    getApplicationSupportDirectory().then((value) {
-      dataDir.complete(value);
-    });
+    _initDataDir();
     getTemporaryDirectory().then((value) {
       tempDir.complete(value);
     });
@@ -26,6 +26,34 @@ class AppPath {
     });
     getApplicationCacheDirectory().then((value) {
       cacheDir.complete(value);
+    });
+  }
+
+  // On iOS the core runs inside the PacketTunnel extension, which shares no
+  // sandbox with the app. Place the home directory (config.yaml, geodata,
+  // profiles) in the App Group container so both processes can read it.
+  void _initDataDir() {
+    if (system.isIOS) {
+      app!.getContainerPath().then((containerPath) async {
+        if (containerPath == null) {
+          // App Group entitlement missing/not signed — the NE extension will
+          // NOT be able to see profiles written here.
+          commonPrint.log(
+            'App Group container unavailable, falling back to sandbox',
+            logLevel: LogLevel.error,
+          );
+          dataDir.complete(await getApplicationSupportDirectory());
+          return;
+        }
+        final dir = Directory(join(containerPath, 'FlClash'));
+        await dir.create(recursive: true);
+        commonPrint.log('homeDir: ${dir.path}');
+        dataDir.complete(dir);
+      });
+      return;
+    }
+    getApplicationSupportDirectory().then((value) {
+      dataDir.complete(value);
     });
   }
 

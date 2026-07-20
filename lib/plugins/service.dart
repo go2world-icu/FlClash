@@ -11,6 +11,10 @@ abstract mixin class ServiceListener {
   void onServiceEvent(CoreEvent event) {}
 
   void onServiceCrash(String message) {}
+
+  /// iOS only: NEVPNStatus transitions (connected/disconnected/...),
+  /// with the current tunnel run time in milliseconds.
+  void onServiceStatus(String status, int runTime) {}
 }
 
 class Service {
@@ -41,6 +45,15 @@ class Service {
           final message = call.arguments as String? ?? '';
           for (final listener in _listeners) {
             listener.onServiceCrash(message);
+          }
+          break;
+        case 'status':
+          final data = call.arguments as String? ?? '{}';
+          final statusJson = json.decode(data) as Map<String, dynamic>;
+          final status = statusJson['status'] as String? ?? '';
+          final runTime = statusJson['runTime'] as int? ?? 0;
+          for (final listener in _listeners) {
+            listener.onServiceStatus(status, runTime);
           }
           break;
         default:
@@ -81,6 +94,16 @@ class Service {
         '';
   }
 
+  /// iOS only: persist the full SharedState (including setupParams) into the
+  /// App Group so the PacketTunnel extension can boot the core headlessly.
+  Future<String> saveState(SharedState state) async {
+    return await methodChannel.invokeMethod<String>(
+          'saveState',
+          json.encode(state),
+        ) ??
+        '';
+  }
+
   Future<bool> shutdown() async {
     return await methodChannel.invokeMethod<bool>('shutdown') ?? true;
   }
@@ -106,4 +129,4 @@ class Service {
   }
 }
 
-Service? get service => system.isAndroid ? Service() : null;
+Service? get service => system.isMobile ? Service() : null;

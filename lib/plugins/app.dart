@@ -99,9 +99,14 @@ class App {
   }
 
   Future<bool?> openAppSettings() async {
-    if (!Platform.isAndroid) return false;
+    if (!system.isMobile) return false;
     return methodChannel.invokeMethod<bool>('openAppSettings');
+  }
+
+  Future<String?> getContainerPath() async {
+    if (!system.isIOS) return null;
+    return methodChannel.invokeMethod<String>('getContainerPath');
   }
 }
 
-final app = system.isAndroid ? App() : null;
+final app = system.isMobile ? App() : null;
