@@ -246,9 +246,11 @@ String _detectArch() {
 }
 
 Future<bool> _hasCommand(String cmd) async {
-  final which = Platform.isWindows ? 'where' : 'command';
-  final args = Platform.isWindows ? [cmd] : ['-v', cmd];
-  final result = await Process.run(which, args);
+  if (Platform.isWindows) {
+    final result = await Process.run('where', [cmd]);
+    return result.exitCode == 0;
+  }
+  final result = await Process.run('which', [cmd]);
   return result.exitCode == 0;
 }
 
