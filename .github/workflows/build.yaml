@@ -134,13 +134,36 @@ jobs:
         if: ${{ !startsWith(matrix.platform, 'ios') }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
+      - name: Setup iOS Code Signing
+        if: startsWith(matrix.platform, 'ios')
+        run: |
+          # 创建专用钥匙串
+          security create-keychain -p temp build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p temp build.keychain
+
+          # 导入开发证书
+          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain \
+            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+
+          # 保存 Apple ID 到钥匙串，供 -allowProvisioningUpdates 使用
+          xcrun altool --store-password-in-keychain-item "AC_PASSWORD" \
+            -u "${{ secrets.IOS_APPLE_ID }}" \
+            -p "${{ secrets.IOS_APP_SPECIFIC_PASSWORD }}"
+
       - name: Build iOS
         if: startsWith(matrix.platform, 'ios')
         run: |
           make core-ios
-          flutter build ios --no-codesign --debug
-          mkdir -p dist/ios
-          cp -R build/ios/iphoneos/Runner.app dist/ios/
+          XCODE_BUILD_ARGS="-allowProvisioningUpdates" \
+            flutter build ios --debug
+          mkdir -p dist/Payload
+          cp -R build/ios/iphoneos/Runner.app dist/Payload/
+          cd dist && zip -r FlClash-ios-arm64.ipa Payload/
+          rm -rf Payload
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -189,8 +212,8 @@ jobs:
           git add CHANGELOG.md
           if ! git diff --cached --quiet; then
             echo "Commit pushing"
-            git config --local user.email "chen08209@gmail.com"
-            git config --local user.name "chen08209"
+            git config --local user.email "coterjiesen@gmail.com"
+            git config --local user.name "coterjiesen"
             git commit -m "Update changelog"
             if git push; then
               echo "Push succeeded"
@@ -232,7 +255,7 @@ jobs:
       - name: Generate release.md
         run: |
           tags=($(git tag --merged HEAD --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/chen08209/FlClash/releases/latest" | \
+          preTag=$(curl -s "https://api.github.com/repos/go2world-icu/FlClash/releases/latest" | \
           sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
           
           [ -z "$preTag" ] && preTag=""
@@ -297,10 +320,10 @@ jobs:
       #     SSH_DEPLOY_KEY: ${{ secrets.HOMEBREW_SSH_DEPLOY_KEY }}
       #   with:
       #     source-directory: ./brew/
-      #     destination-github-username: chen08209
+      #     destination-github-username: go2world-icu
       #     destination-repository-name: homebrew-tap
-      #     user-name: 'chen08029'
-      #     user-email: 'chen08209@gmail.com'
+      #     user-name: 'coterjiesen'
+      #     user-email: 'coterjiesen@gmail.com'
       #     target-branch: main
       #     commit-message: Update Homebrew cask from ${{ github.ref_name }}
       #     target-directory: /
@@ -319,10 +342,10 @@ jobs:
       #     SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
       #   with:
       #     source-directory: ./tmp/
-      #     destination-github-username: chen08209
+      #     destination-github-username: go2world-icu
       #     destination-repository-name: FlClash-fdroid-repo
-      #     user-name: 'chen08029'
-      #     user-email: 'chen08209@gmail.com'
+      #     user-name: 'coterjiesen'
+      #     user-email: 'coterjiesen@gmail.com'
       #     target-branch: main
       #     commit-message: Update from ${{ github.ref_name }}
       #     target-directory: /tmp/
