@@ -1,0 +1,51 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "下载 Distribution 描述文件并构建"
+  lane :build do |options|
+    setup_ci
+
+    export_method = options[:export_method] || "app-store"
+    profile_type = export_method == "app-store" ? "app_store" : "development"
+
+    # App Store Connect API 密钥认证
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_PATH"],
+      is_key_content_base64: false
+    )
+
+    # 自动创建/下载描述文件（这是 Fastlane 的核心价值）
+    sigh(
+      app_identifier: "uk.toworld.flclash",
+      api_key: api_key,
+      profile_type: profile_type,
+      force: true,
+      skip_install: false
+    )
+    sigh(
+      app_identifier: "uk.toworld.flclash.PacketTunnel",
+      api_key: api_key,
+      profile_type: profile_type,
+      force: true,
+      skip_install: false
+    )
+  end
+
+  desc "上传到 TestFlight"
+  lane :upload_testflight do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_PATH"],
+      is_key_content_base64: false
+    )
+
+    pilot(
+      ipa: "dist/FlClash-ios-arm64.ipa",
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end
