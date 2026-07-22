@@ -1,0 +1,142 @@
+name: build-ios
+
+on:
+  workflow_dispatch:
+    inputs:
+      export-method:
+        description: 'Export method (app-store-connect / development)'
+        required: true
+        default: 'app-store-connect'
+        type: choice
+        options:
+          - app-store-connect
+          - development
+
+env:
+  FLUTTER_VERSION: '3.44.4'
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.BOARD_SDK_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.4'
+          cache-dependency-path: |
+            core/go.sum
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: master
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.3.app || sudo xcode-select -s /Applications/Xcode_26.2.app
+          xcodebuild -version
+
+      - name: Get Flutter Dependency
+        run: |
+          flutter --version
+          flutter pub get
+
+      - name: Setup iOS Code Signing
+        run: |
+          # 创建专用钥匙串
+          security create-keychain -p temp build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p temp build.keychain
+
+          # 导入 Distribution 证书
+          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain \
+            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+
+          # 保存 App Store Connect API 密钥
+          mkdir -p ~/private_keys
+          echo "${{ secrets.ASC_API_KEY }}" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+
+      - name: Build iOS
+        run: |
+          make core-ios
+
+          # 缓存 Flutter iOS 引擎文件
+          flutter precache --ios
+
+          # 确保 CocoaPods workspace 已生成
+          cd ios
+          pod install
+          cd ..
+          test -d ios/Runner.xcworkspace || { echo "ERROR: pod install 未生成 Runner.xcworkspace"; exit 1; }
+
+          # xcodebuild 认证参数
+          export ASC_KEY_ID="${{ secrets.ASC_KEY_ID }}"
+          export ASC_ISSUER_ID="${{ secrets.ASC_ISSUER_ID }}"
+          export ASC_KEY_PATH=~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          AUTH_ARGS="-allowProvisioningUpdates -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID -authenticationKeyPath $ASC_KEY_PATH"
+
+          # 默认签名身份改为 Distribution（让 -allowProvisioningUpdates 自动创建 Distribution 配置）
+          perl -i -pe 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "iPhone Developer";/"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";/' \
+            ios/Runner.xcodeproj/project.pbxproj
+
+          # Archive
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/ios/Runner.xcarchive \
+            $AUTH_ARGS \
+            CODE_SIGN_STYLE=Automatic \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            archive
+
+          # 导出 IPA
+          cat > ExportOptions.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>${{ inputs.export-method }}</string>
+              <key>teamID</key>
+              <string>9ZKNBU3VL4</string>
+          </dict>
+          </plist>
+          PLIST
+
+          xcodebuild -exportArchive \
+            -archivePath build/ios/Runner.xcarchive \
+            -exportPath dist/ \
+            -exportOptionsPlist ExportOptions.plist \
+            $AUTH_ARGS
+
+          # 重命名为统一文件名
+          mv dist/Runner.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
+          mv dist/fl_clash.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
+          { ls -la dist/; echo "ERROR: 找不到导出的 IPA"; exit 1; }
+
+      - name: Upload to TestFlight
+        if: ${{ inputs.export-method == 'app-store-connect' }}
+        run: |
+          xcrun altool --upload-app -f dist/FlClash-ios-arm64.ipa \
+            --apiKey ${{ secrets.ASC_KEY_ID }} \
+            --apiIssuer ${{ secrets.ASC_ISSUER_ID }} \
+            --type ios
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlClash-ios
+          path: ./dist/FlClash-ios-arm64.ipa
+          overwrite: true
