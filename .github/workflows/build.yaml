@@ -279,6 +279,15 @@ jobs:
           files: ./dist/*
           body_path: './release.md'
 
+      - name: Trigger FlClash-Publish sync
+        if: ${{ env.IS_STABLE == 'true' }}
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.PUBLISH_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/go2world-icu/FlClash-Publish/dispatches \
+            -d '{"event_type":"new-release","client_payload":{"tag":"${{ github.ref_name }}"}}'
+
       # - name: Create Homebrew Cask Source Dir
       #   if: ${{ env.IS_STABLE == 'true' }}
       #   run: |
