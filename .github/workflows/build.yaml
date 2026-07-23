@@ -288,6 +288,34 @@ jobs:
             https://api.github.com/repos/go2world-icu/FlClash-Publish/dispatches \
             -d '{"event_type":"new-release","client_payload":{"tag":"${{ github.ref_name }}"}}'
 
+      - name: Sync release to Gitee
+        if: ${{ env.IS_STABLE == 'true' }}
+        env:
+          TAG: ${{ github.ref_name }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_OWNER: ${{ secrets.GITEE_OWNER }}
+          GITEE_REPO: ${{ secrets.GITEE_REPO }}
+        run: |
+          # 创建 Gitee Release
+          API="https://gitee.com/api/v5/repos/$GITEE_OWNER/$GITEE_REPO"
+          curl -s -X POST "$API/releases" \
+            -H "Content-Type: application/json" \
+            -d "{\"access_token\":\"$GITEE_TOKEN\",\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}" > /dev/null
+
+          # 获取 release_id
+          RELEASE_ID=$(curl -s "$API/releases/tags/$TAG?access_token=$GITEE_TOKEN" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          [ -z "$RELEASE_ID" ] && { echo "Failed to get release ID"; exit 1; }
+
+          # 上传每个文件
+          for file in dist/*; do
+            [ -f "$file" ] || continue
+            echo "Uploading $(basename $file)..."
+            curl -s -X POST "$API/releases/$RELEASE_ID/attach_files" \
+              -F "access_token=$GITEE_TOKEN" \
+              -F "file=@$file" > /dev/null
+          done
+          echo "Sync to Gitee complete"
+
       # - name: Create Homebrew Cask Source Dir
       #   if: ${{ env.IS_STABLE == 'true' }}
       #   run: |
