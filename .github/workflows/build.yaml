@@ -134,32 +134,11 @@ jobs:
         if: ${{ !startsWith(matrix.platform, 'ios') }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
-      - name: Setup iOS Code Signing
-        if: startsWith(matrix.platform, 'ios')
-        run: |
-          # 创建专用钥匙串
-          security create-keychain -p temp build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p temp build.keychain
-
-          # 导入开发证书
-          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
-          security import cert.p12 -k build.keychain \
-            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-          security set-key-partition-list \
-            -S apple-tool:,apple:,codesign: -s -k temp build.keychain
-
-          # 保存 Apple ID 到钥匙串，供 -allowProvisioningUpdates 使用
-          xcrun altool --store-password-in-keychain-item "AC_PASSWORD" \
-            -u "${{ secrets.IOS_APPLE_ID }}" \
-            -p "${{ secrets.IOS_APP_SPECIFIC_PASSWORD }}"
-
       - name: Build iOS
         if: startsWith(matrix.platform, 'ios')
         run: |
           make core-ios
-          XCODE_BUILD_ARGS="-allowProvisioningUpdates" \
-            flutter build ios --debug
+          flutter build ios --release --no-codesign
           mkdir -p dist/Payload
           cp -R build/ios/iphoneos/Runner.app dist/Payload/
           cd dist && zip -r FlClash-ios-arm64.ipa Payload/
