@@ -302,7 +302,7 @@ jobs:
           echo "Creating Gitee release $TAG..."
           RESP=$(curl -s -X POST "$API/releases" \
             -H "Content-Type: application/json" \
-            -d "{\"access_token\":\"$GITEE_TOKEN\",\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}")
+            -d "{\"access_token\":\"$GITEE_TOKEN\",\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\",\"target_commitish\":\"main\"}")
           echo "Create response: $RESP" | head -c 500
 
           # 获取 release_id
