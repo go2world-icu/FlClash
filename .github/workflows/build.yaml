@@ -296,15 +296,23 @@ jobs:
           GITEE_OWNER: ${{ secrets.GITEE_OWNER }}
           GITEE_REPO: ${{ secrets.GITEE_REPO }}
         run: |
-          # 创建 Gitee Release
           API="https://gitee.com/api/v5/repos/$GITEE_OWNER/$GITEE_REPO"
-          curl -s -X POST "$API/releases" \
+
+          # 创建 Gitee Release（已存在则忽略）
+          echo "Creating Gitee release $TAG..."
+          RESP=$(curl -s -X POST "$API/releases" \
             -H "Content-Type: application/json" \
-            -d "{\"access_token\":\"$GITEE_TOKEN\",\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}" > /dev/null
+            -d "{\"access_token\":\"$GITEE_TOKEN\",\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}")
+          echo "Create response: $RESP" | head -c 500
 
           # 获取 release_id
-          RELEASE_ID=$(curl -s "$API/releases/tags/$TAG?access_token=$GITEE_TOKEN" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          RELEASE_ID=$(echo "$RESP" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          if [ -z "$RELEASE_ID" ]; then
+            # 尝试从已有 release 获取
+            RELEASE_ID=$(curl -s "$API/releases/tags/$TAG?access_token=$GITEE_TOKEN" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          fi
           [ -z "$RELEASE_ID" ] && { echo "Failed to get release ID"; exit 1; }
+          echo "Release ID: $RELEASE_ID"
 
           # 上传每个文件
           for file in dist/*; do
