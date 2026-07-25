@@ -89,6 +89,16 @@ jobs:
           echo "[signing] packet tunnel profile name: $(cat ~/private_keys/packettunnel_profile_name.txt)"
           echo "[signing] expected bundle ids: uk.toworld.flclash, uk.toworld.flclash.PacketTunnel"
 
+          echo "[signing] app profile details:"
+          security cms -D -i app-profile.mobileprovision > /tmp/app-profile.plist
+          plutil -extract ApplicationIdentifier raw /tmp/app-profile.plist
+          plutil -extract Entitlements xml1 -o - /tmp/app-profile.plist | sed -n '1,80p'
+
+          echo "[signing] packet tunnel profile details:"
+          security cms -D -i packettunnel-profile.mobileprovision > /tmp/packettunnel-profile.plist
+          plutil -extract ApplicationIdentifier raw /tmp/packettunnel-profile.plist
+          plutil -extract Entitlements xml1 -o - /tmp/packettunnel-profile.plist | sed -n '1,80p'
+
           # API 密钥（上传 TestFlight 用）
           mkdir -p ~/private_keys
           echo "${{ secrets.ASC_API_KEY }}" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
@@ -129,9 +139,9 @@ jobs:
               <key>provisioningProfiles</key>
               <dict>
                   <key>uk.toworld.flclash</key>
-                  <string>$(cat ~/private_keys/app_profile_name.txt)</string>
+                  <string>iOS Team Store Provisioning Profile: uk.toworld.flclash</string>
                   <key>uk.toworld.flclash.PacketTunnel</key>
-                  <string>$(cat ~/private_keys/packettunnel_profile_name.txt)</string>
+                  <string>iOS Team Store Provisioning Profile: uk.toworld.flclash.PacketTunnel</string>
               </dict>
           </dict>
           </plist>
