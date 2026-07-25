@@ -47,64 +47,44 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p temp build.keychain
 
-          # 导入 Distribution 证书（带私钥）
-          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
-          security import cert.p12 -k build.keychain \
+          # 导入 Development 证书（archive 用）
+          echo "${{ secrets.IOS_DEVELOPMENT_CERTIFICATE }}" | base64 --decode > dev-cert.p12
+          security import dev-cert.p12 -k build.keychain \
             -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+
+          # 导入 Distribution 证书（export 用）
+          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > dist-cert.p12
+          security import dist-cert.p12 -k build.keychain \
+            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
-          # 安装描述文件（UUID 命名）
+          # 安装描述文件到两个路径
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           mkdir -p ~/private_keys
 
-          echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > app-profile.mobileprovision
-          APP_PROFILE_UUID=$(plutil -extract UUID raw -o - app-profile.mobileprovision 2>/dev/null) || \
-          APP_PROFILE_UUID=$(grep -aA1 '<key>UUID</key>' app-profile.mobileprovision | \
-            tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
-          APP_PROFILE_NAME=$(plutil -extract Name raw -o - app-profile.mobileprovision 2>/dev/null) || \
-          APP_PROFILE_NAME=$(grep -aA1 '<key>Name</key>' app-profile.mobileprovision | \
-            tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
-          [ -n "$APP_PROFILE_UUID" ] && cp app-profile.mobileprovision \
-            ~/Library/MobileDevice/Provisioning\ Profiles/$APP_PROFILE_UUID.mobileprovision
-          [ -n "$APP_PROFILE_UUID" ] && cp app-profile.mobileprovision \
-            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$APP_PROFILE_UUID.mobileprovision
-          [ -n "$APP_PROFILE_NAME" ] && echo "$APP_PROFILE_NAME" > ~/private_keys/app_profile_name.txt
-          echo "APP_PROFILE_UUID=$APP_PROFILE_UUID" >> $GITHUB_ENV
+          install_profile() {
+            local b64="$1"
+            [ -z "$b64" ] && return
+            echo "$b64" | base64 --decode > /tmp/tmp-profile.mobileprovision 2>/dev/null || return
+            local uuid=$(plutil -extract UUID raw -o - /tmp/tmp-profile.mobileprovision 2>/dev/null)
+            [ -z "$uuid" ] && return
+            cp /tmp/tmp-profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
+            cp /tmp/tmp-profile.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid.mobileprovision
+            echo "[signing] installed $uuid ($(plutil -extract Name raw -o - /tmp/tmp-profile.mobileprovision 2>/dev/null))"
+          }
 
-          echo "${{ secrets.IOS_PACKETTUNNEL_PROFILE }}" | base64 --decode > packettunnel-profile.mobileprovision
-          PACKET_TUNNEL_PROFILE_UUID=$(plutil -extract UUID raw -o - packettunnel-profile.mobileprovision 2>/dev/null) || \
-          PACKET_TUNNEL_PROFILE_UUID=$(grep -aA1 '<key>UUID</key>' packettunnel-profile.mobileprovision | \
-            tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
-          PACKET_TUNNEL_PROFILE_NAME=$(plutil -extract Name raw -o - packettunnel-profile.mobileprovision 2>/dev/null) || \
-          PACKET_TUNNEL_PROFILE_NAME=$(grep -aA1 '<key>Name</key>' packettunnel-profile.mobileprovision | \
-            tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
-          [ -n "$PACKET_TUNNEL_PROFILE_UUID" ] && cp packettunnel-profile.mobileprovision \
-            ~/Library/MobileDevice/Provisioning\ Profiles/$PACKET_TUNNEL_PROFILE_UUID.mobileprovision
-          [ -n "$PACKET_TUNNEL_PROFILE_UUID" ] && cp packettunnel-profile.mobileprovision \
-            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$PACKET_TUNNEL_PROFILE_UUID.mobileprovision
-          [ -n "$PACKET_TUNNEL_PROFILE_NAME" ] && echo "$PACKET_TUNNEL_PROFILE_NAME" > ~/private_keys/packettunnel_profile_name.txt
-          echo "PACKET_TUNNEL_PROFILE_UUID=$PACKET_TUNNEL_PROFILE_UUID" >> $GITHUB_ENV
+          install_profile "${{ secrets.IOS_DEVELOPMENT_PROFILE }}"
+          install_profile "${{ secrets.IOS_PROVISIONING_PROFILE }}"
+          install_profile "${{ secrets.IOS_DEVELOPMENT_PACKETTUNNEL_PROFILE }}"
+          install_profile "${{ secrets.IOS_PACKETTUNNEL_PROFILE }}"
 
-          test -s ~/private_keys/app_profile_name.txt || { echo "ERROR: 无法解析主应用描述文件名"; exit 1; }
-          test -s ~/private_keys/packettunnel_profile_name.txt || { echo "ERROR: 无法解析 PacketTunnel 描述文件名"; exit 1; }
-
-          echo "[signing] installed provisioning profiles:"
+          echo "[signing] all installed provisioning profiles:"
           ls -1 ~/Library/MobileDevice/Provisioning\ Profiles || true
-          echo "[signing] app profile name: $(cat ~/private_keys/app_profile_name.txt)"
-          echo "[signing] packet tunnel profile name: $(cat ~/private_keys/packettunnel_profile_name.txt)"
-          echo "[signing] expected bundle ids: uk.toworld.flclash, uk.toworld.flclash.PacketTunnel"
-
-          echo "[signing] app profile details:"
-          security cms -D -i app-profile.mobileprovision > /tmp/app-profile.plist
-          plutil -extract Entitlements.application-identifier raw /tmp/app-profile.plist
-          plutil -extract Entitlements xml1 -o - /tmp/app-profile.plist | sed -n '1,80p'
-
-          echo "[signing] packet tunnel profile details:"
-          security cms -D -i packettunnel-profile.mobileprovision > /tmp/packettunnel-profile.plist
-          plutil -extract Entitlements.application-identifier raw /tmp/packettunnel-profile.plist
-          plutil -extract Entitlements xml1 -o - /tmp/packettunnel-profile.plist | sed -n '1,80p'
+          echo ""
+          ls -1 ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles || true
 
           # API 密钥（上传 TestFlight 用）
           mkdir -p ~/private_keys
@@ -118,20 +98,22 @@ jobs:
           cd ios && pod install && cd ..
           test -d ios/Runner.xcworkspace || { echo "ERROR: pod install 未生成 Runner.xcworkspace"; exit 1; }
 
-          # Archive（Manual 签名 + UUID，不用 allowProvisioningUpdates）
-          echo "[xcodebuild] checking keychain identities:"
+          # Archive（Automatic 签名 — 需要 Dev cert + Dev profile）
+          echo "[xcodebuild] keychain identities:"
           security find-identity -v -p codesigning build.keychain || true
-          echo "[xcodebuild] starting archive: app=$APP_PROFILE_UUID pt=$PACKET_TUNNEL_PROFILE_UUID"
+          echo "[xcodebuild] starting archive"
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/ios/Runner.xcarchive \
-            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_STYLE=Automatic \
             DEVELOPMENT_TEAM=9ZKNBU3VL4 \
             IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-            "Runner.PROVISIONING_PROFILE=$APP_PROFILE_UUID" \
-            "PacketTunnel.PROVISIONING_PROFILE=$PACKET_TUNNEL_PROFILE_UUID" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \
             archive
 
           # 导出 IPA
@@ -145,14 +127,7 @@ jobs:
               <key>teamID</key>
               <string>9ZKNBU3VL4</string>
               <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>uk.toworld.flclash</key>
-                  <string>iOS Team Store Provisioning Profile: uk.toworld.flclash</string>
-                  <key>uk.toworld.flclash.PacketTunnel</key>
-                  <string>iOS Team Store Provisioning Profile: uk.toworld.flclash.PacketTunnel</string>
-              </dict>
+              <string>automatic</string>
           </dict>
           </plist>
           PLIST
