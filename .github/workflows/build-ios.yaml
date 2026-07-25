@@ -111,18 +111,16 @@ jobs:
           cd ios && pod install && cd ..
           test -d ios/Runner.xcworkspace || { echo "ERROR: pod install 未生成 Runner.xcworkspace"; exit 1; }
 
-          # Archive（Manual 签名 — 使用已安装的描述文件）
-          echo "[xcodebuild] starting archive with manual signing"
+          # Archive（Automatic 签名 — 让 Xcode 自动匹配已安装的 profile）
+          echo "[xcodebuild] starting archive with automatic signing"
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/ios/Runner.xcarchive \
-            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_STYLE=Automatic \
             DEVELOPMENT_TEAM=9ZKNBU3VL4 \
             IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-            "Runner.PROVISIONING_PROFILE_SPECIFIER=iOS Team Store Provisioning Profile: uk.toworld.flclash" \
-            "PacketTunnel.PROVISIONING_PROFILE_SPECIFIER=iOS Team Store Provisioning Profile: uk.toworld.flclash.PacketTunnel" \
             -allowProvisioningUpdates \
             archive
 
