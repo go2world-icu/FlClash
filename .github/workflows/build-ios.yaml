@@ -126,6 +126,8 @@ jobs:
               <string>app-store-connect</string>
               <key>teamID</key>
               <string>9ZKNBU3VL4</string>
+              <key>signingCertificate</key>
+              <string>iOS Distribution</string>
               <key>signingStyle</key>
               <string>automatic</string>
           </dict>
