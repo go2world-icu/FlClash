@@ -56,6 +56,7 @@ jobs:
 
           # 安装描述文件（UUID 命名）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           mkdir -p ~/private_keys
 
           echo "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > app-profile.mobileprovision
@@ -67,6 +68,8 @@ jobs:
             tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
           [ -n "$APP_PROFILE_UUID" ] && cp app-profile.mobileprovision \
             ~/Library/MobileDevice/Provisioning\ Profiles/$APP_PROFILE_UUID.mobileprovision
+          [ -n "$APP_PROFILE_UUID" ] && cp app-profile.mobileprovision \
+            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$APP_PROFILE_UUID.mobileprovision
           [ -n "$APP_PROFILE_NAME" ] && echo "$APP_PROFILE_NAME" > ~/private_keys/app_profile_name.txt
           echo "APP_PROFILE_UUID=$APP_PROFILE_UUID" >> $GITHUB_ENV
 
@@ -79,6 +82,8 @@ jobs:
             tail -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
           [ -n "$PACKET_TUNNEL_PROFILE_UUID" ] && cp packettunnel-profile.mobileprovision \
             ~/Library/MobileDevice/Provisioning\ Profiles/$PACKET_TUNNEL_PROFILE_UUID.mobileprovision
+          [ -n "$PACKET_TUNNEL_PROFILE_UUID" ] && cp packettunnel-profile.mobileprovision \
+            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$PACKET_TUNNEL_PROFILE_UUID.mobileprovision
           [ -n "$PACKET_TUNNEL_PROFILE_NAME" ] && echo "$PACKET_TUNNEL_PROFILE_NAME" > ~/private_keys/packettunnel_profile_name.txt
           echo "PACKET_TUNNEL_PROFILE_UUID=$PACKET_TUNNEL_PROFILE_UUID" >> $GITHUB_ENV
 
