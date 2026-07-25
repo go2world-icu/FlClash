@@ -91,12 +91,12 @@ jobs:
 
           echo "[signing] app profile details:"
           security cms -D -i app-profile.mobileprovision > /tmp/app-profile.plist
-          plutil -extract ApplicationIdentifier raw /tmp/app-profile.plist
+          plutil -extract Entitlements.application-identifier raw /tmp/app-profile.plist
           plutil -extract Entitlements xml1 -o - /tmp/app-profile.plist | sed -n '1,80p'
 
           echo "[signing] packet tunnel profile details:"
           security cms -D -i packettunnel-profile.mobileprovision > /tmp/packettunnel-profile.plist
-          plutil -extract ApplicationIdentifier raw /tmp/packettunnel-profile.plist
+          plutil -extract Entitlements.application-identifier raw /tmp/packettunnel-profile.plist
           plutil -extract Entitlements xml1 -o - /tmp/packettunnel-profile.plist | sed -n '1,80p'
 
           # API 密钥（上传 TestFlight 用）
