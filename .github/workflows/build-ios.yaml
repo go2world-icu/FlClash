@@ -136,7 +136,10 @@ jobs:
             -archivePath build/ios/Runner.xcarchive \
             -exportPath dist/ \
             -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates
+            -allowProvisioningUpdates \
+            -authenticationKeyPath $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
 
           # 重命名 IPA
           mv dist/Runner.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
