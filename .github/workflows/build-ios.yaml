@@ -121,6 +121,8 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=9ZKNBU3VL4 \
             IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            "Runner.PROVISIONING_PROFILE_SPECIFIER=iOS Team Store Provisioning Profile: uk.toworld.flclash" \
+            "PacketTunnel.PROVISIONING_PROFILE_SPECIFIER=iOS Team Store Provisioning Profile: uk.toworld.flclash.PacketTunnel" \
             -allowProvisioningUpdates \
             archive
 
