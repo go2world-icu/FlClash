@@ -60,16 +60,31 @@ jobs:
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
-          # 手动安装 Provisioning Profiles
+          # 安装手动创建的非 Xcode 管理的 Distribution Profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           mkdir -p ~/private_keys
 
-          echo "[signing] profiles will be auto-managed by -allowProvisioningUpdates"
+          set +e
+          install_p() {
+            local b64="$1" label="$2"
+            [ -z "$b64" ] && { echo "[signing] WARNING: empty secret for $label"; return; }
+            echo "$b64" | base64 --decode > /tmp/p.mobileprovision 2>/dev/null || { echo "[signing] WARNING: base64 decode failed for $label"; return; }
+            local uuid=$(plutil -extract UUID raw -o - /tmp/p.mobileprovision 2>/dev/null)
+            local name=$(plutil -extract Name raw -o - /tmp/p.mobileprovision 2>/dev/null)
+            [ -z "$uuid" ] && { echo "[signing] WARNING: no UUID for $label"; return; }
+            cp /tmp/p.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
+            cp /tmp/p.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid.mobileprovision
+            echo "[signing] installed $label: $uuid ($name)"
+          }
+          install_p "${{ secrets.IOS_PROVISIONING_PROFILE }}" "store-main"
+          install_p "${{ secrets.IOS_PACKETTUNNEL_PROFILE }}" "store-pt"
+          set -e
 
-          echo "[signing] installed profiles:"
-          ls -1 ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "  (empty)"
-          ls -1 ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ || echo "  (empty)"
+          echo "[signing] MobileDevice profiles:"
+          ls -1 ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "  (empty)"
+          echo "[signing] UserData profiles:"
+          ls -1 ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ 2>/dev/null || echo "  (empty)"
 
           # API 密钥（上传 TestFlight 用）
           mkdir -p ~/private_keys
@@ -111,10 +126,15 @@ jobs:
               <string>app-store-connect</string>
               <key>teamID</key>
               <string>9ZKNBU3VL4</string>
-              <key>signingCertificate</key>
-              <string>iOS Distribution</string>
               <key>signingStyle</key>
-              <string>automatic</string>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>uk.toworld.flclash</key>
+                  <string>ToWorld</string>
+                  <key>uk.toworld.flclash.PacketTunnel</key>
+                  <string>ToWorldPacketTunnel</string>
+              </dict>
           </dict>
           </plist>
           PLIST
@@ -122,11 +142,7 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/ios/Runner.xcarchive \
             -exportPath dist/ \
-            -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
+            -exportOptionsPlist ExportOptions.plist
 
           # 重命名 IPA
           mv dist/Runner.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
