@@ -63,29 +63,35 @@ jobs:
           mkdir -p ~/private_keys
 
           set +e
-          # 安装 ToWorld (主应用) Profile
-          printf '%s' "$IOS_PROVISIONING_PROFILE" | base64 --decode > /tmp/p.mobileprovision 2>/dev/null || true
-          uuid=$(plutil -extract UUID raw -o - /tmp/p.mobileprovision 2>/dev/null || true)
-          name=$(plutil -extract Name raw -o - /tmp/p.mobileprovision 2>/dev/null || true)
-          if [ -n "$uuid" ] && [ -s /tmp/p.mobileprovision ]; then
-            cp /tmp/p.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
-            cp /tmp/p.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid.mobileprovision
-            echo "[signing] ToWorld: $uuid ($name)"
-          else
-            echo "[signing] WARNING: failed ToWorld (size=$(wc -c < /tmp/p.mobileprovision 2>/dev/null), uuid=$uuid)"
-          fi
-
-          # 安装 ToWorldPacketTunnel Profile
-          printf '%s' "$IOS_PACKETTUNNEL_PROFILE" | base64 --decode > /tmp/p2.mobileprovision 2>/dev/null || true
-          uuid2=$(plutil -extract UUID raw -o - /tmp/p2.mobileprovision 2>/dev/null || true)
-          name2=$(plutil -extract Name raw -o - /tmp/p2.mobileprovision 2>/dev/null || true)
-          if [ -n "$uuid2" ] && [ -s /tmp/p2.mobileprovision ]; then
-            cp /tmp/p2.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid2.mobileprovision
-            cp /tmp/p2.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid2.mobileprovision
-            echo "[signing] ToWorldPacketTunnel: $uuid2 ($name2)"
-          else
-            echo "[signing] WARNING: failed ToWorldPacketTunnel (size=$(wc -c < /tmp/p2.mobileprovision 2>/dev/null), uuid=$uuid2)"
-          fi
+          python3 -c "
+import base64, os, plistlib
+def install(label, env_var):
+    b64 = os.environ.get(env_var, '')
+    if not b64:
+        print(f'[signing] WARNING: empty secret {label}')
+        return
+    try:
+        data = base64.b64decode(b64.strip())
+    except Exception as e:
+        print(f'[signing] WARNING: base64 decode failed for {label}: {e}, len={len(b64)}')
+        return
+    with open('/tmp/p.mobileprovision', 'wb') as f:
+        f.write(data)
+    try:
+        uuid = plistlib.loads(data)['UUID']
+        name = plistlib.loads(data)['Name']
+    except Exception as e:
+        print(f'[signing] WARNING: plist parse failed for {label}: {e}, size={len(data)}')
+        return
+    import shutil
+    for d in [os.path.expanduser('~/Library/MobileDevice/Provisioning Profiles'),
+              os.path.expanduser('~/Library/Developer/Xcode/UserData/Provisioning Profiles')]:
+        os.makedirs(d, exist_ok=True)
+        shutil.copy('/tmp/p.mobileprovision', os.path.join(d, f'{uuid}.mobileprovision'))
+    print(f'[signing] installed {label}: {uuid} ({name})')
+install('ToWorld', 'IOS_PROVISIONING_PROFILE')
+install('ToWorldPacketTunnel', 'IOS_PACKETTUNNEL_PROFILE')
+"
           set -e
 
           # App Store Connect API Key
