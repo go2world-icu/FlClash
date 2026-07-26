@@ -65,53 +65,7 @@ jobs:
           mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           mkdir -p ~/private_keys
 
-          set +e
-          echo "[signing] installing profiles..."
-
-          # Dev Profile - 主应用
-          printf '%s' "${{ secrets.IOS_DEVELOPMENT_PROFILE }}" | base64 --decode > ~/Desktop/app-dev.mobileprovision 2>/dev/null || true
-          APP_DEV_UUID=$(plutil -extract UUID raw -o - ~/Desktop/app-dev.mobileprovision 2>/dev/null || true)
-          if [ -n "$APP_DEV_UUID" ]; then
-            cp ~/Desktop/app-dev.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$APP_DEV_UUID.mobileprovision
-            cp ~/Desktop/app-dev.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$APP_DEV_UUID.mobileprovision
-            echo "[signing]   dev main: $APP_DEV_UUID"
-          else
-            echo "[signing]   WARNING: failed to decode dev main profile"
-          fi
-
-          # Dev Profile - PacketTunnel
-          printf '%s' "${{ secrets.IOS_DEVELOPMENT_PACKETTUNNEL_PROFILE }}" | base64 --decode > ~/Desktop/pt-dev.mobileprovision 2>/dev/null || true
-          PT_DEV_UUID=$(plutil -extract UUID raw -o - ~/Desktop/pt-dev.mobileprovision 2>/dev/null || true)
-          if [ -n "$PT_DEV_UUID" ]; then
-            cp ~/Desktop/pt-dev.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PT_DEV_UUID.mobileprovision
-            cp ~/Desktop/pt-dev.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$PT_DEV_UUID.mobileprovision
-            echo "[signing]   dev pt: $PT_DEV_UUID"
-          else
-            echo "[signing]   WARNING: failed to decode dev pt profile"
-          fi
-
-          # Store Profile - 主应用
-          printf '%s' "${{ secrets.IOS_PROVISIONING_PROFILE }}" | base64 --decode > ~/Desktop/app-store.mobileprovision 2>/dev/null || true
-          APP_STORE_UUID=$(plutil -extract UUID raw -o - ~/Desktop/app-store.mobileprovision 2>/dev/null || true)
-          if [ -n "$APP_STORE_UUID" ]; then
-            cp ~/Desktop/app-store.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$APP_STORE_UUID.mobileprovision
-            cp ~/Desktop/app-store.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$APP_STORE_UUID.mobileprovision
-            echo "[signing]   store main: $APP_STORE_UUID"
-          else
-            echo "[signing]   WARNING: failed to decode store main profile"
-          fi
-
-          # Store Profile - PacketTunnel
-          printf '%s' "${{ secrets.IOS_PACKETTUNNEL_PROFILE }}" | base64 --decode > ~/Desktop/pt-store.mobileprovision 2>/dev/null || true
-          PT_STORE_UUID=$(plutil -extract UUID raw -o - ~/Desktop/pt-store.mobileprovision 2>/dev/null || true)
-          if [ -n "$PT_STORE_UUID" ]; then
-            cp ~/Desktop/pt-store.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PT_STORE_UUID.mobileprovision
-            cp ~/Desktop/pt-store.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$PT_STORE_UUID.mobileprovision
-            echo "[signing]   store pt: $PT_STORE_UUID"
-          else
-            echo "[signing]   WARNING: failed to decode store pt profile"
-          fi
-          set -e
+          echo "[signing] profiles will be auto-managed by -allowProvisioningUpdates"
 
           echo "[signing] installed profiles:"
           ls -1 ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "  (empty)"
@@ -168,7 +122,11 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/ios/Runner.xcarchive \
             -exportPath dist/ \
-            -exportOptionsPlist ExportOptions.plist
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
 
           # 重命名 IPA
           mv dist/Runner.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
