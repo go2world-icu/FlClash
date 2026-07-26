@@ -116,6 +116,16 @@ jobs:
             -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \
             archive
 
+          # 导出前检查 profile 状态
+          echo "[debug] profiles in MobileDevice:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "  (empty)"
+          echo "[debug] profiles in UserData:"
+          ls -la ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ || echo "  (empty)"
+          echo "[debug] profile details:"
+          for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            [ -f "$f" ] && echo "--- $f ---" && security cms -D -i "$f" 2>/dev/null | plutil -extract Name raw -o - -
+          done
+
           # 导出 IPA
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
