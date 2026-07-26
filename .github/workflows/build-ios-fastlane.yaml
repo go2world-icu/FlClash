@@ -40,9 +40,42 @@ jobs:
           flutter --version
           flutter pub get
 
-      - name: Setup App Store Connect API Key
+      - name: Setup Code Signing
         run: |
+          # 创建专用钥匙串
+          security create-keychain -p temp build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p temp build.keychain
+
+          # 导入 iPhone Distribution 证书
+          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain \
+            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+
+          # 安装 ToWorld Provisioning Profiles
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           mkdir -p ~/private_keys
+
+          set +e
+          install_p() {
+            local b64="$1" label="$2"
+            [ -z "$b64" ] && { echo "[signing] WARNING: empty secret for $label"; return; }
+            echo "$b64" | base64 --decode > /tmp/p.mobileprovision 2>/dev/null || { echo "[signing] WARNING: base64 decode failed for $label"; return; }
+            local uuid=$(plutil -extract UUID raw -o - /tmp/p.mobileprovision 2>/dev/null)
+            local name=$(plutil -extract Name raw -o - /tmp/p.mobileprovision 2>/dev/null)
+            [ -z "$uuid" ] && { echo "[signing] WARNING: no UUID for $label"; return; }
+            cp /tmp/p.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
+            cp /tmp/p.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid.mobileprovision
+            echo "[signing] installed $label: $uuid ($name)"
+          }
+          install_p "${{ secrets.IOS_PROVISIONING_PROFILE }}" "ToWorld"
+          install_p "${{ secrets.IOS_PACKETTUNNEL_PROFILE }}" "ToWorldPacketTunnel"
+          set -e
+
+          # App Store Connect API Key
           echo "${{ secrets.ASC_API_KEY }}" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
 
       - name: Build & Export IPA
@@ -64,8 +97,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             archive
 
-          # Export（Xcode 自动签名 + ASC API Key）
-          echo "[xcodebuild] exporting with auto signing"
+          # Export（Manual 签名 + ToWorld profiles）
+          echo "[xcodebuild] exporting with manual signing"
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -75,6 +108,17 @@ jobs:
               <string>app-store-connect</string>
               <key>teamID</key>
               <string>9ZKNBU3VL4</string>
+              <key>signingCertificate</key>
+              <string>iOS Distribution</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>uk.toworld.flclash</key>
+                  <string>ToWorld</string>
+                  <key>uk.toworld.flclash.PacketTunnel</key>
+                  <string>ToWorldPacketTunnel</string>
+              </dict>
           </dict>
           </plist>
           PLIST
@@ -82,11 +126,7 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/ios/Runner.xcarchive \
             -exportPath dist/ \
-            -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
+            -exportOptionsPlist ExportOptions.plist
 
           # 重命名 IPA
           mv dist/Runner.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
