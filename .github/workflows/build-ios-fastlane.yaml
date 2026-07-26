@@ -111,6 +111,16 @@ jobs:
             archive
 
           # Export（Manual 签名 + ToWorld profiles）
+          echo "[debug] profiles on disk before export:"
+          echo "  MobileDevice:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "    (empty)"
+          echo "  UserData:"
+          ls -la ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ 2>/dev/null || echo "    (empty)"
+          echo "[debug] profile names:"
+          for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            [ -f "$f" ] && echo "  $(basename $f): $(security cms -D -i "$f" 2>/dev/null | plutil -extract Name raw -o - -)"
+          done
+
           echo "[xcodebuild] exporting with manual signing"
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
