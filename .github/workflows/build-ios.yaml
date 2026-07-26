@@ -60,6 +60,9 @@ jobs:
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
+          # Dev p12 可能带入了 Apple Distribution 证书，删掉避免 Xcode 优先选它
+          security delete-certificate -c "Apple Distribution: Faying Cheng" build.keychain 2>/dev/null || true
+
           # 安装手动创建的非 Xcode 管理的 Distribution Profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
@@ -126,6 +129,8 @@ jobs:
               <string>app-store-connect</string>
               <key>teamID</key>
               <string>9ZKNBU3VL4</string>
+              <key>signingCertificate</key>
+              <string>iOS Distribution</string>
               <key>signingStyle</key>
               <string>manual</string>
               <key>provisioningProfiles</key>
