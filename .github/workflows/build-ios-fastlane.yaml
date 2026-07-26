@@ -57,9 +57,10 @@ jobs:
           echo "[xcodebuild] archiving without signing"
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
-            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -configuration Release \
             -archivePath build/ios/Runner.xcarchive \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             CODE_SIGNING_ALLOWED=NO \
             archive
 
