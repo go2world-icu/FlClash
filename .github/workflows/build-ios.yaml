@@ -60,31 +60,10 @@ jobs:
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
-          # 安装描述文件到两个路径
+          # 安装描述文件（让 Xcode 通过 -allowProvisioningUpdates 自动管理）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           mkdir -p ~/private_keys
-
-          install_profile() {
-            local b64="$1"
-            [ -z "$b64" ] && return
-            echo "$b64" | base64 --decode > /tmp/tmp-profile.mobileprovision 2>/dev/null || return
-            local uuid=$(plutil -extract UUID raw -o - /tmp/tmp-profile.mobileprovision 2>/dev/null)
-            [ -z "$uuid" ] && return
-            cp /tmp/tmp-profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
-            cp /tmp/tmp-profile.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid.mobileprovision
-            echo "[signing] installed $uuid ($(plutil -extract Name raw -o - /tmp/tmp-profile.mobileprovision 2>/dev/null))"
-          }
-
-          install_profile "${{ secrets.IOS_DEVELOPMENT_PROFILE }}"
-          install_profile "${{ secrets.IOS_PROVISIONING_PROFILE }}"
-          install_profile "${{ secrets.IOS_DEVELOPMENT_PACKETTUNNEL_PROFILE }}"
-          install_profile "${{ secrets.IOS_PACKETTUNNEL_PROFILE }}"
-
-          echo "[signing] all installed provisioning profiles:"
-          ls -1 ~/Library/MobileDevice/Provisioning\ Profiles || true
-          echo ""
-          ls -1 ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles || true
 
           # API 密钥（上传 TestFlight 用）
           mkdir -p ~/private_keys
@@ -116,16 +95,6 @@ jobs:
             -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \
             archive
 
-          # 导出前检查 profile 状态
-          echo "[debug] profiles in MobileDevice:"
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "  (empty)"
-          echo "[debug] profiles in UserData:"
-          ls -la ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ || echo "  (empty)"
-          echo "[debug] profile details:"
-          for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
-            [ -f "$f" ] && echo "--- $f ---" && security cms -D -i "$f" 2>/dev/null | plutil -extract Name raw -o - -
-          done
-
           # 导出 IPA
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -148,6 +117,7 @@ jobs:
             -archivePath build/ios/Runner.xcarchive \
             -exportPath dist/ \
             -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
             -authenticationKeyPath $HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
             -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
             -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }}
