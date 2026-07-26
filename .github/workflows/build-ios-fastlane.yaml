@@ -41,6 +41,9 @@ jobs:
           flutter pub get
 
       - name: Setup Code Signing
+        env:
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          IOS_PACKETTUNNEL_PROFILE: ${{ secrets.IOS_PACKETTUNNEL_PROFILE }}
         run: |
           # 创建专用钥匙串
           security create-keychain -p temp build.keychain
@@ -60,25 +63,29 @@ jobs:
           mkdir -p ~/private_keys
 
           set +e
-          for label in IOS_PROVISIONING_PROFILE IOS_PACKETTUNNEL_PROFILE; do
-            # 用 heredoc 写入 base64，然后解码
-            case "$label" in
-              IOS_PROVISIONING_PROFILE) b64="${{ secrets.IOS_PROVISIONING_PROFILE }}" ;;
-              IOS_PACKETTUNNEL_PROFILE) b64="${{ secrets.IOS_PACKETTUNNEL_PROFILE }}" ;;
-            esac
-            [ -z "$b64" ] && { echo "[signing] WARNING: empty secret $label"; continue; }
-            echo "$b64" | tr -d '\n\r' | base64 --decode > /tmp/p.mobileprovision 2>/dev/null
-            if [ $? -ne 0 ] || [ ! -s /tmp/p.mobileprovision ]; then
-              echo "[signing] WARNING: base64 decode failed for $label (len=${#b64})"
-              continue
-            fi
-            uuid=$(plutil -extract UUID raw -o - /tmp/p.mobileprovision 2>/dev/null)
-            name=$(plutil -extract Name raw -o - /tmp/p.mobileprovision 2>/dev/null)
-            [ -z "$uuid" ] && { echo "[signing] WARNING: no UUID for $label"; continue; }
+          # 安装 ToWorld (主应用) Profile
+          printf '%s' "$IOS_PROVISIONING_PROFILE" | base64 --decode > /tmp/p.mobileprovision 2>/dev/null || true
+          uuid=$(plutil -extract UUID raw -o - /tmp/p.mobileprovision 2>/dev/null || true)
+          name=$(plutil -extract Name raw -o - /tmp/p.mobileprovision 2>/dev/null || true)
+          if [ -n "$uuid" ] && [ -s /tmp/p.mobileprovision ]; then
             cp /tmp/p.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
             cp /tmp/p.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid.mobileprovision
-            echo "[signing] installed $label: $uuid ($name)"
-          done
+            echo "[signing] ToWorld: $uuid ($name)"
+          else
+            echo "[signing] WARNING: failed ToWorld (size=$(wc -c < /tmp/p.mobileprovision 2>/dev/null), uuid=$uuid)"
+          fi
+
+          # 安装 ToWorldPacketTunnel Profile
+          printf '%s' "$IOS_PACKETTUNNEL_PROFILE" | base64 --decode > /tmp/p2.mobileprovision 2>/dev/null || true
+          uuid2=$(plutil -extract UUID raw -o - /tmp/p2.mobileprovision 2>/dev/null || true)
+          name2=$(plutil -extract Name raw -o - /tmp/p2.mobileprovision 2>/dev/null || true)
+          if [ -n "$uuid2" ] && [ -s /tmp/p2.mobileprovision ]; then
+            cp /tmp/p2.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid2.mobileprovision
+            cp /tmp/p2.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$uuid2.mobileprovision
+            echo "[signing] ToWorldPacketTunnel: $uuid2 ($name2)"
+          else
+            echo "[signing] WARNING: failed ToWorldPacketTunnel (size=$(wc -c < /tmp/p2.mobileprovision 2>/dev/null), uuid=$uuid2)"
+          fi
           set -e
 
           # App Store Connect API Key
