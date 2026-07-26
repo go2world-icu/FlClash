@@ -41,9 +41,6 @@ jobs:
           flutter pub get
 
       - name: Setup Code Signing
-        env:
-          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
-          IOS_PACKETTUNNEL_PROFILE: ${{ secrets.IOS_PACKETTUNNEL_PROFILE }}
         run: |
           # 创建专用钥匙串
           security create-keychain -p temp build.keychain
@@ -56,43 +53,22 @@ jobs:
             -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+          security delete-certificate -c "Apple Distribution: Faying Cheng" build.keychain 2>/dev/null || true
 
-          # 安装 ToWorld Provisioning Profiles
+          # 安装仓库中的 Provisioning Profiles（无需 secrets）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           mkdir -p ~/private_keys
 
-          set +e
-          python3 -c "
-import base64, os, plistlib
-def install(label, env_var):
-    b64 = os.environ.get(env_var, '')
-    if not b64:
-        print(f'[signing] WARNING: empty secret {label}')
-        return
-    try:
-        data = base64.b64decode(b64.strip())
-    except Exception as e:
-        print(f'[signing] WARNING: base64 decode failed for {label}: {e}, len={len(b64)}')
-        return
-    with open('/tmp/p.mobileprovision', 'wb') as f:
-        f.write(data)
-    try:
-        uuid = plistlib.loads(data)['UUID']
-        name = plistlib.loads(data)['Name']
-    except Exception as e:
-        print(f'[signing] WARNING: plist parse failed for {label}: {e}, size={len(data)}')
-        return
-    import shutil
-    for d in [os.path.expanduser('~/Library/MobileDevice/Provisioning Profiles'),
-              os.path.expanduser('~/Library/Developer/Xcode/UserData/Provisioning Profiles')]:
-        os.makedirs(d, exist_ok=True)
-        shutil.copy('/tmp/p.mobileprovision', os.path.join(d, f'{uuid}.mobileprovision'))
-    print(f'[signing] installed {label}: {uuid} ({name})')
-install('ToWorld', 'IOS_PROVISIONING_PROFILE')
-install('ToWorldPacketTunnel', 'IOS_PACKETTUNNEL_PROFILE')
-"
-          set -e
+          cp ios/ToWorld.mobileprovision \
+            ~/Library/MobileDevice/Provisioning\ Profiles/340b6121-77d2-4d0a-81f5-e9241d1524b5.mobileprovision
+          cp ios/ToWorld.mobileprovision \
+            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/340b6121-77d2-4d0a-81f5-e9241d1524b5.mobileprovision
+          cp ios/ToWorldPacketTunnel.mobileprovision \
+            ~/Library/MobileDevice/Provisioning\ Profiles/efbd09e0-c128-4857-b7ee-987f9b4260e4.mobileprovision
+          cp ios/ToWorldPacketTunnel.mobileprovision \
+            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/efbd09e0-c128-4857-b7ee-987f9b4260e4.mobileprovision
+          echo "[signing] profiles installed from repo ($(ls ~/Library/MobileDevice/Provisioning\ Profiles/ | wc -l) files)"
 
           # App Store Connect API Key
           echo "${{ secrets.ASC_API_KEY }}" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
@@ -117,16 +93,6 @@ install('ToWorldPacketTunnel', 'IOS_PACKETTUNNEL_PROFILE')
             archive
 
           # Export（Manual 签名 + ToWorld profiles）
-          echo "[debug] profiles on disk before export:"
-          echo "  MobileDevice:"
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ 2>/dev/null || echo "    (empty)"
-          echo "  UserData:"
-          ls -la ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ 2>/dev/null || echo "    (empty)"
-          echo "[debug] profile names:"
-          for f in ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
-            [ -f "$f" ] && echo "  $(basename $f): $(security cms -D -i "$f" 2>/dev/null | plutil -extract Name raw -o - -)"
-          done
-
           echo "[xcodebuild] exporting with manual signing"
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
