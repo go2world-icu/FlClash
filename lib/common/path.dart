@@ -42,18 +42,25 @@ class AppPath {
             'App Group container unavailable, falling back to sandbox',
             logLevel: LogLevel.error,
           );
-          dataDir.complete(await getApplicationSupportDirectory());
+          final dir = Directory(join(
+            (await getApplicationSupportDirectory()).path,
+            appName,
+          ));
+          await dir.create(recursive: true);
+          dataDir.complete(dir);
           return;
         }
-        final dir = Directory(join(containerPath, 'FlClash'));
+        final dir = Directory(join(containerPath, appName));
         await dir.create(recursive: true);
         commonPrint.log('homeDir: ${dir.path}');
         dataDir.complete(dir);
       });
       return;
     }
-    getApplicationSupportDirectory().then((value) {
-      dataDir.complete(value);
+    getApplicationSupportDirectory().then((value) async {
+      final dir = Directory(join(value.path, appName));
+      await dir.create(recursive: true);
+      dataDir.complete(dir);
     });
   }
 
