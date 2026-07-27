@@ -1,4 +1,4 @@
-display_name: FlClash
+display_name: ToWorld
 
 icon: ./assets/images/icon.png
 
@@ -8,7 +8,7 @@ keywords:
   - ClashMeta
   - Proxy
 
-generic_name: FlClash
+generic_name: ToWorld
 
 categories:
   - Network

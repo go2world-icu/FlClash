@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>FlClash</string>
+	<string>ToWorld</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -40,11 +40,11 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSCameraUsageDescription</key>
-	<string>FlClash uses the camera to scan QR codes for importing profiles and proxies.</string>
+	<string>ToWorld uses the camera to scan QR codes for importing profiles and proxies.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>FlClash uses your location to read the current Wi-Fi name (SSID) for network-based rules.</string>
+	<string>ToWorld uses your location to read the current Wi-Fi name (SSID) for network-based rules.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>FlClash accesses your photo library to import QR code images.</string>
+	<string>ToWorld accesses your photo library to import QR code images.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
