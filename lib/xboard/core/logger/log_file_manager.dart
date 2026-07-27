@@ -1,6 +1,7 @@
-/// Encrypted file log output with 1-day retention
+/// Encrypted single-file log output with 1-day retention
 ///
-/// 基于 `logger` 包的加密文件日志输出，自动按天轮转并清理超期日志
+/// 基于 `logger` 包的加密文件日志输出，使用 AppPath 统一管理路径。
+/// 单文件按天命名（xboard_yyyy-MM-dd.log.enc），保留 1 天。
 library;
 
 import 'dart:io';
@@ -8,27 +9,24 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:logger/logger.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:crypto/crypto.dart';
 
-/// 加密文件日志输出
+import 'package:fl_clash/common/path.dart' show appPath;
+
+/// AES-256-CBC 加密单文件日志输出
 ///
 /// 功能：
-/// - 按天轮转日志文件（app_yyyy-MM-dd.log.enc）
+/// - 单文件按天命名：xboard_yyyy-MM-dd.log.enc
+/// - 保留 1 天，旧文件自动删除
 /// - AES-256-CBC 加密存储
-/// - 自动清理超过 1 天的旧日志
-/// - 支持导出日志文件
+/// - 支持解密导出
 class EncryptedFileLogOutput extends LogOutput {
-  static const Duration _maxAge = Duration(days: 1);
-  static const String _logDirName = 'xboard_logs';
-  static const String _filePrefix = 'app_';
+  static const String _fileNamePrefix = 'xboard_';
   static const String _fileExtension = '.log.enc';
 
   final String appKey;
-  late Directory _logDir;
   File? _currentFile;
-  String? _currentDateStr;
   late encrypt.Key _key;
   late encrypt.IV _iv;
   bool _initialized = false;
@@ -36,19 +34,13 @@ class EncryptedFileLogOutput extends LogOutput {
   /// [appKey] 用于派生加密密钥的应用密钥
   EncryptedFileLogOutput({this.appKey = 'xboard_default_key'});
 
-  /// [baseDir] — custom log directory (e.g. App Group on iOS).  Falls back
-  /// to `getApplicationDocumentsDirectory()` when omitted.
   @override
   Future<void> init({String? baseDir}) async {
     if (_initialized) return;
     super.init();
 
-    final dirPath = baseDir ?? (await getApplicationDocumentsDirectory()).path;
-    _logDir = Directory('$dirPath/$_logDirName');
-
-    if (!await _logDir.exists()) {
-      await _logDir.create(recursive: true);
-    }
+    // 路径统一由 AppPath 管理，存放到临时目录
+    final dirPath = await appPath.tempPath;
 
     // 派生 AES-256 密钥（SHA-256 哈希）
     final keyBytes = sha256.convert(utf8.encode(appKey)).bytes;
@@ -57,11 +49,30 @@ class EncryptedFileLogOutput extends LogOutput {
     final ivHash = sha256.convert(utf8.encode('${appKey}_iv')).bytes;
     _iv = encrypt.IV(Uint8List.fromList(ivHash.sublist(0, 16)));
 
-    // 清理过期日志
-    await _cleanOldLogs();
+    // 按天命名，保留当天文件，删除旧文件
+    final today = _dateString(DateTime.now());
+    _currentFile = File('$dirPath/$_fileNamePrefix$today$_fileExtension');
 
-    // 初始化当日日志文件
-    await _rotateFile();
+    // 清理非今天的日志文件（保留 1 天）
+    final dir = Directory(dirPath);
+    if (await dir.exists()) {
+      await for (final entity in dir.list()) {
+        if (entity is File &&
+            entity.path.startsWith('$dirPath/$_fileNamePrefix') &&
+            entity.path.endsWith(_fileExtension) &&
+            entity.path != _currentFile!.path) {
+          try {
+            await entity.delete();
+          } catch (_) {
+            // 忽略删除失败
+          }
+        }
+      }
+    }
+
+    if (!await _currentFile!.exists()) {
+      await _currentFile!.create();
+    }
 
     _initialized = true;
   }
@@ -69,14 +80,8 @@ class EncryptedFileLogOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
     if (!_initialized || _currentFile == null) return;
+
     final now = DateTime.now();
-    final dateStr = _dateString(now);
-
-    // 如果日期变更，轮转文件
-    if (dateStr != _currentDateStr) {
-      _rotateFile();
-    }
-
     final timestamp = _formatTimestamp(now);
     final level = event.level.name.toUpperCase();
 
@@ -140,67 +145,17 @@ class EncryptedFileLogOutput extends LogOutput {
     return buffer.toString();
   }
 
-  /// 获取日志目录路径
-  String get logDirectoryPath => _logDir.path;
-
-  /// 获取所有日志文件列表
-  Future<List<File>> getLogFiles() async {
-    if (!await _logDir.exists()) return [];
-
-    return _logDir.list().where((entity) =>
-      entity is File &&
-      entity.path.endsWith(_fileExtension)
-    ).cast<File>().toList();
-  }
-
-  /// 获取当日日志文件路径
+  /// 获取日志文件路径
   String? get currentLogFilePath => _currentFile?.path;
 
-  /// 轮转日志文件（按天）
-  Future<void> _rotateFile() async {
-    final now = DateTime.now();
-    _currentDateStr = _dateString(now);
-    final fileName = '$_filePrefix$_currentDateStr$_fileExtension';
-    final file = File('${_logDir.path}/$fileName');
-
-    if (!await file.exists()) {
-      await file.create();
-    }
-
-    _currentFile = file;
-
-    // 每次轮转时顺便清理
-    await _cleanOldLogs();
-  }
-
-  /// 清理超过 1 天的旧日志
-  Future<void> _cleanOldLogs() async {
-    if (!await _logDir.exists()) return;
-
-    final cutoff = DateTime.now().subtract(_maxAge);
-
-    await for (final entity in _logDir.list()) {
-      if (entity is File && entity.path.endsWith(_fileExtension)) {
-        try {
-          final stat = await entity.stat();
-          if (stat.modified.isBefore(cutoff)) {
-            await entity.delete();
-          }
-        } catch (_) {
-          // 跳过无法读取的文件
-        }
-      }
-    }
-  }
-
   String _dateString(DateTime dt) {
-    return '${dt.year}-${_pad(dt.month)}-${_pad(dt.day)}';
+    return '${dt.year}-${_p(dt.month)}-${_p(dt.day)}';
   }
 
   String _formatTimestamp(DateTime dt) {
-    return '${dt.year}-${_pad(dt.month)}-${_pad(dt.day)} '
-        '${_pad(dt.hour)}:${_pad(dt.minute)}:${_pad(dt.second)}';
+    return '${dt.year}-${_p(dt.month)}-${_p(dt.day)} '
+        '${_p(dt.hour)}:${_p(dt.minute)}:${_p(dt.second)}';
   }
 
-  String _pad(int n) => n.toString().padLeft(2, '0');
+  String _p(int n) => n.toString().padLeft(2, '0');
 }

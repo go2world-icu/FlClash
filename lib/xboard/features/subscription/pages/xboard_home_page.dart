@@ -311,16 +311,19 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     setState(() => _isUploading = true);
 
     try {
-      // 读取最新的日志文件
-      final logFiles = await fileOutput.getLogFiles();
-      if (logFiles.isEmpty) {
-        _showSnackBar('暂无日志文件');
+      // 单文件模式，直接获取当前日志文件
+      final logPath = fileOutput.currentLogFilePath;
+      if (logPath == null) {
+        _showSnackBar('日志文件未初始化');
         return;
       }
-      logFiles.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
-      final latestFile = logFiles.first;
-      final fileBytes = await latestFile.readAsBytes();
-      final filename = latestFile.path.split(Platform.pathSeparator).last;
+      final logFile = File(logPath);
+      if (!await logFile.exists()) {
+        _showSnackBar('日志文件不存在');
+        return;
+      }
+      final fileBytes = await logFile.readAsBytes();
+      final filename = logFile.path.split(Platform.pathSeparator).last;
 
       // 设备信息
       final deviceInfoResult = await DeviceInfoService.collectBasicDeviceInfo();

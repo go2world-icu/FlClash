@@ -38,7 +38,7 @@ class LogUploadService {
 
   /// 上报日志文件到服务端
   ///
-  /// [fileOutput] 加密文件输出实例（包含文件和密钥信息）
+  /// [fileOutput] 加密文件输出实例（包含文件路径和密钥信息）
   /// [authToken] Bearer Token 用于接口鉴权
   /// [extraData] 可选的额外数据
   Future<LogUploadResult> uploadLogs(
@@ -47,26 +47,24 @@ class LogUploadService {
     Map<String, dynamic>? extraData,
   }) async {
     try {
-      // 获取所有日志文件列表
-      final logFiles = await fileOutput.getLogFiles();
-      if (logFiles.isEmpty) {
-        return const LogUploadFailure('暂无日志文件');
+      // 单文件模式，直接获取当前日志文件
+      final logPath = fileOutput.currentLogFilePath;
+      if (logPath == null) {
+        return const LogUploadFailure('日志文件未初始化');
       }
-
-      // 读取最新的日志文件（当天的）
-      final latestFile = _getLatestFile(logFiles);
-      if (latestFile == null) {
-        return const LogUploadFailure('无可用日志文件');
+      final logFile = File(logPath);
+      if (!await logFile.exists()) {
+        return const LogUploadFailure('日志文件不存在');
       }
 
       // 读取文件内容
-      final fileBytes = await latestFile.readAsBytes();
+      final fileBytes = await logFile.readAsBytes();
 
       // 构建上传表单
       final formData = FormData.fromMap({
         'log_file': MultipartFile.fromBytes(
           fileBytes,
-          filename: latestFile.path.split(Platform.pathSeparator).last,
+          filename: logFile.path.split(Platform.pathSeparator).last,
         ),
         if (extraData != null) ...extraData,
       });
@@ -106,18 +104,5 @@ class LogUploadService {
       }
       return LogUploadFailure('上报失败: $e');
     }
-  }
-
-  /// 获取最新的日志文件
-  File? _getLatestFile(List<File> files) {
-    if (files.isEmpty) return null;
-
-    files.sort((a, b) {
-      final aStat = a.statSync();
-      final bStat = b.statSync();
-      return bStat.modified.compareTo(aStat.modified);
-    });
-
-    return files.first;
   }
 }
