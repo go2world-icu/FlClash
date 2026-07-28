@@ -74,6 +74,12 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# GCC 14+ treats va_list as incompatible with void* in third-party C code
+# (jni FFI plugin). Downgrade the error to a warning for the jni target.
+if(TARGET jni)
+  target_compile_options(jni PRIVATE -Wno-error=incompatible-pointer-types)
+endif()
+
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build
