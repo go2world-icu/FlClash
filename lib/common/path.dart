@@ -45,15 +45,17 @@ class AppPath {
           dataDir.complete(await getApplicationSupportDirectory());
           return;
         }
-        final dir = Directory(join(containerPath, 'FlClash'));
+        final dir = Directory(join(containerPath, 'ToWorld'));
         await dir.create(recursive: true);
         commonPrint.log('homeDir: ${dir.path}');
         dataDir.complete(dir);
       });
       return;
     }
-    getApplicationSupportDirectory().then((value) {
-      dataDir.complete(value);
+    getApplicationSupportDirectory().then((value) async {
+      final dir = Directory(join(value.path, 'ToWorld'));
+      await dir.create(recursive: true);
+      dataDir.complete(dir);
     });
   }
 
