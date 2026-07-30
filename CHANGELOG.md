@@ -1,3 +1,29 @@
+## v0.8.94
+
+- 环境问题linux-arm64不编译
+
+- 不编译linux arm64
+
+- ubuntu-22.04-arm
+
+- ubuntu-22.04-arm
+
+- pub.dev
+
+- pub.dev
+
+- fix: 直接在 jni 目标上应用 -Wno-error=incompatible-pointer-types
+
+- fix: 兼容 GCC 14+ 编译 jni 插件时 va_list 类型不匹配（CMAKE_C_FLAGS）
+
+- refactor: homeDir 统一放入 appName 子目录，隔离原项目文件
+
+- fix: 全局兼容 GCC 14+ va_list 编译错误（jni FFI 插件）
+
+- fix: 兼容 GCC 14+ 编译 jni 插件时 va_list 类型不匹配
+
+- rename: FlClash -> ToWorld（仅改用户可见的显示名，保留内部标识）
+
 ## v0.8.93
 
 - fix: _hasCommand 使用 which 替代 command，兼容 CI 环境
