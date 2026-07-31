@@ -429,14 +429,14 @@ jobs:
           # 1. 推送分支和 tag 到 GitCode（空仓库也保证 tag 存在）
           git remote remove gitcode 2>/dev/null || true
           git remote add gitcode "https://oauth2:$GITCODE_TOKEN@gitcode.com/$GITCODE_OWNER/$GITCODE_REPO.git"
-          git push -q gitcode "HEAD:refs/heads/$GITCODE_BRANCH" 2>&1 | tail -1 || true
+          git push -q gitcode "HEAD:refs/heads/$GITCODE_BRANCH" --force 2>&1 | tail -1 || true
           git push -q gitcode "refs/tags/$TAG:refs/tags/$TAG" --force 2>&1 | tail -1
           git remote remove gitcode 2>/dev/null || true
 
           # 2. 创建或更新 Release（已存在则 PATCH 更新）
           EXISTING=$(curl -sS -H "$AUTH" "$API/releases/tags/$TAG")
-          if echo "$EXISTING" | grep -q '"id"'; then
-            RELEASE_ID=$(echo "$EXISTING" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          RELEASE_ID=$(echo "$EXISTING" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+          if [ -n "$RELEASE_ID" ]; then
             echo "Release $TAG exists (id=$RELEASE_ID), updating..."
             curl -sS -X PATCH "$API/releases/$RELEASE_ID" \
               -H "$AUTH" -H "Content-Type: application/json" \
@@ -447,10 +447,10 @@ jobs:
               -H "$AUTH" -H "Content-Type: application/json" \
               -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
             echo "Create response: $RESP" | head -c 500
+            RELEASE_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
           fi
 
-          # 3. 获取 release_id
-          RELEASE_ID=$(curl -sS -H "$AUTH" "$API/releases/tags/$TAG" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          # 3. 确认 release_id
           [ -z "$RELEASE_ID" ] && { echo "Failed to get release ID"; exit 1; }
           echo "Release ID: $RELEASE_ID"
 
