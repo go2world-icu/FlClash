@@ -338,10 +338,28 @@ jobs:
       #     commit-message: Update from ${{ github.ref_name }}
       #     target-directory: /tmp/
 
-      # 放在最后：Gitee 同步失败不影响整体流程，可手动同步
+  # 同步到 Gitee：与 GitCode 并行，失败不影响整体流程，可手动同步
+  sync-gitee:
+    if: ${{ env.IS_STABLE == 'true' }}
+    needs: [ upload ]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist/
+          pattern: artifact-*
+          merge-multiple: true
+
       - name: Sync release to Gitee
-        continue-on-error: true
-        if: ${{ env.IS_STABLE == 'true' }}
         env:
           TAG: ${{ github.ref_name }}
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
@@ -375,3 +393,91 @@ jobs:
               -F "file=@$file" > /dev/null
           done
           echo "Sync to Gitee complete"
+
+  # 同步到 GitCode：与 Gitee 并行，失败不影响整体流程，可手动同步
+  sync-gitcode:
+    if: ${{ env.IS_STABLE == 'true' }}
+    needs: [ upload ]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist/
+          pattern: artifact-*
+          merge-multiple: true
+
+      - name: Sync release to GitCode
+        env:
+          TAG: ${{ github.ref_name }}
+          GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
+          GITCODE_OWNER: ${{ secrets.GITCODE_OWNER }}
+          GITCODE_REPO: ${{ secrets.GITCODE_REPO }}
+          GITCODE_BRANCH: main
+        run: |
+          API="https://api.gitcode.com/api/v5/repos/$GITCODE_OWNER/$GITCODE_REPO"
+          AUTH="Authorization: Bearer $GITCODE_TOKEN"
+
+          # 1. 推送分支和 tag 到 GitCode（空仓库也保证 tag 存在）
+          git remote remove gitcode 2>/dev/null || true
+          git remote add gitcode "https://oauth2:$GITCODE_TOKEN@gitcode.com/$GITCODE_OWNER/$GITCODE_REPO.git"
+          git push -q gitcode "HEAD:refs/heads/$GITCODE_BRANCH" 2>&1 | tail -1 || true
+          git push -q gitcode "refs/tags/$TAG:refs/tags/$TAG" --force 2>&1 | tail -1
+          git remote remove gitcode 2>/dev/null || true
+
+          # 2. 创建或更新 Release（已存在则 PATCH 更新）
+          EXISTING=$(curl -sS -H "$AUTH" "$API/releases/tags/$TAG")
+          if echo "$EXISTING" | grep -q '"id"'; then
+            RELEASE_ID=$(echo "$EXISTING" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+            echo "Release $TAG exists (id=$RELEASE_ID), updating..."
+            curl -sS -X PATCH "$API/releases/$RELEASE_ID" \
+              -H "$AUTH" -H "Content-Type: application/json" \
+              -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}" > /dev/null
+          else
+            echo "Creating GitCode release $TAG..."
+            RESP=$(curl -sS -X POST "$API/releases" \
+              -H "$AUTH" -H "Content-Type: application/json" \
+              -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
+            echo "Create response: $RESP" | head -c 500
+          fi
+
+          # 3. 获取 release_id
+          RELEASE_ID=$(curl -sS -H "$AUTH" "$API/releases/tags/$TAG" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          [ -z "$RELEASE_ID" ] && { echo "Failed to get release ID"; exit 1; }
+          echo "Release ID: $RELEASE_ID"
+
+          # 4. 上传附件
+          for file in dist/*; do
+            [ -f "$file" ] || continue
+            FNAME=$(basename "$file")
+            ENC=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$FNAME")
+            echo "Getting upload URL for $FNAME..."
+            UPLOAD_INFO=$(curl -sS -H "$AUTH" "$API/releases/$TAG/upload_url?file_name=$ENC")
+            UPLOAD_URL=$(echo "$UPLOAD_INFO" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('url',''))" 2>/dev/null)
+            if [ -z "$UPLOAD_URL" ]; then
+              echo "Failed to get upload URL for $FNAME, skipping"
+              continue
+            fi
+            # 应用上传接口返回的请求头
+            echo "$UPLOAD_INFO" | python3 -c "
+            import sys, json
+            d = json.load(sys.stdin)
+            for k, v in (d.get('headers') or {}).items():
+                print(f'{k}: {v}')
+            " > /tmp/gitcode_headers.txt
+            echo "Uploading $FNAME..."
+            if [ -s /tmp/gitcode_headers.txt ]; then
+              curl -sS -X PUT "$UPLOAD_URL" -H @/tmp/gitcode_headers.txt --data-binary "@$file" > /dev/null
+            else
+              curl -sS -X PUT "$UPLOAD_URL" --data-binary "@$file" > /dev/null
+            fi
+          done
+          echo "Sync to GitCode complete"
