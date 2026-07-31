@@ -267,20 +267,20 @@ jobs:
           sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
 
       - name: Generate sha256
-        if: ${{ env.IS_STABLE == 'true' }}
+        if: ${{ !contains(github.ref, '-') }}
         run: |
           cd ./dist
           sha256sum ./* > SHA256SUMS
 
       - name: Release
-        if: ${{ env.IS_STABLE == 'true' }}
+        if: ${{ !contains(github.ref, '-') }}
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/*
           body_path: './release.md'
 
       - name: Trigger FlClash-Publish sync
-        if: ${{ env.IS_STABLE == 'true' }}
+        if: ${{ !contains(github.ref, '-') }}
         run: |
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.FlClash_AND_Publish_PAT }}" \
@@ -340,7 +340,7 @@ jobs:
 
   # 同步到 Gitee：与 GitCode 并行，失败不影响整体流程，可手动同步
   sync-gitee:
-    if: ${{ env.IS_STABLE == 'true' }}
+    if: ${{ !contains(github.ref, '-') }}
     needs: [ upload ]
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -396,7 +396,7 @@ jobs:
 
   # 同步到 GitCode：与 Gitee 并行，失败不影响整体流程，可手动同步
   sync-gitcode:
-    if: ${{ env.IS_STABLE == 'true' }}
+    if: ${{ !contains(github.ref, '-') }}
     needs: [ upload ]
     runs-on: ubuntu-latest
     continue-on-error: true
