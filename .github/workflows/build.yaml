@@ -415,11 +415,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Download
         uses: actions/download-artifact@v4
         with:
@@ -433,28 +428,19 @@ jobs:
           GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
           GITCODE_OWNER: ${{ secrets.GITCODE_OWNER }}
           GITCODE_REPO: ${{ secrets.GITCODE_REPO }}
-          GITCODE_BRANCH: main
         run: |
           API="https://api.gitcode.com/api/v5/repos/$GITCODE_OWNER/$GITCODE_REPO"
           AUTH="Authorization: Bearer $GITCODE_TOKEN"
 
-          # 1. 推送分支和 tag 到 GitCode（空仓库也保证 tag 存在）
-          git remote remove gitcode 2>/dev/null || true
-          git remote add gitcode "https://oauth2:$GITCODE_TOKEN@gitcode.com/$GITCODE_OWNER/$GITCODE_REPO.git"
-          git push -q gitcode "HEAD:refs/heads/$GITCODE_BRANCH" --force 2>&1 | tail -1 || true
-          git push -q gitcode "refs/tags/$TAG:refs/tags/$TAG" --force 2>&1 | tail -1
-          git remote remove gitcode 2>/dev/null || true
-
-          # 2. 确保 Release 存在（GitCode 用 tag_name 操作，不需要数字 id）
-          echo "Ensuring GitCode release $TAG..."
+          # 1. 创建 Release（GitCode 不需要 tag 预先存在）
+          echo "Creating GitCode release $TAG..."
           RESP=$(curl -sS -X POST "$API/releases" \
             -H "$AUTH" -H "Content-Type: application/json" \
-            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"ToWorld $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
-          HTTP_C=$(echo "$RESP" | head -c 200)
-          echo "Create: $HTTP_C"
-          # 409 = 已存在，201/200 = 创建成功，都继续上传
+            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"ToWorld $TAG\",\"target_commitish\":\"main\"}")
+          echo "Create: $(echo "$RESP" | head -c 200)"
+          # 409 = 已存在，200/201 = 创建成功，都继续上传
 
-          # 3. 上传附件（upload_url 直接用 tag 名）
+          # 2. 上传附件（upload_url 直接用 tag 名）
           for file in dist/*; do
             [ -f "$file" ] || continue
             FNAME=$(basename "$file")
