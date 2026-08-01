@@ -445,33 +445,16 @@ jobs:
           git push -q gitcode "refs/tags/$TAG:refs/tags/$TAG" --force 2>&1 | tail -1
           git remote remove gitcode 2>/dev/null || true
 
-          # 2. 尝试创建 Release，若已存在则从列表查已有 ID
-          echo "Creating GitCode release $TAG..."
+          # 2. 确保 Release 存在（GitCode 用 tag_name 操作，不需要数字 id）
+          echo "Ensuring GitCode release $TAG..."
           RESP=$(curl -sS -X POST "$API/releases" \
             -H "$AUTH" -H "Content-Type: application/json" \
             -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"ToWorld $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
-          echo "Create response: $RESP" | head -c 500
-          RELEASE_ID=$(echo "$RESP" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+          HTTP_C=$(echo "$RESP" | head -c 200)
+          echo "Create: $HTTP_C"
+          # 409 = 已存在，201/200 = 创建成功，都继续上传
 
-          if [ -z "$RELEASE_ID" ]; then
-            echo "Release may already exist, fetching from list..."
-            # 从列表按 tag_name 精确匹配（避免 grep 误匹配 author.id）
-            RELEASE_ID=$(curl -sS -H "$AUTH" "$API/releases?per_page=100" | \
-              python3 -c "import sys,json; d=json.load(sys.stdin); d=d if isinstance(d,list) else d.get('data',[]); [print(r['id']) for r in d if r.get('tag_name')==sys.argv[1]]" "$TAG" 2>&1 | head -1)
-
-            if [ -n "$RELEASE_ID" ]; then
-              echo "Release $TAG exists (id=$RELEASE_ID), updating body..."
-              curl -sS -X PATCH "$API/releases/$RELEASE_ID" \
-                -H "$AUTH" -H "Content-Type: application/json" \
-                -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"ToWorld $TAG\"}" > /dev/null
-            fi
-          fi
-
-          # 3. 确认 release_id
-          [ -z "$RELEASE_ID" ] && { echo "Failed to get release ID"; exit 1; }
-          echo "Release ID: $RELEASE_ID"
-
-          # 4. 上传附件
+          # 3. 上传附件（upload_url 直接用 tag 名）
           for file in dist/*; do
             [ -f "$file" ] || continue
             FNAME=$(basename "$file")
