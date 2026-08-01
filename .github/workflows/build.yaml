@@ -385,12 +385,24 @@ jobs:
           echo "Release ID: $RELEASE_ID"
 
           # 上传每个文件
+          MAX_SIZE_MB=50
           for file in dist/*; do
             [ -f "$file" ] || continue
-            echo "Uploading $(basename $file)..."
-            curl -s -X POST "$API/releases/$RELEASE_ID/attach_files" \
+            FNAME=$(basename "$file")
+            SIZE_MB=$(( $(stat -c%s "$file") / 1048576 ))
+            if [ "$SIZE_MB" -gt "$MAX_SIZE_MB" ]; then
+              echo "跳过 $FNAME (${SIZE_MB}MB 超过 Gitee ${MAX_SIZE_MB}MB 附件限制)"
+              continue
+            fi
+            echo "上传 $FNAME (${SIZE_MB}MB)..."
+            HTTP_CODE=$(curl -sS -w "%{http_code}" --max-time 600 \
+              -X POST "$API/releases/$RELEASE_ID/attach_files" \
               -F "access_token=$GITEE_TOKEN" \
-              -F "file=@$file" > /dev/null
+              -F "file=@$file" -o /tmp/gitee_upload_resp.txt)
+            echo "  HTTP $HTTP_CODE"
+            if [ "$HTTP_CODE" -ge 400 ]; then
+              echo "  上传失败，响应:"; cat /tmp/gitee_upload_resp.txt
+            fi
           done
           echo "Sync to Gitee complete"
 
@@ -433,21 +445,33 @@ jobs:
           git push -q gitcode "refs/tags/$TAG:refs/tags/$TAG" --force 2>&1 | tail -1
           git remote remove gitcode 2>/dev/null || true
 
-          # 2. 创建或更新 Release（已存在则 PATCH 更新）
-          EXISTING=$(curl -sS -H "$AUTH" "$API/releases/tags/$TAG")
-          RELEASE_ID=$(echo "$EXISTING" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
-          if [ -n "$RELEASE_ID" ]; then
-            echo "Release $TAG exists (id=$RELEASE_ID), updating..."
-            curl -sS -X PATCH "$API/releases/$RELEASE_ID" \
-              -H "$AUTH" -H "Content-Type: application/json" \
-              -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}" > /dev/null
-          else
-            echo "Creating GitCode release $TAG..."
-            RESP=$(curl -sS -X POST "$API/releases" \
-              -H "$AUTH" -H "Content-Type: application/json" \
-              -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
-            echo "Create response: $RESP" | head -c 500
-            RELEASE_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+          # 2. 先尝试创建 Release，已存在则查询已有 ID
+          echo "Creating GitCode release $TAG..."
+          RESP=$(curl -sS -X POST "$API/releases" \
+            -H "$AUTH" -H "Content-Type: application/json" \
+            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
+          echo "Create response: $RESP" | head -c 500
+          RELEASE_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Release may already exist, fetching release info..."
+            EXISTING=$(curl -sS -H "$AUTH" "$API/releases/tags/$TAG")
+            echo "Lookup response: $EXISTING" | head -c 500
+            RELEASE_ID=$(echo "$EXISTING" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+
+            # 如果 releases/tags/$TAG 也查不到，尝试从列表里翻
+            if [ -z "$RELEASE_ID" ]; then
+              echo "Trying releases list..."
+              RELEASE_ID=$(curl -sS -H "$AUTH" "$API/releases?per_page=100" | \
+                python3 -c "import sys,json; releases=json.load(sys.stdin); print(next((r['id'] for r in releases if r.get('tag_name')=='$TAG'),''))" 2>/dev/null)
+            fi
+
+            if [ -n "$RELEASE_ID" ]; then
+              echo "Release $TAG exists (id=$RELEASE_ID), updating body..."
+              curl -sS -X PATCH "$API/releases/$RELEASE_ID" \
+                -H "$AUTH" -H "Content-Type: application/json" \
+                -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}" > /dev/null
+            fi
           fi
 
           # 3. 确认 release_id
