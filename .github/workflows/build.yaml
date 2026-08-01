@@ -141,7 +141,7 @@ jobs:
           flutter build ios --release --no-codesign
           mkdir -p dist/Payload
           cp -R build/ios/iphoneos/Runner.app dist/Payload/
-          cd dist && zip -r FlClash-ios-arm64.ipa Payload/
+          cd dist && zip -r ToWorld-ios-arm64.ipa Payload/
           rm -rf Payload
 
       - name: Upload
@@ -372,7 +372,7 @@ jobs:
           echo "Creating Gitee release $TAG..."
           RESP=$(curl -sS -X POST "$API/releases" \
             -H "Content-Type: application/json" \
-            -d "{\"access_token\":\"$GITEE_TOKEN\",\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\",\"target_commitish\":\"master\"}")
+            -d "{\"access_token\":\"$GITEE_TOKEN\",\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"ToWorld $TAG\",\"target_commitish\":\"master\"}")
           echo "Create response: $RESP" | head -c 500
 
           # 获取 release_id
@@ -445,32 +445,25 @@ jobs:
           git push -q gitcode "refs/tags/$TAG:refs/tags/$TAG" --force 2>&1 | tail -1
           git remote remove gitcode 2>/dev/null || true
 
-          # 2. 先尝试创建 Release，已存在则查询已有 ID
+          # 2. 尝试创建 Release，若已存在则从列表查已有 ID
           echo "Creating GitCode release $TAG..."
           RESP=$(curl -sS -X POST "$API/releases" \
             -H "$AUTH" -H "Content-Type: application/json" \
-            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
+            -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"ToWorld $TAG\",\"target_commitish\":\"$GITCODE_BRANCH\"}")
           echo "Create response: $RESP" | head -c 500
-          RELEASE_ID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+          RELEASE_ID=$(echo "$RESP" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
 
           if [ -z "$RELEASE_ID" ]; then
-            echo "Release may already exist, fetching release info..."
-            EXISTING=$(curl -sS -H "$AUTH" "$API/releases/tags/$TAG")
-            echo "Lookup response: $EXISTING" | head -c 500
-            RELEASE_ID=$(echo "$EXISTING" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
-
-            # 如果 releases/tags/$TAG 也查不到，尝试从列表里翻
-            if [ -z "$RELEASE_ID" ]; then
-              echo "Trying releases list..."
-              RELEASE_ID=$(curl -sS -H "$AUTH" "$API/releases?per_page=100" | \
-                python3 -c "import sys,json; releases=json.load(sys.stdin); print(next((r['id'] for r in releases if r.get('tag_name')=='$TAG'),''))" 2>/dev/null)
-            fi
+            echo "Release may already exist, fetching from list..."
+            # 从列表按 tag_name 精确匹配（避免 grep 误匹配 author.id）
+            RELEASE_ID=$(curl -sS -H "$AUTH" "$API/releases?per_page=100" | \
+              python3 -c "import sys,json; d=json.load(sys.stdin); d=d if isinstance(d,list) else d.get('data',[]); [print(r['id']) for r in d if r.get('tag_name')==sys.argv[1]]" "$TAG" 2>&1 | head -1)
 
             if [ -n "$RELEASE_ID" ]; then
               echo "Release $TAG exists (id=$RELEASE_ID), updating body..."
               curl -sS -X PATCH "$API/releases/$RELEASE_ID" \
                 -H "$AUTH" -H "Content-Type: application/json" \
-                -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"FlClash $TAG\"}" > /dev/null
+                -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"body\":\"ToWorld $TAG\"}" > /dev/null
             fi
           fi
 
