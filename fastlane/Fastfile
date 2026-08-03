@@ -24,8 +24,8 @@ platform :ios do
 
   desc "Build signed IPA and upload to TestFlight"
   lane :deploy_testflight do |options|
-    setup_ci if ENV['CI']
-
+    # 注意：不要调用 setup_ci——它会在 CI 里新建 fastlane_tmp_keychain 并把默认
+    # keychain 切走，而我们已在 workflow 中把自己的 build.keychain 设为默认并导入证书。
     app_store_connect_api_key(
       key_id: ENV['ASC_KEY_ID'],
       issuer_id: ENV['ASC_ISSUER_ID'],
@@ -44,9 +44,9 @@ platform :ios do
       scheme: "Runner",
       configuration: "Release",
       xcargs: xcargs,
-      export_method: "app-store-connect",
+      export_method: "app-store",
       export_options: {
-        method: "app-store-connect",
+        method: "app-store",
         teamID: "9ZKNBU3VL4",
         signingStyle: "manual",
         provisioningProfiles: {
@@ -55,7 +55,7 @@ platform :ios do
         }
       },
       output_directory: "dist",
-      output_name: "FlClash-ios-arm64"
+      output_name: "ToWorld-ios-arm64"
     )
 
     upload_to_testflight(
