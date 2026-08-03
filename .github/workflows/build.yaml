@@ -137,11 +137,12 @@ jobs:
       - name: Build iOS
         if: startsWith(matrix.platform, 'ios')
         run: |
+          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
           make core-ios
           flutter build ios --release --no-codesign
           mkdir -p dist/Payload
           cp -R build/ios/iphoneos/Runner.app dist/Payload/
-          cd dist && zip -r ToWorld-ios-arm64.ipa Payload/
+          cd dist && zip -r "ToWorld-${version}-ios-arm64.ipa" Payload/
           rm -rf Payload
 
       - name: Upload
