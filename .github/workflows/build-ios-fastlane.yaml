@@ -76,12 +76,16 @@ jobs:
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
-          # 安装仓库中的 Provisioning Profiles（无需 secrets），按每个 profile 内嵌的 UUID 命名
+          # 安装仓库中的 Provisioning Profiles（无需 secrets），按每个 profile 内嵌的 UUID 命名。
+          # 两处都装：MobileDevice 给 codesign/export，UserData 给 Xcode 的 GatherProvisioningInputs。
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           main_uuid=$(grep -a -A1 '<key>UUID</key>' ios/ToWorld.mobileprovision | grep -a '<string>' | sed 's/.*<string>//;s/<\/string>.*//')
           pkt_uuid=$(grep -a -A1 '<key>UUID</key>' ios/ToWorldPacketTunnel.mobileprovision | grep -a '<string>' | sed 's/.*<string>//;s/<\/string>.*//')
           cp ios/ToWorld.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${main_uuid}.mobileprovision
+          cp ios/ToWorld.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/${main_uuid}.mobileprovision
           cp ios/ToWorldPacketTunnel.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${pkt_uuid}.mobileprovision
+          cp ios/ToWorldPacketTunnel.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/${pkt_uuid}.mobileprovision
           echo "MAIN_PROFILE_UUID=$main_uuid" >> "$GITHUB_ENV"
           echo "PKT_PROFILE_UUID=$pkt_uuid" >> "$GITHUB_ENV"
           echo "[signing] profiles installed ($main_uuid, $pkt_uuid)"
