@@ -58,11 +58,12 @@ platform :ios do
     # 证书 + Provisioning Profile 已由 GitHub Actions 安装到
     # ~/Library/MobileDevice/Provisioning Profiles 与默认 keychain，
     # 这里沿用旧的 xcodebuild 方案：先无签名 archive，再在 export 阶段手动签名。
-    # 从仓库里的 profile 读取内嵌 UUID，export 按 UUID 匹配（profile 名每次重建会变，不能靠名字）
-    main_uuid = `grep -a -A1 '<key>UUID</key>' ios/ToWorld.mobileprovision | grep -a '<string>' | sed 's/.*<string>//;s/<\\/string>.*//'`.strip
-    pkt_uuid = `grep -a -A1 '<key>UUID</key>' ios/ToWorldPacketTunnel.mobileprovision | grep -a '<string>' | sed 's/.*<string>//;s/<\\/string>.*//'`.strip
+    # UUID 由 workflow 的 Setup Code Signing 步骤提取并注入环境变量（MAIN_PROFILE_UUID/PKT_PROFILE_UUID），
+    # export 按 UUID 匹配（profile 名每次重建会变，不能靠名字）
+    main_uuid = ENV['MAIN_PROFILE_UUID'].to_s.strip
+    pkt_uuid = ENV['PKT_PROFILE_UUID'].to_s.strip
     if main_uuid.empty? || pkt_uuid.empty?
-      UI.user_error!("无法读取 provisioning profile 的 UUID")
+      UI.user_error!("无法读取 provisioning profile 的 UUID（需要 workflow 注入 MAIN_PROFILE_UUID/PKT_PROFILE_UUID）")
     end
 
     build_number = options[:build_number]
