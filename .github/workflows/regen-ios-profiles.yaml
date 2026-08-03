@@ -27,6 +27,19 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
+      - name: Import signing certificate
+        # sigh 创建新 profile 时需要在本地 keychain 找到那把 Distribution 证书
+        run: |
+          security create-keychain -p temp build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p temp build.keychain
+          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain \
+            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+          security find-identity -v -p codesigning build.keychain
+
       - name: Regenerate profiles
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
