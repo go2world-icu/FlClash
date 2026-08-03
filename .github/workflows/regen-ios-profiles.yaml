@@ -18,8 +18,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        # 用 GITHUB_TOKEN（非 PAT）：本 workflow 会提交修改 .github/workflows/*，
+        # 而 PAT 需要 workflow scope 才能这么推，GITHUB_TOKEN 配了 contents:write 即可
         with:
-          token: ${{ secrets.BOARD_SDK_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
