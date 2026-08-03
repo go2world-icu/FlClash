@@ -42,7 +42,7 @@ jobs:
           # 只保留 Apple Distribution，否则 sigh 建 profile 时会选错证书。
           KEEP="6186B637E95AF2B1D39B5F532413833B991D69CB"
           security find-identity -v -p codesigning build.keychain | while IFS= read -r line; do
-            hash=$(printf '%s' "$line" | sed -nE 's/^ *([0-9A-F]{40}) .*/\1/p')
+            hash=$(printf '%s' "$line" | sed -nE 's/^ *[0-9]+\) ([0-9A-F]{40}) .*/\1/p')
             if [ -n "$hash" ] && [ "$hash" != "$KEEP" ]; then
               echo "deleting $hash"
               security delete-certificate -Z "$hash" build.keychain
