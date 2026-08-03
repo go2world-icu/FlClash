@@ -38,6 +38,17 @@ jobs:
             -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+          # p12 里含 4 把证书（含旧的 iPhone Distribution 和两把 Development），
+          # 只保留 Apple Distribution，否则 sigh 建 profile 时会选错证书。
+          KEEP="6186B637E95AF2B1D39B5F532413833B991D69CB"
+          security find-identity -v -p codesigning build.keychain | while IFS= read -r line; do
+            hash=$(printf '%s' "$line" | sed -nE 's/^ *([0-9A-F]{40}) .*/\1/p')
+            if [ -n "$hash" ] && [ "$hash" != "$KEEP" ]; then
+              echo "deleting $hash"
+              security delete-certificate -Z "$hash" build.keychain
+            fi
+          done
+          echo "--- remaining identities ---"
           security find-identity -v -p codesigning build.keychain
 
       - name: Regenerate profiles
