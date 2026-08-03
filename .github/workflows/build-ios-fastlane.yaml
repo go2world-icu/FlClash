@@ -2,6 +2,11 @@ name: build-ios-fastlane
 
 on:
   workflow_dispatch:
+    inputs:
+      build_number:
+        description: '可选的构建号（build number）覆盖。TestFlight 每次上传必须比上一次大，留空则用 pubspec.yaml 的 +xxxx'
+        required: false
+        default: ''
 
 env:
   FLUTTER_VERSION: '3.44.4'
@@ -9,6 +14,7 @@ env:
 jobs:
   build-ios:
     runs-on: macos-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,10 +41,26 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_26.3.app || sudo xcode-select -s /Applications/Xcode_26.2.app
           xcodebuild -version
 
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
       - name: Get Flutter Dependency
         run: |
           flutter --version
           flutter pub get
+
+      - name: Build Go Core & Precache iOS
+        run: |
+          make core-ios
+          flutter precache --ios
+
+      - name: Install CocoaPods
+        run: |
+          cd ios && pod install && cd ..
+          test -d ios/Runner.xcworkspace || { echo "ERROR: pod install 未生成 Runner.xcworkspace"; exit 1; }
 
       - name: Setup Code Signing
         run: |
@@ -53,87 +75,27 @@ jobs:
             -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
-          security delete-certificate -c "Apple Distribution: Faying Cheng" build.keychain 2>/dev/null || true
 
           # 安装仓库中的 Provisioning Profiles（无需 secrets）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
-          mkdir -p ~/private_keys
-
           cp ios/ToWorld.mobileprovision \
             ~/Library/MobileDevice/Provisioning\ Profiles/340b6121-77d2-4d0a-81f5-e9241d1524b5.mobileprovision
-          cp ios/ToWorld.mobileprovision \
-            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/340b6121-77d2-4d0a-81f5-e9241d1524b5.mobileprovision
           cp ios/ToWorldPacketTunnel.mobileprovision \
             ~/Library/MobileDevice/Provisioning\ Profiles/efbd09e0-c128-4857-b7ee-987f9b4260e4.mobileprovision
-          cp ios/ToWorldPacketTunnel.mobileprovision \
-            ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/efbd09e0-c128-4857-b7ee-987f9b4260e4.mobileprovision
           echo "[signing] profiles installed from repo ($(ls ~/Library/MobileDevice/Provisioning\ Profiles/ | wc -l) files)"
 
-          # App Store Connect API Key
-          echo "${{ secrets.ASC_API_KEY }}" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
-
-      - name: Build & Export IPA
+      - name: Deploy to TestFlight
+        env:
+          CI: 'true'
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY: ${{ secrets.ASC_API_KEY }}
         run: |
-          make core-ios
-          flutter precache --ios
-
-          cd ios && pod install && cd ..
-          test -d ios/Runner.xcworkspace || { echo "ERROR: pod install 未生成 Runner.xcworkspace"; exit 1; }
-
-          # Archive（不签名）
-          echo "[xcodebuild] archiving without signing"
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -destination 'generic/platform=iOS' \
-            -configuration Release \
-            -archivePath build/ios/Runner.xcarchive \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-            CODE_SIGNING_ALLOWED=NO \
-            archive
-
-          # Export（Manual 签名 + ToWorld profiles）
-          echo "[xcodebuild] exporting with manual signing"
-          cat > ExportOptions.plist <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store-connect</string>
-              <key>teamID</key>
-              <string>9ZKNBU3VL4</string>
-              <key>signingCertificate</key>
-              <string>iOS Distribution</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>uk.toworld.flclash</key>
-                  <string>ToWorld</string>
-                  <key>uk.toworld.flclash.PacketTunnel</key>
-                  <string>ToWorldPacketTunnel</string>
-              </dict>
-          </dict>
-          </plist>
-          PLIST
-
-          xcodebuild -exportArchive \
-            -archivePath build/ios/Runner.xcarchive \
-            -exportPath dist/ \
-            -exportOptionsPlist ExportOptions.plist
-
-          # 重命名 IPA
-          mv dist/Runner.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
-          mv dist/fl_clash.ipa dist/FlClash-ios-arm64.ipa 2>/dev/null || \
-          { ls -la dist/; echo "ERROR: 找不到 IPA"; exit 1; }
-
-      - name: Upload to TestFlight
-        run: |
-          xcrun altool --upload-app -f dist/FlClash-ios-arm64.ipa \
-            --apiKey ${{ secrets.ASC_KEY_ID }} \
-            --apiIssuer ${{ secrets.ASC_ISSUER_ID }} \
-            --type ios
+          ARGS=""
+          if [ -n "${{ github.event.inputs.build_number }}" ]; then
+            ARGS="build_number:${{ github.event.inputs.build_number }}"
+          fi
+          bundle exec fastlane deploy_testflight $ARGS --verbose
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

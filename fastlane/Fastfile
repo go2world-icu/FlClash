@@ -21,4 +21,46 @@ platform :ios do
       development: false
     )
   end
+
+  desc "Build signed IPA and upload to TestFlight"
+  lane :deploy_testflight do |options|
+    setup_ci if ENV['CI']
+
+    app_store_connect_api_key(
+      key_id: ENV['ASC_KEY_ID'],
+      issuer_id: ENV['ASC_ISSUER_ID'],
+      key_content: ENV['ASC_API_KEY']
+    )
+
+    # 证书 + Provisioning Profile 已由 GitHub Actions 安装到
+    # ~/Library/MobileDevice/Provisioning Profiles 与默认 keychain，
+    # 这里沿用旧的 xcodebuild 方案：先无签名 archive，再在 export 阶段手动签名。
+    build_number = options[:build_number]
+    xcargs = "IPHONEOS_DEPLOYMENT_TARGET=15.0 CODE_SIGNING_ALLOWED=NO"
+    xcargs += " CURRENT_PROJECT_VERSION=#{build_number}" if build_number && !build_number.to_s.empty?
+
+    build_app(
+      workspace: "ios/Runner.xcworkspace",
+      scheme: "Runner",
+      configuration: "Release",
+      xcargs: xcargs,
+      export_method: "app-store-connect",
+      export_options: {
+        method: "app-store-connect",
+        teamID: "9ZKNBU3VL4",
+        signingStyle: "manual",
+        provisioningProfiles: {
+          "uk.toworld.flclash" => "ToWorld",
+          "uk.toworld.flclash.PacketTunnel" => "ToWorldPacketTunnel"
+        }
+      },
+      output_directory: "dist",
+      output_name: "FlClash-ios-arm64"
+    )
+
+    upload_to_testflight(
+      app_identifier: "uk.toworld.flclash",
+      skip_waiting_for_build_processing: true
+    )
+  end
 end
