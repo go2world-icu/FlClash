@@ -58,6 +58,13 @@ platform :ios do
     # 证书 + Provisioning Profile 已由 GitHub Actions 安装到
     # ~/Library/MobileDevice/Provisioning Profiles 与默认 keychain，
     # 这里沿用旧的 xcodebuild 方案：先无签名 archive，再在 export 阶段手动签名。
+    # 从仓库里的 profile 读取内嵌 UUID，export 按 UUID 匹配（profile 名每次重建会变，不能靠名字）
+    main_uuid = `grep -a -A1 '<key>UUID</key>' ios/ToWorld.mobileprovision | grep -a '<string>' | sed 's/.*<string>//;s/<\\/string>.*//'`.strip
+    pkt_uuid = `grep -a -A1 '<key>UUID</key>' ios/ToWorldPacketTunnel.mobileprovision | grep -a '<string>' | sed 's/.*<string>//;s/<\\/string>.*//'`.strip
+    if main_uuid.empty? || pkt_uuid.empty?
+      UI.user_error!("无法读取 provisioning profile 的 UUID")
+    end
+
     build_number = options[:build_number]
     xcargs = "IPHONEOS_DEPLOYMENT_TARGET=15.0 CODE_SIGNING_ALLOWED=NO"
     xcargs += " CURRENT_PROJECT_VERSION=#{build_number}" if build_number && !build_number.to_s.empty?
@@ -73,8 +80,8 @@ platform :ios do
         teamID: "9ZKNBU3VL4",
         signingStyle: "manual",
         provisioningProfiles: {
-          "uk.toworld.flclash" => "ToWorld",
-          "uk.toworld.flclash.PacketTunnel" => "ToWorldPacketTunnel"
+          "uk.toworld.flclash" => main_uuid,
+          "uk.toworld.flclash.PacketTunnel" => pkt_uuid
         }
       },
       output_directory: "dist",
