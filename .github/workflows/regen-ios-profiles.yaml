@@ -1,8 +1,8 @@
 name: regen-ios-profiles
 
 # 一键用当前 ASC 账号里最新的 Distribution 证书重建 App Store 描述文件，
-# 覆盖 ios/ToWorld.mobileprovision 与 ios/ToWorldPacketTunnel.mobileprovision，
-# 并自动把新 UUID 写回 .github/workflows/build-ios-fastlane.yaml，然后提交。
+# 覆盖 ios/ToWorld.mobileprovision 与 ios/ToWorldPacketTunnel.mobileprovision 并提交。
+# build-ios-fastlane.yaml 会自动读取 profile 内嵌的 UUID，无需同步硬编码。
 #
 # 触发条件：IOS_CERTIFICATE secret 的证书（Apple Distribution）与仓库里的
 # 描述文件不匹配（描述文件嵌的是旧 iPhone Distribution 证书）时运行一次。
@@ -98,20 +98,11 @@ jobs:
           cd ..
           echo "MAIN_UUID=$MAIN_UUID PKT_UUID=$PKT_UUID"
 
-      - name: Patch workflow UUIDs
-        run: |
-          set -euo pipefail
-          [ -n "$MAIN_UUID" ] && [ -n "$PKT_UUID" ] || { echo "ERROR: UUIDs not found"; exit 1; }
-          sed -i '' "s/340b6121-77d2-4d0a-81f5-e9241d1524b5/${MAIN_UUID}/g" .github/workflows/build-ios-fastlane.yaml
-          sed -i '' "s/efbd09e0-c128-4857-b7ee-987f9b4260e4/${PKT_UUID}/g" .github/workflows/build-ios-fastlane.yaml
-          echo "--- patched ---"
-          grep -n 'mobileprovision' .github/workflows/build-ios-fastlane.yaml
-
       - name: Commit and push
         run: |
           git config --local user.name "coterjiesen"
           git config --local user.email "coterjiesen@gmail.com"
-          git add ios/ToWorld.mobileprovision ios/ToWorldPacketTunnel.mobileprovision .github/workflows/build-ios-fastlane.yaml
+          git add ios/ToWorld.mobileprovision ios/ToWorldPacketTunnel.mobileprovision
           if ! git diff --cached --quiet; then
             git commit -m "Regenerate iOS provisioning profiles with Apple Distribution cert"
             git push origin HEAD:main

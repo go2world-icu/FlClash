@@ -76,12 +76,12 @@ jobs:
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
-          # 安装仓库中的 Provisioning Profiles（无需 secrets）
+          # 安装仓库中的 Provisioning Profiles（无需 secrets），按每个 profile 内嵌的 UUID 命名
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp ios/ToWorld.mobileprovision \
-            ~/Library/MobileDevice/Provisioning\ Profiles/340b6121-77d2-4d0a-81f5-e9241d1524b5.mobileprovision
-          cp ios/ToWorldPacketTunnel.mobileprovision \
-            ~/Library/MobileDevice/Provisioning\ Profiles/efbd09e0-c128-4857-b7ee-987f9b4260e4.mobileprovision
+          for p in ios/ToWorld.mobileprovision ios/ToWorldPacketTunnel.mobileprovision; do
+            uuid=$(grep -a -A1 '<key>UUID</key>' "$p" | grep -a '<string>' | sed 's/.*<string>//;s/<\/string>.*//')
+            cp "$p" ~/Library/MobileDevice/Provisioning\ Profiles/${uuid}.mobileprovision
+          done
           echo "[signing] profiles installed from repo ($(ls ~/Library/MobileDevice/Provisioning\ Profiles/ | wc -l) files)"
 
       - name: Deploy to TestFlight
