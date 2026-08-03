@@ -85,9 +85,11 @@ jobs:
             echo "-> $name  UUID=$uuid  Name=$pname"
             if echo "$pname" | grep -q 'PacketTunnel'; then
               mv "$f" ToWorldPacketTunnel.mobileprovision
+              PKT_UUID="$uuid"
               echo "PKT_UUID=$uuid" >> "$GITHUB_ENV"
             else
               mv "$f" ToWorld.mobileprovision
+              MAIN_UUID="$uuid"
               echo "MAIN_UUID=$uuid" >> "$GITHUB_ENV"
             fi
           done
