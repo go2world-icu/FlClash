@@ -96,7 +96,9 @@ jobs:
             BN_ARGS="FLUTTER_BUILD_NUMBER=${{ github.event.inputs.build_number }} CURRENT_PROJECT_VERSION=${{ github.event.inputs.build_number }}"
           fi
 
-          # Archive（不签名，签名推迟到 export）
+          # Archive：直接手动签名（CODE_SIGN_STYLE=Manual，Xcode 按 bundle id 自动匹配已安装的 profile）。
+          # 不能用 CODE_SIGNING_ALLOWED=NO —— 那会跳过 codesign，entitlements 就不会嵌入，
+          # 之后 export 重新签名也不会补 entitlement，上传会被 App Store 拒绝。
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -destination 'generic/platform=iOS' \
@@ -104,7 +106,8 @@ jobs:
             -archivePath build/ios/Runner.xcarchive \
             IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             $BN_ARGS \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=9ZKNBU3VL4 \
             archive
 
           # ExportOptions.plist（manual 签名 + 按 UUID 匹配，profile 名每次重建会变）
