@@ -1,0 +1,92 @@
+name: regen-ios-profiles
+
+# 一键用当前 ASC 账号里最新的 Distribution 证书重建 App Store 描述文件，
+# 覆盖 ios/ToWorld.mobileprovision 与 ios/ToWorldPacketTunnel.mobileprovision，
+# 并自动把新 UUID 写回 .github/workflows/build-ios-fastlane.yaml，然后提交。
+#
+# 触发条件：IOS_CERTIFICATE secret 的证书（Apple Distribution）与仓库里的
+# 描述文件不匹配（描述文件嵌的是旧 iPhone Distribution 证书）时运行一次。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BOARD_SDK_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Regenerate profiles
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY: ${{ secrets.ASC_API_KEY }}
+        run: |
+          bundle exec fastlane regenerate_profiles --verbose
+
+      - name: Verify and stage profiles
+        run: |
+          set -euo pipefail
+          cd ios
+          for f in *.mobileprovision; do
+            name=$(basename "$f")
+            # 跳过旧的两个人类命名文件
+            [ "$name" = "ToWorld.mobileprovision" ] && continue
+            [ "$name" = "ToWorldPacketTunnel.mobileprovision" ] && continue
+            # 校验嵌入证书必须包含 Apple Distribution（与 IOS_CERTIFICATE 一致）
+            subj=$(grep -a -A2 '<key>DeveloperCertificates</key>' "$f" \
+              | grep -a '<data>' | sed 's/.*<data>//;s/<\/data>.*//' \
+              | base64 -d | openssl x509 -inform DER -noout -subject)
+            echo "-> $name  subject=$subj"
+            if ! echo "$subj" | grep -q 'Apple Distribution'; then
+              echo "ERROR: $name 未包含 Apple Distribution 证书: $subj"
+              exit 1
+            fi
+            uuid=$(grep -a -A1 '<key>UUID</key>' "$f" \
+              | grep -a '<string>' | sed 's/.*<string>//;s/<\/string>.*//')
+            # 用外层 plist 的明文 Name 区分主 App 与 PacketTunnel 扩展
+            pname=$(grep -a -A1 '<key>Name</key>' "$f" \
+              | grep -a '<string>' | sed 's/.*<string>//;s/<\/string>.*//')
+            echo "-> $name  UUID=$uuid  Name=$pname"
+            if echo "$pname" | grep -q 'PacketTunnel'; then
+              mv "$f" ToWorldPacketTunnel.mobileprovision
+              echo "PKT_UUID=$uuid" >> "$GITHUB_ENV"
+            else
+              mv "$f" ToWorld.mobileprovision
+              echo "MAIN_UUID=$uuid" >> "$GITHUB_ENV"
+            fi
+          done
+          cd ..
+          echo "MAIN_UUID=$MAIN_UUID PKT_UUID=$PKT_UUID"
+
+      - name: Patch workflow UUIDs
+        run: |
+          set -euo pipefail
+          [ -n "$MAIN_UUID" ] && [ -n "$PKT_UUID" ] || { echo "ERROR: UUIDs not found"; exit 1; }
+          sed -i "s/340b6121-77d2-4d0a-81f5-e9241d1524b5/${MAIN_UUID}/g" .github/workflows/build-ios-fastlane.yaml
+          sed -i "s/efbd09e0-c128-4857-b7ee-987f9b4260e4/${PKT_UUID}/g" .github/workflows/build-ios-fastlane.yaml
+          echo "--- patched ---"
+          grep -n 'mobileprovision' .github/workflows/build-ios-fastlane.yaml
+
+      - name: Commit and push
+        run: |
+          git config --local user.name "coterjiesen"
+          git config --local user.email "coterjiesen@gmail.com"
+          git add ios/ToWorld.mobileprovision ios/ToWorldPacketTunnel.mobileprovision .github/workflows/build-ios-fastlane.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m "Regenerate iOS provisioning profiles with Apple Distribution cert"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit"
+          fi

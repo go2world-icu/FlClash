@@ -22,6 +22,31 @@ platform :ios do
     )
   end
 
+  desc "Regenerate App Store distribution profiles with the current certificate (saved to ios/)"
+  lane :regenerate_profiles do
+    app_store_connect_api_key(
+      key_id: ENV['ASC_KEY_ID'],
+      issuer_id: ENV['ASC_ISSUER_ID'],
+      key_content: ENV['ASC_API_KEY']
+    )
+    # force: true -> 用账号里最新的 Distribution 证书重建 profile，
+    # 以匹配 IOS_CERTIFICATE secret（Apple Distribution 证书）。
+    sigh(
+      app_identifier: "uk.toworld.flclash",
+      readonly: false,
+      force: true,
+      development: false,
+      output_path: "ios/"
+    )
+    sigh(
+      app_identifier: "uk.toworld.flclash.PacketTunnel",
+      readonly: false,
+      force: true,
+      development: false,
+      output_path: "ios/"
+    )
+  end
+
   desc "Build signed IPA and upload to TestFlight"
   lane :deploy_testflight do |options|
     # 注意：不要调用 setup_ci——它会在 CI 里新建 fastlane_tmp_keychain 并把默认
