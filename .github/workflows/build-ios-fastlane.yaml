@@ -92,7 +92,8 @@ jobs:
         run: |
           BN_ARGS=""
           if [ -n "${{ github.event.inputs.build_number }}" ]; then
-            BN_ARGS="CURRENT_PROJECT_VERSION=${{ github.event.inputs.build_number }}"
+            # Info.plist 的 CFBundleVersion 直接引用 $(FLUTTER_BUILD_NUMBER)，所以要覆盖它
+            BN_ARGS="FLUTTER_BUILD_NUMBER=${{ github.event.inputs.build_number }} CURRENT_PROJECT_VERSION=${{ github.event.inputs.build_number }}"
           fi
 
           # Archive（不签名，签名推迟到 export）
