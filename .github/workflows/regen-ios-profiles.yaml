@@ -100,8 +100,8 @@ jobs:
         run: |
           set -euo pipefail
           [ -n "$MAIN_UUID" ] && [ -n "$PKT_UUID" ] || { echo "ERROR: UUIDs not found"; exit 1; }
-          sed -i "s/340b6121-77d2-4d0a-81f5-e9241d1524b5/${MAIN_UUID}/g" .github/workflows/build-ios-fastlane.yaml
-          sed -i "s/efbd09e0-c128-4857-b7ee-987f9b4260e4/${PKT_UUID}/g" .github/workflows/build-ios-fastlane.yaml
+          sed -i '' "s/340b6121-77d2-4d0a-81f5-e9241d1524b5/${MAIN_UUID}/g" .github/workflows/build-ios-fastlane.yaml
+          sed -i '' "s/efbd09e0-c128-4857-b7ee-987f9b4260e4/${PKT_UUID}/g" .github/workflows/build-ios-fastlane.yaml
           echo "--- patched ---"
           grep -n 'mobileprovision' .github/workflows/build-ios-fastlane.yaml
 
