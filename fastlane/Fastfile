@@ -33,14 +33,12 @@ platform :ios do
     # 以匹配 IOS_CERTIFICATE secret（Apple Distribution 证书）。
     sigh(
       app_identifier: "uk.toworld.flclash",
-      readonly: false,
       force: true,
       development: false,
       output_path: "ios/"
     )
     sigh(
       app_identifier: "uk.toworld.flclash.PacketTunnel",
-      readonly: false,
       force: true,
       development: false,
       output_path: "ios/"
