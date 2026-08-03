@@ -45,51 +45,18 @@ platform :ios do
     )
   end
 
-  desc "Build signed IPA and upload to TestFlight"
+  desc "Upload built IPA to TestFlight"
   lane :deploy_testflight do |options|
-    # 注意：不要调用 setup_ci——它会在 CI 里新建 fastlane_tmp_keychain 并把默认
-    # keychain 切走，而我们已在 workflow 中把自己的 build.keychain 设为默认并导入证书。
+    # ipa 由 workflow 的 Build & Export IPA 步骤（原生 xcodebuild archive+export）产出。
+    # 不要用 gym build_app：它会同时把 CODE_SIGNING_ALLOWED=NO 传给 export，导致 export 卡死。
     app_store_connect_api_key(
       key_id: ENV['ASC_KEY_ID'],
       issuer_id: ENV['ASC_ISSUER_ID'],
       key_content: ENV['ASC_API_KEY']
     )
 
-    # 证书 + Provisioning Profile 已由 GitHub Actions 安装到
-    # ~/Library/MobileDevice/Provisioning Profiles 与默认 keychain，
-    # 这里沿用旧的 xcodebuild 方案：先无签名 archive，再在 export 阶段手动签名。
-    # UUID 由 workflow 的 Setup Code Signing 步骤提取并注入环境变量（MAIN_PROFILE_UUID/PKT_PROFILE_UUID），
-    # export 按 UUID 匹配（profile 名每次重建会变，不能靠名字）
-    main_uuid = ENV['MAIN_PROFILE_UUID'].to_s.strip
-    pkt_uuid = ENV['PKT_PROFILE_UUID'].to_s.strip
-    if main_uuid.empty? || pkt_uuid.empty?
-      UI.user_error!("无法读取 provisioning profile 的 UUID（需要 workflow 注入 MAIN_PROFILE_UUID/PKT_PROFILE_UUID）")
-    end
-
-    build_number = options[:build_number]
-    xcargs = "IPHONEOS_DEPLOYMENT_TARGET=15.0 CODE_SIGNING_ALLOWED=NO"
-    xcargs += " CURRENT_PROJECT_VERSION=#{build_number}" if build_number && !build_number.to_s.empty?
-
-    build_app(
-      workspace: "ios/Runner.xcworkspace",
-      scheme: "Runner",
-      configuration: "Release",
-      xcargs: xcargs,
-      export_method: "app-store",
-      export_options: {
-        method: "app-store",
-        teamID: "9ZKNBU3VL4",
-        signingStyle: "manual",
-        provisioningProfiles: {
-          "uk.toworld.flclash" => main_uuid,
-          "uk.toworld.flclash.PacketTunnel" => pkt_uuid
-        }
-      },
-      output_directory: "dist",
-      output_name: "ToWorld-ios-arm64"
-    )
-
     upload_to_testflight(
+      ipa: "dist/ToWorld-ios-arm64.ipa",
       app_identifier: "uk.toworld.flclash",
       skip_waiting_for_build_processing: true
     )

@@ -86,6 +86,60 @@ jobs:
           echo "PKT_PROFILE_UUID=$pkt_uuid" >> "$GITHUB_ENV"
           echo "[signing] profiles installed ($main_uuid, $pkt_uuid)"
 
+      - name: Build & Export IPA
+        # 原生 xcodebuild：先无签名 archive，再手动签名 export。
+        # 不用 gym build_app——它会同时把 CODE_SIGNING_ALLOWED=NO 传给 export 导致卡死。
+        run: |
+          BN_ARGS=""
+          if [ -n "${{ github.event.inputs.build_number }}" ]; then
+            BN_ARGS="CURRENT_PROJECT_VERSION=${{ github.event.inputs.build_number }}"
+          fi
+
+          # Archive（不签名，签名推迟到 export）
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -archivePath build/ios/Runner.xcarchive \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            $BN_ARGS \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+
+          # ExportOptions.plist（manual 签名 + 按 UUID 匹配，profile 名每次重建会变）
+          cat > ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>9ZKNBU3VL4</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>uk.toworld.flclash</key>
+                  <string>${MAIN_PROFILE_UUID}</string>
+                  <key>uk.toworld.flclash.PacketTunnel</key>
+                  <string>${PKT_PROFILE_UUID}</string>
+              </dict>
+          </dict>
+          </plist>
+          PLIST
+
+          # Export（手动签名；export 阶段绝不能带 CODE_SIGNING_ALLOWED=NO，否则会卡死）
+          xcodebuild -exportArchive \
+            -archivePath build/ios/Runner.xcarchive \
+            -exportPath dist/ \
+            -exportOptionsPlist ExportOptions.plist
+
+          # 重命名 IPA
+          mv dist/Runner.ipa dist/ToWorld-ios-arm64.ipa 2>/dev/null || \
+          mv dist/fl_clash.ipa dist/ToWorld-ios-arm64.ipa 2>/dev/null || \
+          { ls -la dist/; echo "ERROR: 找不到 IPA"; exit 1; }
+
       - name: Deploy to TestFlight
         env:
           CI: 'true'
@@ -93,15 +147,11 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY: ${{ secrets.ASC_API_KEY }}
         run: |
-          ARGS=""
-          if [ -n "${{ github.event.inputs.build_number }}" ]; then
-            ARGS="build_number:${{ github.event.inputs.build_number }}"
-          fi
-          bundle exec fastlane deploy_testflight $ARGS --verbose
+          bundle exec fastlane deploy_testflight --verbose
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: FlClash-ios-fastlane
-          path: ./dist/FlClash-ios-arm64.ipa
+          path: ./dist/ToWorld-ios-arm64.ipa
           overwrite: true
