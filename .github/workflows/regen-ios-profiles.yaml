@@ -98,11 +98,27 @@ jobs:
           cd ..
           echo "MAIN_UUID=$MAIN_UUID PKT_UUID=$PKT_UUID"
 
+      - name: Patch project signing specifiers
+        # profile 重建后 UUID 会变，需同步 pbxproj 里两个 target 的 PROVISIONING_PROFILE_SPECIFIER。
+        # 文件里 PacketTunnel 的 Release 配置在前、Runner 的在后，所以按出现顺序替换。
+        run: |
+          set -euo pipefail
+          [ -n "$MAIN_UUID" ] && [ -n "$PKT_UUID" ] || { echo "ERROR: UUIDs not found"; exit 1; }
+          awk -v main="$MAIN_UUID" -v pkt="$PKT_UUID" '
+            /PROVISIONING_PROFILE_SPECIFIER/ {
+              n++
+              if (n == 1) { sub(/"[-0-9a-fA-F]+"/, "\"" pkt "\"") }
+              else if (n == 2) { sub(/"[-0-9a-fA-F]+"/, "\"" main "\"") }
+            }
+            { print }
+          ' ios/Runner.xcodeproj/project.pbxproj > /tmp/pbx.new && mv /tmp/pbx.new ios/Runner.xcodeproj/project.pbxproj
+          grep -n 'PROVISIONING_PROFILE_SPECIFIER' ios/Runner.xcodeproj/project.pbxproj
+
       - name: Commit and push
         run: |
           git config --local user.name "coterjiesen"
           git config --local user.email "coterjiesen@gmail.com"
-          git add ios/ToWorld.mobileprovision ios/ToWorldPacketTunnel.mobileprovision
+          git add ios/ToWorld.mobileprovision ios/ToWorldPacketTunnel.mobileprovision ios/Runner.xcodeproj/project.pbxproj
           if ! git diff --cached --quiet; then
             git commit -m "Regenerate iOS provisioning profiles with Apple Distribution cert"
             git push origin HEAD:main
