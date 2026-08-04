@@ -15,7 +15,10 @@ dart setup.dart macos
 dart setup.dart linux
 dart setup.dart windows
 dart setup.dart android
+dart setup.dart ios          # macOS only; see .agents/release-ios.md for signing
 ```
+
+iOS signing + TestFlight publishing has its own CI flow — see [release-ios.md](release-ios.md).
 
 Build only the Go core and skip Flutter packaging:
 
