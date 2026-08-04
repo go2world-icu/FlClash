@@ -21,6 +21,25 @@ dart setup.dart ios --env stable \
 
 `setup.dart` 只负责编译/打包；**证书、描述文件的安装**和 **TestFlight 上传**在 CI workflow 里单独做，不归它管。iOS 只能在 macOS 上编译（签名依赖 Xcode）。
 
+## 本地运行（与 CI 一致）
+
+本地跑 `dart setup.dart ios` 前，需要手动复刻 CI 的 Setup Code Signing 那几步。封装好的脚本在 **`ios/scripts/ios_release.sh`**（把签名前置 + ExportOptions.plist + 构建 + 可选上传做成一条命令，与 CI 逻辑一致）：
+
+```bash
+# 证书来源（二选一）
+export IOS_CERT_P12_FILE=/path/to/your-cert.p12     # 或
+export IOS_CERTIFICATE=<p12 的 base64>
+export IOS_CERTIFICATE_PASSWORD=...
+
+./ios/scripts/ios_release.sh                          # 打签名 ipa（--env stable）
+./ios/scripts/ios_release.sh --build-number 2026080303 # 指定构建号
+./ios/scripts/ios_release.sh --upload                   # 构建后上传 TestFlight
+```
+
+脚本做的事 = CI 的 Setup Code Signing + Build & Export：证书进登录钥匙串 → 描述文件按 UUID 装两处 → 生成 ExportOptions.plist → `dart setup.dart ios --env stable ...`。`--upload` 还需 `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_API_KEY`。
+
+要点：**构建号必须比 TestFlight 上已上传的大**（本地传之前先看一眼上次的号），否则上传被拒。
+
 ## CI 流水线（`.github/workflows/build-ios-fastlane.yaml`）
 
 1. 环境：Go / Flutter / Xcode / Ruby + bundler。
@@ -40,10 +59,8 @@ dart setup.dart ios --env stable \
 
 ## 描述文件（提交在仓库）
 
-| 文件 | 用途 | UUID |
-|------|------|------|
-| `ios/ToWorld.mobileprovision` | 主 App `uk.toworld.flclash` | `d74658aa-56d6-4b4d-afe6-e1250185eb34` |
-| `ios/ToWorldPacketTunnel.mobileprovision` | 扩展 `uk.toworld.flclash.PacketTunnel` | `e2a0c32b-0c7f-4fa2-8032-3373acc7dfe1` |
+- `ios/ToWorld.mobileprovision` —— 主 App `uk.toworld.flclash`，UUID `d74658aa-56d6-4b4d-afe6-e1250185eb34`
+- `ios/ToWorldPacketTunnel.mobileprovision` —— 扩展 `uk.toworld.flclash.PacketTunnel`，UUID `e2a0c32b-0c7f-4fa2-8032-3373acc7dfe1`
 
 `ios/Runner.xcodeproj/project.pbxproj` 的 Runner/PacketTunnel **Release 配置是 Manual 签名**：`CODE_SIGN_STYLE = Manual` + `PROVISIONING_PROFILE_SPECIFIER` = 上面两个 UUID。**profile 重建后 UUID 会变**，pbxproj 的 specifier 必须同步（regen workflow 会自动改，文件里 PacketTunnel 配置在前、Runner 在后）。
 
