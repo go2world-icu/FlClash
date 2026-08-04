@@ -52,9 +52,8 @@ jobs:
           flutter --version
           flutter pub get
 
-      - name: Build Go Core & Precache iOS
+      - name: Precache iOS
         run: |
-          make core-ios
           flutter precache --ios
 
       - name: Install CocoaPods
@@ -91,29 +90,10 @@ jobs:
           echo "[signing] profiles installed ($main_uuid, $pkt_uuid)"
 
       - name: Build & Export IPA
-        # 原生 xcodebuild：先无签名 archive，再手动签名 export。
-        # 不用 gym build_app——它会同时把 CODE_SIGNING_ALLOWED=NO 传给 export 导致卡死。
+        # 统一入口：dart setup.dart ios —— 内部负责 make core-ios + flutter build ipa。
+        # 签名：cert/profile 已由 Setup Code Signing 装好，pbxproj 是 Manual + profile UUID，
+        # export 用下面这个 ExportOptions.plist（manual 签名 + 按 UUID 匹配）。
         run: |
-          BN_ARGS=""
-          if [ -n "${{ github.event.inputs.build_number }}" ]; then
-            # Info.plist 的 CFBundleVersion 直接引用 $(FLUTTER_BUILD_NUMBER)，所以要覆盖它
-            BN_ARGS="FLUTTER_BUILD_NUMBER=${{ github.event.inputs.build_number }} CURRENT_PROJECT_VERSION=${{ github.event.inputs.build_number }}"
-          fi
-
-          # Archive：直接手动签名（CODE_SIGN_STYLE=Manual，Xcode 按 bundle id 自动匹配已安装的 profile）。
-          # 不能用 CODE_SIGNING_ALLOWED=NO —— 那会跳过 codesign，entitlements 就不会嵌入，
-          # 之后 export 重新签名也不会补 entitlement，上传会被 App Store 拒绝。
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -destination 'generic/platform=iOS' \
-            -configuration Release \
-            -archivePath build/ios/Runner.xcarchive \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-            $BN_ARGS \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM=9ZKNBU3VL4 \
-            archive
-
           # ExportOptions.plist（manual 签名 + 按 UUID 匹配，profile 名每次重建会变）
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -137,16 +117,18 @@ jobs:
           </plist>
           PLIST
 
-          # Export（手动签名；export 阶段绝不能带 CODE_SIGNING_ALLOWED=NO，否则会卡死）
-          xcodebuild -exportArchive \
-            -archivePath build/ios/Runner.xcarchive \
-            -exportPath dist/ \
-            -exportOptionsPlist ExportOptions.plist
+          BN=""
+          if [ -n "${{ github.event.inputs.build_number }}" ]; then
+            BN="--build-number=${{ github.event.inputs.build_number }}"
+          fi
 
-          # 重命名 IPA
-          mv dist/Runner.ipa dist/ToWorld-ios-arm64.ipa 2>/dev/null || \
-          mv dist/fl_clash.ipa dist/ToWorld-ios-arm64.ipa 2>/dev/null || \
-          { ls -la dist/; echo "ERROR: 找不到 IPA"; exit 1; }
+          # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
+          dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v
+
+          # 重命名 IPA（flutter build ipa 输出到 build/ios/ipa/）
+          mkdir -p dist
+          mv build/ios/ipa/*.ipa dist/ToWorld-ios-arm64.ipa 2>/dev/null || \
+          { ls -la build/ios/ipa/; echo "ERROR: 找不到 IPA"; exit 1; }
 
       - name: Deploy to TestFlight
         env:

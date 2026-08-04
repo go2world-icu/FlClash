@@ -9,6 +9,7 @@ const _allTargets = <String, String>{
   'linux': 'deb', // appimage + rpm added for amd64 only
   'macos': 'dmg',
   'windows': 'exe,zip',
+  'ios': 'ipa',
 };
 
 const _androidFlutterTarget = {
@@ -43,7 +44,9 @@ Future<void> main(List<String> args) async {
 
   final platform = rest.isNotEmpty ? rest.first : host;
 
-  if (platform != host && platform != 'android') {
+  // iOS 只能在 macOS 上编译（签名依赖 Xcode）
+  final iosOnMac = host == 'macos' && platform == 'ios';
+  if (platform != host && platform != 'android' && !iosOnMac) {
     stderr.writeln(
       'Cannot build "$platform" on $hostOs. Allowed: $host, android',
     );
@@ -57,6 +60,8 @@ Future<void> main(List<String> args) async {
   final targets = _getTargets(platform, arch, results['targets']);
   final androidArch = results['arch'] as String?;
   final verbose = results['verbose'] as bool;
+  final buildNumber = results['build-number'] as String?;
+  final exportOptionsPlist = results['export-options-plist'] as String?;
 
   final exitCode = await _package(
     platform,
@@ -66,6 +71,8 @@ Future<void> main(List<String> args) async {
     arch,
     androidArch: androidArch,
     verbose: verbose,
+    buildNumber: buildNumber,
+    exportOptionsPlist: exportOptionsPlist,
   );
   exit(exitCode);
 }
@@ -88,6 +95,14 @@ ArgParser createSetupArgParser() {
       valueHelp: 'arm,arm64,amd64',
       allowed: ['arm', 'arm64', 'amd64'],
       help: 'Target architecture (Android only)',
+    )
+    ..addOption(
+      'build-number',
+      help: 'iOS build number override (TestFlight 构建号需递增)',
+    )
+    ..addOption(
+      'export-options-plist',
+      help: 'iOS export options plist 路径（manual 签名 + profile UUID）',
     )
     ..addFlag(
       'verbose',
@@ -135,6 +150,8 @@ Future<int> _package(
   String arch, {
   String? androidArch,
   required bool verbose,
+  String? buildNumber,
+  String? exportOptionsPlist,
 }) async {
   final coreSha256 = platform == 'windows' ? await _buildGoCore(rootDir) : null;
 
@@ -155,6 +172,26 @@ Future<int> _package(
 
   final depExit = await _ensureDependencies(platform, arch);
   if (depExit != 0) return depExit;
+
+  // iOS 统一入口：先编 Go core，再 flutter build ipa。
+  // 签名走项目 Manual 配置（pbxproj PROVISIONING_PROFILE_SPECIFIER）+ 已装证书/profile。
+  if (platform == 'ios') {
+    final coreExit = await _runCommand('make', ['core-ios'], rootDir);
+    if (coreExit != 0) return coreExit;
+
+    final flutterArgs = <String>[
+      'build',
+      'ipa',
+      '--release',
+      '--dart-define-from-file=env.json',
+      if (verbose) '--verbose',
+      if (buildNumber != null && buildNumber.isNotEmpty)
+        '--build-number=$buildNumber',
+      if (exportOptionsPlist != null && exportOptionsPlist.isNotEmpty)
+        '--export-options-plist=$exportOptionsPlist',
+    ];
+    return _runCommand('flutter', flutterArgs, rootDir);
+  }
 
   // 检查 flutter_distributor 是否已安装，不存在才拉取
   final hasDistributor = await _hasCommand('flutter_distributor');
@@ -231,6 +268,18 @@ Future<String?> _buildGoCore(String rootDir) async {
   final content =
       jsonDecode(shaFile.readAsStringSync()) as Map<String, dynamic>;
   return content['CORE_SHA256'] as String?;
+}
+
+Future<int> _runCommand(String cmd, List<String> args, String cwd) async {
+  final process = await Process.start(
+    cmd,
+    args,
+    workingDirectory: cwd,
+    runInShell: Platform.isWindows,
+  );
+  process.stdout.listen((data) => stdout.write(utf8.decode(data)));
+  process.stderr.listen((data) => stderr.write(utf8.decode(data)));
+  return process.exitCode;
 }
 
 String _detectArch() {
