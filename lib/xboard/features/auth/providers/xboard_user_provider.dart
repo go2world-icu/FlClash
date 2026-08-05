@@ -485,7 +485,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       for (final profile in profiles.toList()) {
         await ref.read(profilesActionProvider.notifier).deleteProfile(profile.id);
       }
-      // iOS: delete config.yaml + shared_state.json from App Group
+      // iOS: delete config.yaml + shared.json from App Group
       // so the dashboard doesn't show a stale start button after logout.
       if (system.isIOS) {
         final configPath = await appPath.configFilePath;

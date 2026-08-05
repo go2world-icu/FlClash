@@ -13,15 +13,19 @@ enum AppGroup {
 
     /// The core home directory (config.yaml, geodata, profiles) — the iOS
     /// counterpart of `appPath.homeDirPath` on other platforms.
+    ///
+    /// Must match `appName` in lib/common/constant.dart (the Dart side joins
+    /// the container path with `appName`). Keep these in sync when renaming.
     static var homeDirectory: URL {
-        containerURL.appendingPathComponent("FlClash", isDirectory: true)
+        containerURL.appendingPathComponent("ToWorld", isDirectory: true)
     }
 
     /// SharedState JSON persisted by the app's `syncState`/`saveState`
     /// channel calls; read by the NE at `startTunnel` for headless boot.
+    ///
+    /// Must match `appPath.sharedFilePath` in lib/common/path.dart (the Dart
+    /// side deletes this file on logout).
     static var sharedStateURL: URL {
-        homeDirectory
-            .appendingPathComponent("state", isDirectory: true)
-            .appendingPathComponent("shared_state.json")
+        homeDirectory.appendingPathComponent("shared.json")
     }
 }
