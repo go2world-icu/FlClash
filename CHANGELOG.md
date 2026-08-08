@@ -1,3 +1,107 @@
+## v0.8.95
+
+- 主题默认为系统跟随/升级版本
+
+## v0.8.94-pre1
+
+- 修改build版本
+
+- 仪表盘添加节点选择/隐藏代理菜单
+
+- 位置	修改	作用
+
+- _setupConfig	MD5 没变时跳过 setupConfig	层1: 防止不必要的 Core 重载
+
+- restartCore	重置 lastConfigMd5 = null	层2: 保证重启后一定重载 config
+
+- updateGroups	空数据/异常时不清空已有 groups	层3: 安全网，任何瞬态失败不丢失数据
+
+- 安卓桌面图标修复/脚本修复
+
+- fix: 修复登录后代理菜单为空的问题 — _setupConfig 时序竞态
+
+- 根因: _addProfile() 调用 applyProfile(silence: true) 后，fullSetup()
+
+- 通过 addPostFrameCallback 再次调用 applyProfile(force: true)，两次都
+
+- 触发 _setupConfig → coreController.setupConfig()，导致 Core 在 reload
+
+- 期间 getProxies() 返回空数据覆盖了正确的代理列表。
+
+- 修复 (lib/providers/action.dart):
+
+- 1. _setupConfig: config MD5 未变时跳过 coreController.setupConfig()，
+
+-    避免不必要的 Core 重载，但保留 onUpdated 刷新代理数据
+
+- 2. restartCore: 重置 lastConfigMd5 = null，确保 Core 重启后 config
+
+-    一定会重新加载
+
+- 诊断 (profile_import_service.dart):
+
+- - _addProfile() 中记录 Core 状态、applyProfile 前后的 groups 数量
+
+- Add .agents/app-store-release.md: TestFlight review + App Store release flow
+
+- 修改buid版本
+
+- fix: align iOS AppGroup paths with Dart appName (ToWorld) + shared.json
+
+- Add local ios_release.sh that mirrors CI signing+build (dart setup.dart ios)
+
+- Add .agents/release-ios.md: iOS TestFlight publishing pipeline docs
+
+- Unify iOS build into setup.dart (make core-ios + flutter build ipa); CI uses dart setup.dart ios
+
+- Move Gitee/GitCode release sync to standalone sync-gitee-gitcode workflow
+
+- Remove obsolete build-ios.yaml (superseded by build-ios-fastlane.yaml)
+
+- Regen workflow also syncs pbxproj profile specifiers
+
+- Manual signing with explicit PROVISIONING_PROFILE_SPECIFIER per target (fixes GatherProvisioningInputs)
+
+- Install profiles to UserData location too (Xcode GatherProvisioningInputs)
+
+- Sign at archive time so entitlements get embedded (CODE_SIGN_STYLE=Manual)
+
+- Override FLUTTER_BUILD_NUMBER (Info.plist uses it directly for CFBundleVersion)
+
+- Use raw xcodebuild archive+export (gym export hung on CODE_SIGNING_ALLOWED=NO); fastlane uploads only
+
+- Pass profile UUIDs via GITHUB_ENV (workflow bash) instead of Ruby backticks
+
+- Match profiles by embedded UUID in export (names change after regen)
+
+- Regenerate iOS provisioning profiles with Apple Distribution cert
+
+- Install profiles by embedded UUID (no hardcoded UUIDs); regen no longer patches workflow file
+
+- Use GITHUB_TOKEN in regen checkout so workflow-file push is allowed
+
+- Use BSD sed syntax (-i '') for macOS runner
+
+- Set UUID shell vars alongside GITHUB_ENV (nounset was killing verify step)
+
+- Fix find-identity hash extraction regex (had missing index prefix)
+
+- Keep only Apple Distribution cert in regen keychain (sigh picks wrong cert otherwise)
+
+- Import signing cert in regen workflow so sigh can create profiles
+
+- Run regen-ios-profiles on macos (sigh install needs Xcode)
+
+- Fix sigh conflict: force implies readonly=false, drop explicit readonly
+
+- Add iOS profile regeneration workflow (fastlane sigh force-regenerate)
+
+- bug
+
+- ios ci
+
+- iOS 包名加版本号，统一为 ToWorld-{version}-ios-arm64.ipa
+
 ## v0.8.94
 
 - 环境问题linux-arm64不编译
