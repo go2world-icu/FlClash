@@ -25,9 +25,7 @@ class Navigation {
         label: PageLabel.proxies,
         builder: (_) =>
             const ProxiesView(key: GlobalObjectKey(PageLabel.proxies)),
-        modes: hasProxies
-            ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
-            : [],
+        modes: [], // 代理菜单已隐藏，改为通过仪表盘节点选择器访问
       ),
       if (!hasXboard)
         NavigationItem(

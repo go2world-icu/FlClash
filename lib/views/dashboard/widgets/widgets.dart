@@ -1,7 +1,9 @@
 export 'intranet_ip.dart';
 export 'network_detection.dart';
 export 'network_speed.dart';
+export 'node_selector_chip.dart';
 export 'outbound_mode.dart';
 export 'quick_options.dart';
+export 'start_button.dart';
 export 'traffic_usage.dart';
 export 'memory_info.dart';

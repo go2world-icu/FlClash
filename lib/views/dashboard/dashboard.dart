@@ -10,7 +10,7 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'widgets/start_button.dart';
+import 'widgets/widgets.dart';
 
 typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
 
@@ -255,7 +255,17 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       (isEdit) => CommonScaffold(
         title: context.appLocalizations.dashboard,
         actions: _buildActions(isEdit),
-        floatingActionButton: const StartButton(),
+        floatingActionButton: const Padding(
+          padding: EdgeInsets.only(left: 16),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NodeSelectorChip(),
+              SizedBox(width: 12),
+              StartButton(),
+            ],
+          ),
+        ),
         body: Align(
           alignment: Alignment.topCenter,
           child: SingleChildScrollView(

@@ -96,7 +96,7 @@ class _StartButtonState extends ConsumerState<StartButton>
                             ),
                           )
                           .width +
-                      24
+                      16
                 : globalState.measure
                           .computeTextSize(
                             Text(
@@ -105,10 +105,10 @@ class _StartButtonState extends ConsumerState<StartButton>
                             ),
                           )
                           .width +
-                      16;
+                      12;
             return FloatingActionButton(
               clipBehavior: Clip.antiAlias,
-              materialTapTargetSize: MaterialTapTargetSize.padded,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               heroTag: null,
               onPressed: () {
                 handleSwitchStart();
@@ -119,8 +119,8 @@ class _StartButtonState extends ConsumerState<StartButton>
                   Container(
                     height: 56,
                     padding: EdgeInsets.only(
-                      left: 16,
-                      right: 16 - 8 * _animation.value,
+                      left: 12,
+                      right: 12 - 8 * _animation.value,
                     ),
                     alignment: Alignment.centerLeft,
                     child: AnimatedIcon(
