@@ -16,6 +16,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 const sourceAppIcon = 'assets_source/images/icon/status_3';
+const sourceAppIconForeground = 'assets_source/images/icon/status_3_foreground';
 
 // ---- iOS ----
 const iosIconDir = 'ios/Runner/Assets.xcassets/AppIcon.appiconset';
@@ -115,9 +116,18 @@ Future<void> main() async {
     for (final name in ['ic_launcher_foreground', 'ic_launcher', 'ic_launcher_round']) {
       final size = name == 'ic_launcher_foreground' ? adaptivePx : legacyPx;
       final png = File('$dir/$name.png');
-      await _render(rsvg, source, png.path, size, size, isSvg: isSvg);
-      // Android adaptive icons: foreground should NOT be pre-rounded
-      // (OS crops the adaptive icon shape). Legacy icons: OS also crops.
+      // Use foreground SVG (transparent bg, safe zone scaled) for adaptive icon foreground.
+      // Adaptive icon foreground must NOT be pre-rounded — the OS applies its own mask.
+      if (name == 'ic_launcher_foreground') {
+        final fgSource = _findSource(sourceAppIconForeground);
+        if (fgSource != null) {
+          await _render(rsvg, fgSource, png.path, size, size, isSvg: false);
+        } else {
+          await _render(rsvg, source, png.path, size, size, isSvg: isSvg);
+        }
+      } else {
+        await _render(rsvg, source, png.path, size, size, isSvg: isSvg);
+      }
       await _toWebP(png.path, '$dir/$name.webp');
       await png.delete();
     }
