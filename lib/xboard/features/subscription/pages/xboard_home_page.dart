@@ -27,11 +27,13 @@ import 'package:fl_clash/xboard/features/invite/widgets/wallet_details_card.dart
 import 'package:fl_clash/xboard/features/invite/widgets/commission_history_card.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
+
 class XBoardHomePage extends ConsumerStatefulWidget {
   const XBoardHomePage({super.key});
   @override
   ConsumerState<XBoardHomePage> createState() => _XBoardHomePageState();
 }
+
 class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     with AutomaticKeepAliveClientMixin {
   bool _hasInitialized = false;
@@ -39,10 +41,10 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
   bool _hasCheckedSubscriptionStatus = false;
   bool _isUploading = false;
   bool _hasUploaded = false;
-  
+
   @override
-  bool get wantKeepAlive => true;  // 保持页面状态，防止重建
-  
+  bool get wantKeepAlive => true; // 保持页面状态，防止重建
+
   @override
   void initState() {
     super.initState();
@@ -66,15 +68,20 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         });
       }
     });
-    
+
     // 监听订阅导入完成事件
     ref.listenManual(profileImportProvider, (previous, next) {
       // 从导入中变为完成（成功或失败）
-      if (previous?.isImporting == true && !next.isImporting && !_hasCheckedSubscriptionStatus) {
+      if (previous?.isImporting == true &&
+          !next.isImporting &&
+          !_hasCheckedSubscriptionStatus) {
         _hasCheckedSubscriptionStatus = true;
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted && context.mounted) {
-            subscriptionStatusChecker.checkSubscriptionStatusOnStartup(context, ref);
+            subscriptionStatusChecker.checkSubscriptionStatusOnStartup(
+              context,
+              ref,
+            );
           }
         });
       }
@@ -90,7 +97,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       }
     });
     ref.listenManual(groupsProvider, (previous, next) {
-      if ((previous?.isEmpty ?? true) && next.isNotEmpty && !_hasStartedLatencyTesting) {
+      if ((previous?.isEmpty ?? true) &&
+          next.isNotEmpty &&
+          !_hasStartedLatencyTesting) {
         _hasStartedLatencyTesting = true;
         Future.delayed(const Duration(seconds: 2), () {
           // 使用 ref.maybeRead 安全读取，避免在 dispose 后使用
@@ -103,95 +112,93 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       }
     });
   }
+
   @override
   Widget build(BuildContext context) {
-    super.build(context);  // 必须调用，配合 AutomaticKeepAliveClientMixin
-    
-    // 根据操作系统平台判断设备类型
-    final isDesktop = Platform.isLinux || Platform.isWindows || Platform.isMacOS;
-    
+    super.build(context); // 必须调用，配合 AutomaticKeepAliveClientMixin
+
     return Scaffold(
-      appBar: isDesktop ? null : AppBar(
-        automaticallyImplyLeading: false,
-      ),
       body: Consumer(
         builder: (_, ref, __) {
           // 获取屏幕高度并计算自适应间距
           final screenHeight = MediaQuery.of(context).size.height;
-        final appBarHeight = kToolbarHeight;
-        final statusBarHeight = MediaQuery.of(context).padding.top;
-        final bottomNavHeight = 60.0; // 底部导航栏高度
-        final availableHeight = screenHeight - appBarHeight - statusBarHeight - bottomNavHeight;
-        
-        // 根据可用高度调整间距
-        double sectionSpacing;
-        double verticalPadding;
-        double horizontalPadding;
-        
-        if (availableHeight < 500) {
-          // 小屏幕：紧凑布局
-          sectionSpacing = 8.0;
-          verticalPadding = 8.0;
-          horizontalPadding = 12.0;
-        } else if (availableHeight < 650) {
-          // 中等屏幕：适中布局
-          sectionSpacing = 10.0;
-          verticalPadding = 10.0;
-          horizontalPadding = 16.0;
-        } else {
-          // 大屏幕：标准布局
-          sectionSpacing = 14.0;
-          verticalPadding = 12.0;
-          horizontalPadding = 16.0;
-        }
-        
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                Theme.of(context).colorScheme.surface,
-              ],
+          final statusBarHeight = MediaQuery.of(context).padding.top;
+          final bottomNavHeight = 60.0; // 底部导航栏高度
+          final availableHeight =
+              screenHeight - statusBarHeight - bottomNavHeight;
+
+          // 根据可用高度调整间距
+          double sectionSpacing;
+          double verticalPadding;
+          double horizontalPadding;
+
+          if (availableHeight < 500) {
+            // 小屏幕：紧凑布局
+            sectionSpacing = 8.0;
+            verticalPadding = 8.0;
+            horizontalPadding = 12.0;
+          } else if (availableHeight < 650) {
+            // 中等屏幕：适中布局
+            sectionSpacing = 10.0;
+            verticalPadding = 10.0;
+            horizontalPadding = 16.0;
+          } else {
+            // 大屏幕：标准布局
+            sectionSpacing = 14.0;
+            verticalPadding = 12.0;
+            horizontalPadding = 16.0;
+          }
+
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  Theme.of(context).colorScheme.surface,
+                ],
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    vertical: verticalPadding,
-                    horizontal: horizontalPadding,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const NoticeBanner(),
-                      SizedBox(height: sectionSpacing),
-                      _buildUsageCard(context),
-                      SizedBox(height: sectionSpacing),
-                      _buildInviteSection(),
-                      SizedBox(height: sectionSpacing),
-                      _buildLogUploadRow(),
-                      SizedBox(height: sectionSpacing),
-                      _buildLogoutButton(),
-                    ],
-                  ),
-                );
-              },
+            child: SafeArea(
+              top: true,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      vertical: verticalPadding,
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const NoticeBanner(),
+                        SizedBox(height: sectionSpacing),
+                        _buildUsageCard(context),
+                        SizedBox(height: sectionSpacing),
+                        _buildInviteSection(),
+                        SizedBox(height: sectionSpacing),
+                        _buildLogUploadRow(),
+                        SizedBox(height: sectionSpacing),
+                        _buildLogoutButton(),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        );
+          );
         },
       ),
     );
   }
 
   /// 禁用态颜色（上传中或已上报）
-  Color get _disabledColor => Theme.of(context)
-      .colorScheme.onSurfaceVariant
-      .withValues(alpha: _hasUploaded ? 0.4 : 0.5);
+  Color get _disabledColor => Theme.of(
+    context,
+  ).colorScheme.onSurfaceVariant.withValues(alpha: _hasUploaded ? 0.4 : 0.5);
 
   /// 异步加载邀请数据
   Future<void> _loadInviteData() async {
@@ -235,7 +242,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -262,7 +271,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
                     color: _disabledColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    decoration: (_isUploading || _hasUploaded) ? null : TextDecoration.underline,
+                    decoration: (_isUploading || _hasUploaded)
+                        ? null
+                        : TextDecoration.underline,
                   ),
                 ),
               ],
@@ -287,7 +298,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: Colors.red.shade300),
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );
@@ -295,11 +308,9 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
 
   /// 显示退出确认对话框
   void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const LogoutDialog(),
-    );
+    showDialog(context: context, builder: (context) => const LogoutDialog());
   }
+
   /// 上传日志到服务端
   Future<void> _uploadLogs() async {
     final fileOutput = XBoardLogger.fileOutput;
@@ -371,6 +382,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       ),
     );
   }
+
   Widget _buildUsageCard(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
@@ -387,6 +399,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       },
     );
   }
+
   /// 等待订阅导入完成后再检查订阅状态（备用方案）
   /// 如果3秒后还没有触发导入完成监听器，则主动检查
   void _waitForSubscriptionImportThenCheck() async {
@@ -400,13 +413,16 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     _hasCheckedSubscriptionStatus = true;
     if (mounted && context.mounted) {
       try {
-        subscriptionStatusChecker.checkSubscriptionStatusOnStartup(context, ref);
+        subscriptionStatusChecker.checkSubscriptionStatusOnStartup(
+          context,
+          ref,
+        );
       } catch (e) {
         // ignore ref errors after dispose
       }
     }
   }
-  
+
   void _showTokenExpiredDialog() {
     if (!mounted) return;
     final appLocalizations = AppLocalizations.of(context);
@@ -468,6 +484,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       }
     });
   }
+
   void _performInitialLatencyTest() {
     if (!mounted) return;
     autoLatencyService.testCurrentNode();
@@ -483,4 +500,4 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       }
     });
   }
-} 
+}

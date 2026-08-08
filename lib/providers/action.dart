@@ -757,7 +757,7 @@ class ProxiesAction extends _$ProxiesAction {
   Future<void> updateGroups() async {
     try {
       commonPrint.log('updateGroups');
-      ref.read(groupsProvider.notifier).value = await retry(
+      final newGroups = await retry(
         task: () async {
           final sortType = ref.read(
             proxiesStyleSettingProvider.select((state) => state.sortType),
@@ -778,9 +778,14 @@ class ProxiesAction extends _$ProxiesAction {
         },
         retryIf: (res) => res.isEmpty,
       );
+      if (newGroups.isNotEmpty || ref.read(groupsProvider).isEmpty) {
+        ref.read(groupsProvider.notifier).value = newGroups;
+      } else {
+        commonPrint.log('updateGroups: got empty groups, keeping existing data');
+      }
     } catch (e) {
       commonPrint.log('updateGroups error: $e');
-      ref.read(groupsProvider.notifier).value = [];
+      // Don't clear existing groups on transient failure
     }
   }
 
