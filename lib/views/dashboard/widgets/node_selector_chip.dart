@@ -21,8 +21,9 @@ class NodeSelectorChip extends ConsumerWidget {
 
     final groups = ref.watch(groupsProvider);
     final selectedMap = ref.watch(selectedMapProvider);
-    final mode =
-        ref.watch(patchClashConfigProvider.select((state) => state.mode));
+    final mode = ref.watch(
+      patchClashConfigProvider.select((state) => state.mode),
+    );
 
     if (groups.isEmpty) {
       return const SizedBox.shrink();
@@ -81,18 +82,16 @@ class NodeSelectorChip extends ConsumerWidget {
 
     return Material(
       color: colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(16),
       elevation: 3,
       shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ProxiesView(),
-            ),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const ProxiesView()));
         },
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(16),
         child: SizedBox(
           height: 56,
           child: Padding(

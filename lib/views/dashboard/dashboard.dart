@@ -259,11 +259,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           padding: EdgeInsets.only(left: 16),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              NodeSelectorChip(),
-              SizedBox(width: 12),
-              StartButton(),
-            ],
+            children: [NodeSelectorChip(), SizedBox(width: 6), StartButton()],
           ),
         ),
         body: Align(
