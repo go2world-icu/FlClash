@@ -279,24 +279,45 @@ class XBoardProfileImportService {
     try {
       // 1. 添加配置到列表
       _ref.read(profilesProvider.notifier).put(profile);
-      
+
       // 2. 强制设置为当前配置（订阅导入是用户主动操作，应该立即生效）
       final currentProfileIdNotifier = _ref.read(currentProfileIdProvider.notifier);
       currentProfileIdNotifier.value = profile.id;
       _logger.info('✅ 已设置为当前配置: ${profile.label ?? profile.id}');
-      
+
+      // [DIAGNOSTIC] 检查 Core 是否在运行
+      final isCoreRunning = _ref.read(isStartProvider);
+      final coreStatus = _ref.read(coreStatusProvider);
+      final groupsBefore = _ref.read(groupsProvider);
+      _logger.info(
+        '🔍 [DIAGNOSTIC] Core状态: isRunning=$isCoreRunning, '
+        'coreStatus=$coreStatus, groupsCount=${groupsBefore.length}',
+      );
+
       // 3. 使用 silence 模式直接应用配置（新路由系统中 homeScaffoldKey 不可用）
-      // needSetupProvider 的监听器会触发 handleChangeProfile，但因为 commonScaffoldState 
+      // needSetupProvider 的监听器会触发 handleChangeProfile，但因为 commonScaffoldState
       // 未 mounted 会失败，所以我们在这里手动用 silence 模式触发
       _logger.info('📋 使用 silence 模式应用配置...');
       try {
         await _ref.read(setupActionProvider.notifier).applyProfile(silence: true);
         _logger.info('✅ 配置应用成功');
-      } catch (e) {
-        _logger.error('❌ 配置应用失败', e);
+        // [DIAGNOSTIC] applyProfile 成功后再检查 groups
+        final groupsAfter = _ref.read(groupsProvider);
+        _logger.info(
+          '🔍 [DIAGNOSTIC] applyProfile后: groupsCount=${groupsAfter.length}, '
+          'groups=${groupsAfter.map((g) => g.name).toList()}',
+        );
+      } catch (e, stackTrace) {
+        _logger.error('❌ 配置应用失败', e, stackTrace);
         // 不抛出异常，因为配置已经保存了
+        // [DIAGNOSTIC] 记录失败时的状态
+        _logger.error(
+          '🔍 [DIAGNOSTIC] applyProfile失败时状态: '
+          'isCoreRunning=${_ref.read(isStartProvider)}, '
+          'coreStatus=${_ref.read(coreStatusProvider)}',
+        );
       }
-      
+
       _logger.info('配置添加成功: ${profile.label ?? profile.id}');
     } catch (e) {
       throw Exception('添加配置失败: $e');

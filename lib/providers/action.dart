@@ -403,18 +403,25 @@ class SetupAction extends _$SetupAction {
     final yamlString = vm2.a;
     final yamlMd5 = vm2.b;
     if (yamlMd5 == globalState.lastConfigMd5 && force == false) return;
+    final configChanged = yamlMd5 != globalState.lastConfigMd5;
     await globalState.loadingRun(
       () async {
         final configFilePath = await appPath.configFilePath;
         await File(configFilePath).safeWriteAsString(yamlString);
         globalState.lastConfigMd5 = yamlMd5;
-        final message = await coreController.setupConfig(
-          setupState: setupState,
-          params: _setupParams,
-          preloadInvoke: preloadInvoke,
-        );
-        if (message.isNotEmpty && !message.endsWith('is empty')) {
-          throw message;
+        // Only call setupConfig on core if config actually changed.
+        // When force=true but MD5 is unchanged (e.g. fullSetup racing with
+        // _addProfile), calling setupConfig needlessly reloads the core and
+        // can cause getProxies() to return empty, overwriting valid data.
+        if (configChanged) {
+          final message = await coreController.setupConfig(
+            setupState: setupState,
+            params: _setupParams,
+            preloadInvoke: preloadInvoke,
+          );
+          if (message.isNotEmpty && !message.endsWith('is empty')) {
+            throw message;
+          }
         }
         ref.read(checkIpNumProvider.notifier).add();
         await onUpdated?.call();
@@ -541,6 +548,9 @@ class CoreAction extends _$CoreAction {
     final isDisconnected =
         ref.read(coreStatusProvider) == CoreStatus.disconnected;
     ref.read(coreStatusProvider.notifier).value = CoreStatus.disconnected;
+    // Reset config MD5 so setupConfig is always called after core restart,
+    // even if the config content hasn't changed.
+    globalState.lastConfigMd5 = null;
     await coreController.shutdown(!isDisconnected);
     await connectCore();
     await initCore();
