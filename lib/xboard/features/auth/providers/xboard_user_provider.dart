@@ -11,6 +11,7 @@ import 'package:fl_clash/xboard/adapter/state/user_state.dart';
 import 'package:fl_clash/xboard/adapter/state/subscription_state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_user_provider.dart');
@@ -125,7 +126,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
           _silentUpdateUserData();
         } catch (e) {
           _logger.info('Token验证失败，显示登录过期提示: $e');
-          _showTokenExpiredDialog();
+          _onTokenExpired();
         }
       } catch (e) {
         _logger.info('后台token验证异常: $e');
@@ -164,11 +165,36 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       _logger.info('静默更新用户数据失败: $e');
     }
   }
-  void _showTokenExpiredDialog() {
+  /// 检测到 token 过期：立即清除认证态并关闭代理开关。
+  ///
+  /// 不能只打 errorMessage 标记 —— 那样过期后代理仍在运行，
+  /// 且界面会停在一个所有接口都失败的「已登录」页面。
+  /// errorMessage 保留给 UI 弹提示用。
+  void _onTokenExpired() {
+    _logger.info('token 已过期，清除认证态并关闭代理');
     state = state.copyWith(
-      errorMessage: 'TOKEN_EXPIRED', // 特殊标记，UI层检测到后显示对话框
+      isAuthenticated: false,
+      errorMessage: 'TOKEN_EXPIRED', // 特殊标记，UI层检测到后提示用户
+    );
+    _stopProxy();
+    // 用全局 navigatorKey 提示，页面此刻正在被换掉，不能依赖某个 State 还活着
+    XBoardNotification.showError(
+      currentAppLocalizations.xboardTokenExpiredContent,
     );
   }
+
+  /// 关闭代理开关。
+  ///
+  /// 幂等 —— 未运行时调用同样安全；内部吞掉所有异常，
+  /// 因此即便不 await 也不会产生未捕获的 async error。
+  Future<void> _stopProxy() async {
+    try {
+      await ref.read(setupActionProvider.notifier).updateStatus(false);
+    } catch (e) {
+      _logger.info('关闭代理失败: $e');
+    }
+  }
+
   void clearTokenExpiredError() {
     if (state.errorMessage == 'TOKEN_EXPIRED') {
       state = state.copyWith(errorMessage: null);
@@ -176,6 +202,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   }
   Future<void> handleTokenExpired() async {
     _logger.info('处理token过期，清除认证状态');
+    await _stopProxy();
     await XBoardSDK.instance.logout();
     state = const UserAuthState(isInitialized: true);
   }
@@ -475,6 +502,10 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   }
   Future<void> logout() async {
     _logger.info('用户登出');
+
+    // 先关代理再删配置：隧道还在跑的时候删掉 profile / App Group 配置，
+    // 会留下一个没有配置可用的运行中隧道。
+    await _stopProxy();
 
     await XBoardSDK.instance.logout();
     await _storageService.clearAuthData();

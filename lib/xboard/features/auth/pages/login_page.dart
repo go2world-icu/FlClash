@@ -33,7 +33,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _storageService = ref.read(storageServiceProvider);
     _loadSavedCredentials();
     _loadAppInfo();
-    
+
+    // 远程配置要等初始化完成才落地，标题/官网必须在就绪后重读一次，
+    // 否则界面一直显示本地 YAML 的兜底值。
+    ref.listenManual(initializationProvider, (previous, next) {
+      if (previous?.isReady != true && next.isReady) {
+        _loadAppInfo();
+      }
+    });
+
     // ✅ 调用统一初始化服务
     _initializeXBoard();
   }
@@ -56,15 +64,57 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
   
+  /// 冷启动重试间隔。首次失败多半是「刚启动还没连上网」，退避重试即可自愈。
+  static const _initRetryDelays = [
+    Duration(seconds: 2),
+    Duration(seconds: 4),
+    Duration(seconds: 8),
+    Duration(seconds: 15),
+  ];
+
   /// 初始化 XBoard（统一入口）
+  ///
+  /// 必须能重试：iOS 上外壳就是 home，登录页在 t=0 挂载，
+  /// 很容易撞上「连接尚未就绪」而初始化失败。失败后没有重试路径的话，
+  /// 登录按钮会一直是灰的，远程配置（标题/官网）也永远不会落地。
   Future<void> _initializeXBoard() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        await ref.read(initializationProvider.notifier).initialize();
-      } catch (e) {
-        // 初始化失败，UI 会显示错误状态
+      for (var attempt = 0; attempt <= _initRetryDelays.length; attempt++) {
+        if (!mounted) return;
+
+        final initState = ref.read(initializationProvider);
+        if (initState.isReady) return;
+
+        // 别和另一个进行中的初始化抢（application.dart 启动时也会触发一次）
+        if (!initState.isInitializing) {
+          try {
+            await ref.read(initializationProvider.notifier).initialize();
+          } catch (_) {
+            // 失败态由 UI 呈现，这里只负责退避重试
+          }
+        }
+
+        if (!mounted) return;
+        if (ref.read(initializationProvider).isReady) return;
+        if (attempt == _initRetryDelays.length) return;
+
+        await Future.delayed(_initRetryDelays[attempt]);
       }
     });
+  }
+
+  /// 手动重试（点击状态指示器）。顺便把失败原因显示出来 ——
+  /// 否则界面上只有一个红点，完全无法定位是网络、域名还是 SDK 的问题。
+  Future<void> _retryInitialization() async {
+    final error = ref.read(initializationProvider).errorMessage;
+    if (error != null && error.isNotEmpty) {
+      XBoardNotification.showError(error);
+    }
+    try {
+      await ref.read(initializationProvider.notifier).refresh();
+    } catch (_) {
+      // 失败态由 UI 呈现
+    }
   }
   void refreshCredentials() {
     _loadSavedCredentials();
@@ -113,7 +163,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           if (mounted) {
             XBoardNotification.showSuccess(appLocalizations.xboardLoginSuccess);
             Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
+              // canPop 守卫：登录页也可能是根页面（iOS 外壳未登录态），
+              // 此时 pop() 会弹掉 home 路由导致黑屏。
+              if (mounted && Navigator.of(context).canPop()) {
                 Navigator.of(context).pop();
               }
             });
@@ -358,7 +410,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           break;
       }
       
-      return Row(
+      final indicator = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           initState.isInitializing
@@ -376,6 +428,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   color: statusColor,
                 ),
         ],
+      );
+
+      // 失败态给一个手动重试入口，否则退避重试用尽后就是死路
+      if (initState.status != InitializationStatus.failed) {
+        return indicator;
+      }
+      return InkWell(
+        onTap: _retryInitialization,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: indicator,
+        ),
       );
     }
   }

@@ -10,8 +10,11 @@ import 'package:fl_clash/manager/manager.dart';
 import 'package:fl_clash/plugins/app.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/bridge.dart';
 import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
+import 'package:fl_clash/xboard/features/shared/widgets/node_selector_bar.dart';
+import 'package:fl_clash/xboard/features/subscription/widgets/xboard_connect_button.dart';
 import 'package:fl_clash/xboard/services/storage/xboard_storage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -195,7 +198,27 @@ class ApplicationState extends ConsumerState<Application> {
           home: child!,
         );
       },
-      child: const HomePage(),
+      child: _buildHome(),
+    );
+  }
+
+  /// iOS 走 XBoard 外壳（订阅/账户形态），其余平台保持原有主界面。
+  ///
+  /// 必须同时判 [hasXboardConfig]：未打包 xboard 配置的 iOS 构建若进入外壳，
+  /// 会卡在一个永远登不上的登录页且回不到主界面。
+  Widget _buildHome() {
+    if (!system.isIOS || !hasXboardConfig) {
+      return const HomePage();
+    }
+    return const XBoardIosShell(
+      connectionControl: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          NodeSelectorBar(),
+          SizedBox(height: 12),
+          XBoardConnectButton(),
+        ],
+      ),
     );
   }
 

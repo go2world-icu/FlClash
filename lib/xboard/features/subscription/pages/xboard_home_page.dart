@@ -1,14 +1,6 @@
 ﻿import 'dart:async';
-import 'dart:io';
-import 'dart:math';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/xboard/config/xboard_config.dart';
-import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
-import 'dart:convert';
-import 'package:fl_clash/xboard/features/remote_task/services/device_info_service.dart';
-import 'package:fl_clash/xboard/features/auth/pages/login_page.dart';
-import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -17,7 +9,7 @@ import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/features/latency/services/auto_latency_service.dart';
 import 'package:fl_clash/xboard/features/subscription/services/subscription_status_checker.dart';
 import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import '../widgets/log_upload_row.dart';
 import '../widgets/subscription_usage_card.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/error_card.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/invite_rules_card.dart';
@@ -39,8 +31,6 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
   bool _hasInitialized = false;
   bool _hasStartedLatencyTesting = false;
   bool _hasCheckedSubscriptionStatus = false;
-  bool _isUploading = false;
-  bool _hasUploaded = false;
 
   @override
   bool get wantKeepAlive => true; // 保持页面状态，防止重建
@@ -61,13 +51,8 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       autoLatencyService.initialize(ref);
       _waitForGroupsAndStartTesting();
     });
-    ref.listenManual(xboardUserProvider, (previous, next) {
-      if (next.errorMessage == 'TOKEN_EXPIRED') {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showTokenExpiredDialog();
-        });
-      }
-    });
+    // Token 过期由 xboardUserProvider 统一处理（清认证态 + 关代理 + 全局提示），
+    // 认证态一变本页就会被 XBoardPage 换成登录页，这里无需再监听。
 
     // 监听订阅导入完成事件
     ref.listenManual(profileImportProvider, (previous, next) {
@@ -180,7 +165,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
                         SizedBox(height: sectionSpacing),
                         _buildInviteSection(),
                         SizedBox(height: sectionSpacing),
-                        _buildLogUploadRow(),
+                        const LogUploadRow(),
                         SizedBox(height: sectionSpacing),
                         _buildLogoutButton(),
                       ],
@@ -194,11 +179,6 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       ),
     );
   }
-
-  /// 禁用态颜色（上传中或已上报）
-  Color get _disabledColor => Theme.of(
-    context,
-  ).colorScheme.onSurfaceVariant.withValues(alpha: _hasUploaded ? 0.4 : 0.5);
 
   /// 异步加载邀请数据
   Future<void> _loadInviteData() async {
@@ -236,54 +216,6 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
     );
   }
 
-  /// 构建日志上报行（内嵌在滚动内容中）
-  Widget _buildLogUploadRow() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '遇到问题？',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 13,
-            ),
-          ),
-          GestureDetector(
-            onTap: (_isUploading || _hasUploaded) ? null : _uploadLogs,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!_hasUploaded)
-                  Icon(Icons.bug_report, size: 14, color: _disabledColor),
-                if (!_hasUploaded) const SizedBox(width: 4),
-                Text(
-                  _isUploading ? '上传中...' : (_hasUploaded ? '已上报' : '日志上报'),
-                  style: TextStyle(
-                    color: _disabledColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    decoration: (_isUploading || _hasUploaded)
-                        ? null
-                        : TextDecoration.underline,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// 构建退出登录按钮
   Widget _buildLogoutButton() {
     return SizedBox(
@@ -309,78 +241,6 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
   /// 显示退出确认对话框
   void _showLogoutDialog() {
     showDialog(context: context, builder: (context) => const LogoutDialog());
-  }
-
-  /// 上传日志到服务端
-  Future<void> _uploadLogs() async {
-    final fileOutput = XBoardLogger.fileOutput;
-    if (fileOutput == null) {
-      _showSnackBar('日志未启用');
-      return;
-    }
-
-    setState(() => _isUploading = true);
-
-    try {
-      // 单文件模式，直接获取当前日志文件
-      final logPath = fileOutput.currentLogFilePath;
-      if (logPath == null) {
-        _showSnackBar('日志文件未初始化');
-        return;
-      }
-      final logFile = File(logPath);
-      if (!await logFile.exists()) {
-        _showSnackBar('日志文件不存在');
-        return;
-      }
-      final fileBytes = await logFile.readAsBytes();
-      final filename = logFile.path.split(Platform.pathSeparator).last;
-
-      // 设备信息
-      final deviceInfoResult = await DeviceInfoService.collectBasicDeviceInfo();
-      final deviceInfoJson = deviceInfoResult['status'] == 'success'
-          ? jsonEncode(deviceInfoResult['device_info'])
-          : '{}';
-
-      final reportUrl = XBoardConfig.reportLogUrl;
-      if (reportUrl == null || reportUrl.isEmpty) {
-        _showSnackBar('未配置日志上报服务器地址');
-        return;
-      }
-
-      final success = await XBoardSDK.instance.reportLog(
-        fileBytes,
-        filename,
-        deviceInfoJson: deviceInfoJson,
-        customUrl: reportUrl,
-      );
-
-      if (!mounted) return;
-
-      if (success) {
-        _hasUploaded = true;
-        _showSnackBar('日志上报成功 ✓');
-      } else {
-        _showSnackBar('日志上报失败');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      _showSnackBar('上报异常: $e');
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
-    }
-  }
-
-  /// 显示 SnackBar 提示
-  void _showSnackBar(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   Widget _buildUsageCard(BuildContext context) {
@@ -421,41 +281,6 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         // ignore ref errors after dispose
       }
     }
-  }
-
-  void _showTokenExpiredDialog() {
-    if (!mounted) return;
-    final appLocalizations = AppLocalizations.of(context);
-    final userNotifier = ref.read(xboardUserProvider.notifier);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(appLocalizations.xboardTokenExpiredTitle),
-        content: Text(appLocalizations.xboardTokenExpiredContent),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              // 先关闭对话框
-              if (context.mounted) {
-                Navigator.of(context).pop();
-              }
-              // 清除错误状态
-              userNotifier.clearTokenExpiredError();
-              // 处理 Token 过期（清除数据）
-              await userNotifier.handleTokenExpired();
-              // 导航到登录页
-              if (context.mounted) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              }
-            },
-            child: Text(appLocalizations.xboardRelogin),
-          ),
-        ],
-      ),
-    );
   }
 
   void _waitForGroupsAndStartTesting() {
