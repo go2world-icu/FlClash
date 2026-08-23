@@ -47,72 +47,79 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     return const UserAuthState();
   }
   Future<bool> quickAuth() async {
+    _logger.info('快速认证检查：检查登录状态...');
+    final hasToken = await _restoreFromLocal();
+    if (hasToken) {
+      _logger.info('快速认证成功：已有token，直接进入主界面. isInitialized: ${state.isInitialized}');
+      // 订阅下载统一由 _backgroundTokenValidation → _silentUpdateUserData 负责：
+      // 冷启动本地已有配置，先用本地节点展示，后台 token 验证通过后再拉最新订阅
+      // 一次；下载失败不影响本地节点展示。
+      _backgroundTokenValidation();
+      return true;
+    }
+    _logger.info('快速认证：无本地token，显示登录页面. isInitialized: ${state.isInitialized}');
+    state = state.copyWith(isInitialized: true);
+    return false;
+  }
+
+  /// 冷启动本地会话恢复（纯本地，不依赖域名竞速 / SDK 初始化）。
+  ///
+  /// 只读 SharedPreferences 里的 token + FileStorage 里的用户/订阅缓存，
+  /// 有 token 立即恢复登录态，让外壳尽快进入首页；token 的完整验证
+  /// 交给后台 initialize() 完成后的 [quickAuth] 处理。
+  Future<void> restoreLocalSession() async {
+    if (state.isInitialized) return;
+    final hasToken = await _restoreFromLocal();
+    if (!hasToken) {
+      state = state.copyWith(isInitialized: true);
+    }
+  }
+
+  /// 纯本地读取 token + 用户/订阅缓存，返回是否有 token。
+  ///
+  /// 有 token 时同步更新 [userInfoProvider] / [subscriptionInfoProvider]
+  /// 并设置 isAuthenticated + isInitialized；无 token 不改认证态。
+  Future<bool> _restoreFromLocal() async {
     try {
-      _logger.info('快速认证检查：检查登录状态...');
-      final hasToken = await XBoardSDK.instance.hasToken()
-          .timeout(const Duration(seconds: 5), onTimeout: () {
-        _logger.info('快速认证超时，假设无token');
+      final hasToken = await XBoardSDK.hasStoredToken()
+          .timeout(const Duration(seconds: 2), onTimeout: () {
+        _logger.info('本地token检查超时，假设无token');
         return false;
       });
-      
-      if (hasToken) {
-        String? email;
-        DomainUser? userInfo;
-        DomainSubscription? subscriptionInfo;
-        try {
-          final emailResult = await _storageService.getUserEmail()
-              .timeout(const Duration(seconds: 2));
-          email = emailResult.dataOrNull;
-          
-          final userInfoResult = await _storageService.getDomainUser()
-              .timeout(const Duration(seconds: 2));
-          userInfo = userInfoResult.dataOrNull;
-          
-          final subscriptionInfoResult = await _storageService.getDomainSubscription()
-              .timeout(const Duration(seconds: 2));
-          subscriptionInfo = subscriptionInfoResult.dataOrNull;
-        } catch (e) {
-          _logger.info('获取缓存数据失败，但继续进行认证: $e');
-        }
-        
-        state = state.copyWith(
-          isAuthenticated: true,
-          isInitialized: true,
-          email: email,
-        );
-        
-        if (userInfo != null) {
-          ref.read(userInfoProvider.notifier).state = userInfo;
-        }
-        if (subscriptionInfo != null) {
-          ref.read(subscriptionInfoProvider.notifier).state = subscriptionInfo;
-        }
-        
-        _logger.info('快速认证成功：已有token，直接进入主界面. isInitialized: ${state.isInitialized}');
-        _backgroundTokenValidation();
-        
-        // 启动时自动导入订阅
-        if (subscriptionInfo?.subscribeUrl?.isNotEmpty == true) {
-          _logger.info('启动时自动导入订阅: ${subscriptionInfo!.subscribeUrl}');
-          ref.read(profileImportProvider.notifier).importSubscription(subscriptionInfo.subscribeUrl);
-        }
-        
-        return true;
-      } else {
-        _logger.info('快速认证：无本地token，显示登录页面. isInitialized: ${state.isInitialized}');
-        state = state.copyWith(isInitialized: true);
-        return false;
+      if (!hasToken) return false;
+
+      String? email;
+      DomainUser? userInfo;
+      DomainSubscription? subscriptionInfo;
+      try {
+        email = (await _storageService.getUserEmail()
+                .timeout(const Duration(seconds: 2)))
+            .dataOrNull;
+        userInfo = (await _storageService.getDomainUser()
+                .timeout(const Duration(seconds: 2)))
+            .dataOrNull;
+        subscriptionInfo = (await _storageService.getDomainSubscription()
+                .timeout(const Duration(seconds: 2)))
+            .dataOrNull;
+      } catch (e) {
+        _logger.info('获取缓存数据失败，但继续进行认证: $e');
       }
+
+      state = state.copyWith(
+        isAuthenticated: true,
+        isInitialized: true,
+        email: email,
+      );
+      if (userInfo != null) {
+        ref.read(userInfoProvider.notifier).state = userInfo;
+      }
+      if (subscriptionInfo != null) {
+        ref.read(subscriptionInfoProvider.notifier).state = subscriptionInfo;
+      }
+      return true;
     } catch (e) {
-      _logger.info('快速认证失败: $e');
-      state = state.copyWith(isInitialized: true);
-      _logger.info('快速认证失败: $e. isInitialized: ${state.isInitialized}');
+      _logger.info('本地会话恢复失败: $e');
       return false;
-    } finally {
-      if (!state.isInitialized) {
-        _logger.info('强制设置初始化状态为true. isInitialized: ${state.isInitialized}');
-        state = state.copyWith(isInitialized: true);
-      }
     }
   }
   void _backgroundTokenValidation() {

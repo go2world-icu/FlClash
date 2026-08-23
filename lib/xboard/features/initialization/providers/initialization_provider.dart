@@ -47,6 +47,11 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
     try {
       _logger.info('[Initialization] 🚀 开始初始化流程');
 
+      // ========== 步骤 0: 本地会话快速恢复（纯本地，不阻塞 UI） ==========
+      // 先读本地 token 恢复登录态，让外壳尽快进入首页；域名竞速 / SDK 初始化
+      // 是网络操作，放到后面后台继续，token 的完整验证由末尾的 autoAuth 兜底。
+      await ref.read(xboardUserAuthProvider.notifier).restoreLocalSession();
+
       // ========== 步骤 1: 检查域名 ==========
       _logger.info('[Initialization] 📡 步骤 1/2: 检查域名');
       state = state.copyWith(
