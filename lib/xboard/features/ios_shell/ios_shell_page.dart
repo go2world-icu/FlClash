@@ -1,9 +1,11 @@
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/xboard/features/auth/pages/login_page.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
+import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/user_menu_widget.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_home_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_invite_tab.dart';
+import 'package:fl_clash/xboard/features/ios_shell/ios_splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,11 +35,18 @@ class _XBoardIosShellState extends ConsumerState<XBoardIosShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isAuthenticated = ref.watch(
-      xboardUserProvider.select((state) => state.isAuthenticated),
-    );
+    final userState = ref.watch(xboardUserProvider);
+    final initState = ref.watch(initializationProvider);
 
-    if (!isAuthenticated) {
+    // 本地登录态还在恢复中（quickAuth 未返回）且初始化仍在进行，
+    // 先显示启动屏，避免已登录用户先看到登录页闪现、过一会才被切回首页。
+    // 初始化失败时不能卡在启动屏 —— 交回 LoginPage，它有失败提示和退避重试。
+    final initPending = !initState.isReady && !initState.isFailed;
+    if (!userState.isInitialized && initPending) {
+      return const IosSplashScreen();
+    }
+
+    if (!userState.isAuthenticated) {
       return const LoginPage();
     }
 

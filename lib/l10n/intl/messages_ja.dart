@@ -1414,6 +1414,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardSixMonthCycle": MessageLookupByLibrary.simpleMessage("6ヶ月サイクル"),
     "xboardSpeedLimit": MessageLookupByLibrary.simpleMessage("速度制限"),
     "xboardStartProxy": MessageLookupByLibrary.simpleMessage("プロキシ開始"),
+    "xboardStartProxyToSelectNode": MessageLookupByLibrary.simpleMessage(
+      "プロキシを起動するとノードを選択できます",
+    ),
     "xboardStop": MessageLookupByLibrary.simpleMessage("停止"),
     "xboardStopProxy": MessageLookupByLibrary.simpleMessage("プロキシ停止"),
     "xboardSubscription": MessageLookupByLibrary.simpleMessage("サブスクリプション"),
@@ -1481,6 +1484,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardUpdateContent": MessageLookupByLibrary.simpleMessage("更新内容："),
     "xboardUpdateLater": MessageLookupByLibrary.simpleMessage("後で更新"),
     "xboardUpdateNow": MessageLookupByLibrary.simpleMessage("今すぐ更新"),
+    "xboardUpdateSubscription": MessageLookupByLibrary.simpleMessage("サブスク更新"),
     "xboardUpdateSubscriptionRegularly": MessageLookupByLibrary.simpleMessage(
       "定期的にサブスクリプションを更新して最新のノードを取得",
     ),

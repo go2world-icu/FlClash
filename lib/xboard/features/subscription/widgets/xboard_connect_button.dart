@@ -75,55 +75,54 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
     if (!isInit || currentProfile == null) {
       return Container();
     }
-    final groups = ref.watch(groupsProvider);
-    final hasNodes = groups.any((g) => g.all.isNotEmpty);
+    // iOS 上 core 跑在 NetworkExtension 里，只有隧道启动后 groups 才会上报，
+    // 所以「有没有节点」不能作为能否启动的依据 —— 有 profile 就该允许启动，
+    // 否则会死锁：没节点 → 不能启动 → 隧道不起来 → 永远没节点。
     if (widget.isFloating) {
-      return _buildFloatingButton(context, hasNodes: hasNodes);
+      return _buildFloatingButton(context);
     } else {
-      return _buildInlineButton(context, hasNodes: hasNodes);
+      return _buildInlineButton(context);
     }
   }
-  Widget _buildFloatingButton(BuildContext context, {required bool hasNodes}) {
+  Widget _buildFloatingButton(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // 暗黑模式使用浅色背景配黑色文字
     final startColor = isDark ? Colors.green.shade200 : Colors.green.shade600;
     final stopColor = isDark ? Colors.blue.shade200 : colorScheme.primary;
 
-    return Opacity(
-      opacity: hasNodes ? 1.0 : 0.35,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          floatingActionButtonTheme: FloatingActionButtonThemeData(
-            backgroundColor: isStart ? startColor : stopColor,
-            foregroundColor: isDark ? Colors.black : Colors.white,
-            sizeConstraints: const BoxConstraints(
-              minWidth: 56,
-              maxWidth: 200,
-            ),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: isStart ? startColor : stopColor,
+          foregroundColor: isDark ? Colors.black : Colors.white,
+          sizeConstraints: const BoxConstraints(
+            minWidth: 56,
+            maxWidth: 200,
           ),
         ),
-        child: AnimatedBuilder(
-          animation: _controller.view,
-          builder: (_, child) {
-            final textWidth = globalState.measure
-                    .computeTextSize(
-                      Text(
-                        utils.getTimeDifference(
-                          DateTime.now(),
-                        ),
-                        style: context.textTheme.titleMedium?.toSoftBold,
+      ),
+      child: AnimatedBuilder(
+        animation: _controller.view,
+        builder: (_, child) {
+          final textWidth = globalState.measure
+                  .computeTextSize(
+                    Text(
+                      utils.getTimeDifference(
+                        DateTime.now(),
                       ),
-                    )
-                    .width +
-                16;
-            return FloatingActionButton.extended(
-              clipBehavior: Clip.antiAlias,
-              materialTapTargetSize: MaterialTapTargetSize.padded,
-              heroTag: "xboard_connect_button",
-              onPressed: hasNodes ? () {
-                handleSwitchStart();
-              } : null,
+                      style: context.textTheme.titleMedium?.toSoftBold,
+                    ),
+                  )
+                  .width +
+              16;
+          return FloatingActionButton.extended(
+            clipBehavior: Clip.antiAlias,
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+            heroTag: "xboard_connect_button",
+            onPressed: () {
+              handleSwitchStart();
+            },
               icon: AnimatedIcon(
                 icon: AnimatedIcons.play_pause,
                 progress: _animation,
@@ -150,100 +149,81 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
             },
           ),
         ),
-      ),
-    );
+      );
   }
-  Widget _buildInlineButton(BuildContext context, {required bool hasNodes}) {
+  Widget _buildInlineButton(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // 暗黑模式使用浅色背景配黑色文字
     final startColor = isDark ? Colors.green.shade200 : Colors.green.shade600;
     final stopColor = isDark ? Colors.blue.shade200 : colorScheme.primary;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: AnimatedBuilder(
-        animation: _controller.view,
-        builder: (_, child) {
-          return Opacity(
-            opacity: hasNodes ? 1.0 : 0.35,
-            child: Container(
-              decoration: BoxDecoration(
-                color: isStart ? startColor : stopColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: hasNodes ? () {
-                    handleSwitchStart();
-                  } : null,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+    return AnimatedBuilder(
+      animation: _controller.view,
+      builder: (_, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isStart ? startColor : stopColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                handleSwitchStart();
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedIcon(
+                      icon: AnimatedIcons.play_pause,
+                      progress: _animation,
+                      size: 24,
+                      color: isDark ? Colors.black : Colors.white,
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        AnimatedIcon(
-                          icon: AnimatedIcons.play_pause,
-                          progress: _animation,
-                          size: 24,
-                          color: isDark ? Colors.black : Colors.white,
+                        Text(
+                          isStart
+                            ? AppLocalizations.of(context).xboardStopProxy
+                            : AppLocalizations.of(context).xboardStartProxy,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: isDark ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        const SizedBox(width: 10),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              isStart
-                                ? AppLocalizations.of(context).xboardStopProxy
-                                : AppLocalizations.of(context).xboardStartProxy,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: isDark ? Colors.black : Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (isStart) ...[
-                              const SizedBox(height: 3),
-                              Consumer(
-                                builder: (_, ref, __) {
-                                  final runTime = ref.watch(runTimeProvider);
-                                  final text = utils.getTimeText(runTime);
-                                  return Text(
-                                    AppLocalizations.of(context).xboardRunningTime(text),
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: isDark
-                                          ? Colors.black.withValues(alpha: 0.7)
-                                          : Colors.white.withValues(alpha: 0.9),
-                                      fontSize: 12,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                            if (!hasNodes && !isStart) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                AppLocalizations.of(context).xboardNoAvailableNodes,
+                        if (isStart) ...[
+                          const SizedBox(height: 3),
+                          Consumer(
+                            builder: (_, ref, __) {
+                              final runTime = ref.watch(runTimeProvider);
+                              final text = utils.getTimeText(runTime);
+                              return Text(
+                                AppLocalizations.of(context).xboardRunningTime(text),
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: isDark
-                                      ? Colors.black.withValues(alpha: 0.5)
-                                      : Colors.white.withValues(alpha: 0.7),
-                                  fontSize: 10,
+                                      ? Colors.black.withValues(alpha: 0.7)
+                                      : Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 12,
                                 ),
-                              ),
-                            ],
-                          ],
-                        ),
+                              );
+                            },
+                          ),
+                        ],
                       ],
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 } 

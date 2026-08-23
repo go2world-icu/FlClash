@@ -5369,6 +5369,16 @@ class AppLocalizations {
     return Intl.message('Refresh', name: 'xboardRefresh', desc: '', args: []);
   }
 
+  /// `Update subscription`
+  String get xboardUpdateSubscription {
+    return Intl.message(
+      'Update subscription',
+      name: 'xboardUpdateSubscription',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Copy Link`
   String get xboardCopyLink {
     return Intl.message(
@@ -6979,6 +6989,16 @@ class AppLocalizations {
     return Intl.message(
       'Click to setup nodes',
       name: 'xboardClickToSetupNodes',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Start the proxy to select nodes`
+  String get xboardStartProxyToSelectNode {
+    return Intl.message(
+      'Start the proxy to select nodes',
+      name: 'xboardStartProxyToSelectNode',
       desc: '',
       args: [],
     );

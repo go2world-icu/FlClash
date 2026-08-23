@@ -10,3 +10,4 @@ export 'xb_card.dart';
 export 'xb_container.dart';
 export 'xb_input_field.dart';
 export 'xboard_outbound_mode.dart';
+export 'xboard_outbound_mode_selector.dart';

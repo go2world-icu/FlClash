@@ -1424,6 +1424,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardSixMonthCycle": MessageLookupByLibrary.simpleMessage("6个月周期"),
     "xboardSpeedLimit": MessageLookupByLibrary.simpleMessage("限速"),
     "xboardStartProxy": MessageLookupByLibrary.simpleMessage("启动代理"),
+    "xboardStartProxyToSelectNode": MessageLookupByLibrary.simpleMessage(
+      "启动代理后可选节点",
+    ),
     "xboardStop": MessageLookupByLibrary.simpleMessage("停止"),
     "xboardStopProxy": MessageLookupByLibrary.simpleMessage("停止代理"),
     "xboardSubscription": MessageLookupByLibrary.simpleMessage("订阅"),
@@ -1473,6 +1476,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardUpdateContent": MessageLookupByLibrary.simpleMessage("更新内容："),
     "xboardUpdateLater": MessageLookupByLibrary.simpleMessage("稍后更新"),
     "xboardUpdateNow": MessageLookupByLibrary.simpleMessage("立即更新"),
+    "xboardUpdateSubscription": MessageLookupByLibrary.simpleMessage("更新订阅"),
     "xboardUpdateSubscriptionRegularly": MessageLookupByLibrary.simpleMessage(
       "定期更新订阅获取最新节点",
     ),

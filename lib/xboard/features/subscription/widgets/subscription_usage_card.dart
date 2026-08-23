@@ -282,6 +282,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
     final usedTraffic = _getUsedTraffic();
     final totalTraffic = _getTotalTraffic();
     final remainingDays = _calculateRemainingDays();
+    final planName = subscriptionInfo?.planName;
     return Container(
       decoration: BoxDecoration(
         color:
@@ -300,20 +301,32 @@ class SubscriptionUsageCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (planName != null && planName.isNotEmpty) ...[
+            Text(
+              planName,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
           Row(
             children: [
-              Text(
-                '${subscriptionInfo?.planName != null && subscriptionInfo!.planName!.isNotEmpty ? '${subscriptionInfo!.planName} · ' : ''}${(progress * 100).toInt()}% ${AppLocalizations.of(context).xboardUsed}',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  '${(progress * 100).toInt()}% ${AppLocalizations.of(context).xboardUsed}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
               Consumer(
                 builder: (context, ref, child) {
                   final userState = ref.watch(xboardUserProvider);
-                  return IconButton(
+                  return FilledButton.tonal(
                     onPressed: userState.isLoading
                         ? null
                         : () async {
@@ -321,26 +334,29 @@ class SubscriptionUsageCard extends ConsumerWidget {
                                 .read(xboardUserProvider.notifier)
                                 .refreshSubscriptionInfo();
                           },
-                    icon: userState.isLoading
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: userState.isLoading
                         ? SizedBox(
-                            width: 18,
-                            height: 18,
+                            width: 14,
+                            height: 14,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: theme.colorScheme.primary,
+                              color: theme.colorScheme.onSecondaryContainer,
                             ),
                           )
-                        : Icon(
-                            Icons.refresh,
-                            color: theme.colorScheme.primary,
-                            size: 20,
+                        : Text(
+                            AppLocalizations.of(context).xboardUpdateSubscription,
                           ),
-                    tooltip: '刷新订阅信息',
-                    style: IconButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(20, 20),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
                   );
                 },
               ),

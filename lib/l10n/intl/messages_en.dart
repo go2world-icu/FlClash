@@ -2054,6 +2054,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "xboardSpeedLimit": MessageLookupByLibrary.simpleMessage("Speed"),
     "xboardStartProxy": MessageLookupByLibrary.simpleMessage("Start Proxy"),
+    "xboardStartProxyToSelectNode": MessageLookupByLibrary.simpleMessage(
+      "Start the proxy to select nodes",
+    ),
     "xboardStop": MessageLookupByLibrary.simpleMessage("Stop"),
     "xboardStopProxy": MessageLookupByLibrary.simpleMessage("Stop Proxy"),
     "xboardSubscription": MessageLookupByLibrary.simpleMessage("Subscription"),
@@ -2131,6 +2134,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "xboardUpdateLater": MessageLookupByLibrary.simpleMessage("Update Later"),
     "xboardUpdateNow": MessageLookupByLibrary.simpleMessage("Update Now"),
+    "xboardUpdateSubscription": MessageLookupByLibrary.simpleMessage(
+      "Update subscription",
+    ),
     "xboardUpdateSubscriptionRegularly": MessageLookupByLibrary.simpleMessage(
       "Update subscription regularly to get latest nodes",
     ),

@@ -1870,6 +1870,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardStartProxy": MessageLookupByLibrary.simpleMessage(
       "Запустить прокси",
     ),
+    "xboardStartProxyToSelectNode": MessageLookupByLibrary.simpleMessage(
+      "Запустите прокси, чтобы выбрать узлы",
+    ),
     "xboardStop": MessageLookupByLibrary.simpleMessage("Остановить"),
     "xboardStopProxy": MessageLookupByLibrary.simpleMessage(
       "Остановить прокси",
@@ -1951,6 +1954,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "xboardUpdateLater": MessageLookupByLibrary.simpleMessage("Обновить позже"),
     "xboardUpdateNow": MessageLookupByLibrary.simpleMessage("Обновить сейчас"),
+    "xboardUpdateSubscription": MessageLookupByLibrary.simpleMessage(
+      "Обновить подписку",
+    ),
     "xboardUpdateSubscriptionRegularly": MessageLookupByLibrary.simpleMessage(
       "Регулярно обновляйте подписку для получения последних узлов",
     ),

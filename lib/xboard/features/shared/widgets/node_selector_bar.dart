@@ -2,7 +2,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
-import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/latency/services/auto_latency_service.dart';
@@ -118,10 +117,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
       currentProxy = currentGroup.all.first;
     }
     _checkNodeChange(currentProxy);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: _buildProxyDisplay(context, currentGroup, currentProxy),
-    );
+    return _buildProxyDisplay(context, currentGroup, currentProxy);
   }
   Widget _buildProxyDisplay(BuildContext context, Group group, Proxy proxy) {
     return Container(
@@ -133,10 +129,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => CommonScaffold(
-                title: AppLocalizations.of(context).xboardProxy,
-                body: const ProxiesView(),
-              ),
+              builder: (context) => const ProxiesView(),
             ),
           );
         },
@@ -182,10 +175,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => CommonScaffold(
-                        title: AppLocalizations.of(context).xboardProxy,
-                        body: const ProxiesView(),
-                      ),
+                      builder: (context) => const ProxiesView(),
                     ),
                   );
                 },
@@ -221,80 +211,80 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
     );
   }
   Widget _buildEmptyState(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer,
+    // iOS 上未启动隧道时 groups 为空是正常现象（节点要等隧道起来才上报），
+    // 此时提示「启动代理后可选节点」，而不是误导性的「无可用节点」。
+    final isStart = ref.watch(isStartProvider);
+    final title = isStart
+        ? AppLocalizations.of(context).xboardNoAvailableNodes
+        : AppLocalizations.of(context).xboardStartProxyToSelectNode;
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.wifi_off,
+              color: Theme.of(context).colorScheme.onErrorContainer,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  AppLocalizations.of(context).xboardClickToSetupNodes,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProxiesView(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              minimumSize: const Size(56, 30),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
-                Icons.wifi_off,
-                color: Theme.of(context).colorScheme.onErrorContainer,
-                size: 18,
-              ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).xboardNoAvailableNodes,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    AppLocalizations.of(context).xboardClickToSetupNodes,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+            child: Text(
+              AppLocalizations.of(context).xboardSetup,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => CommonScaffold(
-                      title: AppLocalizations.of(context).xboardProxy,
-                      body: const ProxiesView(),
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                minimumSize: const Size(56, 30),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                AppLocalizations.of(context).xboardSetup,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
