@@ -180,6 +180,30 @@ class DomainRacingService {
     }
   }
 
+  /// 快速探活单个域名（冷启动快路径用）。
+  ///
+  /// 只测缓存的获胜域名当前是否可达，[timeout] 默认 2 秒 ——
+  /// 比完整竞速的 5s 连接 / 8s 响应快得多，用于决定能否信任持久化的竞速结果。
+  /// 与竞速走同一套测试逻辑（相同 User-Agent / 证书 / 代理路径），
+  /// 探活通过基本等价于该域名在竞速中会获胜。
+  static Future<bool> probeDomain(
+    String domain, {
+    String? proxyUrl,
+    Duration timeout = const Duration(seconds: 2),
+  }) async {
+    final result = await _testSingleDomain(
+      domain,
+      '',
+      CancelToken(),
+      0,
+      useProxy: proxyUrl != null && proxyUrl.isNotEmpty,
+      proxyUrl: proxyUrl,
+      connectTimeout: timeout,
+      responseTimeout: timeout,
+    );
+    return result.success;
+  }
+
   /// 测试单个域名
   static Future<DomainTestResult> _testSingleDomain(
     String domain,
@@ -188,6 +212,8 @@ class DomainRacingService {
     int index, {
     bool useProxy = false,
     String? proxyUrl,
+    Duration? connectTimeout,
+    Duration? responseTimeout,
   }) async {
     final stopwatch = Stopwatch()..start();
 
@@ -253,7 +279,7 @@ class DomainRacingService {
         };
       }
 
-      client.connectionTimeout = _connectionTimeout;
+      client.connectionTimeout = connectTimeout ?? _connectionTimeout;
 
       final uri = Uri.parse(testUrl);
       final request = await client.getUrl(uri);
@@ -272,7 +298,7 @@ class DomainRacingService {
       }
       request.headers.set(HttpHeaders.acceptHeader, '*/*');
 
-      final response = await request.close().timeout(_responseTimeout);
+      final response = await request.close().timeout(responseTimeout ?? _responseTimeout);
       client.close();
 
       stopwatch.stop();

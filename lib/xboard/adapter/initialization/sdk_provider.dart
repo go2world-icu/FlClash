@@ -26,15 +26,16 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
     // 1. 优先使用已缓存的域名竞速结果
     // InitializationProvider 会确保域名检查完成后才调用此 Provider
     String? fastestUrl = XBoardConfig.lastRacingResult?.domain;
-    
+
     if (fastestUrl != null) {
       _logger.info('[XBoardSdkProvider] 使用缓存的竞速结果: $fastestUrl');
     } else {
-      // 如果没有缓存，说明没有通过 InitializationProvider 初始化
-      // 作为降级方案，自己执行域名竞速
-      _logger.warning('[XBoardSdkProvider] ⚠️ 缓存未命中，执行降级方案：自行竞速');
-      _logger.warning('[XBoardSdkProvider] 建议通过 InitializationProvider.initialize() 触发初始化');
-      
+      // 冷启动时外壳可能提前触发本 Provider（如公告拉取），此时 XBoardConfig
+      // 尚未初始化、域名竞速也还没跑。先确保 XBoardConfig 初始化完成再竞速，
+      // 避免拿到空列表直接失败。
+      if (!XBoardConfig.isInitialized) {
+        await XBoardConfig.initialize();
+      }
       fastestUrl = await XBoardConfig.getFastestPanelUrl();
     }
     

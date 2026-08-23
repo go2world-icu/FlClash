@@ -35,6 +35,10 @@ export 'utils/config_file_loader.dart';
 
 // ========== 便捷API ==========
 
+import 'dart:async';
+
+import 'package:fl_clash/xboard/core/core.dart';
+
 import 'core/module_initializer.dart';
 import 'core/config_settings.dart';
 import 'internal/xboard_config_accessor.dart';
@@ -155,16 +159,28 @@ class XBoardConfig {
   static Future<void> initialize({
     String provider = 'Flclash',
     ConfigSettings? settings,
-  }) async {
-    final config = settings ?? await ConfigFileLoader.loadFromFile();
-    
-    _instance = await ModuleInitializer.createConfigAccessor(
-      settings: config,
-      autoWarmUp: true,
-    );
-    
-    // 创建配置提供者实例
-    _provider = _XBoardConfigProvider(_instance!);
+  }) {
+    // 请求合并：冷启动时 domainStatusService 与 SDK Provider 的兜底初始化
+    // 可能并发触发，合并成一次真正的初始化，避免重复创建配置访问器。
+    return _initializeFuture ??= _doInitialize(settings: settings);
+  }
+
+  static Future<void>? _initializeFuture;
+
+  static Future<void> _doInitialize({ConfigSettings? settings}) async {
+    try {
+      final config = settings ?? await ConfigFileLoader.loadFromFile();
+
+      _instance = await ModuleInitializer.createConfigAccessor(
+        settings: config,
+        autoWarmUp: true,
+      );
+
+      // 创建配置提供者实例
+      _provider = _XBoardConfigProvider(_instance!);
+    } finally {
+      _initializeFuture = null;
+    }
   }
   
   /// 获取配置提供者接口（供SDK层使用）
@@ -206,19 +222,23 @@ class XBoardConfig {
   // ========== 公共API方法 ==========
   
   /// 获取第一个面板URL
-  static String? get panelUrl => _accessor.getFirstPanelUrl();
+  ///
+  /// 冷启动时配置可能尚未初始化（外壳已因本地 token 进入首页，而
+  /// XBoardConfig.initialize 在后台域名检查里执行），此时返回 null，
+  /// 由 UI 侧按「无配置」降级展示，而不是抛 StateError 打断构建。
+  static String? get panelUrl => _instance?.getFirstPanelUrl();
 
   /// 应用标题（本地YAML兜底，远程base覆盖）
-  static String get appTitle => _accessor.appTitle;
+  static String get appTitle => _instance?.appTitle ?? '';
 
   /// 应用网站（本地YAML兜底，远程base覆盖）
-  static String get appWebsite => _accessor.appWebsite;
+  static String get appWebsite => _instance?.appWebsite ?? '';
 
   // 缓存正在进行的竞速任务
   static Future<String?>? _racingFuture;
 
   /// 并发竞速获取最快的面板URL
-  /// 
+  ///
   /// 对当前所有可用的面板URL进行并发测试，返回响应最快的URL
   /// 如果所有URL都失败，则返回null
   /// 注意：返回的URL会强制转换为HTTPS格式，以适配SDK的私有证书配置
@@ -230,7 +250,37 @@ class XBoardConfig {
 
     final panelUrls = allPanelUrls;
     if (panelUrls.isEmpty) return null;
-    
+
+    // 冷启动快路径：本进程还没跑过竞速，先用持久化的上次竞速结果，
+    // 避免每次启动都等一轮网络竞速（每域名 5s 连接 / 8s 响应）。
+    if (_lastRacingResult == null) {
+      final cached = await RacingResultCache.load();
+      if (cached != null && cached.domain.isNotEmpty) {
+        // 探活：缓存域名还活着才信任它；死了就清掉缓存走正常竞速（回退）。
+        if (await DomainRacingService.probeDomain(
+          cached.domain,
+          proxyUrl: cached.proxyUrl,
+        )) {
+          XBoardLogger.info('[XBoardConfig] 使用缓存域名: ${cached.domain}');
+          _lastRacingResult = cached;
+          // 后台异步竞速刷新缓存，跑赢的结果留给下次启动（SDK 基地址不可热切）。
+          unawaited(_raceSelectFastest());
+          return cached.domain;
+        } else {
+          XBoardLogger.info('[XBoardConfig] 缓存域名失效，回退到竞速: ${cached.domain}');
+          await RacingResultCache.clear();
+        }
+      }
+    }
+
+    return _raceSelectFastest();
+  }
+
+  /// 执行完整竞速并持久化结果。
+  static Future<String?> _raceSelectFastest() async {
+    final panelUrls = allPanelUrls;
+    if (panelUrls.isEmpty) return null;
+
     // 获取所有代理
     final proxyUrls = allProxyUrls;
 
@@ -243,6 +293,8 @@ class XBoardConfig {
       if (result != null) {
         // 保存竞速结果
         _lastRacingResult = result;
+        // 持久化，供下次冷启动快路径使用
+        unawaited(RacingResultCache.save(result));
         return result.domain;
       }
       return null;
@@ -255,31 +307,31 @@ class XBoardConfig {
   }
   
   /// 获取第一个代理URL
-  static String? get proxyUrl => _accessor.getFirstProxyUrl();
-  
+  static String? get proxyUrl => _instance?.getFirstProxyUrl();
+
   /// 获取第一个WebSocket URL
-  static String? get wsUrl => _accessor.getFirstWebSocketUrl();
-  
+  static String? get wsUrl => _instance?.getFirstWebSocketUrl();
+
   /// 获取第一个更新URL
-  static String? get updateUrl => _accessor.getFirstUpdateUrl();
-  
+  static String? get updateUrl => _instance?.getFirstUpdateUrl();
+
   /// 获取第一个报告日志URL
-  static String? get reportLogUrl => _accessor.getFirstReportLogUrl();
-  
+  static String? get reportLogUrl => _instance?.getFirstReportLogUrl();
+
   /// 获取面板配置列表
-  static List<ConfigEntry> get panelList => _accessor.getPanelConfigList();
-  
+  static List<ConfigEntry> get panelList => _instance?.getPanelConfigList() ?? const [];
+
   /// 获取代理配置列表
-  static List<ProxyInfo> get proxyList => _accessor.getProxyConfigList();
-  
+  static List<ProxyInfo> get proxyList => _instance?.getProxyConfigList() ?? const [];
+
   /// 获取WebSocket配置列表
-  static List<WebSocketInfo> get webSocketList => _accessor.getWebSocketConfigList();
-  
+  static List<WebSocketInfo> get webSocketList => _instance?.getWebSocketConfigList() ?? const [];
+
   /// 获取更新配置列表
-  static List<UpdateInfo> get updateList => _accessor.getUpdateConfigList();
+  static List<UpdateInfo> get updateList => _instance?.getUpdateConfigList() ?? const [];
 
   /// 获取订阅配置信息
-  static SubscriptionInfo? get subscriptionInfo => _accessor.getSubscriptionInfo();
+  static SubscriptionInfo? get subscriptionInfo => _instance?.getSubscriptionInfo();
 
   /// 获取订阅URL列表
   static List<SubscriptionUrlInfo> get subscriptionUrlList => subscriptionInfo?.urls ?? [];
