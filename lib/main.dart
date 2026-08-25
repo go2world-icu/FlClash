@@ -18,7 +18,7 @@ Future<void> main() async {
     if (system.isDesktop) {
       await RustLib.init();
     }
-    final version = await system.version;
+    final version = await system.init();
     final container = await globalState.init(version);
     HttpOverrides.global = FlClashHttpOverrides();
     runApp(

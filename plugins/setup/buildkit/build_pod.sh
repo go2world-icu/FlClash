@@ -20,23 +20,48 @@ else
   PROJECT_DIR="$(cd "$PWD/../.." && pwd)"
 fi
 
-# Forward CocoaPods/Xcode environment to variables the build_tool expects
-export CARGOKIT_DARWIN_PLATFORM_NAME="${PLATFORM_NAME:-macosx}"
-export CARGOKIT_DARWIN_ARCHS="${ARCHS:-arm64}"
-export CARGOKIT_CONFIGURATION="${CONFIGURATION:-Release}"
+# Source the Flutter export environment (PATH etc.) generated per platform.
+case "${PLATFORM_NAME:-macosx}" in
+  iphoneos|iphonesimulator)
+    FLUTTER_EXPORT_BUILD_ENVIRONMENT="${PROJECT_DIR}/ios/Flutter/ephemeral/flutter_export_environment.sh"
+    ;;
+  *)
+    FLUTTER_EXPORT_BUILD_ENVIRONMENT="${PROJECT_DIR}/macos/Flutter/ephemeral/flutter_export_environment.sh"
+    ;;
+esac
+if [ -f "$FLUTTER_EXPORT_BUILD_ENVIRONMENT" ]; then
+  # shellcheck disable=SC1090
+  source "$FLUTTER_EXPORT_BUILD_ENVIRONMENT"
+fi
+
+# Forward CocoaPods/Xcode environment to variables the build_tool expects.
+export BUILDKIT_CONFIGURATION="${CONFIGURATION:-Release}"
 export PROJECT_DIR
 
 if [ -z "${APP_ENV:-}" ]; then
   export APP_ENV="pre"
 fi
 
-# Dispatch by Xcode SDK: macosx -> macos core (executable),
-# iphoneos/iphonesimulator -> ios core (c-archive slice for the active SDK).
+build_args=(macos)
 case "${PLATFORM_NAME:-macosx}" in
   iphoneos|iphonesimulator)
-    exec "$SCRIPT_DIR/run_build_tool.sh" ios --sdk "${PLATFORM_NAME}"
+    build_args=(ios --sdk "${PLATFORM_NAME}")
     ;;
   *)
-    exec "$SCRIPT_DIR/run_build_tool.sh" macos
+    case "${ARCHS:-}" in
+      arm64)
+        build_args+=(--arch arm64)
+        ;;
+      x86_64)
+        build_args+=(--arch amd64)
+        ;;
+    esac
     ;;
 esac
+
+"$SCRIPT_DIR/run_build_tool.sh" "${build_args[@]}"
+
+# Match Cargokit's phony input strategy so CocoaPods invokes the build tool on
+# every native build and lets setup's fingerprint cache decide what to compile.
+ln -fs "$OBJROOT/XCBuildData/build.db" "${BUILT_PRODUCTS_DIR}/buildkit_phony"
+ln -fs "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}" "${BUILT_PRODUCTS_DIR}/buildkit_phony_out"

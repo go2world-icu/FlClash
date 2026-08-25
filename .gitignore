@@ -75,6 +75,8 @@ devtools_options.yaml
 # FVM Version Cache
 .fvm/
 .fvmrc
+/coverage/lcov.info
+
 
 # XBoard config (contains sensitive keys)
 assets/config/xboard.config.yamlcore/core

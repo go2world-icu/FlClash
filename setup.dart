@@ -82,7 +82,7 @@ ArgParser createSetupArgParser() {
     ..addOption(
       'env',
       defaultsTo: 'pre',
-      allowed: ['pre', 'stable'],
+      allowed: ['dev', 'pre', 'stable'],
       help: 'Application environment',
     )
     ..addOption(
@@ -126,6 +126,10 @@ List<String> createFlutterBuildArgs({
   return flutterBuildArgs;
 }
 
+Map<String, String> createBuildEnvironment(String env) {
+  return {'APP_ENV': env};
+}
+
 String _getTargets(String platform, String arch, String? customTargets) {
   if (customTargets != null) return customTargets;
   if (platform == 'linux' && arch == 'amd64') return 'deb,appimage,rpm';
@@ -153,13 +157,8 @@ Future<int> _package(
   String? buildNumber,
   String? exportOptionsPlist,
 }) async {
-  final coreSha256 = platform == 'windows' ? await _buildGoCore(rootDir) : null;
-
   final file = File(p.join(rootDir, 'env.json'));
-
-  await file.writeAsString(
-    jsonEncode({'APP_ENV': env, 'CORE_SHA256': ?coreSha256}),
-  );
+  await file.writeAsString(jsonEncode(createBuildEnvironment(env)));
 
   final flutterBuildArgs = createFlutterBuildArgs(
     platform: platform,
@@ -332,6 +331,7 @@ Future<int> _ensureLinuxDependencies(String arch) async {
     ['ninja-build', 'libgtk-3-dev'],
     ['libayatana-appindicator3-dev'],
     ['libkeybinder-3.0-dev'],
+    ['libsecret-1-dev'],
     ['locate'],
   ];
   if (arch == 'amd64') {

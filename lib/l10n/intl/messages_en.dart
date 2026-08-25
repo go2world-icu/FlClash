@@ -39,7 +39,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m7(label) => "Current ${label} already exists";
 
-  static String m8(name) => "${name} skipped";
+  static String m8(name) => "${name} is already up to date";
 
   static String m9(name) => "${name} updated";
 
@@ -398,6 +398,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
     "coreStatus": MessageLookupByLibrary.simpleMessage("Core status"),
     "country": MessageLookupByLibrary.simpleMessage("Country"),
+    "crashDetected": MessageLookupByLibrary.simpleMessage("Crash detected"),
+    "crashDetectedTip": MessageLookupByLibrary.simpleMessage(
+      "The app crashed during the previous run. To prevent repeated crashes, the current profile has been cleared and automatic configuration setup was skipped.",
+    ),
     "crashTest": MessageLookupByLibrary.simpleMessage("Crash test"),
     "crashlytics": MessageLookupByLibrary.simpleMessage("Crash Analysis"),
     "crashlyticsTip": MessageLookupByLibrary.simpleMessage(
@@ -618,6 +622,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "goToWeb": MessageLookupByLibrary.simpleMessage("Go to Web"),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "Do you want to cache the changes?",
+    ),
+    "helperCorruptTip": MessageLookupByLibrary.simpleMessage(
+      "Helper service unavailable; TUN mode cannot be enabled. Reinstall FlClash to restore it.",
     ),
     "hideFromList": MessageLookupByLibrary.simpleMessage("Hide from list"),
     "host": MessageLookupByLibrary.simpleMessage("Host"),
