@@ -52,8 +52,8 @@ class ServiceChannel: NSObject {
             let json = call.arguments as? String ?? "{}"
             result(persistSharedState(json))
             applyOnDemandRules()
-        case "invokeAction":
-            invokeAction(call.arguments as? String, result: result)
+        case "invokeMethod":
+            invokeMethod(call.arguments as? String, result: result)
         case "start":
             start(result: result)
         case "stop":
@@ -155,7 +155,7 @@ class ServiceChannel: NSObject {
 
     // MARK: - RPC bridge
 
-    private func invokeAction(_ json: String?, result: @escaping FlutterResult) {
+    private func invokeMethod(_ json: String?, result: @escaping FlutterResult) {
         guard let json,
               let session,
               session.status == .connected || session.status == .reasserting,

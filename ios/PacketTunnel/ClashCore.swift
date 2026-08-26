@@ -62,7 +62,7 @@ enum ClashCore {
     ) {
         initialize()
         let box = Unmanaged.passRetained(GoCallback(completion: completion))
-        invokeAction(box.toOpaque(), goOwned(json))
+        invokeMethod(box.toOpaque(), goOwned(json))
     }
 
     static func quickSetup(
