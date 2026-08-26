@@ -97,10 +97,10 @@ jobs:
           set -euo pipefail
           [ -n "$MAIN_PROFILE_UUID" ] && [ -n "$PKT_PROFILE_UUID" ] || { echo "ERROR: profile UUIDs missing"; exit 1; }
           awk -v main="$MAIN_PROFILE_UUID" -v pkt="$PKT_PROFILE_UUID" '
-            /buildSettings = \{/ { in_block = 1; block = $0 "\n"; next }
+            /buildSettings = {/ { in_block = 1; block = $0 "\n"; next }
             in_block {
               block = block $0 "\n"
-              if ($0 ~ /^\s*\};/) {
+              if ($0 ~ /^[[:space:]]*};/) {
                 if (block ~ /PROVISIONING_PROFILE_SPECIFIER/) {
                   n++
                   gsub(/CODE_SIGN_IDENTITY = "Apple Development";/, "CODE_SIGN_IDENTITY = \"Apple Distribution\";", block)
@@ -119,8 +119,9 @@ jobs:
               next
             }
             { print }
-          ' ios/Runner.xcodeproj/project.pbxproj > /tmp/pbx.enforced \
-            && mv /tmp/pbx.enforced ios/Runner.xcodeproj/project.pbxproj
+          ' ios/Runner.xcodeproj/project.pbxproj > /tmp/pbx.enforced
+          [ -s /tmp/pbx.enforced ] || { echo "ERROR: awk 输出为空，未覆盖 pbxproj"; exit 1; }
+          mv /tmp/pbx.enforced ios/Runner.xcodeproj/project.pbxproj
           grep -n 'CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER' ios/Runner.xcodeproj/project.pbxproj
 
       - name: Build & Export IPA
