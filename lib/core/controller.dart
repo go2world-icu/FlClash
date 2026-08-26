@@ -192,10 +192,14 @@ class CoreController {
   Future<Map<String, dynamic>> getConfig(int id) async {
     final profilePath = await appPath.getProfilePath(id.toString());
     final profileFile = File(profilePath);
+    final profileExists = await profileFile.exists();
+    final profileSize = profileExists ? await profileFile.length() : 0;
+    final profileHead = profileExists && profileSize > 0
+        ? String.fromCharCodes((await profileFile.readAsBytes()).take(80))
+        : '';
     commonPrint.log(
       'getConfig id=$id path=$profilePath '
-      'exists=${await profileFile.exists()} '
-      'size=${await profileFile.exists() ? profileFile.length() : 0}',
+      'exists=$profileExists size=$profileSize head=$profileHead',
     );
     final data = Map<String, dynamic>.from(
       await _interface.getConfig(profilePath),
