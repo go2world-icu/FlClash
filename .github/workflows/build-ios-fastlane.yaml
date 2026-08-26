@@ -103,6 +103,7 @@ jobs:
               if ($0 ~ /^\s*\};/) {
                 if (block ~ /PROVISIONING_PROFILE_SPECIFIER/) {
                   n++
+                  gsub(/CODE_SIGN_IDENTITY = "Apple Development";/, "CODE_SIGN_IDENTITY = \"Apple Distribution\";", block)
                   if (n == 1) {
                     gsub(/CODE_SIGN_STYLE = Automatic;/, "CODE_SIGN_STYLE = Manual;", block)
                     gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" pkt "\";", block)
