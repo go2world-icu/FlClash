@@ -162,9 +162,6 @@ class ServiceChannel: NSObject {
               let data = json.data(using: .utf8)
         else {
             // Core unreachable — Dart treats nil as failure.
-            NSLog("[signing] invokeMethod blocked: session=%@ status=%@",
-                  session?.description ?? "nil",
-                  session?.status.rawValue ?? "nil")
             result(nil)
             return
         }

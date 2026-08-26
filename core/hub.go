@@ -420,13 +420,10 @@ func handleGetMemory(fn func(value uint64)) {
 func handleGetConfig(path string) (*config.RawConfig, error) {
 	bytes, err := readFile(path)
 	if err != nil {
-		logError("handleGetConfig readFile error: path=%s err=%v", path, err)
 		return nil, err
 	}
-	logError("handleGetConfig path=%s size=%d", path, len(bytes))
 	prof, err := config.UnmarshalRawConfig(bytes)
 	if err != nil {
-		logError("handleGetConfig unmarshal error: path=%s err=%v", path, err)
 		return nil, err
 	}
 	return prof, nil
