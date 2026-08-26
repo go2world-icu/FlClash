@@ -89,6 +89,39 @@ jobs:
           echo "PKT_PROFILE_UUID=$pkt_uuid" >> "$GITHUB_ENV"
           echo "[signing] profiles installed ($main_uuid, $pkt_uuid)"
 
+      - name: Enforce Manual signing specifiers
+        # 保险：本地调试可能把 pbxproj 的 Release 配置误改成 Automatic/空 profile
+        # （f476904 曾因此导致 TestFlight 找不到 profile）。构建前强制设回
+        # Manual + 当前 profile UUID。文件里 PacketTunnel 的 Release 配置在前、Runner 在后。
+        run: |
+          set -euo pipefail
+          [ -n "$MAIN_PROFILE_UUID" ] && [ -n "$PKT_PROFILE_UUID" ] || { echo "ERROR: profile UUIDs missing"; exit 1; }
+          awk -v main="$MAIN_PROFILE_UUID" -v pkt="$PKT_PROFILE_UUID" '
+            /buildSettings = \{/ { in_block = 1; block = $0 "\n"; next }
+            in_block {
+              block = block $0 "\n"
+              if ($0 ~ /^\s*\};/) {
+                if (block ~ /PROVISIONING_PROFILE_SPECIFIER/) {
+                  n++
+                  if (n == 1) {
+                    gsub(/CODE_SIGN_STYLE = Automatic;/, "CODE_SIGN_STYLE = Manual;", block)
+                    gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" pkt "\";", block)
+                  } else {
+                    gsub(/CODE_SIGN_STYLE = Automatic;/, "CODE_SIGN_STYLE = Manual;", block)
+                    gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" main "\";", block)
+                  }
+                }
+                printf "%s", block
+                in_block = 0; block = ""
+                next
+              }
+              next
+            }
+            { print }
+          ' ios/Runner.xcodeproj/project.pbxproj > /tmp/pbx.enforced \
+            && mv /tmp/pbx.enforced ios/Runner.xcodeproj/project.pbxproj
+          grep -n 'CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER' ios/Runner.xcodeproj/project.pbxproj
+
       - name: Build & Export IPA
         # 统一入口：dart setup.dart ios —— 内部负责 make core-ios + flutter build ipa。
         # 签名：cert/profile 已由 Setup Code Signing 装好，pbxproj 是 Manual + profile UUID，
