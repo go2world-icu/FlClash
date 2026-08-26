@@ -132,12 +132,13 @@ void main() {
       );
       expect(config['hosts']['router.local'], ['192.168.1.1', '192.168.1.2']);
       expect(config['sniffer']['sniff']['HTTP']['ports'], ['80', '443']);
+      String posix(Object? path) => (path as String).replaceAll('\\', '/');
       expect(
-        config['proxy-providers']['remote']['path'],
+        posix(config['proxy-providers']['remote']['path']),
         startsWith('/profiles/providers/7/proxies/'),
       );
       expect(
-        config['rule-providers']['remote']['path'],
+        posix(config['rule-providers']['remote']['path']),
         startsWith('/profiles/providers/7/rules/'),
       );
       expect(config['rules'], [
