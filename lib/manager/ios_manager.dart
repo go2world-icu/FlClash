@@ -75,6 +75,11 @@ class _IosContainerState extends ConsumerState<IosManager>
     commonPrint.log('vpn status: $status runTime: $runTime');
     // Reconcile UI state with NEVPNStatus — the tunnel can be toggled
     // outside the app (Settings, Shortcuts, on-demand rules, NE crash).
+    if (status == 'connected') {
+      // The Go core inside the NEProvider is now reachable — release any
+      // CoreHandlerInterface call that was waiting on coreLib's connected flag.
+      coreLib!.markConnected();
+    }
     final setupAction = ref.read(setupActionProvider.notifier);
     switch (status) {
       case 'connected':

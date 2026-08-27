@@ -25,6 +25,15 @@ class CoreLib extends CoreHandlerInterface {
     return _instance!;
   }
 
+  /// Called by the iOS tunnel once [ServiceListener.onServiceStatus] reports
+  /// `connected` — only then is the Go core inside the NEProvider actually
+  /// reachable, so pending [CoreHandlerInterface] calls can proceed.
+  void markConnected() {
+    if (!_connectedCompleter.isCompleted) {
+      _connectedCompleter.complete(true);
+    }
+  }
+
   @override
   Future<CoreLifecycleResult> start() async {
     if (_closed) {
@@ -41,7 +50,6 @@ class CoreLib extends CoreHandlerInterface {
     if (initializationError.isNotEmpty) {
       throw StateError(initializationError);
     }
-    _connectedCompleter.complete(true);
     final syncError =
         await service?.syncState(
           globalState.container.read(sharedStateProvider),
@@ -51,6 +59,17 @@ class CoreLib extends CoreHandlerInterface {
       _connectedCompleter = Completer<bool>();
       await service?.shutdown();
       throw StateError(syncError);
+    }
+    // iOS: the core lives inside the PacketTunnel NEProvider and is only
+    // reachable once the tunnel connects. Kick off the tunnel NOW so the
+    // core boots headlessly; the status callback (IosManager markConnected /
+    // onServiceStatus) completes _connectedCompleter when it is up. Until
+    // then, CoreHandlerInterface calls wait on the connected flag.
+    if (system.isIOS) {
+      await service?.start();
+      await _connectedCompleter.future;
+    } else {
+      _connectedCompleter.complete(true);
     }
     return CoreLifecycleResult(
       revision: revision,
