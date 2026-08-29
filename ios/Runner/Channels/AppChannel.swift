@@ -8,7 +8,6 @@ import UIKit
 /// benign defaults so shared Dart code keeps working.
 class AppChannel: NSObject {
     static let name = "com.follow.clash/app"
-    static let appGroup = "group.uk.toworld.flclash"
 
     private let channel: FlutterMethodChannel
 
@@ -56,7 +55,7 @@ class AppChannel: NSObject {
             // App Group container shared with the PacketTunnel extension.
             // Returns nil until the App Groups entitlement is configured.
             let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: Self.appGroup
+                forSecurityApplicationGroupIdentifier: AppGroup.identifier
             )
             result(url?.path)
         default:

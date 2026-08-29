@@ -3,7 +3,18 @@ import Foundation
 /// Constants shared between the Runner app and the PacketTunnel extension.
 /// This file is compiled into both targets.
 enum AppGroup {
-    static let identifier = "group.uk.toworld.flclash"
+    /// App Group identifier, derived from the main app's bundle id following
+    /// the `group.<bundle id>` convention. This file is compiled into both the
+    /// Runner app and the PacketTunnel extension, so the extension's
+    /// `.PacketTunnel` suffix is stripped before deriving the group.
+    static let identifier: String = {
+        let bundleId = Bundle.main.bundleIdentifier ?? ""
+        let suffix = ".PacketTunnel"
+        let mainBundleId = bundleId.hasSuffix(suffix)
+            ? String(bundleId.dropLast(suffix.count))
+            : bundleId
+        return "group." + mainBundleId
+    }()
 
     static var containerURL: URL {
         FileManager.default.containerURL(

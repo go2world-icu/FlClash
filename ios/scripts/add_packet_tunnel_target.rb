@@ -15,6 +15,8 @@ end
 
 runner = project.targets.find { |t| t.name == 'Runner' }
 raise 'Runner target not found' unless runner
+runner_bundle_id = runner.build_configurations.first.build_settings['PRODUCT_BUNDLE_IDENTIFIER']
+raise 'Runner PRODUCT_BUNDLE_IDENTIFIER not set' if runner_bundle_id.nil? || runner_bundle_id.empty?
 
 # --- Target -----------------------------------------------------------------
 target = project.new_target(:app_extension, 'PacketTunnel', :ios, '15.0')
@@ -64,7 +66,7 @@ target.frameworks_build_phase.add_file_reference(resolv_ref)
 target.build_configurations.each do |config|
   bs = config.build_settings
   bs['PRODUCT_NAME'] = '$(TARGET_NAME)'
-  bs['PRODUCT_BUNDLE_IDENTIFIER'] = 'uk.toworld.flclash.PacketTunnel'
+  bs['PRODUCT_BUNDLE_IDENTIFIER'] = "#{runner_bundle_id}.PacketTunnel"
   bs['INFOPLIST_FILE'] = 'PacketTunnel/Info.plist'
   bs['CODE_SIGN_ENTITLEMENTS'] = 'PacketTunnel/PacketTunnel.entitlements'
   bs['SWIFT_VERSION'] = '5.0'

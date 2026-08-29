@@ -34,6 +34,15 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# bundle id / App Group 单一数据源 = Xcode 工程。Xcode 里改完，这里自动跟随。
+APP_ID=$(xcodebuild -showBuildSettings -project ios/Runner.xcodeproj -target Runner -sdk iphoneos -configuration Release 2>/dev/null | awk -F' = ' '$1 ~ /^[[:space:]]*PRODUCT_BUNDLE_IDENTIFIER$/ {print $2; exit}')
+PKT_ID=$(xcodebuild -showBuildSettings -project ios/Runner.xcodeproj -target PacketTunnel -sdk iphoneos -configuration Release 2>/dev/null | awk -F' = ' '$1 ~ /^[[:space:]]*PRODUCT_BUNDLE_IDENTIFIER$/ {print $2; exit}')
+GROUP_APP=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' ios/Runner/Runner.entitlements)
+GROUP_PKT=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' ios/PacketTunnel/PacketTunnel.entitlements)
+[ -n "$APP_ID" ] && [ -n "$PKT_ID" ] || { echo "ERROR: 解析 bundle id 失败" >&2; exit 1; }
+[ "$GROUP_APP" = "$GROUP_PKT" ] || { echo "ERROR: 主 App 与 PacketTunnel 的 App Group 不一致: $GROUP_APP vs $GROUP_PKT" >&2; exit 1; }
+echo "[ids] APP_ID=$APP_ID PKT_ID=$PKT_ID GROUP=$GROUP_APP"
+
 echo "==> 1/5 证书到登录钥匙串"
 : "${IOS_CERTIFICATE_PASSWORD:?需要 IOS_CERTIFICATE_PASSWORD}"
 if [ -n "${IOS_CERT_P12_FILE:-}" ]; then
@@ -80,9 +89,9 @@ cat > ExportOptions.plist <<PLIST
     <string>manual</string>
     <key>provisioningProfiles</key>
     <dict>
-        <key>uk.toworld.flclash</key>
+        <key>${APP_ID}</key>
         <string>${MAIN_UUID}</string>
-        <key>uk.toworld.flclash.PacketTunnel</key>
+        <key>${PKT_ID}</key>
         <string>${PKT_UUID}</string>
     </dict>
 </dict>

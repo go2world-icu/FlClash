@@ -15,7 +15,8 @@ import os.log
 ///   `crash` reports fatal errors, `status` reports NEVPNStatus transitions
 class ServiceChannel: NSObject {
     static let name = "com.follow.clash/service"
-    static let providerBundleIdentifier = "uk.toworld.flclash.PacketTunnel"
+    static let providerBundleIdentifier =
+        (Bundle.main.bundleIdentifier ?? "") + ".PacketTunnel"
 
     private let channel: FlutterMethodChannel
     private var manager: NETunnelProviderManager?

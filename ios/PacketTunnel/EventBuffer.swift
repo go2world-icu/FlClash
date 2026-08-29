@@ -7,7 +7,8 @@ final class EventBuffer {
     static let shared = EventBuffer()
 
     private let capacity = 512
-    private let queue = DispatchQueue(label: "uk.toworld.flclash.events")
+    private let queue = DispatchQueue(
+        label: (Bundle.main.bundleIdentifier ?? "flclash") + ".events")
     private var events: [(seq: Int, data: String)] = []
     private var nextSeq = 1
 

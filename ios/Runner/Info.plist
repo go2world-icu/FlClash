@@ -25,13 +25,14 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>uk.toworld.flclash</string>
+			<string>uk.toworld.clash</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>clash</string>
 				<string>clashmeta</string>
-				<string>flclash</string>
 			</array>
 		</dict>
 	</array>
@@ -39,14 +40,14 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>ToWorld uses the camera to scan QR codes for importing profiles and proxies.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>ToWorld uses your location to read the current Wi-Fi name (SSID) for network-based rules.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ToWorld accesses your photo library to import QR code images.</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -61,6 +61,21 @@ jobs:
           cd ios && pod install && cd ..
           test -d ios/Runner.xcworkspace || { echo "ERROR: pod install 未生成 Runner.xcworkspace"; exit 1; }
 
+      - name: Resolve bundle identifiers
+        # bundle id / App Group 单一数据源 = Xcode 工程（pbxproj + entitlements）。
+        # Xcode 里改完，CI 自动跟随，不再硬编码在 workflow / ExportOptions 里。
+        run: |
+          APP_ID=$(xcodebuild -showBuildSettings -project ios/Runner.xcodeproj -target Runner -sdk iphoneos -configuration Release 2>/dev/null | awk -F' = ' '$1 ~ /^[[:space:]]*PRODUCT_BUNDLE_IDENTIFIER$/ {print $2; exit}')
+          PKT_ID=$(xcodebuild -showBuildSettings -project ios/Runner.xcodeproj -target PacketTunnel -sdk iphoneos -configuration Release 2>/dev/null | awk -F' = ' '$1 ~ /^[[:space:]]*PRODUCT_BUNDLE_IDENTIFIER$/ {print $2; exit}')
+          GROUP_APP=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' ios/Runner/Runner.entitlements)
+          GROUP_PKT=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' ios/PacketTunnel/PacketTunnel.entitlements)
+          [ -n "$APP_ID" ] && [ -n "$PKT_ID" ] || { echo "ERROR: 解析 bundle id 失败 (APP_ID=$APP_ID PKT_ID=$PKT_ID)"; exit 1; }
+          [ "$GROUP_APP" = "$GROUP_PKT" ] || { echo "ERROR: 主 App 与 PacketTunnel 的 App Group 不一致: $GROUP_APP vs $GROUP_PKT"; exit 1; }
+          echo "APP_ID=$APP_ID" >> "$GITHUB_ENV"
+          echo "PKT_ID=$PKT_ID" >> "$GITHUB_ENV"
+          echo "APP_GROUP=$GROUP_APP" >> "$GITHUB_ENV"
+          echo "[ids] APP_ID=$APP_ID PKT_ID=$PKT_ID GROUP=$GROUP_APP"
+
       - name: Setup Code Signing
         run: |
           # 创建专用钥匙串
@@ -143,9 +158,9 @@ jobs:
               <string>manual</string>
               <key>provisioningProfiles</key>
               <dict>
-                  <key>uk.toworld.flclash</key>
+                  <key>${APP_ID}</key>
                   <string>${MAIN_PROFILE_UUID}</string>
-                  <key>uk.toworld.flclash.PacketTunnel</key>
+                  <key>${PKT_ID}</key>
                   <string>${PKT_PROFILE_UUID}</string>
               </dict>
           </dict>

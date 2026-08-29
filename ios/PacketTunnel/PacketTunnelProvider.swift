@@ -1,7 +1,9 @@
 import NetworkExtension
 import os.log
 
-let tunnelLog = Logger(subsystem: "uk.toworld.flclash.PacketTunnel", category: "tunnel")
+let tunnelLog = Logger(
+    subsystem: Bundle.main.bundleIdentifier ?? "flclash.packet-tunnel",
+    category: "tunnel")
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
     // Network constants — keep in sync with the android VpnService
@@ -43,7 +45,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         else {
             tunnelLog.error("App Group container unavailable — check entitlements")
             throw NSError(
-                domain: "uk.toworld.flclash.PacketTunnel", code: 3,
+                domain: (Bundle.main.bundleIdentifier ?? "flclash.packet-tunnel"), code: 3,
                 userInfo: [
                     NSLocalizedDescriptionKey:
                         "App Group \(AppGroup.identifier) unavailable"
@@ -78,7 +80,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         guard message.isEmpty else {
             tunnelLog.error("quickSetup failed: \(message, privacy: .public)")
             throw NSError(
-                domain: "uk.toworld.flclash.PacketTunnel", code: 1,
+                domain: (Bundle.main.bundleIdentifier ?? "flclash.packet-tunnel"), code: 1,
                 userInfo: [NSLocalizedDescriptionKey: message])
         }
 
@@ -124,7 +126,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         // 3. Hand the utun fd to the core.
         guard let fd = tunnelFileDescriptor else {
             throw NSError(
-                domain: "uk.toworld.flclash.PacketTunnel", code: 2,
+                domain: (Bundle.main.bundleIdentifier ?? "flclash.packet-tunnel"), code: 2,
                 userInfo: [
                     NSLocalizedDescriptionKey: "Unable to locate utun fd"
                 ])

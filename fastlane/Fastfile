@@ -1,4 +1,27 @@
+require 'xcodeproj'
+
 default_platform(:ios)
+
+# bundle id 单一数据源 = ios/Runner.xcodeproj。Xcode 里改完，Fastfile 自动跟随，
+# 不再硬编码 bundle id。用 xcodeproj 直接读 pbxproj，不依赖 Xcode/SDK
+# （regen-ios-profiles.yaml 没有 Xcode/flutter 步骤，不能依赖 xcodebuild）。
+def resolve_bundle_id(target_name)
+  project = Xcodeproj::Project.open('ios/Runner.xcodeproj')
+  target = project.targets.find { |t| t.name == target_name }
+  raise "target #{target_name} not found" unless target
+  config = target.build_configurations.find { |c| c.name == 'Release' }
+  value = config&.build_settings&.dig('PRODUCT_BUNDLE_IDENTIFIER')
+  raise "#{target_name} 的 Release PRODUCT_BUNDLE_IDENTIFIER 未设置" if value.nil? || value.empty?
+  value
+end
+
+def app_bundle_id
+  @app_bundle_id ||= resolve_bundle_id('Runner')
+end
+
+def packet_tunnel_bundle_id
+  @packet_tunnel_bundle_id ||= resolve_bundle_id('PacketTunnel')
+end
 
 platform :ios do
   desc "Download provisioning profiles from Apple"
@@ -9,13 +32,13 @@ platform :ios do
       key_content: ENV['ASC_API_KEY']
     )
     sigh(
-      app_identifier: "uk.toworld.flclash",
+      app_identifier: app_bundle_id,
       force: false,
       readonly: true,
       development: false
     )
     sigh(
-      app_identifier: "uk.toworld.flclash.PacketTunnel",
+      app_identifier: packet_tunnel_bundle_id,
       force: false,
       readonly: true,
       development: false
@@ -31,14 +54,16 @@ platform :ios do
     )
     # force: true -> 用账号里最新的 Distribution 证书重建 profile，
     # 以匹配 IOS_CERTIFICATE secret（Apple Distribution 证书）。
+    # 不设 filename：sigh 按 portal 里的 Name 输出，由 regen-ios-profiles.yaml 的
+    # "Verify and stage" 步骤校验后重命名为 ToWorld.mobileprovision / ToWorldPacketTunnel.mobileprovision。
     sigh(
-      app_identifier: "uk.toworld.flclash",
+      app_identifier: app_bundle_id,
       force: true,
       development: false,
       output_path: "ios/"
     )
     sigh(
-      app_identifier: "uk.toworld.flclash.PacketTunnel",
+      app_identifier: packet_tunnel_bundle_id,
       force: true,
       development: false,
       output_path: "ios/"
@@ -57,7 +82,7 @@ platform :ios do
 
     upload_to_testflight(
       ipa: "dist/ToWorld-ios-arm64.ipa",
-      app_identifier: "uk.toworld.flclash",
+      app_identifier: app_bundle_id,
       skip_waiting_for_build_processing: true
     )
   end
