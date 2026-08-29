@@ -51,6 +51,12 @@ class _IosInviteTabState extends ConsumerState<IosInviteTab>
     if (_hasInitialized) return;
     _hasInitialized = true;
 
+    // initState 或初始化监听回调可能在 build 阶段触发，此时同步修改 provider
+    // 会抛 "Tried to modify a provider while the widget tree was building"，
+    // 推迟到当前帧结束后再执行。
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) return;
+
     await ref.read(inviteProvider.notifier).refresh();
     if (!mounted) return;
     final inviteState = ref.read(inviteProvider);

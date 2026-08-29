@@ -56,6 +56,35 @@ class Service {
             }
           }
           break;
+        case 'status':
+          // iOS only: NEVPNStatus transition (connected/disconnected/...)
+          // + tunnel run time, pushed by ServiceChannel. Without this the
+          // connected flag that gates CoreHandlerInterface calls is never set
+          // and every invoke blocks until the 10s timeout.
+          final data = call.arguments as String? ?? '{}';
+          try {
+            final json = Map<String, dynamic>.from(
+              jsonDecode(data) as Map,
+            );
+            final status = json['status'] as String? ?? '';
+            final runTime = json['runTime'] as int? ?? 0;
+            for (final listener in _listeners) {
+              listener.onServiceStatus(status, runTime);
+            }
+          } catch (error) {
+            commonPrint.log(
+              'Unable to dispatch iOS service status: $error',
+              logLevel: LogLevel.error,
+            );
+          }
+          break;
+        case 'crash':
+          // iOS only: fatal NE/tunnel failure reason pushed by ServiceChannel.
+          final message = call.arguments as String? ?? '';
+          for (final listener in _listeners) {
+            listener.onServiceCrash(message);
+          }
+          break;
         default:
           throw MissingPluginException();
       }

@@ -88,7 +88,11 @@ class SetupAction extends _$SetupAction {
     final shouldRun = _isRunning || ref.read(appSettingProvider).autoRun;
     if (shouldRun) {
       await setRunning(true, initialize: true);
-    } else {
+    } else if (!system.isIOS) {
+      // iOS: the core lives inside the PacketTunnel and only boots when the
+      // user flips the connect switch. Applying the profile to a core that is
+      // not up yet throws CoreMethodException(empty_result); the profile is
+      // applied on connect via IosManager.onServiceStatus.
       await applyProfile(force: true);
     }
   }
@@ -246,6 +250,18 @@ class SetupAction extends _$SetupAction {
     bool force = false,
     Future<void> Function()? preloadInvoke,
   }) async {
+    // iOS: the core lives inside the PacketTunnel and is only reachable once the
+    // tunnel reaches `.connected`. isStartProvider flips optimistically the moment
+    // the user toggles the switch (still `connecting`), so it alone is not enough —
+    // ask the core directly via getIsInit, which stays false until the tunnel is up.
+    // Skip pure applies while unreachable; the profile is applied on connect by
+    // IosManager.onServiceStatus. Covers applyProfile() and fullSetup()
+    // (profile-change listener). The initialize path (preloadInvoke != null) boots
+    // the core itself, so it must not be skipped here.
+    if (system.isIOS && preloadInvoke == null) {
+      if (!ref.read(isStartProvider)) return;
+      if (!await coreController.isInit) return;
+    }
     final result = await _setupScheduler.run(() {
       return _setupConfig(
         force: force,

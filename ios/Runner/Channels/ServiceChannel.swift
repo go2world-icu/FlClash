@@ -67,6 +67,17 @@ class ServiceChannel: NSObject {
         }
     }
 
+    /// If the tunnel is already connected when the app relaunches (e.g. it
+    /// was auto-restarted by NEVPN and outlived the app process), the Go core
+    /// inside it is reachable *immediately* — there is no connecting→connected
+    /// transition to wait for after `init` re-attaches to the existing
+    /// NETunnelProviderManager. Push a synthetic `status` event now so
+    /// CoreLib.markConnected() fires even without a fresh NEVPNStatusDidChange.
+    private func reportStatusIfAlreadyConnected() {
+        guard let session, session.status == .connected else { return }
+        handleStatusChange()
+    }
+
     // MARK: - Manager lifecycle
 
     private func initManager(result: @escaping FlutterResult) {
@@ -118,6 +129,10 @@ class ServiceChannel: NSObject {
             self?.handleStatusChange()
         }
         handleStatusChange()
+        // In case the tunnel was already up when the app relaunched, there
+        // will be no *new* .NEVPNStatusDidChange — synthesize the connected
+        // report so the Dart-side connected flag can't stay unset.
+        reportStatusIfAlreadyConnected()
     }
 
     private func handleStatusChange() {
@@ -185,6 +200,15 @@ class ServiceChannel: NSObject {
     private func start(result: @escaping FlutterResult) {
         guard let manager else {
             result(false)
+            return
+        }
+        // A session that is already connected OR still connecting (relaunch,
+        // on-demand, NE auto-restart, or the first start still in flight)
+        // must NOT receive another startVPNTunnel — re-invoking it on a live
+        // or pending session tears it down (connecting → disconnecting →
+        // disconnected). Only start when the tunnel is fully idle.
+        if let status = session?.status, status != .disconnected, status != .invalid {
+            result(true)
             return
         }
         manager.isEnabled = true

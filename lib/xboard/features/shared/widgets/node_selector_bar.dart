@@ -52,8 +52,11 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
         });
       }
     });
-    if (groups.isEmpty) {
-      return _buildEmptyState(context);
+    final isStart = ref.watch(isStartProvider);
+    // iOS: 节点要等隧道起来、核心可达后才会由 `loaded` 事件上报到 groups，
+    // 在此之前（未启动 / connecting 窗口）不展示选择器。
+    if (!isStart || groups.isEmpty) {
+      return const SizedBox.shrink();
     }
     Group? currentGroup;
     Proxy? currentProxy;
@@ -99,12 +102,12 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
       }
     }
     if (currentGroup == null || currentGroup.all.isEmpty) {
-      return _buildEmptyState(context);
+      return const SizedBox.shrink();
     }
-    final selectedProxyName = selectedMap[currentGroup.name] ?? "";
+    final selectedProxyName = selectedMap[currentGroup.name] ?? '';
     String realNodeName;
     if (currentGroup.type == GroupType.URLTest) {
-      realNodeName = currentGroup.now ?? "";
+      realNodeName = currentGroup.now ?? '';
     } else {
       realNodeName = currentGroup.getCurrentSelectedName(selectedProxyName);
     }
@@ -208,84 +211,6 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
       delayValue: delayState,
       onTap: () => _handleManualTest(proxy),
       showIcon: true,
-    );
-  }
-  Widget _buildEmptyState(BuildContext context) {
-    // iOS 上未启动隧道时 groups 为空是正常现象（节点要等隧道起来才上报），
-    // 此时提示「启动代理后可选节点」，而不是误导性的「无可用节点」。
-    final isStart = ref.watch(isStartProvider);
-    final title = isStart
-        ? AppLocalizations.of(context).xboardNoAvailableNodes
-        : AppLocalizations.of(context).xboardStartProxyToSelectNode;
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.errorContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.wifi_off,
-              color: Theme.of(context).colorScheme.onErrorContainer,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  AppLocalizations.of(context).xboardClickToSetupNodes,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ProxiesView(),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              minimumSize: const Size(56, 30),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              AppLocalizations.of(context).xboardSetup,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
     );
   }
   void _checkNodeChange(Proxy currentProxy) {

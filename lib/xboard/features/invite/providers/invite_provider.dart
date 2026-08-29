@@ -95,7 +95,6 @@ class InviteNotifier extends Notifier<InviteState> {
 
     try {
       _logger.info('加载邀请信息...');
-      _logger.info('加载邀请信息...');
       final inviteInfoModel = await ref.read(getInviteInfoProvider.future) as InviteInfoModel;
       final inviteData = _mapInviteInfo(inviteInfoModel);
 
@@ -120,7 +119,6 @@ class InviteNotifier extends Notifier<InviteState> {
     state = state.copyWith(isLoadingHistory: true);
 
     try {
-      _logger.info('加载佣金历史... 页码: $page');
       _logger.info('加载佣金历史... 页码: $page');
       final commissionList = await getCommissionDetails(ref, page: page);
       final newHistory = commissionList.map(_mapCommission).toList();
@@ -161,7 +159,6 @@ class InviteNotifier extends Notifier<InviteState> {
   Future<void> loadUserInfo() async {
     try {
       _logger.info('加载用户信息...');
-      _logger.info('加载用户信息...');
       final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
       final userInfo = _mapUser(userModel);
       state = state.copyWith(userInfo: userInfo);
@@ -177,7 +174,6 @@ class InviteNotifier extends Notifier<InviteState> {
     state = state.copyWith(isGenerating: true, errorMessage: null);
 
     try {
-      _logger.info('生成邀请码...');
       _logger.info('生成邀请码...');
       final codeString = await XBoardSDK.instance.invite.generateInviteCode();
       

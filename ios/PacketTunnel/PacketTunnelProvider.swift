@@ -17,6 +17,23 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     private var memoryPressureSource: DispatchSourceMemoryPressure?
 
     override func startTunnel(options: [String: NSObject]?) async throws {
+        do {
+            try await startTunnelInner(options: options)
+        } catch {
+            tunnelLog.error("startTunnel FAILED: \(String(describing: error))")
+            // Surface into the shared log the app can read on next launch.
+            let file = AppGroup.homeDirectory.appendingPathComponent("ne_stderr.log")
+            try? FileManager.default.createDirectory(
+                at: AppGroup.homeDirectory, withIntermediateDirectories: true)
+            if let handle = fopen(file.path, "a") {
+                fputs("[Swift startTunnel failed] \(String(describing: error))\n", handle)
+                fclose(handle)
+            }
+            throw error
+        }
+    }
+
+    private func startTunnelInner(options: [String: NSObject]?) async throws {
         // Go panics and mihomo logs go to stderr, which is invisible in a NE
         // process — redirect both into the App Group so the app can read them.
         redirectStandardStreams()
@@ -66,6 +83,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
 
         // 2. Network settings (mirrors the android VpnService.Builder).
+        tunnelLog.notice("setting up network settings…")
         let settings = NEPacketTunnelNetworkSettings(
             tunnelRemoteAddress: "127.0.0.1")
         settings.mtu = 9000
@@ -101,6 +119,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
 
         try await setTunnelNetworkSettings(settings)
+        tunnelLog.notice("network settings applied")
 
         // 3. Hand the utun fd to the core.
         guard let fd = tunnelFileDescriptor else {

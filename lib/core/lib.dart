@@ -60,17 +60,14 @@ class CoreLib extends CoreHandlerInterface {
       await service?.shutdown();
       throw StateError(syncError);
     }
-    // iOS: the core lives inside the PacketTunnel NEProvider and is only
-    // reachable once the tunnel connects. Kick off the tunnel NOW so the
-    // core boots headlessly; the status callback (IosManager markConnected /
-    // onServiceStatus) completes _connectedCompleter when it is up. Until
-    // then, CoreHandlerInterface calls wait on the connected flag.
-    if (system.isIOS) {
-      await service?.start();
-      await _connectedCompleter.future;
-    } else {
-      _connectedCompleter.complete(true);
-    }
+    // iOS: the core lives inside the PacketTunnel NEProvider. Do NOT boot the
+    // tunnel here — the core is only pulled up when the user flips the connect
+    // switch, via startListener() → service.start(). The init()/syncState()
+    // calls above already installed the VPN manager and persisted SharedState,
+    // which is all the later start needs. Complete the connected flag
+    // optimistically; if/when the tunnel actually connects, the status event
+    // (IosManager.onServiceStatus) reconciles state and re-syncs config.
+    _connectedCompleter.complete(true);
     return CoreLifecycleResult(
       revision: revision,
       outcome: CoreLifecycleOutcome.applied,
@@ -120,6 +117,10 @@ class CoreLib extends CoreHandlerInterface {
 
   @override
   Future<bool> startListener() async {
+    // Pre-merge behavior: always kick the tunnel and report success. The
+    // Swift ServiceChannel.start() itself guards against re-starting a
+    // live/pending session (status != .disconnected → no-op), so calling
+    // start() here again is safe and never tears down a connected tunnel.
     final listenerStarted = await super.startListener();
     final serviceStarted = await service?.start() ?? false;
     return listenerStarted && serviceStarted;

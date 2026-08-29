@@ -24,7 +24,6 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab>
     with AutomaticKeepAliveClientMixin {
   bool _hasInitialized = false;
   bool _hasCheckedSubscriptionStatus = false;
-  bool _hasAutoStarted = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -39,9 +38,6 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab>
       if (ref.read(xboardUserProvider).isAuthenticated) {
         _waitForSubscriptionImportThenCheck();
       }
-      // 冷启动兜底：quickAuth 触发的订阅导入可能在本页挂载前就已完成，
-      // 此时监听器收不到 isImporting 的翻转，这里补一次自动启动判断。
-      _tryAutoStartIfConfigReady();
     });
 
     // 订阅导入完成后检查订阅状态
@@ -58,12 +54,6 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab>
           }
         });
       }
-      // iOS 上节点要等隧道起来才会上报，订阅导入成功后自动连接一次 VPN，
-      // 把节点加载出来，节点选择器才能展示节点。
-      if (importFinished && next.lastResult?.isSuccess == true && !_hasAutoStarted) {
-        _hasAutoStarted = true;
-        _autoStartProxy();
-      }
     });
   }
 
@@ -78,36 +68,6 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab>
     } catch (_) {
       // 忽略 dispose 后的 ref 错误
     }
-  }
-
-  /// 冷启动兜底：若订阅已导入成功（lastResult 成功）但代理未启动，
-  /// 补一次自动连接（与监听器触发互斥，`_hasAutoStarted` 保证只跑一次）。
-  void _tryAutoStartIfConfigReady() {
-    if (_hasAutoStarted) return;
-    final importState = ref.read(profileImportProvider);
-    if (importState.lastResult?.isSuccess == true && !ref.read(isStartProvider)) {
-      _hasAutoStarted = true;
-      _autoStartProxy();
-    }
-  }
-
-  /// 订阅导入成功后自动连接 VPN，把节点加载出来供节点选择器展示。
-  ///
-  /// 只触发一次（[importFinished] 处已用 `_hasAutoStarted` 保证），
-  /// 且仅在配置就绪（init 完成 + 有 profile）且尚未启动时静默启动，失败不打扰用户。
-  void _autoStartProxy() {
-    Future.delayed(const Duration(milliseconds: 300), () async {
-      if (!mounted) return;
-      final isInit = ref.read(initProvider);
-      final currentProfile = ref.read(currentProfileProvider);
-      final isStart = ref.read(isStartProvider);
-      if (!isInit || currentProfile == null || isStart) return;
-      try {
-        await ref.read(setupActionProvider.notifier).updateStatus(true);
-      } catch (_) {
-        // 自动启动失败静默处理（如 VPN 配置尚未安装），不打扰用户。
-      }
-    });
   }
 
   @override
@@ -137,6 +97,8 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab>
             _buildUsageCard(),
             const SizedBox(height: 14),
             const XBoardOutboundModeSelector(),
+            const SizedBox(height: 14),
+            const XBoardNetworkDetection(),
             const SizedBox(height: 14),
             widget.connectionControl,
           ],

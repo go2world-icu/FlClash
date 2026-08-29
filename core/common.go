@@ -268,6 +268,14 @@ func applyConfig(params *SetupParams) error {
 	configPath := filepath.Join(constant.Path.HomeDir(), "config.yaml")
 	if runtime.GOOS == "ios" {
 		currentConfig, err = parseConfigPathFiltered(configPath)
+		// Fresh install: the app only writes config.yaml after the tunnel is up
+		// (IosManager.onServiceStatus → applyProfile). A missing file must not
+		// fail the tunnel start — boot with the default config instead, and the
+		// real profile is applied once the tunnel reports connected.
+		if os.IsNotExist(err) {
+			currentConfig, _ = config.ParseRawConfig(config.DefaultRawConfig())
+			err = nil
+		}
 	} else {
 		currentConfig, err = executor.ParseWithPath(configPath)
 	}
