@@ -48,10 +48,10 @@ class IosSplashScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: colorScheme.primary.withValues(alpha: 0.1),
                 ),
-                child: Icon(
-                  Icons.vpn_key_outlined,
-                  size: 48,
-                  color: colorScheme.primary,
+                child: Image.asset(
+                  'assets/images/icon.png',
+                  width: 48,
+                  height: 48,
                 ),
               ),
               const SizedBox(height: 24),

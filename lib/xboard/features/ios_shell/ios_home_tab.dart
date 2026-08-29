@@ -96,9 +96,15 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab>
             const SizedBox(height: 14),
             _buildUsageCard(),
             const SizedBox(height: 14),
-            const XBoardOutboundModeSelector(),
+            const Card(
+              margin: EdgeInsets.zero,
+              child: XBoardOutboundModeSelector(),
+            ),
             const SizedBox(height: 14),
-            const XBoardNetworkDetection(),
+            const Card(
+              margin: EdgeInsets.zero,
+              child: XBoardNetworkDetection(),
+            ),
             const SizedBox(height: 14),
             widget.connectionControl,
           ],
