@@ -38,9 +38,9 @@ SPEC CHECKSUMS:
   flutter_js: c664361655af1d8fc24e278c7d086e9cbe0d68bc
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   HotKey: 400beb7caa29054ea8d864c96f5ba7e5b4852277
-  hotkey_manager_macos: a4317849af96d2430fa89944d3c58977ca089fbe
-  rust_api: 112f3cfd993afe61c6662bdb30fd6e3509fb3bf8
-  setup: fbca4a83aba6efbe6510b5e268c8aea0bf192d00
+  hotkey_manager_macos: 1e2edb0c7ae4fe67108af44a9d3445de41404160
+  rust_api: c390caec4fc729e25dac91be8ca8ae8c7acf2a2a
+  setup: 879b7f73bc6fe2891f25df070ca124c07f5ebe0a
 
 PODFILE CHECKSUM: b9facb167d6b7e90fef40306c3fe521e010924ac
 

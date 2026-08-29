@@ -100,19 +100,39 @@ class NodeSelectorChip extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 100),
-                  child: Text(
-                    proxy.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        proxy.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      _LatencyLine(theme: theme, delay: delay),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                _LatencyDot(theme: theme, delay: delay),
+                const SizedBox(width: 12),
+                Container(
+                  width: 1,
+                  height: 28,
+                  color: colorScheme.outlineVariant,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  context.appLocalizations.xboardSwitch,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -122,8 +142,8 @@ class NodeSelectorChip extends ConsumerWidget {
   }
 }
 
-class _LatencyDot extends StatelessWidget {
-  const _LatencyDot({required this.theme, required this.delay});
+class _LatencyLine extends StatelessWidget {
+  const _LatencyLine({required this.theme, required this.delay});
 
   final ThemeData theme;
   final int? delay;
@@ -134,19 +154,26 @@ class _LatencyDot extends StatelessWidget {
     final color = utils.getDelayColor(delay) ?? theme.colorScheme.outline;
     final text = hasDelay ? '$delay ms' : '--';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
         ),
-      ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
