@@ -107,28 +107,29 @@ jobs:
       - name: Enforce Manual signing specifiers
         # 保险：本地调试可能把 pbxproj 的 Release 配置误改成 Automatic/空 profile
         # （f476904 曾因此导致 TestFlight 找不到 profile）。构建前强制设回
-        # Manual + 当前 profile UUID。文件里 PacketTunnel 的 Release 配置在前、Runner 在后。
+        # Manual + 当前 profile UUID。按每个 Release buildSettings 块里的
+        # PRODUCT_BUNDLE_IDENTIFIER 区分主 App / PacketTunnel，不依赖文件顺序。
         run: |
           set -euo pipefail
+          [ -n "$APP_ID" ] && [ -n "$PKT_ID" ] || { echo "ERROR: bundle ids missing"; exit 1; }
           [ -n "$MAIN_PROFILE_UUID" ] && [ -n "$PKT_PROFILE_UUID" ] || { echo "ERROR: profile UUIDs missing"; exit 1; }
-          awk -v main="$MAIN_PROFILE_UUID" -v pkt="$PKT_PROFILE_UUID" '
-            /buildSettings = {/ { in_block = 1; block = $0 "\n"; next }
+          awk -v app="$APP_ID" -v pkt="$PKT_ID" -v main="$MAIN_PROFILE_UUID" -v pktuuid="$PKT_PROFILE_UUID" '
+            /\/\* Release \*\/ = \{/ { is_release = 1 }
+            /buildSettings = {/ { if (is_release) { in_block = 1; block = $0 "\n"; next } }
             in_block {
               block = block $0 "\n"
               if ($0 ~ /^[[:space:]]*};/) {
                 if (block ~ /PROVISIONING_PROFILE_SPECIFIER/) {
-                  n++
                   gsub(/CODE_SIGN_IDENTITY = "Apple Development";/, "CODE_SIGN_IDENTITY = \"Apple Distribution\";", block)
-                  if (n == 1) {
-                    gsub(/CODE_SIGN_STYLE = Automatic;/, "CODE_SIGN_STYLE = Manual;", block)
-                    gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" pkt "\";", block)
-                  } else {
-                    gsub(/CODE_SIGN_STYLE = Automatic;/, "CODE_SIGN_STYLE = Manual;", block)
+                  gsub(/CODE_SIGN_STYLE = Automatic;/, "CODE_SIGN_STYLE = Manual;", block)
+                  if (index(block, "PRODUCT_BUNDLE_IDENTIFIER = " pkt ";") > 0) {
+                    gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" pktuuid "\";", block)
+                  } else if (index(block, "PRODUCT_BUNDLE_IDENTIFIER = " app ";") > 0) {
                     gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" main "\";", block)
                   }
                 }
                 printf "%s", block
-                in_block = 0; block = ""
+                in_block = 0; is_release = 0; block = ""
                 next
               }
               next

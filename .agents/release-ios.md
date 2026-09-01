@@ -59,10 +59,10 @@ export IOS_CERTIFICATE_PASSWORD=...
 
 ## 描述文件（提交在仓库）
 
-- `ios/ToWorld.mobileprovision` —— 主 App `uk.toworld.flclash`，UUID `d74658aa-56d6-4b4d-afe6-e1250185eb34`
-- `ios/ToWorldPacketTunnel.mobileprovision` —— 扩展 `uk.toworld.flclash.PacketTunnel`，UUID `e2a0c32b-0c7f-4fa2-8032-3373acc7dfe1`
+- `ios/ToWorld.mobileprovision` —— 主 App `uk.toworld.clash`，UUID `f3102d11-8212-4bab-8328-a9ff3cf965d3`
+- `ios/ToWorldPacketTunnel.mobileprovision` —— 扩展 `uk.toworld.clash.PacketTunnel`，UUID `92c366cf-96f5-4a06-a67e-c0ea88e8141a`
 
-`ios/Runner.xcodeproj/project.pbxproj` 的 Runner/PacketTunnel **Release 配置是 Manual 签名**：`CODE_SIGN_STYLE = Manual` + `PROVISIONING_PROFILE_SPECIFIER` = 上面两个 UUID。**profile 重建后 UUID 会变**，pbxproj 的 specifier 必须同步（regen workflow 会自动改，文件里 PacketTunnel 配置在前、Runner 在后）。
+`ios/Runner.xcodeproj/project.pbxproj` 的 Runner/PacketTunnel **Release 配置是 Manual 签名**：`CODE_SIGN_STYLE = Manual` + `PROVISIONING_PROFILE_SPECIFIER` = 上面两个 UUID。**profile 重建后 UUID 会变**，pbxproj 的 specifier 必须同步（regen workflow 按每个 Release buildSettings 块里的 `PRODUCT_BUNDLE_IDENTIFIER` 自动改，不依赖文件顺序）。
 
 ## 重建描述文件（`.github/workflows/regen-ios-profiles.yaml`）
 

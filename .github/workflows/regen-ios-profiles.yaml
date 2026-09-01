@@ -99,20 +99,39 @@ jobs:
           echo "MAIN_UUID=$MAIN_UUID PKT_UUID=$PKT_UUID"
 
       - name: Patch project signing specifiers
-        # profile 重建后 UUID 会变，需同步 pbxproj 里两个 target 的 PROVISIONING_PROFILE_SPECIFIER。
-        # 文件里 PacketTunnel 的 Release 配置在前、Runner 的在后，所以按出现顺序替换。
+        # profile 重建后 UUID 会变，需同步 pbxproj 里两个 target 的 Release 配置。
+        # 按每个 Release buildSettings 块里的 PRODUCT_BUNDLE_IDENTIFIER 区分主 App / PacketTunnel，
+        # 不依赖文件顺序；只改 Release（Debug/Profile 保持 Automatic，避免影响本地开发）。
         run: |
           set -euo pipefail
           [ -n "$MAIN_UUID" ] && [ -n "$PKT_UUID" ] || { echo "ERROR: UUIDs not found"; exit 1; }
-          awk -v main="$MAIN_UUID" -v pkt="$PKT_UUID" '
-            /PROVISIONING_PROFILE_SPECIFIER/ {
-              n++
-              if (n == 1) { sub(/"[-0-9a-fA-F]+"/, "\"" pkt "\"") }
-              else if (n == 2) { sub(/"[-0-9a-fA-F]+"/, "\"" main "\"") }
+          PKT_ID=$(grep -oE 'PRODUCT_BUNDLE_IDENTIFIER = [^;]+PacketTunnel;' ios/Runner.xcodeproj/project.pbxproj | sed 's/.*= //;s/;//' | sort -u)
+          APP_ID=$(grep -oE 'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;' ios/Runner.xcodeproj/project.pbxproj | sed 's/.*= //;s/;//' | grep -vE 'RunnerTests|PacketTunnel' | sort -u)
+          [ -n "$APP_ID" ] && [ -n "$PKT_ID" ] || { echo "ERROR: bundle ids not resolved (APP_ID=$APP_ID PKT_ID=$PKT_ID)"; exit 1; }
+          awk -v app="$APP_ID" -v pkt="$PKT_ID" -v main="$MAIN_UUID" -v pktuuid="$PKT_UUID" '
+            /\/\* Release \*\/ = \{/ { is_release = 1 }
+            /buildSettings = {/ { if (is_release) { in_block = 1; block = $0 "\n"; next } }
+            in_block {
+              block = block $0 "\n"
+              if ($0 ~ /^[[:space:]]*};/) {
+                if (block ~ /PROVISIONING_PROFILE_SPECIFIER/) {
+                  gsub(/CODE_SIGN_IDENTITY = "Apple Development";/, "CODE_SIGN_IDENTITY = \"Apple Distribution\";", block)
+                  gsub(/CODE_SIGN_STYLE = Automatic;/, "CODE_SIGN_STYLE = Manual;", block)
+                  if (index(block, "PRODUCT_BUNDLE_IDENTIFIER = " pkt ";") > 0) {
+                    gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" pktuuid "\";", block)
+                  } else if (index(block, "PRODUCT_BUNDLE_IDENTIFIER = " app ";") > 0) {
+                    gsub(/PROVISIONING_PROFILE_SPECIFIER = "[^"]*";/, "PROVISIONING_PROFILE_SPECIFIER = \"" main "\";", block)
+                  }
+                }
+                printf "%s", block
+                in_block = 0; is_release = 0; block = ""
+                next
+              }
+              next
             }
             { print }
           ' ios/Runner.xcodeproj/project.pbxproj > /tmp/pbx.new && mv /tmp/pbx.new ios/Runner.xcodeproj/project.pbxproj
-          grep -n 'PROVISIONING_PROFILE_SPECIFIER' ios/Runner.xcodeproj/project.pbxproj
+          grep -n 'CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER' ios/Runner.xcodeproj/project.pbxproj
 
       - name: Commit and push
         run: |
