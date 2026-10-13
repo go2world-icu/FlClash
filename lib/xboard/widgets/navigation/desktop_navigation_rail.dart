@@ -2,7 +2,7 @@ import 'package:fl_clash/l10n/l10n.dart';
 // import 'package:fl_clash/xboard/features/online_support/providers/chat_provider.dart';
 // import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/user_menu_widget.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 桌面端侧边导航栏

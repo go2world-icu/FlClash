@@ -9,7 +9,7 @@ import 'package:fl_clash/xboard/features/online_support/pages/online_support_pag
 import 'package:fl_clash/xboard/features/online_support/services/api_service.dart';
 import 'package:fl_clash/xboard/features/online_support/services/service_config.dart';
 import 'package:fl_clash/xboard/features/online_support/services/websocket_service.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // 初始化文件级日志器
@@ -345,7 +345,7 @@ class ChatNotifier extends Notifier<ChatState> {
           : message.content;
 
       // 使用全局通知系统显示消息，带点击跳转功能
-      globalState.showNotifier(
+      dialogs.showNotifier(
         '${appLocalizations.newMessageFromSupport}: $content',
         actionState: MessageActionState(
           actionText: appLocalizations.view,

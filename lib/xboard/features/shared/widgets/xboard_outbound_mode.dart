@@ -1,10 +1,9 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'tun_introduction_dialog.dart';
@@ -133,7 +132,7 @@ class XBoardOutboundMode extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2.0),
                       child: FilterChip(
-                        label: Text(Intl.message(Mode.rule.name)),
+                        label: Text(Mode.rule.label),
                         selected: mode == Mode.rule,
                         onSelected: (selected) {
                           if (selected) {
@@ -154,7 +153,7 @@ class XBoardOutboundMode extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2.0),
                       child: FilterChip(
-                        label: Text(Intl.message(Mode.global.name)),
+                        label: Text(Mode.global.label),
                         selected: mode == Mode.global,
                         onSelected: (selected) {
                           if (selected) {

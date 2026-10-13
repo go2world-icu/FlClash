@@ -3,7 +3,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NodeSelectorChip extends ConsumerWidget {
@@ -151,7 +151,7 @@ class _LatencyLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasDelay = delay != null && delay! > 0;
-    final color = utils.getDelayColor(delay) ?? theme.colorScheme.outline;
+    final color = theme.colorScheme.delayColor(delay) ?? theme.colorScheme.outline;
     final text = hasDelay ? '$delay ms' : '--';
 
     return Row(

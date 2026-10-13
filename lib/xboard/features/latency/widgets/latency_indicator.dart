@@ -1,5 +1,5 @@
-import 'package:fl_clash/common/utils.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:material_ui/material_ui.dart';
 class LatencyIndicator extends StatelessWidget {
   final int? delayValue;
   final VoidCallback? onTap;
@@ -104,7 +104,7 @@ class LatencyIndicator extends StatelessWidget {
   }
   Widget _buildTestedState(BuildContext context) {
     final displayText = delayValue! < 0 ? 'Timeout' : '${delayValue}ms';
-    final color = utils.getDelayColor(delayValue!);
+    final color = Theme.of(context).colorScheme.delayColor(delayValue!);
     if (isCompact) {
       return GestureDetector(
         onTap: onTap,

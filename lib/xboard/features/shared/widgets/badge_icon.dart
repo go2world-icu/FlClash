@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 带未读数标记的图标组件
 class BadgeIcon extends StatelessWidget {

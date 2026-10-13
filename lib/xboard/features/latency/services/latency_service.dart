@@ -18,7 +18,7 @@ class LatencyService {
     for (final node in nodes) {
       tasks.add(
         coreController.getDelay(testUrl, node.name).then((delay) {
-          latencies[node.name] = delay.value ?? -1;
+          latencies[node.name] = delay?.value ?? -1;
         }).catchError((_) {
           latencies[node.name] = -1;
         }),

@@ -1,11 +1,12 @@
+import 'package:fl_clash/common/service_probe.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/providers/providers.dart';
-import 'package:flutter/material.dart';
+import 'package:fl_clash/providers/outbound_ip.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 网络检测（出口 IP 与归属地），供 iOS 外壳首页使用。
 ///
-/// 复用主应用的 [networkDetectionProvider]，仅做展示层适配；
+/// 复用主应用的出口 IP 探测 [outboundIpProbeProvider]，仅做展示层适配；
 /// 视觉风格对齐 [XBoardOutboundModeSelector]。
 class XBoardNetworkDetection extends ConsumerStatefulWidget {
   const XBoardNetworkDetection({super.key});
@@ -17,21 +18,20 @@ class XBoardNetworkDetection extends ConsumerStatefulWidget {
 
 class _XBoardNetworkDetectionState
     extends ConsumerState<XBoardNetworkDetection> {
-  bool _triggered = false;
+  late final OutboundIpProbe _probe;
 
   @override
   void initState() {
     super.initState();
     // 主应用的检测触发依赖仪表盘配置里是否包含 networkDetection 组件；
-    // iOS 外壳首页不渲染仪表盘网格，这里兜底触发一次，保证组件独立可用。
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_triggered || !mounted) return;
-      _triggered = true;
-      final state = ref.read(networkDetectionProvider);
-      if (state.ipInfo == null && !state.isLoading) {
-        ref.read(networkDetectionProvider.notifier).startCheck();
-      }
-    });
+    // iOS 外壳首页不渲染仪表盘网格，这里兜底订阅一次，保证组件独立可用。
+    _probe = ref.read(outboundIpProbeProvider.notifier)..watch(routedOutbound);
+  }
+
+  @override
+  void dispose() {
+    _probe.unwatch(routedOutbound);
+    super.dispose();
   }
 
   String _countryCodeToEmoji(String countryCode) {
@@ -48,9 +48,11 @@ class _XBoardNetworkDetectionState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appLocalizations = AppLocalizations.of(context);
-    final state = ref.watch(networkDetectionProvider);
-    final ipInfo = state.ipInfo;
-    final isLoading = state.isLoading;
+    final entry = ref.watch(
+      outboundIpProbeProvider.select((state) => state.entryOf(routedOutbound)),
+    );
+    final ipInfo = entry.value;
+    final isLoading = entry.isLoading;
 
     return Container(
       decoration: BoxDecoration(

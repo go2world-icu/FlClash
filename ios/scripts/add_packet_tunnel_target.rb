@@ -45,7 +45,8 @@ runner.add_file_references([app_group_ref])
 # --- Go core build phase (must precede compilation) -------------------------
 script = target.new_shell_script_build_phase('Build Go Core')
 script.shell_path = '/bin/bash'
-script.shell_script = 'bash "${SRCROOT}/../plugins/setup/buildkit/build_pod.sh"'
+script.shell_script = 'if [ -d "${SRCROOT}/../libclash/ios/Libclash.xcframework" ]; then exit 0; fi' \
+                      "\necho \"error: libclash/ios/Libclash.xcframework is missing - build with flutter build ios so the setup build hook produces it\" >&2\nexit 1"
 script.always_out_of_date = '1'
 target.build_phases.rotate!(target.build_phases.index(script))
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/state.dart';
 
@@ -55,7 +55,7 @@ class XBoardNotification {
     String message, {
     String? title,
   }) async {
-    final result = await globalState.showMessage(
+    final result = await dialogs.showMessage(
       message: TextSpan(text: message),
       cancelable: true,
     );

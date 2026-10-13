@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
@@ -244,12 +246,12 @@ class XBoardProfileImportService {
       _logger.debug('💾 开始保存解密的配置内容到Profile...');
       final profile = Profile.normal(url: url);
 
-      // 写入临时文件后使用 saveFileWithPath 保存
-      final tmpDir = await Directory.systemTemp.createTemp('xboard_sub');
-      final tmpFile = File('${tmpDir.path}/profile');
-      await tmpFile.writeAsString(result.content!);
-      final profileWithContent = await profile.saveFileWithPath(tmpFile.path);
-      await tmpDir.delete(recursive: true);
+      // 使用 saveFile 写入并校验配置内容
+      final bytes = utf8.encode(result.content!);
+      final profileWithContent = await profile.saveFile(
+        bytes,
+        validate: (path) => coreController.validateConfig(path),
+      );
       _logger.info('✅ 配置内容已成功保存并通过ClashMeta核心验证');
       
       // 获取订阅信息并更新Profile

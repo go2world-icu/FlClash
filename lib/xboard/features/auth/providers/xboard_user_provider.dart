@@ -1,6 +1,7 @@
 ﻿import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
@@ -528,7 +529,8 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       if (system.isIOS) {
         final configPath = await appPath.configFilePath;
         await File(configPath).safeDelete();
-        final sharedPath = await appPath.sharedFilePath;
+        // 上游移除了 AppPath.sharedFilePath；同语义路径为 homeDir 下的 shared.json。
+        final sharedPath = join(await appPath.homeDirPath, 'shared.json');
         await File(sharedPath).safeDelete();
       }
     } catch (e) {

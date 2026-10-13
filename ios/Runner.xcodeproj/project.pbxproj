@@ -520,7 +520,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "if [ -d \"${SRCROOT}/../libclash/ios/Libclash.xcframework\" ]; then exit 0; fi\nbash \"${SRCROOT}/../plugins/setup/buildkit/build_pod.sh\"";
+			shellScript = "if [ -d \"${SRCROOT}/../libclash/ios/Libclash.xcframework\" ]; then exit 0; fi\necho \"error: libclash/ios/Libclash.xcframework is missing - build with flutter build ios so the setup build hook produces it\" >&2\nexit 1";
 		};
 /* End PBXShellScriptBuildPhase section */
 

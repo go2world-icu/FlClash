@@ -5,7 +5,7 @@ import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dar
 import 'package:fl_clash/xboard/features/subscription/providers/xboard_subscription_provider.dart';
 import 'plan_purchase_page.dart';
 import '../widgets/plan_description_widget.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 class PlansView extends ConsumerStatefulWidget {
   const PlansView({super.key});

@@ -101,12 +101,12 @@ class SubscriptionDownloader {
       // 创建并保存 Profile
       final profile = Profile.normal(url: url);
 
-      // 写入临时文件后使用 saveFileWithPath 保存
-      final tmpDir = await Directory.systemTemp.createTemp('xboard_sub');
-      final tmpFile = File('${tmpDir.path}/profile');
-      await tmpFile.writeAsString(result.content);
-      final savedProfile = await profile.saveFileWithPath(tmpFile.path);
-      await tmpDir.delete(recursive: true);
+      // 使用 saveFile 写入并校验配置内容
+      final bytes = utf8.encode(result.content);
+      final savedProfile = await profile.saveFile(
+        bytes,
+        validate: (path) => coreController.validateConfig(path),
+      );
       
       // 更新订阅信息
       final finalProfile = savedProfile.copyWith(

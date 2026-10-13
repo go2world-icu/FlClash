@@ -7,7 +7,7 @@ import 'package:fl_clash/xboard/features/invite/widgets/invite_rules_card.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/invite_stats_card.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/wallet_details_card.dart';
 import 'package:fl_clash/xboard/features/subscription/widgets/log_upload_row.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// iOS 外壳「邀请」标签页内容。

@@ -1,6 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// iOS 外壳启动屏 —— 在本地登录态恢复（`quickAuth`）完成前显示。
 ///

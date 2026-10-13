@@ -1,4 +1,4 @@
-//go:build cgo
+//go:build (android || ios) && cgo
 
 package main
 
@@ -8,44 +8,57 @@ package main
 import "C"
 
 import (
-	"context"
 	t "core/tun"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"unsafe"
 
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"github.com/metacubex/mihomo/log"
-	"golang.org/x/sync/semaphore"
 )
 
-var eventListener unsafe.Pointer
+var (
+	eventListenerLock sync.RWMutex
+	eventListener     unsafe.Pointer
+)
 
 type TunHandler struct {
 	listener *sing_tun.Listener
 	callback unsafe.Pointer
 
-	limit *semaphore.Weighted
+	mu sync.RWMutex
 }
 
-func (th *TunHandler) start(fd int, stack, address, dns string) {
-	runLock.Lock()
-	defer runLock.Unlock()
-	_ = th.limit.Acquire(context.TODO(), 4)
-	defer th.limit.Release(4)
+func (th *TunHandler) start(fd int, stack, address, dns string) bool {
+	configMu.Lock()
+	defer configMu.Unlock()
+
+	th.mu.Lock()
 	th.initHook()
+	th.mu.Unlock()
+
+	// t.Start runs outside th.mu on purpose. The hook is live from initHook
+	// onwards, and a socket opened anywhere inside Start reaches handleProtect
+	// on this very goroutine — an RLock taken while this one holds the write
+	// lock deadlocks the start outright. Nothing is lost by dropping it: both
+	// hooks return early until th.listener is set, which is below.
 	tunListener := t.Start(fd, stack, address, dns)
+
+	th.mu.Lock()
+	defer th.mu.Unlock()
 	if tunListener != nil {
 		log.Infoln("TUN address: %v", tunListener.Address())
 		th.listener = tunListener
-		return
+		return true
 	}
 	th.clear()
+	return false
 }
 
 func (th *TunHandler) close() {
-	_ = th.limit.Acquire(context.TODO(), 4)
-	defer th.limit.Release(4)
+	th.mu.Lock()
+	defer th.mu.Unlock()
 	th.clear()
 }
 
@@ -69,68 +82,77 @@ var (
 func handleStopTun() {
 	tunLock.Lock()
 	defer tunLock.Unlock()
-	if tunHandler != nil {
-		tunHandler.close()
-	}
+	stopTunLocked()
 }
 
-func handleStartTun(callback unsafe.Pointer, fd int, stack, address, dns string) {
-	handleStopTun()
+func stopTunLocked() {
+	if tunHandler == nil {
+		return
+	}
+	tunHandler.close()
+	tunHandler = nil
+}
+
+func handleStartTun(callback unsafe.Pointer, fd int, stack, address, dns string) bool {
 	tunLock.Lock()
 	defer tunLock.Unlock()
-	if fd != 0 {
-		tunHandler = &TunHandler{
-			callback: callback,
-			limit:    semaphore.NewWeighted(4),
+	stopTunLocked()
+	if fd == 0 {
+		if callback != nil {
+			releaseObject(callback)
 		}
-		tunHandler.start(fd, stack, address, dns)
+		logError("startTun was handed no tun descriptor")
+		return false
 	}
+	tunHandler = &TunHandler{
+		callback: callback,
+	}
+	if tunHandler.start(fd, stack, address, dns) {
+		return true
+	}
+	// start() already cleared the handler, so nothing protects sockets from
+	// here on. Android has the routes up regardless, so the caller has to tear
+	// the VPN down rather than leave the device pointed at a black hole.
+	tunHandler = nil
+	return false
 }
 
 func (response MethodResponse) send() {
 	data, err := response.JSON()
 	if err != nil {
+		logError("MethodResponse marshal error: id=%s err=%v", response.ID, err)
+		releaseObject(response.callback)
 		return
 	}
 	invokeResult(response.callback, string(data))
 	releaseObject(response.callback)
 }
 
-func handlePlatformMethodCall(call *MethodCall, response MethodResponse) bool {
-	switch call.Method {
-	case updateDnsMethod:
-		value := ""
-		if !decodeMethodArguments(call, response, &value) {
-			return true
-		}
-		handleUpdateDns(value)
+func init() {
+	registerMethod(updateDnsMethod, withArguments(func(value *string, response MethodResponse) {
+		handleUpdateDns(*value)
 		response.success(true)
-		return true
-	}
-	return false
+	}))
 }
 
 //export invokeMethod
 func invokeMethod(callback unsafe.Pointer, paramsChar *C.char) {
 	params := takeCString(paramsChar)
 	call := &MethodCall{}
-	err := json.Unmarshal([]byte(params), call)
-	if err != nil {
-		response := MethodResponse{callback: callback}
-		response.failure("invalid_method_call", err.Error(), nil)
+	if err := json.Unmarshal([]byte(params), call); err != nil {
+		newMethodResponse("", callback).failure("invalid_method_call", err.Error(), nil)
 		return
 	}
-	response := MethodResponse{
-		ID:       call.ID,
-		callback: callback,
-	}
-	go handleMethodCall(call, response)
+	dispatchMethodCall(call, newMethodResponse(call.ID, callback))
 }
 
 //export startTUN
 func startTUN(callback unsafe.Pointer, fd C.int, stackChar, addressChar, dnsChar *C.char) bool {
-	handleStartTun(callback, int(fd), takeCString(stackChar), takeCString(addressChar), takeCString(dnsChar))
-	if !isRunning {
+	started := handleStartTun(callback, int(fd), takeCString(stackChar), takeCString(addressChar), takeCString(dnsChar))
+	if !started {
+		return false
+	}
+	if !isRunning.Load() {
 		handleStartListener()
 	} else {
 		handleResetConnections()
@@ -141,6 +163,13 @@ func startTUN(callback unsafe.Pointer, fd C.int, stackChar, addressChar, dnsChar
 //export quickSetup
 func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar *C.char) {
 	go func() {
+		defer releaseObject(callback)
+		defer func() {
+			if r := recover(); r != nil {
+				logError("panic in quickSetup: %v\n%s", r, stackTrace())
+				invokeResult(callback, fmt.Sprintf("internal panic: %v", r))
+			}
+		}()
 		initParamsString := takeCString(initParamsChar)
 		setupParamsString := takeCString(setupParamsChar)
 		initParams := InitParams{}
@@ -148,23 +177,36 @@ func quickSetup(callback unsafe.Pointer, initParamsChar *C.char, setupParamsChar
 			invokeResult(callback, "init failed")
 			return
 		}
-		isRunning = true
 		setupParams := defaultSetupParams()
 		if err := UnmarshalJson([]byte(setupParamsString), setupParams); err != nil {
 			invokeResult(callback, err.Error())
 			return
 		}
-		message := handleSetupConfig(setupParams)
-		invokeResult(callback, message)
+		isRunning.Store(true)
+		invokeResult(callback, handleSetupConfig(setupParams))
 	}()
 }
 
+// The listener goes away with the Flutter engine, which never gets to release
+// the route watch it held, while the service and this core run on.
+//
 //export setEventListener
 func setEventListener(listener unsafe.Pointer) {
-	if eventListener != nil || listener == nil {
+	eventListenerLock.Lock()
+	if eventListener != nil {
 		releaseObject(eventListener)
 	}
 	eventListener = listener
+	eventListenerLock.Unlock()
+	if listener == nil {
+		stopRouteWatch()
+	}
+}
+
+func hasEventListener() bool {
+	eventListenerLock.RLock()
+	defer eventListenerLock.RUnlock()
+	return eventListener != nil
 }
 
 //export getTotalTraffic
@@ -186,22 +228,10 @@ func marshalResult(value any) string {
 	return string(data)
 }
 
-func sendMessageBatch(messages []Message) {
+func deliverEvent(data []byte) {
+	eventListenerLock.RLock()
+	defer eventListenerLock.RUnlock()
 	if eventListener == nil {
-		return
-	}
-	arguments, err := json.Marshal(messages)
-	if err != nil {
-		logError("Message batch marshal error: %v", err)
-		return
-	}
-	call := MethodCall{
-		Method:    messageMethod,
-		Arguments: arguments,
-	}
-	data, err := json.Marshal(call)
-	if err != nil {
-		logError("MethodCall marshal error: method=%s err=%v", call.Method, err)
 		return
 	}
 	invokeResult(eventListener, string(data))
@@ -210,11 +240,14 @@ func sendMessageBatch(messages []Message) {
 //export stopTun
 func stopTun() {
 	handleStopTun()
-	if isRunning {
+	if isRunning.Load() {
 		handleStopListener()
 	}
 }
 
+// suspend parks the tunnel while the packet tunnel provider is frozen.
+// Only iOS calls it, from PacketTunnelProvider.sleep()/wake().
+//
 //export suspend
 func suspend(suspended bool) {
 	handleSuspend(suspended)

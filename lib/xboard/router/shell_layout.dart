@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:fl_clash/xboard/widgets/navigation/desktop_navigation_rail.dart';
 import 'package:fl_clash/xboard/widgets/navigation/mobile_navigation_bar.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// 适配性的 Shell 布局
 /// 桌面端：侧边栏 + 内容区

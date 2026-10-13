@@ -4,7 +4,7 @@ import 'package:fl_clash/xboard/features/profile/providers/profile_import_provid
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/features/subscription/services/subscription_status_checker.dart';
 import 'package:fl_clash/xboard/features/subscription/widgets/subscription_usage_card.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// iOS 外壳「首页」标签页内容。

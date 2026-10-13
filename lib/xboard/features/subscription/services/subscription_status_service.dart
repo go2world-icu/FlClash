@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:material_ui/material_ui.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/models/models.dart' as fl_models;
 import 'package:fl_clash/l10n/l10n.dart';

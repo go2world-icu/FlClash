@@ -1,6 +1,6 @@
 // lib/features/online_support/widgets/message_input.dart
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class MessageInput extends StatefulWidget {
   final Function(String) onSendMessage;

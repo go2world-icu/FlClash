@@ -1,7 +1,8 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:fl_clash/xboard/core/core.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/features/online_support/models/message_model.dart';
 import 'package:fl_clash/xboard/features/online_support/services/file_upload_service.dart';
@@ -27,7 +28,7 @@ class ImagePickerWidget extends StatefulWidget {
 }
 
 class _ImagePickerWidgetState extends State<ImagePickerWidget> {
-  List<PlatformFile> _selectedFiles = [];
+  List<({PlatformFile file, Uint8List bytes})> _selectedFiles = [];
   bool _isUploading = false;
   String? _errorMessage;
   late final FileUploadService _uploadService;
@@ -58,29 +59,24 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       _logger.debug('开始选择图片文件...');
       
       // 方式1: 使用FileType.image（推荐，系统会自动过滤图片文件）
+      // file_picker 12（stable）直接返回 List<PlatformFile>，取消时为空列表。
       final result = await FilePicker.pickFiles(
         type: FileType.image,
         allowMultiple: true,
-        withData: true,
       );
-      
-      // 方式2: 如果需要精确控制扩展名，可以使用FileType.custom
-      // final result = await FilePicker.platform.pickFiles(
-      //   type: FileType.custom,
-      //   allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
-      //   allowMultiple: true,
-      //   withData: true,
-      // );
 
-      if (result != null && result.files.isNotEmpty) {
-        _logger.info('成功选择 ${result.files.length} 个文件');
-        for (int i = 0; i < result.files.length; i++) {
-          final file = result.files[i];
-          _logger.debug('文件${i + 1}: ${file.name} (${file.size} bytes)');
+      if (result.isNotEmpty) {
+        _logger.info('成功选择 ${result.length} 个文件');
+        final selected = <({PlatformFile file, Uint8List bytes})>[];
+        for (int i = 0; i < result.length; i++) {
+          final file = result[i];
+          final bytes = await file.readAsBytes();
+          selected.add((file: file, bytes: bytes));
+          _logger.debug('文件${i + 1}: ${file.name} (${bytes.length} bytes)');
         }
-        
+
         setState(() {
-          _selectedFiles = result.files;
+          _selectedFiles = selected;
           _errorMessage = null;
         });
       } else {
@@ -110,12 +106,13 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
     try {
       List<MessageAttachment> uploadedAttachments = [];
 
-      for (final file in _selectedFiles) {
-        if (file.bytes != null) {
+      for (final entry in _selectedFiles) {
+        final bytes = entry.bytes;
+        if (bytes.isNotEmpty) {
           final result = await _uploadService.uploadFile(
-            fileBytes: file.bytes!,
-            fileName: file.name,
-            mimeType: _getMimeTypeFromExtension(file.extension),
+            fileBytes: bytes,
+            fileName: entry.file.name,
+            mimeType: _getMimeTypeFromExtension(_extensionOf(entry.file.name)),
           );
 
           if (result.success && result.attachment != null) {
@@ -138,6 +135,16 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
         _errorMessage = appLocalizations.onlineSupportUploadFailed(e.toString());
       });
     }
+  }
+
+  /// file_picker 12（stable）的 [PlatformFile] 不再暴露 extension，
+  /// 这里从文件名解析扩展名（不含点）。
+  String? _extensionOf(String name) {
+    final dot = name.lastIndexOf('.');
+    if (dot < 0 || dot == name.length - 1) {
+      return null;
+    }
+    return name.substring(dot + 1);
   }
 
   /// 根据文件扩展名获取MIME类型
@@ -274,15 +281,17 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                         shrinkWrap: true,
                         itemCount: _selectedFiles.length,
                         itemBuilder: (context, index) {
-                          final file = _selectedFiles[index];
+                          final entry = _selectedFiles[index];
+                          final file = entry.file;
+                          final bytes = entry.bytes;
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
-                              leading: file.bytes != null
+                              leading: bytes.isNotEmpty
                                   ? ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image.memory(
-                                        file.bytes!,
+                                        bytes,
                                         width: 40,
                                         height: 40,
                                         fit: BoxFit.cover,
@@ -297,7 +306,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               subtitle: Text(
-                                _formatFileSize(file.size),
+                                _formatFileSize(bytes.length),
                                 style: TextStyle(
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),

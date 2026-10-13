@@ -2,9 +2,19 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+
+/// 上游移除了旧的 `utils.getTimeDifference`（`Utils` 单例已删除），
+/// 这里用上游保留的顶层 [getDateStringLast2] 复现原有格式化行为。
+String _formatTimeDifference(DateTime dateTime) {
+  final difference = DateTime.now().difference(dateTime);
+  return '${getDateStringLast2(difference.inHours)}:'
+      '${getDateStringLast2(difference.inMinutes)}:'
+      '${getDateStringLast2(difference.inSeconds)}';
+}
+
 class XBoardConnectButton extends ConsumerStatefulWidget {
   final bool isFloating; // 是否为浮动按钮模式
   const XBoardConnectButton({
@@ -108,7 +118,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
           final textWidth = globalState.measure
                   .computeTextSize(
                     Text(
-                      utils.getTimeDifference(
+                      _formatTimeDifference(
                         DateTime.now(),
                       ),
                       style: context.textTheme.titleMedium?.toSoftBold,
@@ -136,7 +146,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
           child: Consumer(
             builder: (_, ref, __) {
               final runTime = ref.watch(runTimeProvider);
-              final text = utils.getTimeText(runTime);
+              final text = getTimeText(runTime);
               final isDark = Theme.of(context).brightness == Brightness.dark;
               return Text(
                 text,
@@ -202,7 +212,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
                           Consumer(
                             builder: (_, ref, __) {
                               final runTime = ref.watch(runTimeProvider);
-                              final text = utils.getTimeText(runTime);
+                              final text = getTimeText(runTime);
                               return Text(
                                 AppLocalizations.of(context).xboardRunningTime(text),
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

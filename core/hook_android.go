@@ -3,70 +3,131 @@
 package main
 
 import (
-	"context"
 	"core/platform"
 	"errors"
 	"net"
+	"sync"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/log"
 )
 
-var errBlocked = errors.New("blocked")
+// protectFailing tracks whether the last protect call was refused, so a stuck
+// VpnService produces one log line rather than one per connection.
+var protectFailing atomic.Bool
 
-func (th *TunHandler) handleProtect(fd int) {
-	_ = th.limit.Acquire(context.Background(), 1)
-	defer th.limit.Release(1)
+func (th *TunHandler) handleProtect(fd int) error {
+	th.mu.RLock()
+	defer th.mu.RUnlock()
 
-	if th.listener == nil {
-		return
+	if th.listener == nil || th.callback == nil {
+		// The tun routes are already live at this point (Android establishes
+		// them before it hands the fd over), so an unprotected socket would be
+		// routed straight back into the tunnel and hang until it times out.
+		// Failing it here costs nothing and is at least visible.
+		return errTunNotReady
 	}
 
-	protect(th.callback, fd)
+	if !protect(th.callback, fd) {
+		if protectFailing.CompareAndSwap(false, true) {
+			logError("VpnService.protect refused a socket; connections would loop back into the tunnel")
+		}
+		return errProtectRefused
+	}
+
+	if protectFailing.CompareAndSwap(true, false) {
+		log.Infoln("[TUN] VpnService.protect recovered")
+	}
+	return nil
 }
 
-func (th *TunHandler) handleResolveProcess(source, target net.Addr) string {
-	_ = th.limit.Acquire(context.Background(), 1)
-	defer th.limit.Release(1)
+func (th *TunHandler) handleResolveProcess(source, target net.Addr) (int, string) {
+	th.mu.RLock()
+	defer th.mu.RUnlock()
 
-	if th.listener == nil {
-		return ""
+	// A released callback is a null jobject, and JNI aborts on a call through one.
+	if th.listener == nil || th.callback == nil {
+		return -1, ""
 	}
 	var protocol int
-	uid := -1
 	switch source.Network() {
 	case "udp", "udp4", "udp6":
 		protocol = syscall.IPPROTO_UDP
 	case "tcp", "tcp4", "tcp6":
 		protocol = syscall.IPPROTO_TCP
 	}
-	if version < 29 {
+	var uid int
+	if sdkVersion.Load() < 29 {
 		uid = platform.QuerySocketUidFromProcFs(source, target)
+	} else {
+		uid = resolveUid(th.callback, protocol, source.String(), target.String())
 	}
-	return resolveProcess(th.callback, protocol, source.String(), target.String(), uid)
+	if uid < 0 {
+		return -1, ""
+	}
+	return uid, resolvePackage(th.callback, uid)
+}
+
+var (
+	installHooksOnce sync.Once
+	activeTunHandler atomic.Pointer[TunHandler]
+)
+
+func installHooks() {
+	installHooksOnce.Do(func() {
+		dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
+			if platform.ShouldBlockConnection() {
+				return errBlocked
+			}
+			th := activeTunHandler.Load()
+			if th == nil {
+				return nil
+			}
+			var protectErr error
+			if err := conn.Control(func(fd uintptr) {
+				protectErr = th.handleProtect(int(fd))
+			}); err != nil {
+				return err
+			}
+			return protectErr
+		}
+		process.DefaultPackageNameResolver = func(metadata *constant.Metadata) (string, error) {
+			th := activeTunHandler.Load()
+			if th == nil {
+				return "", process.ErrInvalidNetwork
+			}
+			src, dst := metadata.RawSrcAddr, metadata.RawDstAddr
+			if src == nil || dst == nil {
+				return "", process.ErrInvalidNetwork
+			}
+			// Everywhere else mihomo fills Uid from its own procfs lookup, the one Android took away.
+			uid, packageName := th.handleResolveProcess(src, dst)
+			if uid >= 0 {
+				metadata.Uid = uint32(uid)
+			}
+			return packageName, nil
+		}
+	})
 }
 
 func (th *TunHandler) initHook() {
-	dialer.DefaultSocketHook = func(network, address string, conn syscall.RawConn) error {
-		if platform.ShouldBlockConnection() {
-			return errBlocked
-		}
-		return conn.Control(func(fd uintptr) {
-			tunHandler.handleProtect(int(fd))
-		})
-	}
-	process.DefaultPackageNameResolver = func(metadata *constant.Metadata) (string, error) {
-		src, dst := metadata.RawSrcAddr, metadata.RawDstAddr
-		if src == nil || dst == nil {
-			return "", process.ErrInvalidNetwork
-		}
-		return tunHandler.handleResolveProcess(src, dst), nil
-	}
+	installHooks()
+	activeTunHandler.Store(th)
 }
 
+// Swap the handler, never the hook: mihomo nil-checks DefaultSocketHook once and
+// dereferences it again when the socket is created, so clearing it mid-dial
+// calls a nil func value.
 func (th *TunHandler) removeHook() {
-	dialer.DefaultSocketHook = nil
-	process.DefaultPackageNameResolver = nil
+	activeTunHandler.CompareAndSwap(th, nil)
 }
+
+var (
+	errBlocked        = errors.New("blocked: the process is out of file descriptors")
+	errTunNotReady    = errors.New("blocked: the tun listener is not ready")
+	errProtectRefused = errors.New("blocked: VpnService.protect refused the socket")
+)

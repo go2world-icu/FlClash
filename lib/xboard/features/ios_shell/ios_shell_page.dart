@@ -6,7 +6,7 @@ import 'package:fl_clash/xboard/features/invite/widgets/user_menu_widget.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_home_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_invite_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_splash_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// iOS 专用 XBoard 外壳 —— 接管整个 App 界面。

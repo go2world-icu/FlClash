@@ -1,5 +1,5 @@
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/models/models.dart' as fl_models;
 import 'package:fl_clash/xboard/domain/domain.dart';
