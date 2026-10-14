@@ -87,7 +87,9 @@ class AppTray implements TrayPort {
             tunEnable: trayState.tunEnable,
             safeMode: trayState.safeMode,
           ),
-          isTemplate: isMacOS,
+          // Our tray art is the full-colour app icon, not a monochrome glyph:
+          // macOS would mask a template image down to a solid silhouette.
+          isTemplate: false,
           size: isMacOS ? 18 : 16,
         ),
         toolTip: trayState.safeMode

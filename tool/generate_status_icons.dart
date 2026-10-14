@@ -8,10 +8,11 @@ const pngOutputDir = 'assets/images/tray/unix';
 const icoOutputDir = 'assets/images/tray/windows';
 const macosOutputDir = 'assets/images/tray/macos';
 const statusIconNames = ['status_1', 'status_2', 'status_3', 'status_4'];
-const macosStatusIconSources = {
-  'status_1': '$sourceDir/glyph.svg',
-  'status_4': '$sourceDir/status_4.svg',
-};
+// macOS menu-bar icons. The fork's status art is full-colour app branding, so
+// the running states ship in colour (AppTray passes isTemplate: false); only
+// the safe-mode glyph stays monochrome, matching the template style.
+const macosColoredIcons = ['status_1', 'status_2', 'status_3'];
+const macosMonochromeIcons = ['status_4'];
 const trayBaseSize = 18;
 const trayScales = [1, 2, 3, 4];
 const appIconSource = 'assets/images/icon.png';
@@ -46,9 +47,17 @@ Future<void> main() async {
         sizes: trayIcoSizes,
       );
     }
-    for (final MapEntry(key: name, value: path)
-        in macosStatusIconSources.entries) {
-      final source = File(path);
+    for (final name in macosColoredIcons) {
+      final source = File('$sourceDir/$name.svg');
+      if (!source.existsSync()) {
+        stderr.writeln('Missing source SVG: ${source.path}');
+        exitCode = 1;
+        return;
+      }
+      await _writeTrayVariants(renderer, source, name, macosOutputDir);
+    }
+    for (final name in macosMonochromeIcons) {
+      final source = File('$sourceDir/$name.svg');
       if (!source.existsSync()) {
         stderr.writeln('Missing source SVG: ${source.path}');
         exitCode = 1;

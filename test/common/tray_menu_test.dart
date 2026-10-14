@@ -249,7 +249,9 @@ void main() {
     final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
     expect(reps.map((rep) => rep['scale']), containsAll([1.0, 2.0, 3.0, 4.0]));
     expect(reps.map((rep) => rep['bytes']), everyElement(isNotEmpty));
-    expect((arguments['icon'] as Map)['isTemplate'], isTrue);
+    // The tray art is the full-colour app icon; a macOS template icon would be
+    // masked down to a solid silhouette, so the flag stays off.
+    expect((arguments['icon'] as Map)['isTemplate'], isFalse);
   });
 
   test('skips the platform call when the tray state is unchanged', () async {
