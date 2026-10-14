@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/service_probe.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/outbound_ip.dart';
 import 'package:material_ui/material_ui.dart';
@@ -63,8 +64,8 @@ class _XBoardNetworkDetectionState
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Icon(
-            Icons.network_check,
+          GlyphIcon(
+            AppGlyphs.networkCheck,
             color: theme.colorScheme.primary,
             size: 18,
           ),

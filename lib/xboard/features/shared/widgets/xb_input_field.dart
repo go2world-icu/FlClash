@@ -1,9 +1,10 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 class XBInputField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final String? hintText;
-  final IconData? prefixIcon;
+  final Glyph? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
   final TextInputType? keyboardType;
@@ -40,8 +41,8 @@ class XBInputField extends StatelessWidget {
         labelText: labelText,
         hintText: hintText,
         prefixIcon: prefixIcon != null
-            ? Icon(
-                prefixIcon,
+            ? GlyphIcon(
+                prefixIcon!,
                 color: colorScheme.onSurfaceVariant,
               )
             : null,

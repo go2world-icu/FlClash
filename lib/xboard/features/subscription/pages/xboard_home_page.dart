@@ -1,5 +1,6 @@
 ﻿import 'dart:async';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
@@ -223,7 +224,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () => _showLogoutDialog(),
-        icon: const Icon(Icons.logout, color: Colors.red),
+        icon: const GlyphIcon(AppGlyphs.logout, color: Colors.red),
         label: Text(
           AppLocalizations.of(context).logout,
           style: const TextStyle(color: Colors.red),

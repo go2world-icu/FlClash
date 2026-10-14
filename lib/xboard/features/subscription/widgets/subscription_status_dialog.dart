@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/subscription_status_service.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -75,27 +76,27 @@ class SubscriptionStatusDialog extends StatelessWidget {
   }
   Widget _buildIcon() {
     Color iconColor;
-    IconData iconData;
+    Glyph iconData;
     Color backgroundColor;
     switch (statusResult.type) {
       case SubscriptionStatusType.noSubscription:
         iconColor = Colors.blue.shade600;
-        iconData = Icons.card_giftcard;
+        iconData = AppGlyphs.giftCard;
         backgroundColor = Colors.blue.withValues(alpha: 0.1);
         break;
       case SubscriptionStatusType.expired:
         iconColor = Colors.red.shade600;
-        iconData = Icons.schedule;
+        iconData = AppGlyphs.clock;
         backgroundColor = Colors.red.withValues(alpha: 0.1);
         break;
       case SubscriptionStatusType.exhausted:
         iconColor = Colors.orange.shade600;
-        iconData = Icons.data_usage;
+        iconData = AppGlyphs.dataUsage;
         backgroundColor = Colors.orange.withValues(alpha: 0.1);
         break;
       default:
         iconColor = Colors.green.shade600;
-        iconData = Icons.check_circle;
+        iconData = AppGlyphs.checkCircle;
         backgroundColor = Colors.green.withValues(alpha: 0.1);
     }
     return Container(
@@ -104,7 +105,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
         color: backgroundColor,
         shape: AppShape.all(12),
       ),
-      child: Icon(
+      child: GlyphIcon(
         iconData,
         color: iconColor,
         size: 32,
@@ -146,28 +147,28 @@ class SubscriptionStatusDialog extends StatelessWidget {
           const SizedBox(height: 12),
           _buildFeatureItem(
             context,
-            Icons.speed,
+            AppGlyphs.speed,
             AppLocalizations.of(context).xboardHighSpeedNetwork,
             AppLocalizations.of(context).xboardEnjoyFastNetworkExperience,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
-            Icons.security,
+            AppGlyphs.shieldCheck,
             AppLocalizations.of(context).xboardSecureEncryption,
             AppLocalizations.of(context).xboardProtectNetworkPrivacy,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
-            Icons.public,
+            AppGlyphs.globe,
             AppLocalizations.of(context).xboardGlobalNodes,
             AppLocalizations.of(context).xboardConnectGlobalQualityNodes,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
-            Icons.support_agent,
+            AppGlyphs.supportAgent,
             AppLocalizations.of(context).xboardProfessionalSupport,
             AppLocalizations.of(context).xboard24HourCustomerService,
           ),
@@ -177,7 +178,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
   }
   Widget _buildFeatureItem(
     BuildContext context,
-    IconData icon,
+    Glyph icon,
     String title,
     String description,
   ) {
@@ -189,7 +190,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             shape: AppShape.all(6),
           ),
-          child: Icon(
+          child: GlyphIcon(
             icon,
             size: 16,
             color: Theme.of(context).colorScheme.primary,

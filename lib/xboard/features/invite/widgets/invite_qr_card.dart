@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/qr_code_widget.dart';
@@ -49,7 +50,7 @@ class InviteQrCard extends ConsumerWidget {
                 children: [
                   ElevatedButton.icon(
                     onPressed: () => _saveQrCode(context, inviteUrl),
-                    icon: const Icon(Icons.save_alt),
+                    icon: const GlyphIcon(AppGlyphs.save),
                     label: Text(appLocalizations.saveQr),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -57,7 +58,7 @@ class InviteQrCard extends ConsumerWidget {
                   ),
                   ElevatedButton.icon(
                     onPressed: () => _copyToClipboard(context, inviteUrl),
-                    icon: const Icon(Icons.link),
+                    icon: const GlyphIcon(AppGlyphs.link),
                     label: Text(appLocalizations.copyInviteLink),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -87,8 +88,8 @@ class InviteQrCard extends ConsumerWidget {
                 padding: const EdgeInsets.all(40),
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.error_outline,
+                    GlyphIcon(
+                      AppGlyphs.error,
                       size: 64,
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                     ),

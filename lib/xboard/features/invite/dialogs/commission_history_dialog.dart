@@ -2,6 +2,7 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 
 class CommissionHistoryDialog extends ConsumerStatefulWidget {
@@ -46,7 +47,7 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
           Text(appLocalizations.commissionHistory),
           IconButton(
             onPressed: () => ref.read(inviteProvider.notifier).refreshCommissionHistory(),
-            icon: const Icon(Icons.refresh),
+            icon: const GlyphIcon(AppGlyphs.refresh),
             tooltip: appLocalizations.refresh,
           ),
         ],
@@ -79,7 +80,7 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.history, size: 48, color: Colors.grey),
+                          const GlyphIcon(AppGlyphs.history, size: 48, color: Colors.grey),
                           const SizedBox(height: 8),
                           Text(appLocalizations.noCommissionRecord, style: const TextStyle(color: Colors.grey)),
                         ],
@@ -103,7 +104,7 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
                                     )
                                   : TextButton.icon(
                                       onPressed: () => ref.read(inviteProvider.notifier).loadNextHistoryPage(),
-                                      icon: const Icon(Icons.expand_more),
+                                      icon: const GlyphIcon(AppGlyphs.caretDown),
                                       label: Text(appLocalizations.loadMore),
                                     ),
                             ),
@@ -138,8 +139,8 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.monetization_on,
+          GlyphIcon(
+            AppGlyphs.coin,
             color: Colors.green[600],
             size: 20,
           ),

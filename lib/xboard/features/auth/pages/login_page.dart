@@ -3,6 +3,7 @@ import 'package:fl_clash/xboard/services/services.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'register_page.dart';
@@ -247,8 +248,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 shape: BoxShape.circle,
                                 color: colorScheme.primary.withValues(alpha: 0.1),
                               ),
-                              child: Icon(
-                                Icons.vpn_key_outlined,
+                              child: GlyphIcon(
+                                AppGlyphs.key,
                                 size: 48,
                                 color: colorScheme.primary,
                               ),
@@ -276,7 +277,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         controller: _emailController,
                         labelText: appLocalizations.xboardEmail,
                         hintText: appLocalizations.xboardEmail,
-                        prefixIcon: Icons.email_outlined,
+                        prefixIcon: AppGlyphs.email,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -293,16 +294,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         controller: _passwordController,
                         labelText: appLocalizations.xboardPassword,
                         hintText: appLocalizations.xboardPassword,
-                        prefixIcon: Icons.lock_outlined,
+                        prefixIcon: AppGlyphs.lock,
                         obscureText: !_isPasswordVisible,
                         suffixIcon: IconButton(
                           tooltip: _isPasswordVisible
                               ? appLocalizations.hidePassword
                               : appLocalizations.showPassword,
-                          icon: Icon(
+                          icon: GlyphIcon(
                             _isPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                                ? AppGlyphs.eye
+                                : AppGlyphs.eyeOff,
                           ),
                           onPressed: () {
                             setState(() {
@@ -391,25 +392,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     /// 构建初始化状态指示器
     Widget _buildInitializationIndicator(InitializationState initState) {
       Color statusColor;
-      IconData statusIcon;
-      
+      Glyph statusIcon;
+
       switch (initState.status) {
         case InitializationStatus.checkingDomain:
         case InitializationStatus.initializingSDK:
           statusColor = Colors.orange;
-          statusIcon = Icons.sync;
+          statusIcon = AppGlyphs.sync;
           break;
         case InitializationStatus.ready:
           statusColor = Colors.green;
-          statusIcon = Icons.check_circle;
+          statusIcon = AppGlyphs.checkCircle;
           break;
         case InitializationStatus.failed:
           statusColor = Colors.red;
-          statusIcon = Icons.error;
+          statusIcon = AppGlyphs.error;
           break;
         case InitializationStatus.idle:
           statusColor = Colors.grey;
-          statusIcon = Icons.dns;
+          statusIcon = AppGlyphs.dns;
           break;
       }
       
@@ -425,7 +426,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                   ),
                 )
-              : Icon(
+              : GlyphIcon(
                   statusIcon,
                   size: 12,
                   color: statusColor,

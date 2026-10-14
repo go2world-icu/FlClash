@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'dart:async';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -125,8 +126,8 @@ class _NoticeBannerState extends ConsumerState<NoticeBanner>
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(
-              Icons.campaign_rounded,
+            child: GlyphIcon(
+              AppGlyphs.megaphone,
               size: 18,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -386,8 +387,8 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
               customBorder: AppShape.all(12),
               child: Padding(
                 padding: const EdgeInsets.all(6.0),
-                child: Icon(
-                  Icons.close_rounded,
+                child: GlyphIcon(
+                  AppGlyphs.close,
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   size: 20,
                 ),
@@ -458,7 +459,7 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildNavButton(
-            icon: Icons.chevron_left_rounded,
+            icon: AppGlyphs.chevronBack,
             label: '上一条',
             enabled: _currentIndex > 0,
             onPressed: () => _pageController.previousPage(
@@ -468,7 +469,7 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
           ),
           _buildPageIndicator(),
           _buildNavButton(
-            icon: Icons.chevron_right_rounded,
+            icon: AppGlyphs.chevronForward,
             label: '下一条',
             enabled: _currentIndex < widget.notices.length - 1,
             isReversed: true,
@@ -483,7 +484,7 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
   }
   
   Widget _buildNavButton({
-    required IconData icon,
+    required Glyph icon,
     required String label,
     required bool enabled,
     required VoidCallback onPressed,
@@ -522,18 +523,18 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(
+              GlyphIcon(
                 icon,
                 size: 20,
-                color: enabled 
+                color: enabled
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.outline,
               ),
             ] : [
-              Icon(
+              GlyphIcon(
                 icon,
                 size: 20,
-                color: enabled 
+                color: enabled
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.outline,
               ),

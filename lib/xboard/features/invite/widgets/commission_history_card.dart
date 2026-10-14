@@ -2,6 +2,7 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/withdraw_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/commission_history_dialog.dart';
@@ -32,7 +33,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                 if (inviteState.totalCommission > 0)
                   TextButton.icon(
                     onPressed: () => _showWithdrawDialog(context),
-                    icon: const Icon(Icons.payment),
+                    icon: const GlyphIcon(AppGlyphs.creditCard),
                     label: Text(appLocalizations.withdraw),
                   ),
               ],
@@ -42,8 +43,8 @@ class CommissionHistoryCard extends ConsumerWidget {
               Center(
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.history,
+                    GlyphIcon(
+                      AppGlyphs.history,
                       size: 48,
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                     ),
@@ -67,7 +68,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                 children: [
                   TextButton.icon(
                     onPressed: () => _showCommissionHistoryDialog(context),
-                    icon: const Icon(Icons.history),
+                    icon: const GlyphIcon(AppGlyphs.history),
                     label: Text(appLocalizations.viewHistory),
                   ),
                   if (inviteState.commissionHistory.length >= 5)
@@ -79,7 +80,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                             height: 16, 
                             child: CircularProgressIndicator(strokeWidth: 2)
                           )
-                        : const Icon(Icons.refresh),
+                        : const GlyphIcon(AppGlyphs.refresh),
                       label: Text(inviteState.isLoadingHistory ? appLocalizations.loading : appLocalizations.loadMore),
                     ),
                 ],
@@ -104,8 +105,8 @@ class CommissionHistoryCard extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.monetization_on,
+          GlyphIcon(
+            AppGlyphs.coin,
             color: theme.colorScheme.primary,
             size: 20,
           ),

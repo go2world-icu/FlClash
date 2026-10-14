@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 
 class WithdrawDialog extends ConsumerStatefulWidget {
@@ -41,8 +42,8 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _isSuccess
-                ? const Icon(
-                    Icons.check_circle,
+                ? const GlyphIcon(
+                    AppGlyphs.checkCircle,
                     size: 48,
                     color: Colors.green,
                     key: ValueKey('success'),
@@ -55,8 +56,8 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
                           key: ValueKey('loading'),
                         ),
                       )
-                    : const Icon(
-                        Icons.account_balance_wallet,
+                    : const GlyphIcon(
+                        AppGlyphs.wallet,
                         size: 48,
                         color: Colors.blue,
                         key: ValueKey('wallet'),
@@ -100,7 +101,7 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
               decoration: InputDecoration(
                 labelText: '提现方式',
                 border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.payment),
+                prefixIcon: const GlyphIcon(AppGlyphs.creditCard),
               ),
               items: _withdrawMethods.map((String method) {
                 return DropdownMenuItem<String>(
@@ -122,7 +123,7 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
                 labelText: '提现账号',
                 hintText: '请输入您的账号',
                 border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.account_box),
+                prefixIcon: const GlyphIcon(AppGlyphs.accountBox),
               ),
             ),
             const SizedBox(height: 12),

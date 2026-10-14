@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/theme_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 
@@ -10,7 +11,7 @@ class UserMenuWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.person),
+      icon: const GlyphIcon(AppGlyphs.person),
       tooltip: appLocalizations.userCenter,
       onSelected: (value) {
         if (value == 'theme') {
@@ -24,7 +25,7 @@ class UserMenuWidget extends ConsumerWidget {
           value: 'theme',
           child: Row(
             children: [
-              const Icon(Icons.brightness_6),
+              const GlyphIcon(AppGlyphs.themeAuto),
               const SizedBox(width: 8),
               Text(appLocalizations.switchTheme),
             ],
@@ -35,7 +36,7 @@ class UserMenuWidget extends ConsumerWidget {
           value: 'logout',
           child: Row(
             children: [
-              const Icon(Icons.logout, color: Colors.red),
+              const GlyphIcon(AppGlyphs.logout, color: Colors.red),
               const SizedBox(width: 8),
               Text(appLocalizations.logout, style: const TextStyle(color: Colors.red)),
             ],

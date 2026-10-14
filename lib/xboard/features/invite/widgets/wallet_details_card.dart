@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/stat_item_widget.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/transfer_dialog.dart';
@@ -34,13 +35,13 @@ class WalletDetailsCard extends ConsumerWidget {
                   children: [
                     TextButton.icon(
                       onPressed: () => _showWithdrawDialog(context),
-                      icon: const Icon(Icons.account_balance),
+                      icon: const GlyphIcon(AppGlyphs.bank),
                       label: const Text('提现'),
                     ),
                     const SizedBox(width: 8),
                     TextButton.icon(
                       onPressed: () => _showTransferDialog(context),
-                      icon: const Icon(Icons.swap_horiz),
+                      icon: const GlyphIcon(AppGlyphs.swapHoriz),
                       label: Text(appLocalizations.transfer),
                     ),
                   ],
@@ -57,21 +58,21 @@ class WalletDetailsCard extends ConsumerWidget {
                     child: StatItemWidget(
                       title: appLocalizations.availableCommission,
                       value: inviteState.formattedAvailableCommission,
-                      icon: Icons.account_balance_wallet,
+                      icon: AppGlyphs.wallet,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
                       title: appLocalizations.pendingCommission,
                       value: inviteState.formattedPendingCommission,
-                      icon: Icons.hourglass_empty,
+                      icon: AppGlyphs.hourglass,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
                       title: appLocalizations.walletBalance,
-                      value: inviteState.formattedWalletBalance, 
-                      icon: Icons.account_balance,
+                      value: inviteState.formattedWalletBalance,
+                      icon: AppGlyphs.bank,
                     ),
                   ),
                 ],

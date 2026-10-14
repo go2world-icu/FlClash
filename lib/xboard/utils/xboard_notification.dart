@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/state.dart';
 
 /// XBoard 通知工具类
@@ -27,7 +28,7 @@ class XBoardNotification {
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const GlyphIcon(AppGlyphs.checkCircle, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Flexible(child: Text(message)),
             ],

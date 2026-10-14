@@ -1,9 +1,10 @@
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 
 class StatItemWidget extends StatelessWidget {
   final String title;
   final String value;
-  final IconData icon;
+  final Glyph icon;
 
   const StatItemWidget({
     super.key,
@@ -17,9 +18,9 @@ class StatItemWidget extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
-        Icon(
-          icon, 
-          size: 32, 
+        GlyphIcon(
+          icon,
+          size: 32,
           color: colorScheme.primary,
         ),
         const SizedBox(height: 8),

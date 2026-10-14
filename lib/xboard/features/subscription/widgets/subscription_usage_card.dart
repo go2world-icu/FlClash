@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,8 +55,8 @@ class SubscriptionUsageCard extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Icon(
-            Icons.cloud_off,
+          GlyphIcon(
+            AppGlyphs.cloudOff,
             size: 40,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
@@ -80,34 +81,34 @@ class SubscriptionUsageCard extends ConsumerWidget {
 
   Widget _buildStatusCard(SubscriptionStatusResult statusResult,
       ThemeData theme, BuildContext context) {
-    IconData statusIcon;
+    Glyph statusIcon;
     Color statusColor;
     String statusText;
     String statusDetail;
     switch (statusResult.type) {
       case SubscriptionStatusType.noSubscription:
-        statusIcon = Icons.card_giftcard;
+        statusIcon = AppGlyphs.giftCard;
         statusColor = Colors.blue.shade600;
         statusText = AppLocalizations.of(context).xboardNoAvailableSubscription;
         statusDetail =
             AppLocalizations.of(context).xboardPurchaseSubscriptionToUse;
         break;
       case SubscriptionStatusType.expired:
-        statusIcon = Icons.schedule;
+        statusIcon = AppGlyphs.clock;
         statusColor = Colors.red.shade600;
         statusText = AppLocalizations.of(context).xboardSubscriptionExpired;
         statusDetail = statusResult.getDetailMessage(context) ??
             AppLocalizations.of(context).xboardRenewToContinue;
         break;
       case SubscriptionStatusType.exhausted:
-        statusIcon = Icons.data_usage;
+        statusIcon = AppGlyphs.dataUsage;
         statusColor = Colors.orange.shade600;
         statusText = AppLocalizations.of(context).xboardTrafficExhausted;
         statusDetail = statusResult.getDetailMessage(context) ??
             AppLocalizations.of(context).xboardBuyMoreTrafficOrUpgrade;
         break;
       default:
-        statusIcon = Icons.info;
+        statusIcon = AppGlyphs.info;
         statusColor = theme.colorScheme.primary;
         statusText = statusResult.getMessage(context);
         statusDetail = statusResult.getDetailMessage(context) ?? '';
@@ -137,7 +138,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
                   color: statusColor.withValues(alpha: 0.1),
                   shape: AppShape.all(10),
                 ),
-                child: Icon(
+                child: GlyphIcon(
                   statusIcon,
                   color: statusColor,
                   size: 20,
@@ -186,8 +187,8 @@ class SubscriptionUsageCard extends ConsumerWidget {
                               color: statusColor,
                             ),
                           )
-                        : Icon(
-                            Icons.refresh,
+                        : GlyphIcon(
+                            AppGlyphs.refresh,
                             color: statusColor,
                             size: 20,
                           ),
@@ -213,8 +214,8 @@ class SubscriptionUsageCard extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.calendar_today,
+                  GlyphIcon(
+                    AppGlyphs.calendar,
                     size: 14,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -244,7 +245,11 @@ class SubscriptionUsageCard extends ConsumerWidget {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  icon: const Icon(Icons.shopping_bag, size: 18),
+                  icon: const GlyphIcon(
+                    AppGlyphs.shoppingBag,
+                    size: 18,
+                    fill: 1,
+                  ),
                   label: Text(_getRenewButtonText(statusResult.type, context)),
                 ),
               );
@@ -387,7 +392,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
               Expanded(
                 flex: 2,
                 child: _buildStatItem(
-                  icon: Icons.cloud_download,
+                  icon: AppGlyphs.cloudDownload,
                   label: AppLocalizations.of(context).xboardUsedTraffic,
                   value: _formatBytes(usedTraffic),
                   subtitle: '/ ${_formatBytes(totalTraffic)}',
@@ -402,7 +407,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
               ),
               Expanded(
                 child: _buildStatItem(
-                  icon: Icons.schedule,
+                  icon: AppGlyphs.clock,
                   label: AppLocalizations.of(context).xboardValidityPeriod,
                   value: '$remainingDays',
                   subtitle: AppLocalizations.of(context).xboardDays,
@@ -438,14 +443,14 @@ class SubscriptionUsageCard extends ConsumerWidget {
           side: BorderSide(color: Colors.orange.shade300),
           padding: const EdgeInsets.symmetric(vertical: 10),
         ),
-        icon: const Icon(Icons.open_in_browser, size: 18),
+        icon: const GlyphIcon(AppGlyphs.openExternal, size: 18),
         label: const Text('续费延长'),
       ),
     );
   }
 
   Widget _buildStatItem({
-    required IconData icon,
+    required Glyph icon,
     required String label,
     required String value,
     required String subtitle,
@@ -456,7 +461,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Icon(
+            GlyphIcon(
               icon,
               size: 16,
               color: theme.colorScheme.primary,

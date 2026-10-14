@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 
 class InviteRulesCard extends ConsumerWidget {
@@ -18,7 +19,7 @@ class InviteRulesCard extends ConsumerWidget {
           children: [
               Row(
               children: [
-                Icon(Icons.rule, color: Theme.of(context).colorScheme.primary),
+                GlyphIcon(AppGlyphs.rules, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   appLocalizations.inviteRules,

@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 class LatencyIndicator extends StatelessWidget {
   final int? delayValue;
@@ -71,8 +72,8 @@ class LatencyIndicator extends StatelessWidget {
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
             shape: AppShape.sm,
           ),
-          child: Icon(
-            Icons.refresh,
+          child: GlyphIcon(
+            AppGlyphs.refresh,
             size: 12,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -85,8 +86,8 @@ class LatencyIndicator extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showIcon) ...[
-            Icon(
-              Icons.refresh,
+            GlyphIcon(
+              AppGlyphs.refresh,
               size: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -183,12 +184,12 @@ class LatencyQuality {
     if (delay <= poor) return '网络质量较差，可能影响体验';
     return '网络质量很差，建议更换节点';
   }
-  static IconData getQualityIcon(int delay) {
-    if (delay < 0) return Icons.signal_wifi_off;
-    if (delay <= excellent) return Icons.signal_wifi_4_bar;
-    if (delay <= good) return Icons.signal_wifi_4_bar;
-    if (delay <= fair) return Icons.signal_wifi_4_bar;
-    if (delay <= poor) return Icons.signal_wifi_bad;
-    return Icons.signal_wifi_0_bar;
+  static Glyph getQualityIcon(int delay) {
+    if (delay < 0) return AppGlyphs.signalNone;
+    if (delay <= excellent) return AppGlyphs.signalFull;
+    if (delay <= good) return AppGlyphs.signalFull;
+    if (delay <= fair) return AppGlyphs.signalFull;
+    if (delay <= poor) return AppGlyphs.signalWeak;
+    return AppGlyphs.signalNone;
   }
 }

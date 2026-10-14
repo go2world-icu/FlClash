@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 
@@ -20,8 +21,8 @@ class ErrorCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            Icon(
-              Icons.error_outline,
+            GlyphIcon(
+              AppGlyphs.error,
               color: Theme.of(context).colorScheme.onErrorContainer,
             ),
             const SizedBox(width: 8),
@@ -36,8 +37,8 @@ class ErrorCard extends ConsumerWidget {
             IconButton(
               tooltip: AppLocalizations.of(context).close,
               onPressed: () => ref.read(inviteProvider.notifier).clearError(),
-              icon: Icon(
-                Icons.close,
+              icon: GlyphIcon(
+                AppGlyphs.close,
                 color: Theme.of(context).colorScheme.onErrorContainer,
               ),
             ),

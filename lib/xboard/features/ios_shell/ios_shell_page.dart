@@ -7,6 +7,7 @@ import 'package:fl_clash/xboard/features/ios_shell/ios_home_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_invite_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_splash_screen.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// iOS 专用 XBoard 外壳 —— 接管整个 App 界面。
@@ -74,13 +75,13 @@ class _XBoardIosShellState extends ConsumerState<XBoardIosShell> {
             setState(() => _selectedIndex = index),
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.home_outlined, size: 22),
-            selectedIcon: const Icon(Icons.home, size: 22),
+            icon: const GlyphIcon(AppGlyphs.home, size: 22),
+            selectedIcon: const GlyphIcon(AppGlyphs.home, size: 22),
             label: appLocalizations.xboardHome,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.people_outline, size: 22),
-            selectedIcon: const Icon(Icons.people, size: 22),
+            icon: const GlyphIcon(AppGlyphs.people, size: 22),
+            selectedIcon: const GlyphIcon(AppGlyphs.people, size: 22),
             label: appLocalizations.invite,
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
@@ -149,8 +150,8 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
                   color: Theme.of(context).colorScheme.primaryContainer,
                   shape: AppShape.sm,
                 ),
-                child: Icon(
-                  Icons.router,
+                child: GlyphIcon(
+                  AppGlyphs.router,
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                   size: 18,
                 ),

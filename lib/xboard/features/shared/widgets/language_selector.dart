@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,8 +53,8 @@ class LanguageSelector extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(
-              Icons.expand_more,
+            GlyphIcon(
+              AppGlyphs.caretDown,
               color: colorScheme.onSurfaceVariant,
               size: 18,
             ),
@@ -91,8 +92,8 @@ class LanguageSelector extends ConsumerWidget {
                     ),
                   ),
                   if (isSelected)
-                    Icon(
-                      Icons.check,
+                    GlyphIcon(
+                      AppGlyphs.check,
                       color: colorScheme.primary,
                       size: 18,
                     ),

@@ -1,6 +1,7 @@
 ﻿import 'package:fl_clash/xboard/features/auth/auth.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -208,7 +209,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             ? '${appLocalizations.xboardInviteCode} *' 
             : appLocalizations.inviteCodeOptional,
         hintText: appLocalizations.pleaseEnterInviteCode,
-        prefixIcon: Icons.card_giftcard_outlined,
+        prefixIcon: AppGlyphs.giftCard,
         enabled: true,
       ),
     );
@@ -243,7 +244,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   IconButton(
                     tooltip: appLocalizations.back,
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const GlyphIcon(AppGlyphs.arrowBack),
                     style: IconButton.styleFrom(
                       backgroundColor: colorScheme.surfaceContainerLow,
                     ),
@@ -280,7 +281,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           controller: _emailController,
                           labelText: appLocalizations.emailAddress,
                           hintText: appLocalizations.pleaseEnterYourEmailAddress,
-                          prefixIcon: Icons.email_outlined,
+                          prefixIcon: AppGlyphs.email,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -297,16 +298,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           controller: _passwordController,
                           labelText: appLocalizations.password,
                           hintText: appLocalizations.pleaseEnterAtLeast8CharsPassword,
-                          prefixIcon: Icons.lock_outlined,
+                          prefixIcon: AppGlyphs.lock,
                           obscureText: !_isPasswordVisible,
                           suffixIcon: IconButton(
                             tooltip: _isPasswordVisible
                                 ? appLocalizations.hidePassword
                                 : appLocalizations.showPassword,
-                            icon: Icon(
+                            icon: GlyphIcon(
                               _isPasswordVisible
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
+                                  ? AppGlyphs.eye
+                                  : AppGlyphs.eyeOff,
                             ),
                             onPressed: () {
                               setState(() {
@@ -329,16 +330,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           controller: _confirmPasswordController,
                           labelText: appLocalizations.confirmNewPassword,
                           hintText: appLocalizations.pleaseReEnterPassword,
-                          prefixIcon: Icons.lock_outlined,
+                          prefixIcon: AppGlyphs.lock,
                           obscureText: !_isConfirmPasswordVisible,
                           suffixIcon: IconButton(
                             tooltip: _isConfirmPasswordVisible
                                 ? appLocalizations.hidePassword
                                 : appLocalizations.showPassword,
-                            icon: Icon(
+                            icon: GlyphIcon(
                               _isConfirmPasswordVisible
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
+                                  ? AppGlyphs.eye
+                                  : AppGlyphs.eyeOff,
                             ),
                             onPressed: () {
                               setState(() {
@@ -365,7 +366,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     controller: _emailCodeController,
                                     labelText: appLocalizations.emailVerificationCode,
                                     hintText: appLocalizations.pleaseEnterEmailVerificationCode,
-                                    prefixIcon: Icons.verified_user_outlined,
+                                    prefixIcon: AppGlyphs.shieldCheck,
                                     keyboardType: TextInputType.number,
                                     suffixIcon: _isSendingEmailCode
                                         ? const SizedBox(
@@ -397,7 +398,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               ? '${appLocalizations.xboardInviteCode} *' 
                               : appLocalizations.inviteCodeOptional,
                           hintText: appLocalizations.pleaseEnterInviteCode,
-                          prefixIcon: Icons.card_giftcard_outlined,
+                          prefixIcon: AppGlyphs.giftCard,
                           enabled: true,
                         ),
                         const SizedBox(height: 32),

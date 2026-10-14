@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
@@ -133,9 +134,9 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
             onPressed: () {
               handleSwitchStart();
             },
-              icon: AnimatedIcon(
-                icon: AnimatedIcons.play_pause,
-                progress: _animation,
+              icon: GlyphIcon(
+                AppGlyphs.playPause(_animation.value),
+                fill: 1,
               ),
               label: SizedBox(
                 width: textWidth * _animation.value,
@@ -188,9 +189,8 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    AnimatedIcon(
-                      icon: AnimatedIcons.play_pause,
-                      progress: _animation,
+                    GlyphIcon(
+                      AppGlyphs.playPause(_animation.value),
                       size: 24,
                       color: isDark ? Colors.black : Colors.white,
                     ),

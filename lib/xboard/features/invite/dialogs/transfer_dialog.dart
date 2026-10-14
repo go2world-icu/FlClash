@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 
 class TransferDialog extends ConsumerStatefulWidget {
@@ -35,8 +36,8 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _isSuccess
-                ? const Icon(
-                    Icons.check_circle,
+                ? const GlyphIcon(
+                    AppGlyphs.checkCircle,
                     size: 48,
                     color: Colors.green,
                     key: ValueKey('success'),
@@ -49,8 +50,8 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                           key: ValueKey('loading'),
                         ),
                       )
-                    : const Icon(
-                        Icons.account_balance_wallet,
+                    : const GlyphIcon(
+                        AppGlyphs.wallet,
                         size: 48,
                         color: Colors.blue,
                         key: ValueKey('wallet'),

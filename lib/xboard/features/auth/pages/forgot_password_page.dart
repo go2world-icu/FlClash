@@ -1,5 +1,6 @@
 ﻿import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
@@ -137,7 +138,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           controller: _emailController,
           labelText: AppLocalizations.of(context).emailAddress,
           hintText: AppLocalizations.of(context).pleaseEnterEmail,
-          prefixIcon: Icons.email_outlined,
+          prefixIcon: AppGlyphs.email,
           keyboardType: TextInputType.emailAddress,
           enabled: !_isLoading,
           validator: (value) {
@@ -200,7 +201,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           controller: _codeController,
           labelText: AppLocalizations.of(context).verificationCode,
           hintText: AppLocalizations.of(context).pleaseEnterVerificationCode,
-          prefixIcon: Icons.verified_user_outlined,
+          prefixIcon: AppGlyphs.shieldCheck,
           keyboardType: TextInputType.number,
           enabled: !_isLoading,
           validator: (value) {
@@ -218,15 +219,15 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           controller: _passwordController,
           labelText: AppLocalizations.of(context).newPassword,
           hintText: AppLocalizations.of(context).pleaseEnterNewPassword,
-          prefixIcon: Icons.lock_outlined,
+          prefixIcon: AppGlyphs.lock,
           obscureText: _obscurePassword,
           enabled: !_isLoading,
           suffixIcon: IconButton(
             tooltip: _obscurePassword
                 ? AppLocalizations.of(context).hidePassword
                 : AppLocalizations.of(context).showPassword,
-            icon: Icon(
-              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            icon: GlyphIcon(
+              _obscurePassword ? AppGlyphs.eye : AppGlyphs.eyeOff,
             ),
             onPressed: () {
               setState(() {
@@ -249,15 +250,15 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           controller: _confirmPasswordController,
           labelText: AppLocalizations.of(context).confirmNewPassword,
           hintText: AppLocalizations.of(context).pleaseConfirmNewPassword,
-          prefixIcon: Icons.lock_outlined,
+          prefixIcon: AppGlyphs.lock,
           obscureText: _obscureConfirmPassword,
           enabled: !_isLoading,
           suffixIcon: IconButton(
             tooltip: _obscureConfirmPassword
                 ? AppLocalizations.of(context).hidePassword
                 : AppLocalizations.of(context).showPassword,
-            icon: Icon(
-              _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            icon: GlyphIcon(
+              _obscureConfirmPassword ? AppGlyphs.eye : AppGlyphs.eyeOff,
             ),
             onPressed: () {
               setState(() {
@@ -342,7 +343,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                         Navigator.of(context).pop();
                       }
                     },
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const GlyphIcon(AppGlyphs.arrowBack),
                     style: IconButton.styleFrom(
                       backgroundColor: colorScheme.surfaceContainerLow,
                     ),

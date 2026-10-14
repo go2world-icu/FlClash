@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -54,7 +55,7 @@ class _LogUploadRowState extends State<LogUploadRow> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!_hasUploaded)
-                  Icon(Icons.bug_report, size: 14, color: _disabledColor),
+                  GlyphIcon(AppGlyphs.bug, size: 14, color: _disabledColor),
                 if (!_hasUploaded) const SizedBox(width: 4),
                 Text(
                   _isUploading ? '上传中...' : (_hasUploaded ? '已上报' : '日志上报'),

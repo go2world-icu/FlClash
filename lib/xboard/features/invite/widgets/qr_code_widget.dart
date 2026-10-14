@@ -1,4 +1,5 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -32,8 +33,8 @@ class QrCodeWidget extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.qr_code,
+              const GlyphIcon(
+                AppGlyphs.qrCode,
                 size: 48,
                 color: Colors.grey,
               ),
