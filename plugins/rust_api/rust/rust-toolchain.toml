@@ -4,6 +4,10 @@ channel = "1.98.1"
 targets = [
   "aarch64-apple-darwin",
   "x86_64-apple-darwin",
+  # iOS: the app does not call RustLib.init() there, but the plugin's build hook
+  # still runs for every target Flutter builds, so the slice has to be buildable.
+  "aarch64-apple-ios",
+  "aarch64-apple-ios-sim",
   "aarch64-linux-android",
   "armv7-linux-androideabi",
   "x86_64-linux-android",
