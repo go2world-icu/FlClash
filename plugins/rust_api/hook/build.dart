@@ -9,6 +9,13 @@ void main(List<String> args) async {
       stdout.writeln('Skipping the Rust build: user-define build_assets=false');
       return;
     }
+    // iOS does not use the Rust bridge (main.dart only initialises it on
+    // desktop) and rquickjs-sys publishes no iOS bindings, so there is no
+    // slice to build for it.
+    if (input.config.code.targetOS == OS.iOS) {
+      stdout.writeln('Skipping the Rust build on iOS');
+      return;
+    }
     await FlutterRustBridgeNativeAssetsBuilder(
       cratePath: 'rust',
       extraCargoEnvironmentVariables: _bindgenEnvironment(input),

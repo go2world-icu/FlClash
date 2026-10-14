@@ -30,7 +30,12 @@ void main(List<String> args) {
       };
       try {
         await resolveXboardConfig();
-        await RustLib.init();
+        // The Rust bridge is desktop-only: iOS has no rust_api build (its
+        // rquickjs-sys dependency ships no iOS bindings) and nothing there
+        // reaches it. The guard came from the fork and was lost in the merge.
+        if (system.isDesktop) {
+          await RustLib.init();
+        }
         final version = await system.init();
         final container = await bootstrap.init(version);
         HttpOverrides.global = FlClashHttpOverrides(container);
