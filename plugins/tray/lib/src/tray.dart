@@ -239,12 +239,14 @@ final class Tray {
   }
 
   String _bundledPath(String asset) {
-    return path.joinAll([
-      path.dirname(Platform.resolvedExecutable),
-      'data',
-      'flutter_assets',
-      asset,
-    ]);
+    // Forward slashes throughout: `asset` comes from `variantAsset`, which
+    // joins with posix separators, and joining a platform-separator prefix
+    // with it produced mixed paths like `data\flutter_assets\a/b.png`.
+    // Windows accepts '/' in file paths, so this stays valid there too.
+    final root = path
+        .dirname(Platform.resolvedExecutable)
+        .replaceAll(r'\', '/');
+    return path.posix.joinAll([root, 'data', 'flutter_assets', asset]);
   }
 
   String get _stableId {
