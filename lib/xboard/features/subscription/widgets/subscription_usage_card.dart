@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,10 +46,10 @@ class SubscriptionUsageCard extends ConsumerWidget {
 
   Widget _buildEmptyCard(ThemeData theme, BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color:
             theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -112,10 +113,10 @@ class SubscriptionUsageCard extends ConsumerWidget {
         statusDetail = statusResult.getDetailMessage(context) ?? '';
     }
     return Container(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color:
             theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -132,9 +133,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  shape: AppShape.all(10),
                 ),
                 child: Icon(
                   statusIcon,
@@ -205,10 +206,10 @@ class SubscriptionUsageCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: theme.colorScheme.surfaceContainerHighest
                     .withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
+                shape: AppShape.sm,
               ),
               child: Row(
                 children: [
@@ -284,10 +285,10 @@ class SubscriptionUsageCard extends ConsumerWidget {
     final remainingDays = _calculateRemainingDays();
     final planName = subscriptionInfo?.planName;
     return Container(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color:
             theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -365,8 +366,8 @@ class SubscriptionUsageCard extends ConsumerWidget {
           const SizedBox(height: 10),
           Container(
             height: 6,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(3),
+            decoration: ShapeDecoration(
+              shape: AppShape.all(3),
               color: theme.colorScheme.surfaceContainerHighest
                   .withValues(alpha: 0.5),
             ),

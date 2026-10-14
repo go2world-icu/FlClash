@@ -296,6 +296,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         prefixIcon: Icons.lock_outlined,
                         obscureText: !_isPasswordVisible,
                         suffixIcon: IconButton(
+                          tooltip: _isPasswordVisible
+                              ? appLocalizations.hidePassword
+                              : appLocalizations.showPassword,
                           icon: Icon(
                             _isPasswordVisible
                                 ? Icons.visibility_outlined
@@ -436,7 +439,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
       return InkWell(
         onTap: _retryInitialization,
-        borderRadius: BorderRadius.circular(12),
+        customBorder: AppShape.all(12),
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: indicator,

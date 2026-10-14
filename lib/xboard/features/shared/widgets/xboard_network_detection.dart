@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/service_probe.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/outbound_ip.dart';
@@ -55,9 +56,9 @@ class _XBoardNetworkDetectionState
     final isLoading = entry.isLoading;
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
       ),
       padding: const EdgeInsets.all(14),
       child: Row(

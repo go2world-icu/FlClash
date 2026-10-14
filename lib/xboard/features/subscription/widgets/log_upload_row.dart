@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -31,11 +32,11 @@ class _LogUploadRowState extends State<LogUploadRow> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: Theme.of(
           context,
         ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

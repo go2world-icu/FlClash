@@ -1,6 +1,11 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
+
+/// Normalise the platform separator: `file.path` is `lib\views\...` on Windows,
+/// while the allow list below is written with `/`.
+String _posix(String path) => p.posix.joinAll(p.split(path));
 
 /// The one button that carries its label on an enclosing [Tooltip] instead of
 /// its own `tooltip:`. Nesting a second tooltip inside would fight it.
@@ -43,7 +48,7 @@ void main() {
 
     for (final file in _dartFilesIn('lib')) {
       final source = file.readAsStringSync();
-      if (file.path == _wrappedInTooltip) continue;
+      if (_posix(file.path) == _wrappedInTooltip) continue;
 
       for (final match in _iconButton.allMatches(source)) {
         final arguments = _arguments(source, match.end);

@@ -95,11 +95,12 @@ class CommissionHistoryCard extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.3),
+      decoration: ShapeDecoration(
+        shape: AppShape.sm.copyWith(
+          side: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.3),
+          ),
         ),
-        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [

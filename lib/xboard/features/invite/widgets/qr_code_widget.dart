@@ -22,10 +22,11 @@ class QrCodeWidget extends StatelessWidget {
       return Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: backgroundColor ?? Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
+          shape: AppShape.all(12).copyWith(
+            side: BorderSide(color: Colors.grey.shade300),
+          ),
         ),
         child: Center(
           child: Column(
@@ -52,10 +53,11 @@ class QrCodeWidget extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: backgroundColor ?? Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        shape: AppShape.all(12).copyWith(
+          side: BorderSide(color: Colors.grey.shade300),
+        ),
       ),
       child: QrImageView(
         data: data,

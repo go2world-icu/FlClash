@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -53,9 +54,9 @@ class XBoardOutboundModeSelector extends ConsumerWidget {
       patchClashConfigProvider.select((state) => state.mode),
     );
     return Container(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
       ),
       padding: const EdgeInsets.all(14),
       child: Column(

@@ -1,4 +1,5 @@
 ﻿import 'dart:async';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
@@ -230,9 +231,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: Colors.red.shade300),
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: AppShape.all(12),
         ),
       ),
     );

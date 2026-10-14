@@ -172,9 +172,9 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
       animation: _controller.view,
       builder: (_, child) {
         return Container(
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: isStart ? startColor : stopColor,
-            borderRadius: BorderRadius.circular(12),
+            shape: AppShape.all(12),
           ),
           child: Material(
             color: Colors.transparent,
@@ -182,7 +182,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
               onTap: () {
                 handleSwitchStart();
               },
-              borderRadius: BorderRadius.circular(12),
+              customBorder: AppShape.all(12),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                 child: Row(

@@ -131,9 +131,10 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(8),
+      decoration: ShapeDecoration(
+        shape: AppShape.sm.copyWith(
+          side: BorderSide(color: Colors.grey.shade200),
+        ),
       ),
       child: Row(
         children: [

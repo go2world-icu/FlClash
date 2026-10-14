@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -124,9 +125,9 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
   }
   Widget _buildProxyDisplay(BuildContext context, Group group, Proxy proxy) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
       ),
       child: InkWell(
         onTap: () {
@@ -136,7 +137,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(12),
+        customBorder: AppShape.all(12),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -144,9 +145,9 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
               Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+                  shape: AppShape.sm,
                 ),
                 child: Icon(
                   Icons.router,
@@ -187,9 +188,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   minimumSize: const Size(56, 30),
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: AppShape.sm,
                 ),
                 child: Text(
                   AppLocalizations.of(context).xboardSwitch,

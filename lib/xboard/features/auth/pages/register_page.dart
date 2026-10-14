@@ -241,6 +241,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               child: Row(
                 children: [
                   IconButton(
+                    tooltip: appLocalizations.back,
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back),
                     style: IconButton.styleFrom(
@@ -299,6 +300,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           prefixIcon: Icons.lock_outlined,
                           obscureText: !_isPasswordVisible,
                           suffixIcon: IconButton(
+                            tooltip: _isPasswordVisible
+                                ? appLocalizations.hidePassword
+                                : appLocalizations.showPassword,
                             icon: Icon(
                               _isPasswordVisible
                                   ? Icons.visibility_outlined
@@ -328,6 +332,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           prefixIcon: Icons.lock_outlined,
                           obscureText: !_isConfirmPasswordVisible,
                           suffixIcon: IconButton(
+                            tooltip: _isConfirmPasswordVisible
+                                ? appLocalizations.hidePassword
+                                : appLocalizations.showPassword,
                             icon: Icon(
                               _isConfirmPasswordVisible
                                   ? Icons.visibility_outlined
@@ -413,9 +420,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: colorScheme.primary,
                                     foregroundColor: colorScheme.onPrimary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                                    shape: AppShape.all(12),
                                   ),
                                   child: Text(
                                     appLocalizations.registerAccount,

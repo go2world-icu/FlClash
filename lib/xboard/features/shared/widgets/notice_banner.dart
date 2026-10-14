@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
@@ -102,16 +103,17 @@ class _NoticeBannerState extends ConsumerState<NoticeBanner>
     return Container(
       height: 40,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark 
+      decoration: ShapeDecoration(
+        color: isDark
             ? Theme.of(context).colorScheme.surfaceContainerHighest
             : Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
-          width: 1,
+        shape: AppShape.lg.copyWith(
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
+            width: 1,
+          ),
         ),
-        boxShadow: [
+        shadows: [
           BoxShadow(
             color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
             blurRadius: 8,
@@ -259,20 +261,21 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
             maxWidth: screenWidth > 600 ? 600 : double.infinity,
             maxHeight: screenHeight * 0.85,
           ),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             // 在暗色主题下使用稍亮的背景色以区分弹窗
-            color: isDark 
+            color: isDark
                 ? Theme.of(context).colorScheme.surfaceContainerHighest
                 : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
             // 添加明显的边框
-            border: Border.all(
-              color: isDark
-                  ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)
-                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
-              width: isDark ? 1.5 : 1,
+            shape: AppShape.xl.copyWith(
+              side: BorderSide(
+                color: isDark
+                    ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+                width: isDark ? 1.5 : 1,
+              ),
             ),
-            boxShadow: [
+            shadows: [
               // 增强暗色主题下的阴影
               BoxShadow(
                 color: isDark 
@@ -313,14 +316,14 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
     
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         // 在暗色主题下头部使用更亮的背景色
         color: isDark
             ? Theme.of(context).colorScheme.surfaceContainer
             : Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
+        shape: AppShape.vertical(top: AppCorner.xl),
+      ),
+      foregroundDecoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
             color: Theme.of(context).colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.1),
@@ -352,12 +355,13 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
                 horizontal: 10,
                 vertical: 4,
               ),
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                  width: 1,
+                shape: AppShape.all(12).copyWith(
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
               ),
               child: Text(
@@ -379,7 +383,7 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
                 FocusScope.of(context).unfocus();
                 Navigator.of(context).pop();
               },
-              borderRadius: BorderRadius.circular(12),
+              customBorder: AppShape.all(12),
               child: Padding(
                 padding: const EdgeInsets.all(6.0),
                 child: Icon(
@@ -435,14 +439,14 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         // 在暗色主题下底部导航栏使用更亮的背景色
         color: isDark
             ? Theme.of(context).colorScheme.surfaceContainer
             : Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(24),
-        ),
+        shape: AppShape.vertical(bottom: AppCorner.xl),
+      ),
+      foregroundDecoration: BoxDecoration(
         border: Border(
           top: BorderSide(
             color: Theme.of(context).colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.1),
@@ -489,19 +493,20 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
       color: Colors.transparent,
       child: InkWell(
         onTap: enabled ? onPressed : null,
-        borderRadius: BorderRadius.circular(12),
+        customBorder: AppShape.all(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: enabled 
+          decoration: ShapeDecoration(
+            color: enabled
                 ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: enabled 
-                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
-                  : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
+            shape: AppShape.all(12).copyWith(
+              side: BorderSide(
+                color: enabled
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
+                    : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
           ),
           child: Row(
@@ -560,11 +565,11 @@ class _NoticeDetailDialogState extends State<NoticeDetailDialog>
           margin: const EdgeInsets.symmetric(horizontal: 3),
           width: index == _currentIndex ? 24 : 8,
           height: 8,
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: index == _currentIndex
                 ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(4),
+            shape: AppShape.xs,
           ),
         ),
       ),

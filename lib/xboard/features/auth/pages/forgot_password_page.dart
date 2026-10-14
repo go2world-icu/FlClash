@@ -1,4 +1,5 @@
-﻿import 'package:material_ui/material_ui.dart';
+﻿import 'package:fl_clash/common/common.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
@@ -169,9 +170,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: AppShape.all(12),
                   ),
                   child: Text(
                     AppLocalizations.of(context).sendVerificationCode,
@@ -223,6 +222,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           obscureText: _obscurePassword,
           enabled: !_isLoading,
           suffixIcon: IconButton(
+            tooltip: _obscurePassword
+                ? AppLocalizations.of(context).hidePassword
+                : AppLocalizations.of(context).showPassword,
             icon: Icon(
               _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
             ),
@@ -251,6 +253,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           obscureText: _obscureConfirmPassword,
           enabled: !_isLoading,
           suffixIcon: IconButton(
+            tooltip: _obscureConfirmPassword
+                ? AppLocalizations.of(context).hidePassword
+                : AppLocalizations.of(context).showPassword,
             icon: Icon(
               _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
             ),
@@ -290,9 +295,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: AppShape.all(12),
                   ),
                   child: Text(
                     AppLocalizations.of(context).resetPassword,
@@ -331,6 +334,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
               child: Row(
                 children: [
                   IconButton(
+                    tooltip: AppLocalizations.of(context).back,
                     onPressed: () {
                       if (_currentStep == ResetPasswordStep.resetPassword) {
                         _goBackToSendCode();

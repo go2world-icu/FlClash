@@ -82,7 +82,7 @@ class NodeSelectorChip extends ConsumerWidget {
 
     return Material(
       color: colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(16),
+      shape: AppShape.md,
       elevation: 3,
       shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
       child: InkWell(
@@ -91,7 +91,7 @@ class NodeSelectorChip extends ConsumerWidget {
             context,
           ).push(MaterialPageRoute(builder: (context) => const ProxiesView()));
         },
-        borderRadius: BorderRadius.circular(16),
+        customBorder: AppShape.md,
         child: SizedBox(
           height: 56,
           child: Padding(

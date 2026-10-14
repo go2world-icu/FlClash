@@ -67,9 +67,9 @@ class LatencyIndicator extends StatelessWidget {
         child: Container(
           width: 16,
           height: 16,
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
+            shape: AppShape.sm,
           ),
           child: Icon(
             Icons.refresh,
@@ -110,10 +110,13 @@ class LatencyIndicator extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: color?.withValues(alpha: 0.1) ?? Colors.grey.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: color?.withValues(alpha: 0.3) ?? Colors.grey.withValues(alpha: 0.3)),
+            shape: AppShape.xs.copyWith(
+              side: BorderSide(
+                color: color?.withValues(alpha: 0.3) ?? Colors.grey.withValues(alpha: 0.3),
+              ),
+            ),
           ),
           child: Text(
             delayValue! < 0 ? '超时' : '$delayValue',

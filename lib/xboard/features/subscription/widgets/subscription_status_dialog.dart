@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/subscription_status_service.dart';
 import 'package:fl_clash/l10n/l10n.dart';
@@ -30,9 +31,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: AppShape.md,
       icon: _buildIcon(),
       title: Text(
         _getTitle(context),
@@ -101,9 +100,9 @@ class SubscriptionStatusDialog extends StatelessWidget {
     }
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
       ),
       child: Icon(
         iconData,
@@ -130,9 +129,9 @@ class SubscriptionStatusDialog extends StatelessWidget {
   Widget _buildFeatureList(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        shape: AppShape.all(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,9 +185,9 @@ class SubscriptionStatusDialog extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(6),
+            shape: AppShape.all(6),
           ),
           child: Icon(
             icon,

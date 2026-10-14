@@ -1,3 +1,4 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
@@ -115,12 +116,13 @@ class NoticeMarkdownStyles {
       ),
 
       // 代码块
-      codeblockDecoration: BoxDecoration(
+      codeblockDecoration: ShapeDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.2),
-          width: 1,
+        shape: AppShape.sm.copyWith(
+          side: BorderSide(
+            color: colorScheme.outline.withValues(alpha: 0.2),
+            width: 1,
+          ),
         ),
       ),
 
