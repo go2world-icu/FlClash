@@ -28,7 +28,10 @@ void main() {
         'description': 'desc',
         'metadata': {'k': 1},
       });
-      expect(entry.toString(), 'ConfigEntry(url: https://a.com, description: desc)');
+      expect(
+        entry.toString(),
+        'ConfigEntry(url: https://a.com, description: desc)',
+      );
     });
 
     test('equality is based on url and description', () {
@@ -73,7 +76,10 @@ void main() {
         'port': 1080,
         'region': 'HK',
       });
-      expect(proxy.toString(), 'ProxyInfo(url: socks5://h:1080, protocol: socks5, host: h, port: 1080)');
+      expect(
+        proxy.toString(),
+        'ProxyInfo(url: socks5://h:1080, protocol: socks5, host: h, port: 1080)',
+      );
     });
 
     test('fromUrl parses credentials and port', () {
@@ -94,7 +100,11 @@ void main() {
 
     test('omits optional fields from json when absent', () {
       const proxy = ProxyInfo(url: 'u', description: 'd', protocol: 'http');
-      expect(proxy.toJson(), {'url': 'u', 'description': 'd', 'protocol': 'http'});
+      expect(proxy.toJson(), {
+        'url': 'u',
+        'description': 'd',
+        'protocol': 'http',
+      });
     });
   });
 
@@ -131,13 +141,24 @@ void main() {
 
   group('UpdateInfo', () {
     test('formats file sizes across units', () {
-      expect(const UpdateInfo(url: 'u', description: 'd').fileSizeFormatted, 'Unknown');
       expect(
-        const UpdateInfo(url: 'u', description: 'd', fileSize: 512).fileSizeFormatted,
+        const UpdateInfo(url: 'u', description: 'd').fileSizeFormatted,
+        'Unknown',
+      );
+      expect(
+        const UpdateInfo(
+          url: 'u',
+          description: 'd',
+          fileSize: 512,
+        ).fileSizeFormatted,
         '512.0 B',
       );
       expect(
-        const UpdateInfo(url: 'u', description: 'd', fileSize: 2048).fileSizeFormatted,
+        const UpdateInfo(
+          url: 'u',
+          description: 'd',
+          fileSize: 2048,
+        ).fileSizeFormatted,
         '2.0 KB',
       );
       expect(
@@ -151,8 +172,14 @@ void main() {
     });
 
     test('isSecure depends on https scheme', () {
-      expect(const UpdateInfo(url: 'https://u', description: 'd').isSecure, isTrue);
-      expect(const UpdateInfo(url: 'http://u', description: 'd').isSecure, isFalse);
+      expect(
+        const UpdateInfo(url: 'https://u', description: 'd').isSecure,
+        isTrue,
+      );
+      expect(
+        const UpdateInfo(url: 'http://u', description: 'd').isSecure,
+        isFalse,
+      );
     });
 
     test('fromJson and toJson preserve optional fields', () {
@@ -201,7 +228,9 @@ void main() {
       expect(errors, contains('API base URL cannot be empty'));
       expect(
         errors,
-        contains('WebSocket base URL must use ws or wss protocol: http://not-ws'),
+        contains(
+          'WebSocket base URL must use ws or wss protocol: http://not-ws',
+        ),
       );
     });
 
@@ -214,7 +243,9 @@ void main() {
       );
       expect(
         info.getValidationErrors(),
-        contains('API base URL must use http or https protocol: ftp://api.example.com'),
+        contains(
+          'API base URL must use http or https protocol: ftp://api.example.com',
+        ),
       );
     });
   });
@@ -278,7 +309,11 @@ void main() {
         'description': 'sub',
         'supportEncrypt': true,
         'endpoints': {
-          'v1': {'path': '/api/v1/{token}', 'requiresToken': true, 'method': 'GET'},
+          'v1': {
+            'path': '/api/v1/{token}',
+            'requiresToken': true,
+            'method': 'GET',
+          },
           'v2': {
             'path': '/api/v2/encrypt/{token}',
             'method': 'GET',
@@ -306,7 +341,9 @@ void main() {
     });
 
     test('endpoint getters return null when there are no endpoints', () {
-      final info = SubscriptionUrlInfo.fromJson(const {'url': 'https://sub.com'});
+      final info = SubscriptionUrlInfo.fromJson(const {
+        'url': 'https://sub.com',
+      });
       expect(info.encryptEndpoint, isNull);
       expect(info.normalEndpoint, isNull);
       expect(info.preferredEndpoint, isNull);
@@ -339,7 +376,9 @@ void main() {
     });
 
     test('buildSubscriptionUrl returns raw url without endpoints', () {
-      final info = SubscriptionUrlInfo.fromJson(const {'url': 'https://sub.com'});
+      final info = SubscriptionUrlInfo.fromJson(const {
+        'url': 'https://sub.com',
+      });
       expect(info.buildSubscriptionUrl('abc'), 'https://sub.com');
     });
 
@@ -382,7 +421,9 @@ void main() {
 
     test('firstEncryptUrl falls back to first url', () {
       final info = SubscriptionInfo.fromJson(const {
-        'urls': [{'url': 'https://a'}],
+        'urls': [
+          {'url': 'https://a'},
+        ],
       });
       expect(info.firstEncryptUrl!.url, 'https://a');
     });
@@ -397,7 +438,12 @@ void main() {
     test('buildSubscriptionUrl prefers the encrypt-flagged url', () {
       final info = SubscriptionInfo.fromJson(const {
         'urls': [
-          {'url': 'https://plain', 'endpoints': {'v1': {'path': 'a/{token}'}}},
+          {
+            'url': 'https://plain',
+            'endpoints': {
+              'v1': {'path': 'a/{token}'},
+            },
+          },
           {
             'url': 'https://secure',
             'supportEncrypt': true,
@@ -416,11 +462,19 @@ void main() {
     test('buildSubscriptionUrl falls back to first url non-encrypt', () {
       final info = SubscriptionInfo.fromJson(const {
         'urls': [
-          {'url': 'https://plain', 'endpoints': {'v1': {'path': 'a/{token}'}}},
+          {
+            'url': 'https://plain',
+            'endpoints': {
+              'v1': {'path': 'a/{token}'},
+            },
+          },
         ],
         'enableEncrypt': false,
       });
-      expect(info.buildSubscriptionUrl('tok'), 'https://plain/a/tok?flag=flclash');
+      expect(
+        info.buildSubscriptionUrl('tok'),
+        'https://plain/a/tok?flag=flclash',
+      );
     });
 
     test('toJson round-trips', () {
@@ -466,7 +520,13 @@ void main() {
       ],
       'subscription': {
         'urls': [
-          {'url': 'https://sub', 'supportEncrypt': true, 'endpoints': {'v2': {'path': 's/{token}', 'isEncrypt': true}}},
+          {
+            'url': 'https://sub',
+            'supportEncrypt': true,
+            'endpoints': {
+              'v2': {'path': 's/{token}', 'isEncrypt': true},
+            },
+          },
         ],
       },
       'metadata': {
@@ -500,7 +560,10 @@ void main() {
       expect(config.firstOnlineSupportWsUrl, 'wss://ws2');
       expect(config.firstSubscriptionUrl, 'https://sub');
       expect(config.firstEncryptSubscriptionUrl, 'https://sub');
-      expect(config.buildSubscriptionUrl('tok'), 'https://sub/s/tok?flag=flclash');
+      expect(
+        config.buildSubscriptionUrl('tok'),
+        'https://sub/s/tok?flag=flclash',
+      );
     });
 
     test('throws when panelType is missing', () {
@@ -511,7 +574,9 @@ void main() {
     });
 
     test('handles empty json sections', () {
-      final config = ParsedConfiguration.fromJson(const {'panelType': 'v2board'}, 'Flclash');
+      final config = ParsedConfiguration.fromJson(const {
+        'panelType': 'v2board',
+      }, 'Flclash');
       expect(config.firstWsUrl, isNull);
       expect(config.firstProxyUrl, isNull);
       expect(config.firstUpdateUrl, isNull);

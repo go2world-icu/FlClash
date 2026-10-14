@@ -60,19 +60,25 @@ void main() {
         downloadedBytes: 2,
       );
       expect((await service.saveDomainSubscription(sub)).dataOrNull, isTrue);
-      expect((await service.getDomainSubscription()).dataOrNull!.subscribeUrl, 'https://s');
+      expect(
+        (await service.getDomainSubscription()).dataOrNull!.subscribeUrl,
+        'https://s',
+      );
     });
 
     test('getDomainSubscription returns null when unset', () async {
       expect((await service.getDomainSubscription()).dataOrNull, isNull);
     });
 
-    test('getDomainSubscription reports a parse failure on corrupt json', () async {
-      fake.cache['xboard_domain_subscription'] = '{not json}';
-      final result = await service.getDomainSubscription();
-      expect(result.isFailure, isTrue);
-      expect(result.exceptionOrNull!.code, 'PARSE_ERROR');
-    });
+    test(
+      'getDomainSubscription reports a parse failure on corrupt json',
+      () async {
+        fake.cache['xboard_domain_subscription'] = '{not json}';
+        final result = await service.getDomainSubscription();
+        expect(result.isFailure, isTrue);
+        expect(result.exceptionOrNull!.code, 'PARSE_ERROR');
+      },
+    );
 
     test('clears auth data', () async {
       await service.saveUserEmail('a@b.com');

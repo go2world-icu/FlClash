@@ -28,13 +28,13 @@ void main() {
     Future<void> pump(WidgetTester tester, {InviteState? state}) async {
       await pumpXboard(
         tester,
-        Scaffold(
-          body: WithdrawDialog(),
-        ),
+        Scaffold(body: WithdrawDialog()),
         overrides: [
           ...xboardBaseOverrides(),
           inviteProvider.overrideWith(
-            () => FakeInviteNotifier(state ?? InviteState(inviteData: inviteWith())),
+            () => FakeInviteNotifier(
+              state ?? InviteState(inviteData: inviteWith()),
+            ),
           ),
         ],
       );
@@ -65,21 +65,26 @@ void main() {
 
     testWidgets('cancels the dialog', (tester) async {
       await pump(tester);
-      await tester.tap(find.text(AppLocalizations.of(
-        tester.element(find.byType(WithdrawDialog)),
-      ).cancel));
+      await tester.tap(
+        find.text(
+          AppLocalizations.of(
+            tester.element(find.byType(WithdrawDialog)),
+          ).cancel,
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(WithdrawDialog), findsNothing);
     });
   });
 
   group('CommissionHistoryDialog', () {
-    Future<void> pump(WidgetTester tester, {List<DomainCommission> history = const []}) async {
+    Future<void> pump(
+      WidgetTester tester, {
+      List<DomainCommission> history = const [],
+    }) async {
       await pumpXboard(
         tester,
-        Scaffold(
-          body: CommissionHistoryDialog(),
-        ),
+        Scaffold(body: CommissionHistoryDialog()),
         overrides: [
           ...xboardBaseOverrides(),
           inviteProvider.overrideWith(

@@ -28,7 +28,9 @@ void main() {
         const Scaffold(body: NoticeBanner()),
         overrides: [
           ...xboardBaseOverrides(),
-          noticeProvider.overrideWith(() => FakeNoticeNotifier(const NoticeState())),
+          noticeProvider.overrideWith(
+            () => FakeNoticeNotifier(const NoticeState()),
+          ),
         ],
       );
       expect(find.byType(MarkdownBody), findsNothing);
@@ -84,7 +86,10 @@ void main() {
         ],
         supportedLocales: AppLocalizations.delegate.supportedLocales,
         home: Scaffold(
-          body: NoticeDetailDialog(notices: notices, initialIndex: initialIndex),
+          body: NoticeDetailDialog(
+            notices: notices,
+            initialIndex: initialIndex,
+          ),
         ),
       );
     }
@@ -100,10 +105,7 @@ void main() {
 
     testWidgets('paginates multiple notices', (tester) async {
       await tester.pumpWidget(
-        dialogWith([
-          notice(1, 'First', 'a'),
-          notice(2, 'Second', 'b'),
-        ]),
+        dialogWith([notice(1, 'First', 'a'), notice(2, 'Second', 'b')]),
       );
       await tester.pumpAndSettle();
       // Multi-notice header shows the page counter.

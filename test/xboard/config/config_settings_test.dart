@@ -81,9 +81,7 @@ void main() {
     test('validate passes with a well formed source', () {
       const settings = ConfigSettings(
         remoteConfig: RemoteConfigSettings(
-          sources: [
-            RemoteSourceConfig(name: 'redirect', url: 'https://r'),
-          ],
+          sources: [RemoteSourceConfig(name: 'redirect', url: 'https://r')],
         ),
       );
       expect(settings.validate(), isTrue);
@@ -93,7 +91,10 @@ void main() {
 
   group('RemoteConfigSettingsValidation', () {
     test('flags bad retries and timeout', () {
-      const settings = RemoteConfigSettings(maxRetries: 0, timeout: Duration.zero);
+      const settings = RemoteConfigSettings(
+        maxRetries: 0,
+        timeout: Duration.zero,
+      );
       final errors = settings.getValidationErrors();
       expect(errors, contains('Max retries must be greater than 0'));
       expect(errors, contains('Timeout must be greater than 0'));
@@ -101,9 +102,7 @@ void main() {
 
     test('flags source without name or with malformed url', () {
       const settings = RemoteConfigSettings(
-        sources: [
-          RemoteSourceConfig(name: '', url: 'not-a-url'),
-        ],
+        sources: [RemoteSourceConfig(name: '', url: 'not-a-url')],
       );
       final errors = settings.getValidationErrors();
       expect(errors, contains('sources[0]: Source name cannot be empty'));
@@ -112,9 +111,7 @@ void main() {
 
     test('flags source with empty url', () {
       const settings = RemoteConfigSettings(
-        sources: [
-          RemoteSourceConfig(name: 'base', url: ''),
-        ],
+        sources: [RemoteSourceConfig(name: 'base', url: '')],
       );
       expect(
         settings.getValidationErrors(),
@@ -126,18 +123,25 @@ void main() {
   group('SubscriptionSettings', () {
     test('fromJson reads snake and camel case keys', () {
       expect(
-        SubscriptionSettings.fromJson(const {'preferEncrypt': true}).preferEncrypt,
+        SubscriptionSettings.fromJson(const {
+          'preferEncrypt': true,
+        }).preferEncrypt,
         isTrue,
       );
       expect(
-        SubscriptionSettings.fromJson(const {'prefer_encrypt': true}).preferEncrypt,
+        SubscriptionSettings.fromJson(const {
+          'prefer_encrypt': true,
+        }).preferEncrypt,
         isTrue,
       );
       expect(SubscriptionSettings.fromJson(const {}).preferEncrypt, isFalse);
     });
 
     test('enableRace mirrors preferEncrypt', () {
-      expect(const SubscriptionSettings(preferEncrypt: true).enableRace, isTrue);
+      expect(
+        const SubscriptionSettings(preferEncrypt: true).enableRace,
+        isTrue,
+      );
       expect(const SubscriptionSettings().enableRace, isFalse);
     });
 
@@ -162,7 +166,10 @@ void main() {
     test('rejects an unknown level', () {
       const settings = LogSettings(level: 'verbose');
       expect(settings.validate(), isFalse);
-      expect(settings.getValidationErrors(), contains('Invalid log level: verbose'));
+      expect(
+        settings.getValidationErrors(),
+        contains('Invalid log level: verbose'),
+      );
     });
 
     test('accepts levels case-insensitively', () {
@@ -172,7 +179,10 @@ void main() {
     test('rejects an empty prefix', () {
       const settings = LogSettings(prefix: '');
       expect(settings.validate(), isFalse);
-      expect(settings.getValidationErrors(), contains('Log prefix cannot be empty'));
+      expect(
+        settings.getValidationErrors(),
+        contains('Log prefix cannot be empty'),
+      );
     });
 
     test('fromJson and toJson round-trip', () {
@@ -181,7 +191,11 @@ void main() {
         'level': 'error',
         'prefix': '[P]',
       });
-      expect(settings.toJson(), {'enabled': false, 'level': 'error', 'prefix': '[P]'});
+      expect(settings.toJson(), {
+        'enabled': false,
+        'level': 'error',
+        'prefix': '[P]',
+      });
     });
   });
 }

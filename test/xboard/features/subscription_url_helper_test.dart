@@ -43,7 +43,10 @@ void main() {
     });
 
     test('returns null when there is no path', () {
-      expect(SubscriptionUrlHelper.extractTokenFromUrl('https://domain.com'), isNull);
+      expect(
+        SubscriptionUrlHelper.extractTokenFromUrl('https://domain.com'),
+        isNull,
+      );
     });
   });
 
@@ -65,7 +68,9 @@ void main() {
 
     test('is false for a normal url', () {
       expect(
-        SubscriptionUrlHelper.isEncryptedSubscriptionUrl('https://domain.com/subscribe'),
+        SubscriptionUrlHelper.isEncryptedSubscriptionUrl(
+          'https://domain.com/subscribe',
+        ),
         isFalse,
       );
     });
@@ -92,7 +97,9 @@ void main() {
 
     test('is false otherwise', () {
       expect(
-        SubscriptionUrlHelper.shouldUseEncryptedService('https://domain.com/plain'),
+        SubscriptionUrlHelper.shouldUseEncryptedService(
+          'https://domain.com/plain',
+        ),
         isFalse,
       );
       expect(

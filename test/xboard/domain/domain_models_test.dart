@@ -61,14 +61,20 @@ void main() {
     });
 
     test('expiry getters react to the expiration date', () {
-      final future = makeUser(expiredAt: DateTime.now().add(const Duration(days: 3)));
+      final future = makeUser(
+        expiredAt: DateTime.now().add(const Duration(days: 3)),
+      );
       expect(future.isExpired, isFalse);
       expect(future.isExpiringSoon, isTrue);
 
-      final past = makeUser(expiredAt: DateTime.now().subtract(const Duration(days: 1)));
+      final past = makeUser(
+        expiredAt: DateTime.now().subtract(const Duration(days: 1)),
+      );
       expect(past.isExpired, isTrue);
 
-      final farFuture = makeUser(expiredAt: DateTime.now().add(const Duration(days: 30)));
+      final farFuture = makeUser(
+        expiredAt: DateTime.now().add(const Duration(days: 30)),
+      );
       expect(farFuture.isExpiringSoon, isFalse);
 
       expect(makeUser().isExpired, isFalse);

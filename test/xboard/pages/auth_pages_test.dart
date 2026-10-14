@@ -16,7 +16,12 @@ void main() {
 
   group('LoginPage', () {
     testWidgets('renders the login form', (tester) async {
-      await pumpXboard(tester, const LoginPage(), overrides: xboardBaseOverrides(), textScale: 0.5);
+      await pumpXboard(
+        tester,
+        const LoginPage(),
+        overrides: xboardBaseOverrides(),
+        textScale: 0.5,
+      );
       expect(find.text('Email'), findsWidgets);
       expect(find.byType(Checkbox), findsOneWidget);
       // Login button is disabled until initialization is ready + not loading.
@@ -24,7 +29,12 @@ void main() {
     });
 
     testWidgets('toggles password visibility', (tester) async {
-      await pumpXboard(tester, const LoginPage(), overrides: xboardBaseOverrides(), textScale: 0.5);
+      await pumpXboard(
+        tester,
+        const LoginPage(),
+        overrides: xboardBaseOverrides(),
+        textScale: 0.5,
+      );
       final obscured = tester
           .widgetList<TextField>(find.byType(TextField))
           .map((f) => f.obscureText)
@@ -37,7 +47,12 @@ void main() {
     });
 
     testWidgets('validates an empty email', (tester) async {
-      await pumpXboard(tester, const LoginPage(), overrides: xboardBaseOverrides(), textScale: 0.5);
+      await pumpXboard(
+        tester,
+        const LoginPage(),
+        overrides: xboardBaseOverrides(),
+        textScale: 0.5,
+      );
       await tester.tap(find.widgetWithText(FilledButton, 'Login'));
       await tester.pumpAndSettle();
       // Two field validators fire (email + password).
@@ -45,14 +60,24 @@ void main() {
     });
 
     testWidgets('navigates to the register page', (tester) async {
-      await pumpXboard(tester, const LoginPage(), overrides: xboardBaseOverrides(), textScale: 0.5);
+      await pumpXboard(
+        tester,
+        const LoginPage(),
+        overrides: xboardBaseOverrides(),
+        textScale: 0.5,
+      );
       await tester.tap(find.text('Register'));
       await tester.pumpAndSettle();
       expect(find.byType(RegisterPage), findsOneWidget);
     });
 
     testWidgets('navigates to the forgot-password page', (tester) async {
-      await pumpXboard(tester, const LoginPage(), overrides: xboardBaseOverrides(), textScale: 0.5);
+      await pumpXboard(
+        tester,
+        const LoginPage(),
+        overrides: xboardBaseOverrides(),
+        textScale: 0.5,
+      );
       await tester.tap(find.text('Forgot Password'));
       await tester.pumpAndSettle();
       expect(find.byType(ForgotPasswordPage), findsOneWidget);
@@ -107,7 +132,10 @@ void main() {
         textScale: 0.5,
       );
       expect(find.text('Reset Password'), findsWidgets);
-      expect(find.widgetWithText(ElevatedButton, 'Send Verification Code'), findsOneWidget);
+      expect(
+        find.widgetWithText(ElevatedButton, 'Send Verification Code'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('validates the email before sending', (tester) async {
@@ -117,7 +145,9 @@ void main() {
         overrides: xboardBaseOverrides(),
         textScale: 0.5,
       );
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Send Verification Code'));
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Send Verification Code'),
+      );
       await tester.pumpAndSettle();
       // Empty email triggers the validator.
       expect(find.textContaining('email'), findsWidgets);

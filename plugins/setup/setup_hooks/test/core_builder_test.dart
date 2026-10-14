@@ -222,7 +222,11 @@ void main() {
 
     test('declares no dependencies when nothing is built', () async {
       var built = false;
+      // A macOS slice for an architecture the host is not: requestFor skips it,
+      // so nothing is built. (iOS used to be the skip case upstream, but the
+      // fork builds iOS slices, so it now resolves a target.)
       final builder = CoreBuilder(
+        hostArchitecture: Architecture.arm64,
         build: (_) async {
           built = true;
           throw StateError('unreachable');
@@ -231,7 +235,7 @@ void main() {
       final output = BuildOutputBuilder();
 
       await builder.run(
-        input: buildInput(os: OS.iOS, architecture: Architecture.arm64),
+        input: buildInput(os: OS.macOS, architecture: Architecture.x64),
         output: output,
       );
 

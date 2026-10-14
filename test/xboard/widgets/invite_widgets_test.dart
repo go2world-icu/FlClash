@@ -21,16 +21,17 @@ void main() {
 
   setUpAll(() => AppLocalizations.load(const Locale('en')));
 
-  DomainInvite invite({double available = 12.5, double total = 99}) => DomainInvite(
-    codes: const [DomainInviteCode(code: 'CODE', status: 0)],
-    stats: InviteStats(
-      invitedCount: 7,
-      commissionRate: 20,
-      availableCommission: available,
-      totalCommission: total,
-      pendingCommission: 1.0,
-    ),
-  );
+  DomainInvite invite({double available = 12.5, double total = 99}) =>
+      DomainInvite(
+        codes: const [DomainInviteCode(code: 'CODE', status: 0)],
+        stats: InviteStats(
+          invitedCount: 7,
+          commissionRate: 20,
+          availableCommission: available,
+          totalCommission: total,
+          pendingCommission: 1.0,
+        ),
+      );
 
   Future<void> pump(
     WidgetTester tester,
@@ -89,7 +90,9 @@ void main() {
   });
 
   group('WalletDetailsCard', () {
-    testWidgets('renders balances and opens the withdraw dialog', (tester) async {
+    testWidgets('renders balances and opens the withdraw dialog', (
+      tester,
+    ) async {
       await pump(tester, const WalletDetailsCard());
       expect(find.text('¥12.50'), findsOneWidget);
       await tester.tap(find.text('提现'));
@@ -134,7 +137,9 @@ void main() {
       expect(find.textContaining('T1'), findsOneWidget);
     });
 
-    testWidgets('shows the view-history action with 5+ records', (tester) async {
+    testWidgets('shows the view-history action with 5+ records', (
+      tester,
+    ) async {
       await pump(
         tester,
         const CommissionHistoryCard(),

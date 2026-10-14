@@ -20,7 +20,11 @@ void main() {
 
     test('equality is based on code and message', () {
       final a = XBoardException(code: 'C', message: 'm');
-      final b = XBoardException(code: 'C', message: 'm', details: const {'x': 1});
+      final b = XBoardException(
+        code: 'C',
+        message: 'm',
+        details: const {'x': 1},
+      );
       final c = XBoardException(code: 'D', message: 'm');
       expect(a, b);
       expect(a.hashCode, b.hashCode);
@@ -51,7 +55,10 @@ void main() {
     });
 
     test('validation exception renders the field', () {
-      final text = XBoardValidationException(message: 'm', field: 'email').toString();
+      final text = XBoardValidationException(
+        message: 'm',
+        field: 'email',
+      ).toString();
       expect(text, contains('Field: email'));
     });
 
@@ -63,7 +70,10 @@ void main() {
     });
 
     test('parse exception renders the data type', () {
-      final text = XBoardParseException(message: 'm', dataType: 'User').toString();
+      final text = XBoardParseException(
+        message: 'm',
+        dataType: 'User',
+      ).toString();
       expect(text, contains('DataType: User'));
     });
 
@@ -85,7 +95,10 @@ void main() {
     });
 
     test('timeout exception renders the timeout', () {
-      final text = XBoardTimeoutException(message: 'm', timeoutMs: 5000).toString();
+      final text = XBoardTimeoutException(
+        message: 'm',
+        timeoutMs: 5000,
+      ).toString();
       expect(text, contains('Timeout: 5000ms'));
     });
 

@@ -4,7 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('ConfigurationParseException', () {
     test('renders the message and keeps the original error', () {
-      final exception = ConfigurationParseException('boom', const FormatException('x'));
+      final exception = ConfigurationParseException(
+        'boom',
+        const FormatException('x'),
+      );
       expect(exception.message, 'boom');
       expect(exception.originalError, isA<FormatException>());
       expect(exception.toString(), 'ConfigurationParseException: boom');
@@ -117,9 +120,7 @@ void main() {
     });
 
     test('rejects a non-list onlineSupport', () {
-      final errors = validator.getValidationErrors(const {
-        'onlineSupport': {},
-      });
+      final errors = validator.getValidationErrors(const {'onlineSupport': {}});
       expect(errors.single.field, 'onlineSupport');
     });
 
@@ -245,7 +246,9 @@ void main() {
                 {'url': 'https://s1'},
               ],
             },
-            'metadata': {'sources': ['x']},
+            'metadata': {
+              'sources': ['x'],
+            },
           },
           {
             'panelType': 'xboard',
@@ -295,10 +298,7 @@ void main() {
     });
 
     test('passes through a result that already carries proxy/ws/etc keys', () {
-      const input = {
-        'proxy': [],
-        'ws': [],
-      };
+      const input = {'proxy': [], 'ws': []};
       expect(parser.extractConfigFromRemoteResult(input), same(input));
     });
 
@@ -316,7 +316,10 @@ void main() {
     });
 
     test('returns null when nothing recognizable is present', () {
-      expect(parser.extractConfigFromRemoteResult(const {'foo': 'bar'}), isNull);
+      expect(
+        parser.extractConfigFromRemoteResult(const {'foo': 'bar'}),
+        isNull,
+      );
     });
 
     test('returns null when panel_urls is null', () {

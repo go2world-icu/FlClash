@@ -17,7 +17,8 @@ String _encrypt(String plaintext, String key) {
 
 void main() {
   const key = 'secret-key';
-  const clashConfig = 'port: 7890\nproxies:\n  - name: node\nrules:\n  - DOMAIN,x,node';
+  const clashConfig =
+      'port: 7890\nproxies:\n  - name: node\nrules:\n  - DOMAIN,x,node';
 
   group('xorDecrypt', () {
     test('is its own inverse', () {
@@ -31,13 +32,19 @@ void main() {
   group('decryptXBoard', () {
     test('recovers the original plaintext', () {
       final encrypted = _encrypt(clashConfig, key);
-      expect(XBoardDecryptHelper.decryptXBoard(encrypted, key: key), clashConfig);
+      expect(
+        XBoardDecryptHelper.decryptXBoard(encrypted, key: key),
+        clashConfig,
+      );
     });
 
     test('unwraps an extra base64 layer when present', () {
       final doubleEncoded = base64.encode(utf8.encode(clashConfig));
       final encrypted = _encrypt(doubleEncoded, key);
-      expect(XBoardDecryptHelper.decryptXBoard(encrypted, key: key), clashConfig);
+      expect(
+        XBoardDecryptHelper.decryptXBoard(encrypted, key: key),
+        clashConfig,
+      );
     });
 
     test('returns an error string for garbage input', () {
@@ -72,7 +79,10 @@ void main() {
     test('returns the plaintext when a key matches', () {
       final encrypted = _encrypt(clashConfig, 'second');
       expect(
-        XBoardDecryptHelper.decryptWithMultipleKeys(encrypted, ['first', 'second']),
+        XBoardDecryptHelper.decryptWithMultipleKeys(encrypted, [
+          'first',
+          'second',
+        ]),
         clashConfig,
       );
     });
@@ -95,7 +105,10 @@ void main() {
   group('smartDecrypt', () {
     test('succeeds with the configured key', () {
       final encrypted = _encrypt(clashConfig, key);
-      final result = XBoardDecryptHelper.smartDecrypt(encrypted, configuredKey: key);
+      final result = XBoardDecryptHelper.smartDecrypt(
+        encrypted,
+        configuredKey: key,
+      );
       expect(result.success, isTrue);
       expect(result.content, clashConfig);
       expect(result.keyUsed, key);

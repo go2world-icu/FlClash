@@ -33,7 +33,10 @@ void main() {
     test('queries providers', () {
       expect(service.getPanelsByProvider('Other').single.url, 'https://c');
       expect(service.getAllPanels().length, 3);
-      expect(service.getAvailableProviders(), containsAll(['Flclash', 'Other']));
+      expect(
+        service.getAvailableProviders(),
+        containsAll(['Flclash', 'Other']),
+      );
       expect(service.hasProvider('Flclash'), isTrue);
       expect(service.hasProvider('missing'), isFalse);
     });
@@ -62,9 +65,24 @@ void main() {
 
   group('ProxyService', () {
     final service = ProxyService(const [
-      ProxyInfo(url: 'http://a', description: 'a', protocol: 'http', region: 'HK'),
-      ProxyInfo(url: 'socks5://b', description: 'b', protocol: 'socks5', region: 'US'),
-      ProxyInfo(url: 'http://c', description: 'c', protocol: 'http', region: 'HK'),
+      ProxyInfo(
+        url: 'http://a',
+        description: 'a',
+        protocol: 'http',
+        region: 'HK',
+      ),
+      ProxyInfo(
+        url: 'socks5://b',
+        description: 'b',
+        protocol: 'socks5',
+        region: 'US',
+      ),
+      ProxyInfo(
+        url: 'http://c',
+        description: 'c',
+        protocol: 'http',
+        region: 'HK',
+      ),
     ]);
 
     test('lists and picks the first proxy', () {
@@ -139,7 +157,12 @@ void main() {
         fileSize: 100,
         checksum: 'x',
       ),
-      UpdateInfo(url: 'http://b', description: 'b', version: '2.0', fileSize: 300),
+      UpdateInfo(
+        url: 'http://b',
+        description: 'b',
+        version: '2.0',
+        fileSize: 300,
+      ),
     ]);
 
     test('lists sources and picks the first', () {

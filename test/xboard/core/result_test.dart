@@ -30,26 +30,23 @@ void main() {
 
     test('when dispatches to the right branch', () {
       expect(
-        Result<int>.success(2).when(
-          success: (data) => 'ok:$data',
-          failure: (e) => 'err',
-        ),
+        Result<int>.success(
+          2,
+        ).when(success: (data) => 'ok:$data', failure: (e) => 'err'),
         'ok:2',
       );
       expect(
-        Result<int>.failure(error).when(
-          success: (data) => 'ok',
-          failure: (e) => 'err:${e.code}',
-        ),
+        Result<int>.failure(
+          error,
+        ).when(success: (data) => 'ok', failure: (e) => 'err:${e.code}'),
         'err:E',
       );
     });
 
     test('whenAsync dispatches asynchronously', () async {
-      final out = await Result<int>.success(1).whenAsync(
-        success: (data) async => data + 1,
-        failure: (e) async => -1,
-      );
+      final out = await Result<int>.success(
+        1,
+      ).whenAsync(success: (data) async => data + 1, failure: (e) async => -1);
       expect(out, 2);
     });
 
@@ -70,19 +67,23 @@ void main() {
 
     test('flatMap chains success and short-circuits failure', () {
       expect(
-        Result<int>.success(2).flatMap((d) => Result<String>.success('v$d')).dataOrNull,
+        Result<int>.success(
+          2,
+        ).flatMap((d) => Result<String>.success('v$d')).dataOrNull,
         'v2',
       );
       expect(
-        Result<int>.failure(error).flatMap((d) => Result<String>.success('v')).exceptionOrNull,
+        Result<int>.failure(
+          error,
+        ).flatMap((d) => Result<String>.success('v')).exceptionOrNull,
         error,
       );
     });
 
     test('flatMapAsync chains asynchronously', () async {
-      final result = await Result<int>.success(2).flatMapAsync(
-        (d) async => Result<String>.success('v$d'),
-      );
+      final result = await Result<int>.success(
+        2,
+      ).flatMapAsync((d) async => Result<String>.success('v$d'));
       expect(result.dataOrNull, 'v2');
     });
 
@@ -119,7 +120,9 @@ void main() {
     });
 
     test('wraps an unknown error as UNKNOWN_ERROR', () async {
-      final result = await Future<int>.error(const FormatException('x')).toResult();
+      final result = await Future<int>.error(
+        const FormatException('x'),
+      ).toResult();
       expect(result.exceptionOrNull!.code, 'UNKNOWN_ERROR');
     });
   });
