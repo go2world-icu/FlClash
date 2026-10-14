@@ -121,10 +121,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
         statusDetail = statusResult.getDetailMessage(context) ?? '';
     }
     return Container(
+      // ShapeDecoration 不允许同时给 color 和 gradient（原来 BoxDecoration 允许，
+      // 但那个 gradient 会覆盖 color，所以实际渲染的一直是这里这个淡渐变）。
       decoration: ShapeDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.15,
-        ),
         shape: AppShape.all(12),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -299,10 +298,8 @@ class SubscriptionUsageCard extends ConsumerWidget {
     final remainingDays = _calculateRemainingDays();
     final planName = subscriptionInfo?.planName;
     return Container(
+      // 同上：只保留 gradient，与迁移前的实际渲染一致。
       decoration: ShapeDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.15,
-        ),
         shape: AppShape.all(12),
         gradient: LinearGradient(
           begin: Alignment.topLeft,

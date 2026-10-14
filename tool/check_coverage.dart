@@ -31,6 +31,10 @@ const _groupFloors = <String, double>{
   'icons': 90.0,
   'pages': 71.0,
   'plugins': 67.0,
+  // The panel module (lib/xboard/) is fork-owned and was untested until the
+  // merge; its tests now cover the config/models/services layers and the main
+  // widgets. Raise this as more of it is tested.
+  'xboard': 40.0,
   'lib': 20.0,
 };
 
