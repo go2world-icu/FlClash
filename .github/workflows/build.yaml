@@ -324,6 +324,9 @@ jobs:
     needs: [ dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
+      # One platform failing should not cancel the rest: iOS is the only one
+      # built on macOS, and its artifacts are worth having while it is fixed.
+      fail-fast: false
       matrix:
         include:
           - platform: android
@@ -438,12 +441,20 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
 
+      - name: Build iOS core
+        if: startsWith(matrix.platform, 'ios')
+        # Runner links libclash/ios/Libclash.xcframework, so it has to exist
+        # before Xcode runs. The code-asset hook reports its output too late
+        # for that, so the slices are built explicitly first.
+        run: |
+          cd plugins/setup/setup_hooks
+          dart pub get
+          dart run bin/build_ios.dart
+
       - name: Build iOS
         if: startsWith(matrix.platform, 'ios')
         run: |
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          # The Go core (libclash/ios/Libclash.xcframework) is produced by the
-          # setup build hook during this build; no separate core step.
           flutter build ios --release --no-codesign
           mkdir -p dist/Payload
           cp -R build/ios/iphoneos/Runner.app dist/Payload/

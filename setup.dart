@@ -195,11 +195,19 @@ Future<int> _package(
   final depExit = await _ensureDependencies(platform);
   if (depExit != 0) return depExit;
 
-  // iOS 统一入口：flutter build ipa。
-  // Go core 由 setup 构建 hook 在 flutter build 期间产出（libclash/ios/Libclash.xcframework），
-  // 不再需要预先跑 make core-ios。
+  // iOS 统一入口：先编 Go core，再 flutter build ipa。
+  // Runner 链接 libclash/ios/Libclash.xcframework，它必须在 Xcode 之前就存在；
+  // setup 构建 hook 的产出要等这次构建布局完成才上报，赶不上链接，所以这里显式先建。
   // 签名走项目 Manual 配置（pbxproj PROVISIONING_PROFILE_SPECIFIER）+ 已装证书/profile。
   if (platform == 'ios') {
+    final coreExit = await _runCommand('dart', [
+      'run',
+      'bin/build_ios.dart',
+      '--root',
+      rootDir,
+    ], p.join(rootDir, 'plugins', 'setup', 'setup_hooks'));
+    if (coreExit != 0) return coreExit;
+
     final flutterArgs = <String>[
       'build',
       'ipa',
