@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/features/profile/profile.dart';
 import 'package:fl_clash/xboard/features/subscription/services/encrypted_subscription_service.dart';
@@ -110,7 +109,7 @@ class XBoardProfileImportService {
       final urlProfiles = profiles.where((profile) => profile.type == ProfileType.url).toList();
 
       for (final profile in urlProfiles) {
-        _logger.debug('删除旧的URL配置: ${profile.label ?? profile.id}');
+        _logger.debug('删除旧的URL配置: ${profile.label}');
         _ref.read(profilesProvider.notifier).del(profile.id);
         _clearProfileEffect(profile.id.toString());
       }
@@ -146,7 +145,7 @@ class XBoardProfileImportService {
         },
       );
       
-      _logger.info('配置下载和验证成功: ${profile.label ?? profile.id}');
+      _logger.info('配置下载和验证成功: ${profile.label}');
       return profile;
       
     } on TimeoutException catch (e) {
@@ -285,7 +284,7 @@ class XBoardProfileImportService {
       // 2. 强制设置为当前配置（订阅导入是用户主动操作，应该立即生效）
       final currentProfileIdNotifier = _ref.read(currentProfileIdProvider.notifier);
       currentProfileIdNotifier.value = profile.id;
-      _logger.info('✅ 已设置为当前配置: ${profile.label ?? profile.id}');
+      _logger.info('✅ 已设置为当前配置: ${profile.label}');
 
       // [DIAGNOSTIC] 检查 Core 是否在运行
       final isCoreRunning = _ref.read(isStartProvider);
@@ -320,7 +319,7 @@ class XBoardProfileImportService {
         );
       }
 
-      _logger.info('配置添加成功: ${profile.label ?? profile.id}');
+      _logger.info('配置添加成功: ${profile.label}');
     } catch (e) {
       throw Exception('添加配置失败: $e');
     }

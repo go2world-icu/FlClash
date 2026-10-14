@@ -144,12 +144,12 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   Future<void> _silentUpdateUserData() async {
     try {
       // 获取订阅信息
-      final subscriptionModel = await ref.read(getSubscriptionProvider.future) as SubscriptionModel;
+      final subscriptionModel = await ref.read(getSubscriptionProvider.future);
       final subscriptionData = _mapSubscription(subscriptionModel);
 
       // 获取用户信息
       try {
-        final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
+        final userModel = await ref.read(getUserInfoProvider.future);
         final userInfoData = _mapUser(userModel);
 
         await _storageService.saveDomainUser(userInfoData);
@@ -238,7 +238,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       // 获取用户信息和订阅信息
       try {
         _logger.info('开始获取用户信息...');
-        final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
+        final userModel = await ref.read(getUserInfoProvider.future);
         final userInfo = _mapUser(userModel);
         
         _logger.info('用户信息API调用完成');
@@ -247,7 +247,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
         _logger.info('用户信息已保存: ${userInfo.email}');
         
         _logger.info('开始获取订阅信息...');
-        final subscriptionModel = await ref.read(getSubscriptionProvider.future) as SubscriptionModel;
+        final subscriptionModel = await ref.read(getSubscriptionProvider.future);
         final subscriptionInfo = _mapSubscription(subscriptionModel);
         
         _logger.info('订阅信息API调用完成');
@@ -390,7 +390,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       DomainSubscription? subscriptionData;
       
       try {
-        final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
+        final userModel = await ref.read(getUserInfoProvider.future);
         userInfo = _mapUser(userModel);
         await _storageService.saveDomainUser(userInfo);
         ref.read(userInfoProvider.notifier).state = userInfo;
@@ -399,7 +399,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       }
 
       try {
-        final subscriptionModel = await ref.read(getSubscriptionProvider.future) as SubscriptionModel;
+        final subscriptionModel = await ref.read(getSubscriptionProvider.future);
         subscriptionData = _mapSubscription(subscriptionModel);
         await _storageService.saveDomainSubscription(subscriptionData);
         ref.read(subscriptionInfoProvider.notifier).state = subscriptionData;
@@ -445,7 +445,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       DomainSubscription? subscriptionData;
       
       try {
-        final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
+        final userModel = await ref.read(getUserInfoProvider.future);
         userInfo = _mapUser(userModel);
         await _storageService.saveDomainUser(userInfo);
         ref.read(userInfoProvider.notifier).state = userInfo;
@@ -454,7 +454,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       }
 
       try {
-        final subscriptionModel = await ref.read(getSubscriptionProvider.future) as SubscriptionModel;
+        final subscriptionModel = await ref.read(getSubscriptionProvider.future);
         subscriptionData = _mapSubscription(subscriptionModel);
         await _storageService.saveDomainSubscription(subscriptionData);
         ref.read(subscriptionInfoProvider.notifier).state = subscriptionData;
@@ -497,7 +497,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       
       _logger.info('刷新用户详细信息...');
       
-      final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
+      final userModel = await ref.read(getUserInfoProvider.future);
       final userInfoData = _mapUser(userModel);
       
       await _storageService.saveDomainUser(userInfoData);

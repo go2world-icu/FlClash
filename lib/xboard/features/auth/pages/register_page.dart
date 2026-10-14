@@ -195,26 +195,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     );
   }
 
-  Widget _buildInviteCodeField(ConfigModel? config) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final configAsync = ref.watch(configProvider);
-    
-    // 处理异步加载状态
-    return configAsync.when(
-      loading: () => const SizedBox.shrink(), // Or a placeholder
-      error: (error, stack) => const SizedBox.shrink(), // Or an error message
-      data: (configData) => XBInputField(
-        controller: _inviteCodeController,
-        labelText: (configData?.isInviteForce ?? false)
-            ? '${appLocalizations.xboardInviteCode} *' 
-            : appLocalizations.inviteCodeOptional,
-        hintText: appLocalizations.pleaseEnterInviteCode,
-        prefixIcon: AppGlyphs.giftCard,
-        enabled: true,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;

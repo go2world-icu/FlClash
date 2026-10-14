@@ -1,5 +1,11 @@
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 
+// 这两个类型来自 board_sdk，而 ConfigSettings 的公开字段 remoteConfig 的
+// 类型就是 RemoteConfigSettings —— 所以要一并对外导出，
+// xboard_config.dart 的 show 列表依赖这里。
+export 'package:board_sdk/flutter_xboard_sdk.dart'
+    show RemoteConfigSettings, RemoteSourceConfig;
+
 /// 配置设置
 ///
 /// 包含模块的各种配置参数

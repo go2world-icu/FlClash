@@ -1,5 +1,4 @@
 ﻿import 'package:material_ui/material_ui.dart';
-import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/models/models.dart' as fl_models;
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
@@ -38,8 +37,8 @@ class SubscriptionStatusService {
     fl_models.SubscriptionInfo? profileSubscriptionInfo,
     bool isRefreshing = false,
   }) {
-    // 🔧 DEBUG: 强制显示过期提醒对话框，方便调试
-    const bool debugForceExpired = false;
+    // 🔧 DEBUG: --dart-define=DEBUG_FORCE_EXPIRED=true 可强制显示过期提醒
+    const bool debugForceExpired = bool.fromEnvironment('DEBUG_FORCE_EXPIRED');
     if (debugForceExpired && userState.isAuthenticated) {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.expired,

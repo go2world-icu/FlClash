@@ -554,7 +554,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
     if (profileSubscriptionInfo != null && profileSubscriptionInfo!.total > 0) {
       return profileSubscriptionInfo!.total.toDouble();
     }
-    return userInfo?.transferLimit?.toDouble() ?? 0;
+    return userInfo?.transferLimit.toDouble() ?? 0;
   }
 
   Color _getProgressColor(double progress, ThemeData theme) {

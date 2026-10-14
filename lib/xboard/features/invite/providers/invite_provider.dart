@@ -95,7 +95,7 @@ class InviteNotifier extends Notifier<InviteState> {
 
     try {
       _logger.info('加载邀请信息...');
-      final inviteInfoModel = await ref.read(getInviteInfoProvider.future) as InviteInfoModel;
+      final inviteInfoModel = await ref.read(getInviteInfoProvider.future);
       final inviteData = _mapInviteInfo(inviteInfoModel);
 
       state = state.copyWith(
@@ -159,10 +159,10 @@ class InviteNotifier extends Notifier<InviteState> {
   Future<void> loadUserInfo() async {
     try {
       _logger.info('加载用户信息...');
-      final userModel = await ref.read(getUserInfoProvider.future) as UserModel;
+      final userModel = await ref.read(getUserInfoProvider.future);
       final userInfo = _mapUser(userModel);
       state = state.copyWith(userInfo: userInfo);
-      _logger.info('用户信息加载成功: 钱包余额 ¥${(userInfo?.balanceInCents ?? 0) / 100.0}');
+      _logger.info('用户信息加载成功: 钱包余额 ¥${userInfo.balanceInCents / 100.0}');
     } catch (e) {
       _logger.info('加载用户信息失败: $e');
     }

@@ -32,10 +32,7 @@ class ConcurrentSubscriptionService {
 
       // 1. 获取订阅信息和token
       final subscriptionData = await XBoardSDK.instance.subscription.getSubscription();
-      if (subscriptionData == null) {
-        return SubscriptionResult.failure('未获取到订阅信息');
-      }
-      
+
       final token = subscriptionData.token;
       if (token == null || token.isEmpty) {
         return SubscriptionResult.failure('订阅token无效');

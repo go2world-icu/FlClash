@@ -35,10 +35,6 @@ class EncryptedSubscriptionService {
 
       // 1. 获取订阅信息（注意：这里获取的是订阅数据，不是Auth Token）
       final subscriptionData = await XBoardSDK.instance.subscription.getSubscription();
-      
-      if (subscriptionData == null) {
-        return SubscriptionResult.failure('未获取到订阅信息');
-      }
 
       final subscribeUrl = subscriptionData.subscribeUrl;
       if (subscribeUrl == null || subscribeUrl.isEmpty) {
