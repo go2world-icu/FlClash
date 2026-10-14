@@ -80,4 +80,10 @@ devtools_options.yaml
 
 
 # XBoard config (contains sensitive keys)
-assets/config/xboard.config.yamlcore/core
+assets/config/xboard.config.yaml
+
+# Core build outputs. The missing newline above used to glue this onto the
+# previous line, which made both rules inert and let the two large binaries
+# (~111 MB together) into the repository.
+/core/core
+/core/*.exe
