@@ -1,7 +1,7 @@
 import 'config_entry.dart';
 
 /// WebSocket信息
-/// 
+///
 /// 扩展ConfigEntry，添加WebSocket特有的属性
 class WebSocketInfo extends ConfigEntry {
   final Map<String, String>? headers;
@@ -23,7 +23,7 @@ class WebSocketInfo extends ConfigEntry {
   factory WebSocketInfo.fromJson(Map<String, dynamic> json) {
     final headersData = json['headers'] as Map<String, dynamic>?;
     final timeoutMs = json['timeout'] as int?;
-    
+
     return WebSocketInfo(
       url: json['url'] as String? ?? '',
       description: json['description'] as String? ?? '',

@@ -42,21 +42,21 @@ sealed class Result<T> {
 
   /// 获取数据（成功时返回数据，失败时返回 null）
   T? get dataOrNull => switch (this) {
-        Success(:final data) => data,
-        Failure() => null,
-      };
+    Success(:final data) => data,
+    Failure() => null,
+  };
 
   /// 获取异常（失败时返回异常，成功时返回 null）
   XBoardException? get exceptionOrNull => switch (this) {
-        Success() => null,
-        Failure(:final exception) => exception,
-      };
+    Success() => null,
+    Failure(:final exception) => exception,
+  };
 
   /// 获取数据（成功时返回数据，失败时抛出异常）
   T get data => switch (this) {
-        Success(:final data) => data,
-        Failure(:final exception) => throw exception,
-      };
+    Success(:final data) => data,
+    Failure(:final exception) => throw exception,
+  };
 
   /// 模式匹配处理结果
   R when<R>({
@@ -177,7 +177,8 @@ extension FutureResultExtension<T> on Future<T> {
       if (error is XBoardException) {
         return Result.failure(error);
       }
-      final exception = onError?.call(error, stackTrace) ??
+      final exception =
+          onError?.call(error, stackTrace) ??
           XBoardException(
             code: 'UNKNOWN_ERROR',
             message: error.toString(),
@@ -202,7 +203,8 @@ extension FunctionResultExtension<T> on T Function() {
       if (error is XBoardException) {
         return Result.failure(error);
       }
-      final exception = onError?.call(error, stackTrace) ??
+      final exception =
+          onError?.call(error, stackTrace) ??
           XBoardException(
             code: 'UNKNOWN_ERROR',
             message: error.toString(),
@@ -213,4 +215,3 @@ extension FunctionResultExtension<T> on T Function() {
     }
   }
 }
-

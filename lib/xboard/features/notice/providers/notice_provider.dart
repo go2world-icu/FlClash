@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/state/notice_state.dart';
@@ -59,17 +59,12 @@ class NoticeNotifier extends Notifier<NoticeState> {
 
     try {
       final noticeModels = await ref.read(getNoticesProvider.future);
-      final notices = (noticeModels as List<NoticeModel>?)?.map(_mapNotice).toList() ?? [];
-      state = state.copyWith(
-        notices: notices,
-        isLoading: false,
-      );
+      final notices =
+          (noticeModels as List<NoticeModel>?)?.map(_mapNotice).toList() ?? [];
+      state = state.copyWith(notices: notices, isLoading: false);
     } catch (e) {
       _logger.error('获取公告列表失败', e);
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -86,14 +81,18 @@ class NoticeNotifier extends Notifier<NoticeState> {
 }
 
 /// 公告Provider实例
-final noticeProvider = NotifierProvider<NoticeNotifier, NoticeState>(NoticeNotifier.new);
+final noticeProvider = NotifierProvider<NoticeNotifier, NoticeState>(
+  NoticeNotifier.new,
+);
 
 DomainNotice _mapNotice(NoticeModel notice) {
   return DomainNotice(
     id: notice.id,
     title: notice.title,
     content: notice.content,
-    imageUrls: notice.imgUrl != null && notice.imgUrl!.isNotEmpty ? [notice.imgUrl!] : [],
+    imageUrls: notice.imgUrl != null && notice.imgUrl!.isNotEmpty
+        ? [notice.imgUrl!]
+        : [],
     tags: notice.tags ?? [],
     isVisible: notice.show,
     createdAt: DateTime.fromMillisecondsSinceEpoch(notice.createdAt * 1000),

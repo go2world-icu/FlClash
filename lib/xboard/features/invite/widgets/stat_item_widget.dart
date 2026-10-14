@@ -18,18 +18,11 @@ class StatItemWidget extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
-        GlyphIcon(
-          icon,
-          size: 32,
-          color: colorScheme.primary,
-        ),
+        GlyphIcon(icon, size: 32, color: colorScheme.primary),
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(

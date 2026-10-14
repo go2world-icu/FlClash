@@ -58,7 +58,9 @@ class _XBoardNetworkDetectionState
 
     return Container(
       decoration: ShapeDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.15,
+        ),
         shape: AppShape.all(12),
       ),
       padding: const EdgeInsets.all(14),

@@ -12,7 +12,8 @@ part of '../initialization_state.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 /// @nodoc
 mixin _$InitializationState {
@@ -44,16 +45,18 @@ mixin _$InitializationState {
 /// @nodoc
 abstract class $InitializationStateCopyWith<$Res> {
   factory $InitializationStateCopyWith(
-          InitializationState value, $Res Function(InitializationState) then) =
-      _$InitializationStateCopyWithImpl<$Res, InitializationState>;
+    InitializationState value,
+    $Res Function(InitializationState) then,
+  ) = _$InitializationStateCopyWithImpl<$Res, InitializationState>;
   @useResult
-  $Res call(
-      {InitializationStatus status,
-      String? currentDomain,
-      String? errorMessage,
-      int? latency,
-      DateTime? lastChecked,
-      String? currentStepDescription});
+  $Res call({
+    InitializationStatus status,
+    String? currentDomain,
+    String? errorMessage,
+    int? latency,
+    DateTime? lastChecked,
+    String? currentStepDescription,
+  });
 }
 
 /// @nodoc
@@ -78,59 +81,65 @@ class _$InitializationStateCopyWithImpl<$Res, $Val extends InitializationState>
     Object? lastChecked = freezed,
     Object? currentStepDescription = freezed,
   }) {
-    return _then(_value.copyWith(
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as InitializationStatus,
-      currentDomain: freezed == currentDomain
-          ? _value.currentDomain
-          : currentDomain // ignore: cast_nullable_to_non_nullable
-              as String?,
-      errorMessage: freezed == errorMessage
-          ? _value.errorMessage
-          : errorMessage // ignore: cast_nullable_to_non_nullable
-              as String?,
-      latency: freezed == latency
-          ? _value.latency
-          : latency // ignore: cast_nullable_to_non_nullable
-              as int?,
-      lastChecked: freezed == lastChecked
-          ? _value.lastChecked
-          : lastChecked // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      currentStepDescription: freezed == currentStepDescription
-          ? _value.currentStepDescription
-          : currentStepDescription // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            status: null == status
+                ? _value.status
+                : status // ignore: cast_nullable_to_non_nullable
+                      as InitializationStatus,
+            currentDomain: freezed == currentDomain
+                ? _value.currentDomain
+                : currentDomain // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            errorMessage: freezed == errorMessage
+                ? _value.errorMessage
+                : errorMessage // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            latency: freezed == latency
+                ? _value.latency
+                : latency // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            lastChecked: freezed == lastChecked
+                ? _value.lastChecked
+                : lastChecked // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            currentStepDescription: freezed == currentStepDescription
+                ? _value.currentStepDescription
+                : currentStepDescription // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$InitializationStateImplCopyWith<$Res>
     implements $InitializationStateCopyWith<$Res> {
-  factory _$$InitializationStateImplCopyWith(_$InitializationStateImpl value,
-          $Res Function(_$InitializationStateImpl) then) =
-      __$$InitializationStateImplCopyWithImpl<$Res>;
+  factory _$$InitializationStateImplCopyWith(
+    _$InitializationStateImpl value,
+    $Res Function(_$InitializationStateImpl) then,
+  ) = __$$InitializationStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {InitializationStatus status,
-      String? currentDomain,
-      String? errorMessage,
-      int? latency,
-      DateTime? lastChecked,
-      String? currentStepDescription});
+  $Res call({
+    InitializationStatus status,
+    String? currentDomain,
+    String? errorMessage,
+    int? latency,
+    DateTime? lastChecked,
+    String? currentStepDescription,
+  });
 }
 
 /// @nodoc
 class __$$InitializationStateImplCopyWithImpl<$Res>
     extends _$InitializationStateCopyWithImpl<$Res, _$InitializationStateImpl>
     implements _$$InitializationStateImplCopyWith<$Res> {
-  __$$InitializationStateImplCopyWithImpl(_$InitializationStateImpl _value,
-      $Res Function(_$InitializationStateImpl) _then)
-      : super(_value, _then);
+  __$$InitializationStateImplCopyWithImpl(
+    _$InitializationStateImpl _value,
+    $Res Function(_$InitializationStateImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of InitializationState
   /// with the given fields replaced by the non-null parameter values.
@@ -144,46 +153,48 @@ class __$$InitializationStateImplCopyWithImpl<$Res>
     Object? lastChecked = freezed,
     Object? currentStepDescription = freezed,
   }) {
-    return _then(_$InitializationStateImpl(
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as InitializationStatus,
-      currentDomain: freezed == currentDomain
-          ? _value.currentDomain
-          : currentDomain // ignore: cast_nullable_to_non_nullable
-              as String?,
-      errorMessage: freezed == errorMessage
-          ? _value.errorMessage
-          : errorMessage // ignore: cast_nullable_to_non_nullable
-              as String?,
-      latency: freezed == latency
-          ? _value.latency
-          : latency // ignore: cast_nullable_to_non_nullable
-              as int?,
-      lastChecked: freezed == lastChecked
-          ? _value.lastChecked
-          : lastChecked // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      currentStepDescription: freezed == currentStepDescription
-          ? _value.currentStepDescription
-          : currentStepDescription // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
+    return _then(
+      _$InitializationStateImpl(
+        status: null == status
+            ? _value.status
+            : status // ignore: cast_nullable_to_non_nullable
+                  as InitializationStatus,
+        currentDomain: freezed == currentDomain
+            ? _value.currentDomain
+            : currentDomain // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        errorMessage: freezed == errorMessage
+            ? _value.errorMessage
+            : errorMessage // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        latency: freezed == latency
+            ? _value.latency
+            : latency // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        lastChecked: freezed == lastChecked
+            ? _value.lastChecked
+            : lastChecked // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        currentStepDescription: freezed == currentStepDescription
+            ? _value.currentStepDescription
+            : currentStepDescription // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
   }
 }
 
 /// @nodoc
 
 class _$InitializationStateImpl extends _InitializationState {
-  const _$InitializationStateImpl(
-      {this.status = InitializationStatus.idle,
-      this.currentDomain,
-      this.errorMessage,
-      this.latency,
-      this.lastChecked,
-      this.currentStepDescription})
-      : super._();
+  const _$InitializationStateImpl({
+    this.status = InitializationStatus.idle,
+    this.currentDomain,
+    this.errorMessage,
+    this.latency,
+    this.lastChecked,
+    this.currentStepDescription,
+  }) : super._();
 
   /// 当前状态
   @override
@@ -233,8 +244,15 @@ class _$InitializationStateImpl extends _InitializationState {
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, status, currentDomain,
-      errorMessage, latency, lastChecked, currentStepDescription);
+  int get hashCode => Object.hash(
+    runtimeType,
+    status,
+    currentDomain,
+    errorMessage,
+    latency,
+    lastChecked,
+    currentStepDescription,
+  );
 
   /// Create a copy of InitializationState
   /// with the given fields replaced by the non-null parameter values.
@@ -243,17 +261,20 @@ class _$InitializationStateImpl extends _InitializationState {
   @pragma('vm:prefer-inline')
   _$$InitializationStateImplCopyWith<_$InitializationStateImpl> get copyWith =>
       __$$InitializationStateImplCopyWithImpl<_$InitializationStateImpl>(
-          this, _$identity);
+        this,
+        _$identity,
+      );
 }
 
 abstract class _InitializationState extends InitializationState {
-  const factory _InitializationState(
-      {final InitializationStatus status,
-      final String? currentDomain,
-      final String? errorMessage,
-      final int? latency,
-      final DateTime? lastChecked,
-      final String? currentStepDescription}) = _$InitializationStateImpl;
+  const factory _InitializationState({
+    final InitializationStatus status,
+    final String? currentDomain,
+    final String? errorMessage,
+    final int? latency,
+    final DateTime? lastChecked,
+    final String? currentStepDescription,
+  }) = _$InitializationStateImpl;
   const _InitializationState._() : super._();
 
   /// 当前状态

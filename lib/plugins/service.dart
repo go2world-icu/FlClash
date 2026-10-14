@@ -48,7 +48,7 @@ class Service {
       switch (call.method) {
         case 'event':
           final data = call.arguments as String? ?? '';
-                    final methodCall = CoreMethodCall.fromJson(
+          final methodCall = CoreMethodCall.fromJson(
             Map<String, Object?>.from(json.decode(data) as Map),
           );
           for (final event in coreEventsFromData(methodCall.arguments)) {
@@ -72,9 +72,7 @@ class Service {
           // and every invoke blocks until the 10s timeout.
           final data = call.arguments as String? ?? '{}';
           try {
-            final json = Map<String, dynamic>.from(
-              jsonDecode(data) as Map,
-            );
+            final json = Map<String, dynamic>.from(jsonDecode(data) as Map);
             final status = json['status'] as String? ?? '';
             final runTime = json['runTime'] as int? ?? 0;
             for (final listener in _listeners) {

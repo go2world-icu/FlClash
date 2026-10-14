@@ -1,7 +1,7 @@
 import '../models/online_support_info.dart';
 
 /// 在线客服服务
-/// 
+///
 /// 负责在线客服配置的访问和管理
 class OnlineSupportService {
   final List<OnlineSupportInfo> _configs;
@@ -44,14 +44,18 @@ class OnlineSupportService {
     };
 
     // 协议分布统计
-    final httpCount = _configs.where((config) => 
-        config.apiBaseUrl.startsWith('http://')).length;
-    final httpsCount = _configs.where((config) => 
-        config.apiBaseUrl.startsWith('https://')).length;
-    final wsCount = _configs.where((config) => 
-        config.wsBaseUrl.startsWith('ws://')).length;
-    final wssCount = _configs.where((config) => 
-        config.wsBaseUrl.startsWith('wss://')).length;
+    final httpCount = _configs
+        .where((config) => config.apiBaseUrl.startsWith('http://'))
+        .length;
+    final httpsCount = _configs
+        .where((config) => config.apiBaseUrl.startsWith('https://'))
+        .length;
+    final wsCount = _configs
+        .where((config) => config.wsBaseUrl.startsWith('ws://'))
+        .length;
+    final wssCount = _configs
+        .where((config) => config.wsBaseUrl.startsWith('wss://'))
+        .length;
 
     stats['protocolDistribution'] = {
       'http': httpCount,
@@ -81,7 +85,7 @@ class OnlineSupportService {
   @override
   String toString() {
     return 'OnlineSupportService(configs: ${_configs.length}, '
-           'hasApiConfig: ${getApiBaseUrl() != null}, '
-           'hasWebSocketConfig: ${getWebSocketBaseUrl() != null})';
+        'hasApiConfig: ${getApiBaseUrl() != null}, '
+        'hasWebSocketConfig: ${getWebSocketBaseUrl() != null})';
   }
 }

@@ -4,4 +4,3 @@
 library;
 
 export 'xboard_exception.dart';
-

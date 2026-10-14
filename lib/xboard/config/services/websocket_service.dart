@@ -1,7 +1,7 @@
 import '../models/websocket_info.dart';
 
 /// WebSocket服务
-/// 
+///
 /// 负责WebSocket相关的基础操作，暂不实现连接测试等内部方法
 class WebSocketService {
   final List<WebSocketInfo> _webSockets;
@@ -97,7 +97,7 @@ class WebSocketService {
   @override
   String toString() {
     return 'WebSocketService(webSockets: ${_webSockets.length}, '
-           'secure: ${getSecureWebSockets().length}, '
-           'insecure: ${getInsecureWebSockets().length})';
+        'secure: ${getSecureWebSockets().length}, '
+        'insecure: ${getInsecureWebSockets().length})';
   }
 }

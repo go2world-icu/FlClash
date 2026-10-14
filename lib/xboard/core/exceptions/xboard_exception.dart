@@ -85,12 +85,12 @@ class XBoardNetworkException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() {
@@ -117,12 +117,12 @@ class XBoardAuthException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() => 'XBoardAuthException($code: $message)';
@@ -141,12 +141,12 @@ class XBoardValidationException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() {
@@ -167,12 +167,12 @@ class XBoardBusinessException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() => 'XBoardBusinessException($code: $message)';
@@ -191,12 +191,12 @@ class XBoardParseException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() {
@@ -225,12 +225,12 @@ class XBoardStorageException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() {
@@ -254,12 +254,12 @@ class XBoardConfigException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() => 'XBoardConfigException($code: $message)';
@@ -278,12 +278,12 @@ class XBoardTimeoutException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() {
@@ -304,12 +304,12 @@ class XBoardUnknownException extends XBoardException {
     Object? originalError,
     StackTrace? stackTrace,
   }) : super(
-          code: code,
-          message: message,
-          details: details,
-          originalError: originalError,
-          stackTrace: stackTrace,
-        );
+         code: code,
+         message: message,
+         details: details,
+         originalError: originalError,
+         stackTrace: stackTrace,
+       );
 
   @override
   String toString() => 'XBoardUnknownException($code: $message)';
@@ -365,4 +365,3 @@ class XBoardErrorCodes {
   static const String configNotInitialized = 'CONFIG_NOT_INITIALIZED';
   static const String configInvalid = 'CONFIG_INVALID';
 }
-

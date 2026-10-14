@@ -22,9 +22,7 @@ class LogoutDialog extends ConsumerWidget {
             Navigator.of(context).pop();
             await _performLogout(context, ref);
           },
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.red,
-          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.red),
           child: Text(appLocalizations.logout),
         ),
       ],
@@ -39,7 +37,9 @@ class LogoutDialog extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        XBoardNotification.showError(appLocalizations.logoutFailed(e.toString()));
+        XBoardNotification.showError(
+          appLocalizations.logoutFailed(e.toString()),
+        );
       }
     }
   }

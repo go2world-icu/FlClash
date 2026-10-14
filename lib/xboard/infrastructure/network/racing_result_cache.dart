@@ -45,12 +45,14 @@ class RacingResultCache {
   static Future<void> save(DomainRacingResult result) async {
     try {
       final file = await _file();
-      await file.writeAsString(jsonEncode({
-        'domain': result.domain,
-        'useProxy': result.useProxy,
-        'proxyUrl': result.proxyUrl,
-        'responseTime': result.responseTime,
-      }));
+      await file.writeAsString(
+        jsonEncode({
+          'domain': result.domain,
+          'useProxy': result.useProxy,
+          'proxyUrl': result.proxyUrl,
+          'responseTime': result.responseTime,
+        }),
+      );
     } catch (e) {
       XBoardLogger.info('[RacingResultCache] 保存缓存失败: $e');
     }

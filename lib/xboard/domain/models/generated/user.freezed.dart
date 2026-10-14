@@ -12,7 +12,8 @@ part of '../user.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 DomainUser _$DomainUserFromJson(Map<String, dynamic> json) {
   return _DomainUser.fromJson(json);
@@ -90,29 +91,31 @@ mixin _$DomainUser {
 /// @nodoc
 abstract class $DomainUserCopyWith<$Res> {
   factory $DomainUserCopyWith(
-          DomainUser value, $Res Function(DomainUser) then) =
-      _$DomainUserCopyWithImpl<$Res, DomainUser>;
+    DomainUser value,
+    $Res Function(DomainUser) then,
+  ) = _$DomainUserCopyWithImpl<$Res, DomainUser>;
   @useResult
-  $Res call(
-      {String email,
-      String uuid,
-      String avatarUrl,
-      int? planId,
-      int transferLimit,
-      int uploadedBytes,
-      int downloadedBytes,
-      int balanceInCents,
-      int commissionBalanceInCents,
-      DateTime? expiredAt,
-      DateTime? lastLoginAt,
-      DateTime? createdAt,
-      bool banned,
-      bool remindExpire,
-      bool remindTraffic,
-      double? discount,
-      double? commissionRate,
-      String? telegramId,
-      Map<String, dynamic> metadata});
+  $Res call({
+    String email,
+    String uuid,
+    String avatarUrl,
+    int? planId,
+    int transferLimit,
+    int uploadedBytes,
+    int downloadedBytes,
+    int balanceInCents,
+    int commissionBalanceInCents,
+    DateTime? expiredAt,
+    DateTime? lastLoginAt,
+    DateTime? createdAt,
+    bool banned,
+    bool remindExpire,
+    bool remindTraffic,
+    double? discount,
+    double? commissionRate,
+    String? telegramId,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -150,84 +153,87 @@ class _$DomainUserCopyWithImpl<$Res, $Val extends DomainUser>
     Object? telegramId = freezed,
     Object? metadata = null,
   }) {
-    return _then(_value.copyWith(
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as String,
-      avatarUrl: null == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      planId: freezed == planId
-          ? _value.planId
-          : planId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      transferLimit: null == transferLimit
-          ? _value.transferLimit
-          : transferLimit // ignore: cast_nullable_to_non_nullable
-              as int,
-      uploadedBytes: null == uploadedBytes
-          ? _value.uploadedBytes
-          : uploadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      downloadedBytes: null == downloadedBytes
-          ? _value.downloadedBytes
-          : downloadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      balanceInCents: null == balanceInCents
-          ? _value.balanceInCents
-          : balanceInCents // ignore: cast_nullable_to_non_nullable
-              as int,
-      commissionBalanceInCents: null == commissionBalanceInCents
-          ? _value.commissionBalanceInCents
-          : commissionBalanceInCents // ignore: cast_nullable_to_non_nullable
-              as int,
-      expiredAt: freezed == expiredAt
-          ? _value.expiredAt
-          : expiredAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      lastLoginAt: freezed == lastLoginAt
-          ? _value.lastLoginAt
-          : lastLoginAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      banned: null == banned
-          ? _value.banned
-          : banned // ignore: cast_nullable_to_non_nullable
-              as bool,
-      remindExpire: null == remindExpire
-          ? _value.remindExpire
-          : remindExpire // ignore: cast_nullable_to_non_nullable
-              as bool,
-      remindTraffic: null == remindTraffic
-          ? _value.remindTraffic
-          : remindTraffic // ignore: cast_nullable_to_non_nullable
-              as bool,
-      discount: freezed == discount
-          ? _value.discount
-          : discount // ignore: cast_nullable_to_non_nullable
-              as double?,
-      commissionRate: freezed == commissionRate
-          ? _value.commissionRate
-          : commissionRate // ignore: cast_nullable_to_non_nullable
-              as double?,
-      telegramId: freezed == telegramId
-          ? _value.telegramId
-          : telegramId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            email: null == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
+                      as String,
+            uuid: null == uuid
+                ? _value.uuid
+                : uuid // ignore: cast_nullable_to_non_nullable
+                      as String,
+            avatarUrl: null == avatarUrl
+                ? _value.avatarUrl
+                : avatarUrl // ignore: cast_nullable_to_non_nullable
+                      as String,
+            planId: freezed == planId
+                ? _value.planId
+                : planId // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            transferLimit: null == transferLimit
+                ? _value.transferLimit
+                : transferLimit // ignore: cast_nullable_to_non_nullable
+                      as int,
+            uploadedBytes: null == uploadedBytes
+                ? _value.uploadedBytes
+                : uploadedBytes // ignore: cast_nullable_to_non_nullable
+                      as int,
+            downloadedBytes: null == downloadedBytes
+                ? _value.downloadedBytes
+                : downloadedBytes // ignore: cast_nullable_to_non_nullable
+                      as int,
+            balanceInCents: null == balanceInCents
+                ? _value.balanceInCents
+                : balanceInCents // ignore: cast_nullable_to_non_nullable
+                      as int,
+            commissionBalanceInCents: null == commissionBalanceInCents
+                ? _value.commissionBalanceInCents
+                : commissionBalanceInCents // ignore: cast_nullable_to_non_nullable
+                      as int,
+            expiredAt: freezed == expiredAt
+                ? _value.expiredAt
+                : expiredAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            lastLoginAt: freezed == lastLoginAt
+                ? _value.lastLoginAt
+                : lastLoginAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            createdAt: freezed == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            banned: null == banned
+                ? _value.banned
+                : banned // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            remindExpire: null == remindExpire
+                ? _value.remindExpire
+                : remindExpire // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            remindTraffic: null == remindTraffic
+                ? _value.remindTraffic
+                : remindTraffic // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            discount: freezed == discount
+                ? _value.discount
+                : discount // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            commissionRate: freezed == commissionRate
+                ? _value.commissionRate
+                : commissionRate // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            telegramId: freezed == telegramId
+                ? _value.telegramId
+                : telegramId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            metadata: null == metadata
+                ? _value.metadata
+                : metadata // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -235,30 +241,32 @@ class _$DomainUserCopyWithImpl<$Res, $Val extends DomainUser>
 abstract class _$$DomainUserImplCopyWith<$Res>
     implements $DomainUserCopyWith<$Res> {
   factory _$$DomainUserImplCopyWith(
-          _$DomainUserImpl value, $Res Function(_$DomainUserImpl) then) =
-      __$$DomainUserImplCopyWithImpl<$Res>;
+    _$DomainUserImpl value,
+    $Res Function(_$DomainUserImpl) then,
+  ) = __$$DomainUserImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String email,
-      String uuid,
-      String avatarUrl,
-      int? planId,
-      int transferLimit,
-      int uploadedBytes,
-      int downloadedBytes,
-      int balanceInCents,
-      int commissionBalanceInCents,
-      DateTime? expiredAt,
-      DateTime? lastLoginAt,
-      DateTime? createdAt,
-      bool banned,
-      bool remindExpire,
-      bool remindTraffic,
-      double? discount,
-      double? commissionRate,
-      String? telegramId,
-      Map<String, dynamic> metadata});
+  $Res call({
+    String email,
+    String uuid,
+    String avatarUrl,
+    int? planId,
+    int transferLimit,
+    int uploadedBytes,
+    int downloadedBytes,
+    int balanceInCents,
+    int commissionBalanceInCents,
+    DateTime? expiredAt,
+    DateTime? lastLoginAt,
+    DateTime? createdAt,
+    bool banned,
+    bool remindExpire,
+    bool remindTraffic,
+    double? discount,
+    double? commissionRate,
+    String? telegramId,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -266,8 +274,9 @@ class __$$DomainUserImplCopyWithImpl<$Res>
     extends _$DomainUserCopyWithImpl<$Res, _$DomainUserImpl>
     implements _$$DomainUserImplCopyWith<$Res> {
   __$$DomainUserImplCopyWithImpl(
-      _$DomainUserImpl _value, $Res Function(_$DomainUserImpl) _then)
-      : super(_value, _then);
+    _$DomainUserImpl _value,
+    $Res Function(_$DomainUserImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of DomainUser
   /// with the given fields replaced by the non-null parameter values.
@@ -294,112 +303,114 @@ class __$$DomainUserImplCopyWithImpl<$Res>
     Object? telegramId = freezed,
     Object? metadata = null,
   }) {
-    return _then(_$DomainUserImpl(
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as String,
-      avatarUrl: null == avatarUrl
-          ? _value.avatarUrl
-          : avatarUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      planId: freezed == planId
-          ? _value.planId
-          : planId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      transferLimit: null == transferLimit
-          ? _value.transferLimit
-          : transferLimit // ignore: cast_nullable_to_non_nullable
-              as int,
-      uploadedBytes: null == uploadedBytes
-          ? _value.uploadedBytes
-          : uploadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      downloadedBytes: null == downloadedBytes
-          ? _value.downloadedBytes
-          : downloadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      balanceInCents: null == balanceInCents
-          ? _value.balanceInCents
-          : balanceInCents // ignore: cast_nullable_to_non_nullable
-              as int,
-      commissionBalanceInCents: null == commissionBalanceInCents
-          ? _value.commissionBalanceInCents
-          : commissionBalanceInCents // ignore: cast_nullable_to_non_nullable
-              as int,
-      expiredAt: freezed == expiredAt
-          ? _value.expiredAt
-          : expiredAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      lastLoginAt: freezed == lastLoginAt
-          ? _value.lastLoginAt
-          : lastLoginAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      banned: null == banned
-          ? _value.banned
-          : banned // ignore: cast_nullable_to_non_nullable
-              as bool,
-      remindExpire: null == remindExpire
-          ? _value.remindExpire
-          : remindExpire // ignore: cast_nullable_to_non_nullable
-              as bool,
-      remindTraffic: null == remindTraffic
-          ? _value.remindTraffic
-          : remindTraffic // ignore: cast_nullable_to_non_nullable
-              as bool,
-      discount: freezed == discount
-          ? _value.discount
-          : discount // ignore: cast_nullable_to_non_nullable
-              as double?,
-      commissionRate: freezed == commissionRate
-          ? _value.commissionRate
-          : commissionRate // ignore: cast_nullable_to_non_nullable
-              as double?,
-      telegramId: freezed == telegramId
-          ? _value.telegramId
-          : telegramId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      metadata: null == metadata
-          ? _value._metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ));
+    return _then(
+      _$DomainUserImpl(
+        email: null == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String,
+        uuid: null == uuid
+            ? _value.uuid
+            : uuid // ignore: cast_nullable_to_non_nullable
+                  as String,
+        avatarUrl: null == avatarUrl
+            ? _value.avatarUrl
+            : avatarUrl // ignore: cast_nullable_to_non_nullable
+                  as String,
+        planId: freezed == planId
+            ? _value.planId
+            : planId // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        transferLimit: null == transferLimit
+            ? _value.transferLimit
+            : transferLimit // ignore: cast_nullable_to_non_nullable
+                  as int,
+        uploadedBytes: null == uploadedBytes
+            ? _value.uploadedBytes
+            : uploadedBytes // ignore: cast_nullable_to_non_nullable
+                  as int,
+        downloadedBytes: null == downloadedBytes
+            ? _value.downloadedBytes
+            : downloadedBytes // ignore: cast_nullable_to_non_nullable
+                  as int,
+        balanceInCents: null == balanceInCents
+            ? _value.balanceInCents
+            : balanceInCents // ignore: cast_nullable_to_non_nullable
+                  as int,
+        commissionBalanceInCents: null == commissionBalanceInCents
+            ? _value.commissionBalanceInCents
+            : commissionBalanceInCents // ignore: cast_nullable_to_non_nullable
+                  as int,
+        expiredAt: freezed == expiredAt
+            ? _value.expiredAt
+            : expiredAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        lastLoginAt: freezed == lastLoginAt
+            ? _value.lastLoginAt
+            : lastLoginAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        createdAt: freezed == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        banned: null == banned
+            ? _value.banned
+            : banned // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        remindExpire: null == remindExpire
+            ? _value.remindExpire
+            : remindExpire // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        remindTraffic: null == remindTraffic
+            ? _value.remindTraffic
+            : remindTraffic // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        discount: freezed == discount
+            ? _value.discount
+            : discount // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        commissionRate: freezed == commissionRate
+            ? _value.commissionRate
+            : commissionRate // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        telegramId: freezed == telegramId
+            ? _value.telegramId
+            : telegramId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        metadata: null == metadata
+            ? _value._metadata
+            : metadata // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$DomainUserImpl extends _DomainUser {
-  const _$DomainUserImpl(
-      {required this.email,
-      required this.uuid,
-      required this.avatarUrl,
-      this.planId,
-      required this.transferLimit,
-      required this.uploadedBytes,
-      required this.downloadedBytes,
-      required this.balanceInCents,
-      required this.commissionBalanceInCents,
-      this.expiredAt,
-      this.lastLoginAt,
-      this.createdAt,
-      this.banned = false,
-      this.remindExpire = true,
-      this.remindTraffic = true,
-      this.discount,
-      this.commissionRate,
-      this.telegramId,
-      final Map<String, dynamic> metadata = const {}})
-      : _metadata = metadata,
-        super._();
+  const _$DomainUserImpl({
+    required this.email,
+    required this.uuid,
+    required this.avatarUrl,
+    this.planId,
+    required this.transferLimit,
+    required this.uploadedBytes,
+    required this.downloadedBytes,
+    required this.balanceInCents,
+    required this.commissionBalanceInCents,
+    this.expiredAt,
+    this.lastLoginAt,
+    this.createdAt,
+    this.banned = false,
+    this.remindExpire = true,
+    this.remindTraffic = true,
+    this.discount,
+    this.commissionRate,
+    this.telegramId,
+    final Map<String, dynamic> metadata = const {},
+  }) : _metadata = metadata,
+       super._();
 
   factory _$DomainUserImpl.fromJson(Map<String, dynamic> json) =>
       _$$DomainUserImplFromJson(json);
@@ -515,7 +526,9 @@ class _$DomainUserImpl extends _DomainUser {
             (identical(other.balanceInCents, balanceInCents) ||
                 other.balanceInCents == balanceInCents) &&
             (identical(
-                    other.commissionBalanceInCents, commissionBalanceInCents) ||
+                  other.commissionBalanceInCents,
+                  commissionBalanceInCents,
+                ) ||
                 other.commissionBalanceInCents == commissionBalanceInCents) &&
             (identical(other.expiredAt, expiredAt) ||
                 other.expiredAt == expiredAt) &&
@@ -540,27 +553,27 @@ class _$DomainUserImpl extends _DomainUser {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hashAll([
-        runtimeType,
-        email,
-        uuid,
-        avatarUrl,
-        planId,
-        transferLimit,
-        uploadedBytes,
-        downloadedBytes,
-        balanceInCents,
-        commissionBalanceInCents,
-        expiredAt,
-        lastLoginAt,
-        createdAt,
-        banned,
-        remindExpire,
-        remindTraffic,
-        discount,
-        commissionRate,
-        telegramId,
-        const DeepCollectionEquality().hash(_metadata)
-      ]);
+    runtimeType,
+    email,
+    uuid,
+    avatarUrl,
+    planId,
+    transferLimit,
+    uploadedBytes,
+    downloadedBytes,
+    balanceInCents,
+    commissionBalanceInCents,
+    expiredAt,
+    lastLoginAt,
+    createdAt,
+    banned,
+    remindExpire,
+    remindTraffic,
+    discount,
+    commissionRate,
+    telegramId,
+    const DeepCollectionEquality().hash(_metadata),
+  ]);
 
   /// Create a copy of DomainUser
   /// with the given fields replaced by the non-null parameter values.
@@ -572,33 +585,32 @@ class _$DomainUserImpl extends _DomainUser {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$DomainUserImplToJson(
-      this,
-    );
+    return _$$DomainUserImplToJson(this);
   }
 }
 
 abstract class _DomainUser extends DomainUser {
-  const factory _DomainUser(
-      {required final String email,
-      required final String uuid,
-      required final String avatarUrl,
-      final int? planId,
-      required final int transferLimit,
-      required final int uploadedBytes,
-      required final int downloadedBytes,
-      required final int balanceInCents,
-      required final int commissionBalanceInCents,
-      final DateTime? expiredAt,
-      final DateTime? lastLoginAt,
-      final DateTime? createdAt,
-      final bool banned,
-      final bool remindExpire,
-      final bool remindTraffic,
-      final double? discount,
-      final double? commissionRate,
-      final String? telegramId,
-      final Map<String, dynamic> metadata}) = _$DomainUserImpl;
+  const factory _DomainUser({
+    required final String email,
+    required final String uuid,
+    required final String avatarUrl,
+    final int? planId,
+    required final int transferLimit,
+    required final int uploadedBytes,
+    required final int downloadedBytes,
+    required final int balanceInCents,
+    required final int commissionBalanceInCents,
+    final DateTime? expiredAt,
+    final DateTime? lastLoginAt,
+    final DateTime? createdAt,
+    final bool banned,
+    final bool remindExpire,
+    final bool remindTraffic,
+    final double? discount,
+    final double? commissionRate,
+    final String? telegramId,
+    final Map<String, dynamic> metadata,
+  }) = _$DomainUserImpl;
   const _DomainUser._() : super._();
 
   factory _DomainUser.fromJson(Map<String, dynamic> json) =

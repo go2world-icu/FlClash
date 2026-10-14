@@ -9,8 +9,10 @@ class ThemeDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentThemeMode = ref.read(themeSettingProvider.select((state) => state.themeMode));
-    
+    final currentThemeMode = ref.read(
+      themeSettingProvider.select((state) => state.themeMode),
+    );
+
     return AlertDialog(
       title: Text(appLocalizations.selectTheme),
       content: Column(
@@ -28,9 +30,9 @@ class ThemeDialog extends ConsumerWidget {
             groupValue: currentThemeMode,
             onChanged: (value) {
               if (value != null) {
-                ref.read(themeSettingProvider.notifier).update(
-                  (state) => state.copyWith(themeMode: value),
-                );
+                ref
+                    .read(themeSettingProvider.notifier)
+                    .update((state) => state.copyWith(themeMode: value));
                 Navigator.of(context).pop();
               }
             },
@@ -47,9 +49,9 @@ class ThemeDialog extends ConsumerWidget {
             groupValue: currentThemeMode,
             onChanged: (value) {
               if (value != null) {
-                ref.read(themeSettingProvider.notifier).update(
-                  (state) => state.copyWith(themeMode: value),
-                );
+                ref
+                    .read(themeSettingProvider.notifier)
+                    .update((state) => state.copyWith(themeMode: value));
                 Navigator.of(context).pop();
               }
             },
@@ -66,9 +68,9 @@ class ThemeDialog extends ConsumerWidget {
             groupValue: currentThemeMode,
             onChanged: (value) {
               if (value != null) {
-                ref.read(themeSettingProvider.notifier).update(
-                  (state) => state.copyWith(themeMode: value),
-                );
+                ref
+                    .read(themeSettingProvider.notifier)
+                    .update((state) => state.copyWith(themeMode: value));
                 Navigator.of(context).pop();
               }
             },

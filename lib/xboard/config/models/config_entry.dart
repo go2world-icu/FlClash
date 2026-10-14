@@ -1,5 +1,5 @@
 /// 配置条目基础类
-/// 
+///
 /// 表示配置中的一个条目，包含URL和描述信息
 class ConfigEntry {
   final String url;

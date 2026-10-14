@@ -1,20 +1,23 @@
 import 'package:fl_clash/models/models.dart';
+
 enum ImportStatus {
-  idle,        // 空闲状态
-  cleaning,    // 清理旧配置
+  idle, // 空闲状态
+  cleaning, // 清理旧配置
   downloading, // 下载配置
-  validating,  // 验证配置
-  adding,      // 添加配置
-  success,     // 成功完成
-  failed,      // 导入失败
+  validating, // 验证配置
+  adding, // 添加配置
+  success, // 成功完成
+  failed, // 导入失败
 }
+
 enum ImportErrorType {
-  networkError,     // 网络错误
-  downloadError,    // 下载失败
-  validationError,  // 配置验证失败
-  storageError,     // 存储错误
-  unknownError,     // 未知错误
+  networkError, // 网络错误
+  downloadError, // 下载失败
+  validationError, // 配置验证失败
+  storageError, // 存储错误
+  unknownError, // 未知错误
 }
+
 class ImportResult {
   final bool isSuccess;
   final String? errorMessage;
@@ -28,15 +31,8 @@ class ImportResult {
     this.profile,
     this.duration,
   });
-  factory ImportResult.success({
-    Profile? profile,
-    Duration? duration,
-  }) {
-    return ImportResult(
-      isSuccess: true,
-      profile: profile,
-      duration: duration,
-    );
+  factory ImportResult.success({Profile? profile, Duration? duration}) {
+    return ImportResult(isSuccess: true, profile: profile, duration: duration);
   }
   factory ImportResult.failure({
     required String errorMessage,
@@ -51,6 +47,7 @@ class ImportResult {
     );
   }
 }
+
 class ImportState {
   final ImportStatus status;
   final String? message;
@@ -87,6 +84,7 @@ class ImportState {
       lastSuccessTime: lastSuccessTime ?? this.lastSuccessTime,
     );
   }
+
   String get statusText {
     switch (status) {
       case ImportStatus.idle:
@@ -105,6 +103,7 @@ class ImportState {
         return '导入失败';
     }
   }
+
   String? get errorTypeMessage {
     if (lastResult?.errorType == null) return null;
     switch (lastResult!.errorType!) {
@@ -120,4 +119,4 @@ class ImportState {
         return '未知错误，请重试';
     }
   }
-} 
+}

@@ -48,8 +48,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
   Widget _buildEmptyCard(ThemeData theme, BuildContext context) {
     return Container(
       decoration: ShapeDecoration(
-        color:
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.15,
+        ),
         shape: AppShape.all(12),
       ),
       padding: const EdgeInsets.all(16),
@@ -79,8 +80,11 @@ class SubscriptionUsageCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusCard(SubscriptionStatusResult statusResult,
-      ThemeData theme, BuildContext context) {
+  Widget _buildStatusCard(
+    SubscriptionStatusResult statusResult,
+    ThemeData theme,
+    BuildContext context,
+  ) {
     Glyph statusIcon;
     Color statusColor;
     String statusText;
@@ -90,21 +94,24 @@ class SubscriptionUsageCard extends ConsumerWidget {
         statusIcon = AppGlyphs.giftCard;
         statusColor = Colors.blue.shade600;
         statusText = AppLocalizations.of(context).xboardNoAvailableSubscription;
-        statusDetail =
-            AppLocalizations.of(context).xboardPurchaseSubscriptionToUse;
+        statusDetail = AppLocalizations.of(
+          context,
+        ).xboardPurchaseSubscriptionToUse;
         break;
       case SubscriptionStatusType.expired:
         statusIcon = AppGlyphs.clock;
         statusColor = Colors.red.shade600;
         statusText = AppLocalizations.of(context).xboardSubscriptionExpired;
-        statusDetail = statusResult.getDetailMessage(context) ??
+        statusDetail =
+            statusResult.getDetailMessage(context) ??
             AppLocalizations.of(context).xboardRenewToContinue;
         break;
       case SubscriptionStatusType.exhausted:
         statusIcon = AppGlyphs.dataUsage;
         statusColor = Colors.orange.shade600;
         statusText = AppLocalizations.of(context).xboardTrafficExhausted;
-        statusDetail = statusResult.getDetailMessage(context) ??
+        statusDetail =
+            statusResult.getDetailMessage(context) ??
             AppLocalizations.of(context).xboardBuyMoreTrafficOrUpgrade;
         break;
       default:
@@ -115,8 +122,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
     }
     return Container(
       decoration: ShapeDecoration(
-        color:
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.15,
+        ),
         shape: AppShape.all(12),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -138,11 +146,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
                   color: statusColor.withValues(alpha: 0.1),
                   shape: AppShape.all(10),
                 ),
-                child: GlyphIcon(
-                  statusIcon,
-                  color: statusColor,
-                  size: 20,
-                ),
+                child: GlyphIcon(statusIcon, color: statusColor, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -160,8 +164,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
                     Text(
                       statusDetail,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   ],
@@ -208,8 +213,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: ShapeDecoration(
-                color: theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
                 shape: AppShape.sm,
               ),
               child: Row(
@@ -261,7 +267,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
   }
 
   String _getRenewButtonText(
-      SubscriptionStatusType type, BuildContext context) {
+    SubscriptionStatusType type,
+    BuildContext context,
+  ) {
     switch (type) {
       case SubscriptionStatusType.noSubscription:
         return AppLocalizations.of(context).xboardPurchasePlan;
@@ -277,8 +285,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
   Future<void> _handleRenewAction(BuildContext context, WidgetRef ref) async {
     final website = XBoardConfig.appWebsite;
     if (website.isNotEmpty) {
-      final uri =
-          Uri.parse(website.startsWith('http') ? website : 'https://$website');
+      final uri = Uri.parse(
+        website.startsWith('http') ? website : 'https://$website',
+      );
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
@@ -291,8 +300,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
     final planName = subscriptionInfo?.planName;
     return Container(
       decoration: ShapeDecoration(
-        color:
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.15,
+        ),
         shape: AppShape.all(12),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -361,7 +371,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
                             ),
                           )
                         : Text(
-                            AppLocalizations.of(context).xboardUpdateSubscription,
+                            AppLocalizations.of(
+                              context,
+                            ).xboardUpdateSubscription,
                           ),
                   );
                 },
@@ -373,8 +385,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
             height: 6,
             decoration: ShapeDecoration(
               shape: AppShape.all(3),
-              color: theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.5),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
+              ),
             ),
             child: LinearProgressIndicator(
               value: progress,
@@ -461,11 +474,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
       children: [
         Row(
           children: [
-            GlyphIcon(
-              icon,
-              size: 16,
-              color: theme.colorScheme.primary,
-            ),
+            GlyphIcon(icon, size: 16, color: theme.colorScheme.primary),
             const SizedBox(width: 6),
             Text(
               label,
@@ -522,7 +531,8 @@ class SubscriptionUsageCard extends ConsumerWidget {
     if (profileSubscriptionInfo?.expire != null &&
         profileSubscriptionInfo!.expire != 0) {
       expiredAt = DateTime.fromMillisecondsSinceEpoch(
-          profileSubscriptionInfo!.expire * 1000);
+        profileSubscriptionInfo!.expire * 1000,
+      );
     } else if (subscriptionInfo?.expiredAt != null) {
       expiredAt = subscriptionInfo!.expiredAt;
     }

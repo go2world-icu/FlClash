@@ -16,8 +16,8 @@ _$DomainUserImpl _$$DomainUserImplFromJson(Map<String, dynamic> json) =>
       uploadedBytes: (json['uploadedBytes'] as num).toInt(),
       downloadedBytes: (json['downloadedBytes'] as num).toInt(),
       balanceInCents: (json['balanceInCents'] as num).toInt(),
-      commissionBalanceInCents:
-          (json['commissionBalanceInCents'] as num).toInt(),
+      commissionBalanceInCents: (json['commissionBalanceInCents'] as num)
+          .toInt(),
       expiredAt: json['expiredAt'] == null
           ? null
           : DateTime.parse(json['expiredAt'] as String),

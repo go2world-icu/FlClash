@@ -100,7 +100,6 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
         currentStepDescription: '初始化完成',
         errorMessage: null,
       );
-
     } catch (e, stackTrace) {
       _logger.error('[Initialization] ❌ 初始化失败', e, stackTrace);
 
@@ -137,8 +136,8 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
 /// XBoard 统一初始化 Provider
 final initializationProvider =
     NotifierProvider<XBoardInitializationNotifier, InitializationState>(
-  XBoardInitializationNotifier.new,
-);
+      XBoardInitializationNotifier.new,
+    );
 
 /// 便捷 Provider: 是否已初始化
 final isInitializedProvider = Provider<bool>((ref) {

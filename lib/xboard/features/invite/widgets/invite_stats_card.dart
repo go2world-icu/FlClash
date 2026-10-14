@@ -11,7 +11,7 @@ class InviteStatsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inviteState = ref.watch(inviteProvider);
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -20,10 +20,7 @@ class InviteStatsCard extends ConsumerWidget {
           children: [
             Text(
               appLocalizations.inviteStats,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             if (inviteState.isLoading && !inviteState.hasInviteData)
@@ -33,8 +30,8 @@ class InviteStatsCard extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.totalInvites, 
-                      value: '${inviteState.totalInvites}', 
+                      title: appLocalizations.totalInvites,
+                      value: '${inviteState.totalInvites}',
                       icon: AppGlyphs.people,
                     ),
                   ),
@@ -47,8 +44,8 @@ class InviteStatsCard extends ConsumerWidget {
                   ),
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.totalCommission, 
-                      value: inviteState.formattedCommission, 
+                      title: appLocalizations.totalCommission,
+                      value: inviteState.formattedCommission,
                       icon: AppGlyphs.coin,
                     ),
                   ),

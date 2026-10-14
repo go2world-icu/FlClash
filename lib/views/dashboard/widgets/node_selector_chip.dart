@@ -151,7 +151,8 @@ class _LatencyLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasDelay = delay != null && delay! > 0;
-    final color = theme.colorScheme.delayColor(delay) ?? theme.colorScheme.outline;
+    final color =
+        theme.colorScheme.delayColor(delay) ?? theme.colorScheme.outline;
     final text = hasDelay ? '$delay ms' : '--';
 
     return Row(
@@ -160,10 +161,7 @@ class _LatencyLine extends StatelessWidget {
         Container(
           width: 6,
           height: 6,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
         Text(

@@ -27,7 +27,12 @@ Future<void> main(List<String> args) async {
 
   // Step 3: Build runner
   print('[3/4] 代码生成（riverpod / freezed / json / drift）...');
-  await _run('dart', ['run', 'build_runner', 'build', '--delete-conflicting-outputs']);
+  await _run('dart', [
+    'run',
+    'build_runner',
+    'build',
+    '--delete-conflicting-outputs',
+  ]);
   print('');
 
   // Step 4: Localization
@@ -41,9 +46,12 @@ Future<void> main(List<String> args) async {
 }
 
 Future<void> _run(String cmd, List<String> args) async {
-  final result = await Process.run(cmd, args,
-      workingDirectory: Directory.current.path,
-      runInShell: true);
+  final result = await Process.run(
+    cmd,
+    args,
+    workingDirectory: Directory.current.path,
+    runInShell: true,
+  );
   stdout.write(result.stdout);
   stderr.write(result.stderr);
   if (result.exitCode != 0) {

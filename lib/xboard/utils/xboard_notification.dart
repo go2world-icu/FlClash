@@ -4,7 +4,7 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/state.dart';
 
 /// XBoard 通知工具类
-/// 
+///
 /// 使用 FlClash 的底部中间 SnackBar 通知（自动消失）
 class XBoardNotification {
   XBoardNotification._();
@@ -28,7 +28,11 @@ class XBoardNotification {
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const GlyphIcon(AppGlyphs.checkCircle, color: Colors.white, size: 20),
+              const GlyphIcon(
+                AppGlyphs.checkCircle,
+                color: Colors.white,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Flexible(child: Text(message)),
             ],
@@ -52,10 +56,7 @@ class XBoardNotification {
   }
 
   /// 显示确认对话框（需要用户确认）
-  static Future<bool> showConfirm(
-    String message, {
-    String? title,
-  }) async {
+  static Future<bool> showConfirm(String message, {String? title}) async {
     final result = await dialogs.showMessage(
       message: TextSpan(text: message),
       cancelable: true,

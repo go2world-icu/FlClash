@@ -6,11 +6,7 @@ class UIState {
   final String? errorMessage;
   final DateTime? lastUpdated;
 
-  const UIState({
-    this.isLoading = false,
-    this.errorMessage,
-    this.lastUpdated,
-  });
+  const UIState({this.isLoading = false, this.errorMessage, this.lastUpdated});
 
   UIState copyWith({
     bool? isLoading,
@@ -39,9 +35,7 @@ class UIState {
 
   @override
   int get hashCode {
-    return isLoading.hashCode ^
-        errorMessage.hashCode ^
-        lastUpdated.hashCode;
+    return isLoading.hashCode ^ errorMessage.hashCode ^ lastUpdated.hashCode;
   }
 }
 
@@ -113,4 +107,3 @@ class UserAuthState {
         subscriptionInfo.hashCode;
   }
 }
-

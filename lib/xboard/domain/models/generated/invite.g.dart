@@ -8,7 +8,8 @@ part of '../invite.dart';
 
 _$DomainInviteImpl _$$DomainInviteImplFromJson(Map<String, dynamic> json) =>
     _$DomainInviteImpl(
-      codes: (json['codes'] as List<dynamic>?)
+      codes:
+          (json['codes'] as List<dynamic>?)
               ?.map((e) => DomainInviteCode.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
@@ -24,28 +25,28 @@ Map<String, dynamic> _$$DomainInviteImplToJson(_$DomainInviteImpl instance) =>
     };
 
 _$DomainInviteCodeImpl _$$DomainInviteCodeImplFromJson(
-        Map<String, dynamic> json) =>
-    _$DomainInviteCodeImpl(
-      code: json['code'] as String,
-      status: (json['status'] as num?)?.toInt() ?? 0,
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.parse(json['createdAt'] as String),
-      usedAt: json['usedAt'] == null
-          ? null
-          : DateTime.parse(json['usedAt'] as String),
-      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
-    );
+  Map<String, dynamic> json,
+) => _$DomainInviteCodeImpl(
+  code: json['code'] as String,
+  status: (json['status'] as num?)?.toInt() ?? 0,
+  createdAt: json['createdAt'] == null
+      ? null
+      : DateTime.parse(json['createdAt'] as String),
+  usedAt: json['usedAt'] == null
+      ? null
+      : DateTime.parse(json['usedAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+);
 
 Map<String, dynamic> _$$DomainInviteCodeImplToJson(
-        _$DomainInviteCodeImpl instance) =>
-    <String, dynamic>{
-      'code': instance.code,
-      'status': instance.status,
-      'createdAt': instance.createdAt?.toIso8601String(),
-      'usedAt': instance.usedAt?.toIso8601String(),
-      'metadata': instance.metadata,
-    };
+  _$DomainInviteCodeImpl instance,
+) => <String, dynamic>{
+  'code': instance.code,
+  'status': instance.status,
+  'createdAt': instance.createdAt?.toIso8601String(),
+  'usedAt': instance.usedAt?.toIso8601String(),
+  'metadata': instance.metadata,
+};
 
 _$InviteStatsImpl _$$InviteStatsImplFromJson(Map<String, dynamic> json) =>
     _$InviteStatsImpl(
@@ -69,21 +70,21 @@ Map<String, dynamic> _$$InviteStatsImplToJson(_$InviteStatsImpl instance) =>
     };
 
 _$DomainCommissionImpl _$$DomainCommissionImplFromJson(
-        Map<String, dynamic> json) =>
-    _$DomainCommissionImpl(
-      id: (json['id'] as num).toInt(),
-      tradeNo: json['tradeNo'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
-    );
+  Map<String, dynamic> json,
+) => _$DomainCommissionImpl(
+  id: (json['id'] as num).toInt(),
+  tradeNo: json['tradeNo'] as String,
+  amount: (json['amount'] as num).toDouble(),
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+);
 
 Map<String, dynamic> _$$DomainCommissionImplToJson(
-        _$DomainCommissionImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'tradeNo': instance.tradeNo,
-      'amount': instance.amount,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'metadata': instance.metadata,
-    };
+  _$DomainCommissionImpl instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'tradeNo': instance.tradeNo,
+  'amount': instance.amount,
+  'createdAt': instance.createdAt.toIso8601String(),
+  'metadata': instance.metadata,
+};

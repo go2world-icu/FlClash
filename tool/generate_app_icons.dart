@@ -77,14 +77,28 @@ Future<void> main() async {
   // ---- iOS (OS applies squircle mask — keep square) ----
   await Directory(iosIconDir).create(recursive: true);
   for (final entry in iosSizes.entries) {
-    await _render(rsvg, source, '$iosIconDir/${entry.key}', entry.value, entry.value);
+    await _render(
+      rsvg,
+      source,
+      '$iosIconDir/${entry.key}',
+      entry.value,
+      entry.value,
+    );
   }
   stdout.writeln('[iOS] ${iosSizes.length} icons');
 
   // ---- macOS (85% content, padded for Dock) ----
   await Directory(macOSIconDir).create(recursive: true);
   for (final size in macOSSizes) {
-    await _render(rsvg, source, '$macOSIconDir/app_icon_$size.png', size, size, isSvg: isSvg, scale: 0.8);
+    await _render(
+      rsvg,
+      source,
+      '$macOSIconDir/app_icon_$size.png',
+      size,
+      size,
+      isSvg: isSvg,
+      scale: 0.8,
+    );
   }
   stdout.writeln('[macOS] ${macOSSizes.length} icons');
 
@@ -113,7 +127,11 @@ Future<void> main() async {
     final adaptivePx = (adaptiveDp * scale).round();
     final legacyPx = (legacyDp * scale).round();
 
-    for (final name in ['ic_launcher_foreground', 'ic_launcher', 'ic_launcher_round']) {
+    for (final name in [
+      'ic_launcher_foreground',
+      'ic_launcher',
+      'ic_launcher_round',
+    ]) {
       final size = name == 'ic_launcher_foreground' ? adaptivePx : legacyPx;
       final png = File('$dir/$name.png');
       // Use foreground SVG (transparent bg, safe zone scaled) for adaptive icon foreground.
@@ -167,10 +185,15 @@ Future<void> _render(
 }) async {
   final renderSrc = isSvg ? _wrapRounded(src, w, h, scale) : src;
   try {
-    final r = await Process.run(
-      rsvg,
-      ['-w', '$w', '-h', '$h', '-o', out, renderSrc],
-    );
+    final r = await Process.run(rsvg, [
+      '-w',
+      '$w',
+      '-h',
+      '$h',
+      '-o',
+      out,
+      renderSrc,
+    ]);
     if (r.exitCode != 0) {
       stderr.writeln('rsvg-convert failed: $src → $out\n${r.stderr}');
       exit(r.exitCode);
@@ -184,11 +207,24 @@ Future<void> _render(
 /// uniform scale transform (centered).  [scale] &lt; 1.0 adds padding.
 String _wrapRounded(String src, int w, int h, [double scale = 1.0]) {
   var raw = File(src).readAsStringSync();
-  final vb = RegExp(r'viewBox="\S+\s+\S+\s+(\S+)\s+(\S+)"', multiLine: true).firstMatch(raw);
-  final svgW = int.tryParse(vb?.group(1) ?? '') ?? int.tryParse(
-      RegExp(r'width="(\d+)"', multiLine: true).firstMatch(raw)?.group(1) ?? '') ?? w;
-  final svgH = int.tryParse(vb?.group(2) ?? '') ?? int.tryParse(
-      RegExp(r'height="(\d+)"', multiLine: true).firstMatch(raw)?.group(1) ?? '') ?? h;
+  final vb = RegExp(
+    r'viewBox="\S+\s+\S+\s+(\S+)\s+(\S+)"',
+    multiLine: true,
+  ).firstMatch(raw);
+  final svgW =
+      int.tryParse(vb?.group(1) ?? '') ??
+      int.tryParse(
+        RegExp(r'width="(\d+)"', multiLine: true).firstMatch(raw)?.group(1) ??
+            '',
+      ) ??
+      w;
+  final svgH =
+      int.tryParse(vb?.group(2) ?? '') ??
+      int.tryParse(
+        RegExp(r'height="(\d+)"', multiLine: true).firstMatch(raw)?.group(1) ??
+            '',
+      ) ??
+      h;
   final r = (svgW * 0.22).round().clamp(4, svgW ~/ 2);
   final xf = scale < 1.0
       ? '\n<g transform="translate(${svgW * (1 - scale) / 2}, ${svgH * (1 - scale) / 2}) scale($scale, $scale)">'
@@ -196,7 +232,8 @@ String _wrapRounded(String src, int w, int h, [double scale = 1.0]) {
   final xfClose = scale < 1.0 ? '</g>' : '';
   raw = raw.replaceFirstMapped(
     RegExp(r'(<svg[^>]*>)', multiLine: true),
-    (m) => '${m[1]}\n<defs><clipPath id="_round"><rect width="$svgW" height="$svgH" rx="$r" ry="$r"/></clipPath></defs>$xf\n<g clip-path="url(#_round)">',
+    (m) =>
+        '${m[1]}\n<defs><clipPath id="_round"><rect width="$svgW" height="$svgH" rx="$r" ry="$r"/></clipPath></defs>$xf\n<g clip-path="url(#_round)">',
   );
   raw = raw.replaceFirst('</svg>', '$xfClose</g>\n</svg>');
   final tmp = File('${Directory.systemTemp.path}/rounded_${w}x$h.svg');
@@ -227,12 +264,15 @@ Uint8List _multiIco(List<Uint8List> pngs) {
   return b.toBytes();
 }
 
-int _dim(Uint8List p, int o) => (ByteData.sublistView(p, o, o + 4)).getUint32(0);
+int _dim(Uint8List p, int o) =>
+    (ByteData.sublistView(p, o, o + 4)).getUint32(0);
 
 Future<void> _toWebP(String png, String webp) async {
   final r = await Process.run('cwebp', ['-q', '90', png, '-o', webp]);
   if (r.exitCode != 0) stderr.writeln('cwebp failed: $png → $webp');
 }
 
-Uint8List _u16(int v) => (ByteData(2)..setUint16(0, v, Endian.little)).buffer.asUint8List();
-Uint8List _u32(int v) => (ByteData(4)..setUint32(0, v, Endian.little)).buffer.asUint8List();
+Uint8List _u16(int v) =>
+    (ByteData(2)..setUint16(0, v, Endian.little)).buffer.asUint8List();
+Uint8List _u32(int v) =>
+    (ByteData(4)..setUint32(0, v, Endian.little)).buffer.asUint8List();

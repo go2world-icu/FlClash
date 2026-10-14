@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+
 class XBContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -32,7 +33,9 @@ class XBContainer extends StatelessWidget {
           bottom: MediaQuery.viewPaddingOf(context).bottom,
         );
       }
-      final double realPaddingTop = safePadding.top > height * 0.5 ? 0 : safePadding.top;
+      final double realPaddingTop = safePadding.top > height * 0.5
+          ? 0
+          : safePadding.top;
       content = Padding(
         padding: EdgeInsets.only(
           left: safePadding.left,

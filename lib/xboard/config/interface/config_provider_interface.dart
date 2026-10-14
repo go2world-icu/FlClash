@@ -20,7 +20,7 @@ abstract interface class ConfigProviderInterface {
   // ===== 基础配置获取 =====
 
   /// 获取面板类型
-  /// 
+  ///
   /// 返回 'xboard' 或 'v2board'
   String getPanelType();
 
@@ -82,4 +82,3 @@ abstract interface class ConfigProviderInterface {
   /// 返回配置变化的流，外部可以监听配置更新
   Stream<void> get configChangeStream;
 }
-

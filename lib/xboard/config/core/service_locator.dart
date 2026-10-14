@@ -2,7 +2,7 @@
 typedef ServiceFactory<T> = T Function();
 
 /// 简单的服务定位器
-/// 
+///
 /// 提供基础的依赖注入功能
 class ServiceLocator {
   static final Map<Type, dynamic> _services = {};

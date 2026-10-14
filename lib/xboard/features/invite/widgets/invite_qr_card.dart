@@ -14,13 +14,14 @@ class InviteQrCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inviteState = ref.watch(inviteProvider);
-    
-    final firstCode = inviteState.hasInviteData && inviteState.inviteData!.codes.isNotEmpty
+
+    final firstCode =
+        inviteState.hasInviteData && inviteState.inviteData!.codes.isNotEmpty
         ? inviteState.inviteData!.codes.first
         : null;
-    
+
     final baseUrl = _getSdkBaseUrl();
-    final inviteUrl = firstCode != null && baseUrl.isNotEmpty 
+    final inviteUrl = firstCode != null && baseUrl.isNotEmpty
         ? '$baseUrl/login#/register?code=${firstCode.code}'
         : '';
 
@@ -32,19 +33,16 @@ class InviteQrCard extends ConsumerWidget {
           children: [
             Text(
               appLocalizations.myInviteQr,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            
+
             if (firstCode != null) ...[
-              QrCodeWidget(
-                data: inviteUrl,
-                size: 200,
-              ),
+              QrCodeWidget(data: inviteUrl, size: 200),
               const SizedBox(height: 20),
-              
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -53,7 +51,10 @@ class InviteQrCard extends ConsumerWidget {
                     icon: const GlyphIcon(AppGlyphs.save),
                     label: Text(appLocalizations.saveQr),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                   ElevatedButton.icon(
@@ -61,7 +62,10 @@ class InviteQrCard extends ConsumerWidget {
                     icon: const GlyphIcon(AppGlyphs.link),
                     label: Text(appLocalizations.copyInviteLink),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -77,7 +81,9 @@ class InviteQrCard extends ConsumerWidget {
                       appLocalizations.generatingInviteCode,
                       style: TextStyle(
                         fontSize: 16,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ],
@@ -91,7 +97,9 @@ class InviteQrCard extends ConsumerWidget {
                     GlyphIcon(
                       AppGlyphs.error,
                       size: 64,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.4),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -99,7 +107,9 @@ class InviteQrCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -107,7 +117,9 @@ class InviteQrCard extends ConsumerWidget {
                       appLocalizations.checkNetwork,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),

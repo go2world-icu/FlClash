@@ -20,15 +20,10 @@ import '../core/config_settings.dart';
 final _logger = FileLogger('xboard_config_accessor.dart');
 
 /// 配置访问器状态
-enum ConfigAccessorState {
-  uninitialized,
-  loading,
-  ready,
-  error,
-}
+enum ConfigAccessorState { uninitialized, loading, ready, error }
 
 /// XBoard配置访问器
-/// 
+///
 /// 统一接口层，整合所有配置获取、解析和服务模块
 /// 注意：这个类不应该被外部直接实例化，请使用XBoardConfig
 class XBoardConfigAccessor {
@@ -55,9 +50,9 @@ class XBoardConfigAccessor {
   OnlineSupportService? _onlineSupportService;
 
   // 事件流
-  final StreamController<ParsedConfiguration> _configStreamController = 
+  final StreamController<ParsedConfiguration> _configStreamController =
       StreamController<ParsedConfiguration>.broadcast();
-  final StreamController<ConfigAccessorState> _stateStreamController = 
+  final StreamController<ConfigAccessorState> _stateStreamController =
       StreamController<ConfigAccessorState>.broadcast();
 
   XBoardConfigAccessor({
@@ -108,7 +103,8 @@ class XBoardConfigAccessor {
   // ========== 事件流 ==========
 
   /// 配置变化流
-  Stream<ParsedConfiguration> get configStream => _configStreamController.stream;
+  Stream<ParsedConfiguration> get configStream =>
+      _configStreamController.stream;
 
   /// 状态变化流
   Stream<ConfigAccessorState> get stateStream => _stateStreamController.stream;
@@ -132,7 +128,9 @@ class XBoardConfigAccessor {
 
     try {
       // 只拉取 redirect/gitee（base app/log 配置已合并到 redirect 响应中）
-      final multiResult = await _remoteManager.fetchAllConfigs(includeBase: false);
+      final multiResult = await _remoteManager.fetchAllConfigs(
+        includeBase: false,
+      );
 
       if (multiResult.hasSuccess && multiResult.firstSuccessfulData != null) {
         final data = multiResult.firstSuccessfulData!;
@@ -143,13 +141,15 @@ class XBoardConfigAccessor {
         // 提取并处理主配置
         final configData = _parser.extractConfigFromRemoteResult(data);
         if (configData != null) {
-          await _processConfigData(configData, multiResult.firstSuccessfulSource ?? 'remote');
+          await _processConfigData(
+            configData,
+            multiResult.firstSuccessfulSource ?? 'remote',
+          );
           return;
         }
       }
 
       throw Exception('Remote config fetch failed');
-
     } catch (e) {
       _lastError = 'Configuration refresh failed: $e';
       await _updateState(ConfigAccessorState.error);
@@ -163,10 +163,12 @@ class XBoardConfigAccessor {
     final logData = data['log'] as Map<String, dynamic>?;
 
     if (appData != null) {
-      if (appData['title'] is String && (appData['title'] as String).isNotEmpty) {
+      if (appData['title'] is String &&
+          (appData['title'] as String).isNotEmpty) {
         _appTitle = appData['title'] as String;
       }
-      if (appData['website'] is String && (appData['website'] as String).isNotEmpty) {
+      if (appData['website'] is String &&
+          (appData['website'] as String).isNotEmpty) {
         _appWebsite = appData['website'] as String;
       }
     }
@@ -184,11 +186,11 @@ class XBoardConfigAccessor {
   /// 应用日志设置
   void _applyLogSettings() {
     if (_logSettings.enabled) {
-      _logger.info('日志配置已更新: level=${_logSettings.level}, prefix=${_logSettings.prefix}');
+      _logger.info(
+        '日志配置已更新: level=${_logSettings.level}, prefix=${_logSettings.prefix}',
+      );
     }
   }
-
-
 
   /// 从指定源刷新配置
   Future<void> refreshFromSource(String sourceName) async {
@@ -201,7 +203,9 @@ class XBoardConfigAccessor {
       switch (sourceName.toLowerCase()) {
         case 'remote':
           final multiResult = await _remoteManager.fetchAllConfigs();
-          result = multiResult.firstSuccessful ?? ConfigResult.failure('No successful remote source', 'remote');
+          result =
+              multiResult.firstSuccessful ??
+              ConfigResult.failure('No successful remote source', 'remote');
           break;
         case 'base':
           result = await _remoteManager.fetchBaseConfig();
@@ -213,7 +217,10 @@ class XBoardConfigAccessor {
           result = await _remoteManager.getGiteeConfig();
           break;
         default:
-          result = ConfigResult.failure('Unknown source: $sourceName. Only remote sources (base, redirect, gitee) are supported.', sourceName);
+          result = ConfigResult.failure(
+            'Unknown source: $sourceName. Only remote sources (base, redirect, gitee) are supported.',
+            sourceName,
+          );
       }
 
       if (result.isSuccess && result.data != null) {
@@ -226,9 +233,10 @@ class XBoardConfigAccessor {
           throw Exception('Invalid config data from $sourceName');
         }
       } else {
-        throw Exception('Failed to get config from $sourceName: ${result.error}');
+        throw Exception(
+          'Failed to get config from $sourceName: ${result.error}',
+        );
       }
-
     } catch (e) {
       _lastError = 'Refresh from $sourceName failed: $e';
       await _updateState(ConfigAccessorState.error);
@@ -276,7 +284,7 @@ class XBoardConfigAccessor {
   // ========== 便捷访问方法 ==========
 
   /// 获取面板类型
-  /// 
+  ///
   /// 必须从配置中读取，不提供默认值
   String getPanelType() {
     if (_currentConfig == null) {
@@ -285,7 +293,7 @@ class XBoardConfigAccessor {
         code: 'CONFIG_NOT_INITIALIZED',
       );
     }
-    
+
     final panelType = _currentConfig!.panelType;
     if (panelType.isEmpty) {
       throw XBoardConfigException(
@@ -293,7 +301,7 @@ class XBoardConfigAccessor {
         code: 'PANEL_TYPE_NOT_CONFIGURED',
       );
     }
-    
+
     return panelType;
   }
 
@@ -344,7 +352,10 @@ class XBoardConfigAccessor {
 
   /// 构建订阅URL
   String? buildSubscriptionUrl(String token, {bool preferEncrypt = true}) {
-    return _currentConfig?.buildSubscriptionUrl(token, preferEncrypt: preferEncrypt);
+    return _currentConfig?.buildSubscriptionUrl(
+      token,
+      preferEncrypt: preferEncrypt,
+    );
   }
 
   // ========== 统计信息 ==========
@@ -369,7 +380,8 @@ class XBoardConfigAccessor {
       'updates': _currentConfig!.updates.length,
       'onlineSupport': _currentConfig!.onlineSupport.length,
       'subscriptionUrls': _currentConfig!.subscription?.urls.length ?? 0,
-      'subscriptionEncryptUrls': _currentConfig!.subscription?.encryptUrls.length ?? 0,
+      'subscriptionEncryptUrls':
+          _currentConfig!.subscription?.encryptUrls.length ?? 0,
       'currentProvider': _currentProvider,
       'lastUpdateTime': _lastUpdateTime?.toIso8601String(),
       'sourceHash': _currentConfig!.sourceHash,
@@ -390,7 +402,10 @@ class XBoardConfigAccessor {
   // ========== 内部方法 ==========
 
   /// 处理配置数据
-  Future<void> _processConfigData(Map<String, dynamic> configData, String source) async {
+  Future<void> _processConfigData(
+    Map<String, dynamic> configData,
+    String source,
+  ) async {
     try {
       // 解析配置
       _currentConfig = _parser.parseFromJson(configData, _currentProvider);
@@ -401,7 +416,9 @@ class XBoardConfigAccessor {
       _proxyService = ProxyService(_currentConfig!.proxies);
       _webSocketService = WebSocketService(_currentConfig!.webSockets);
       _updateService = UpdateService(_currentConfig!.updates);
-      _onlineSupportService = OnlineSupportService(_currentConfig!.onlineSupport);
+      _onlineSupportService = OnlineSupportService(
+        _currentConfig!.onlineSupport,
+      );
 
       await _updateState(ConfigAccessorState.ready);
 
@@ -431,6 +448,6 @@ class XBoardConfigAccessor {
   @override
   String toString() {
     return 'XBoardConfigAccessor(state: $_state, provider: $_currentProvider, '
-           'hasConfig: ${_currentConfig != null})';
+        'hasConfig: ${_currentConfig != null})';
   }
 }

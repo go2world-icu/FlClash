@@ -2297,10 +2297,7 @@ abstract final class AppGlyphs {
     GlyphArc(12, 12.6, 7.8, math.pi, math.pi, role: GlyphRole.line),
     GlyphBox(3.2, 11.4, 6.8, 17.4, 1.8, role: GlyphRole.line),
     GlyphBox(17.2, 11.4, 20.8, 17.4, 1.8, role: GlyphRole.line),
-    GlyphPath(
-      'M18.4 17.6C18.4 19.9 15.4 20.9 12.6 20.9',
-      role: GlyphRole.line,
-    ),
+    GlyphPath('M18.4 17.6C18.4 19.9 15.4 20.9 12.6 20.9', role: GlyphRole.line),
   ]);
 
   static const accountBox = Glyph([

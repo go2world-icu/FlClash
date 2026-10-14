@@ -13,7 +13,7 @@ class CommissionHistoryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inviteState = ref.watch(inviteProvider);
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -25,10 +25,7 @@ class CommissionHistoryCard extends ConsumerWidget {
               children: [
                 Text(
                   appLocalizations.commissionHistory,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 if (inviteState.totalCommission > 0)
                   TextButton.icon(
@@ -46,22 +43,28 @@ class CommissionHistoryCard extends ConsumerWidget {
                     GlyphIcon(
                       AppGlyphs.history,
                       size: 48,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.4),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       appLocalizations.noCommissionRecord,
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ],
                 ),
               )
             else
-              ...inviteState.commissionHistory.take(5).map((commission) => 
-                _buildCommissionItem(context, commission)
-              ),
+              ...inviteState.commissionHistory
+                  .take(5)
+                  .map(
+                    (commission) => _buildCommissionItem(context, commission),
+                  ),
             if (inviteState.commissionHistory.length >= 5)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -73,15 +76,21 @@ class CommissionHistoryCard extends ConsumerWidget {
                   ),
                   if (inviteState.commissionHistory.length >= 5)
                     TextButton.icon(
-                      onPressed: () => ref.read(inviteProvider.notifier).loadNextHistoryPage(),
-                      icon: inviteState.isLoadingHistory 
-                        ? const SizedBox(
-                            width: 16, 
-                            height: 16, 
-                            child: CircularProgressIndicator(strokeWidth: 2)
-                          )
-                        : const GlyphIcon(AppGlyphs.refresh),
-                      label: Text(inviteState.isLoadingHistory ? appLocalizations.loading : appLocalizations.loadMore),
+                      onPressed: () => ref
+                          .read(inviteProvider.notifier)
+                          .loadNextHistoryPage(),
+                      icon: inviteState.isLoadingHistory
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const GlyphIcon(AppGlyphs.refresh),
+                      label: Text(
+                        inviteState.isLoadingHistory
+                            ? appLocalizations.loading
+                            : appLocalizations.loadMore,
+                      ),
                     ),
                 ],
               ),
@@ -91,25 +100,22 @@ class CommissionHistoryCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildCommissionItem(BuildContext context, DomainCommission commission) {
+  Widget _buildCommissionItem(
+    BuildContext context,
+    DomainCommission commission,
+  ) {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: ShapeDecoration(
         shape: AppShape.sm.copyWith(
-          side: BorderSide(
-            color: theme.colorScheme.outline.withOpacity(0.3),
-          ),
+          side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.3)),
         ),
       ),
       child: Row(
         children: [
-          GlyphIcon(
-            AppGlyphs.coin,
-            color: theme.colorScheme.primary,
-            size: 20,
-          ),
+          GlyphIcon(AppGlyphs.coin, color: theme.colorScheme.primary, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -150,10 +156,7 @@ class CommissionHistoryCard extends ConsumerWidget {
   }
 
   void _showWithdrawDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const WithdrawDialog(),
-    );
+    showDialog(context: context, builder: (context) => const WithdrawDialog());
   }
 
   void _showCommissionHistoryDialog(BuildContext context) {

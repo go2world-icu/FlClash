@@ -6,7 +6,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 /// 用于统一管理应用内Markdown内容的显示样式
 class NoticeMarkdownStyles {
   /// 获取通知内容的Markdown样式
-  /// 
+  ///
   /// 样式设计原则：
   /// - H1-H6: 降级处理，因为通知标题已在顶部显示
   /// - 正文: 适中的行高和字体大小，保持可读性
@@ -162,9 +162,7 @@ class NoticeMarkdownStyles {
         color: colorScheme.onSurface,
       ),
 
-      tableBody: textTheme.bodyMedium?.copyWith(
-        color: colorScheme.onSurface,
-      ),
+      tableBody: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
 
       tableBorder: TableBorder.all(
         color: colorScheme.outline.withValues(alpha: 0.2),
@@ -174,9 +172,7 @@ class NoticeMarkdownStyles {
       tableCellsPadding: const EdgeInsets.all(8),
 
       // ========== 复选框 ==========
-      checkbox: textTheme.bodyMedium?.copyWith(
-        color: colorScheme.onSurface,
-      ),
+      checkbox: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
     );
   }
 
@@ -188,4 +184,3 @@ class NoticeMarkdownStyles {
     return getNoticeContentStyle(context);
   }
 }
-

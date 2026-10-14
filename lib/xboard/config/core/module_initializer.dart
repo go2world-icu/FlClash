@@ -11,7 +11,7 @@ import '../../core/core.dart';
 final _logger = FileLogger('module_initializer.dart');
 
 /// 模块初始化器（内部类）
-/// 
+///
 /// 负责初始化所有模块和依赖注入
 /// 注意：这个类不应该被外部直接使用，请使用XBoardConfig
 class ModuleInitializer {
@@ -25,7 +25,7 @@ class ModuleInitializer {
     }
 
     final config = settings ?? const ConfigSettings();
-    
+
     try {
       // 验证配置
       if (!config.validate()) {
@@ -72,7 +72,10 @@ class ModuleInitializer {
   }
 
   /// 配置日志
-  static Future<void> _configureLogger(LogSettings logSettings, [String provider = 'xboard_default_key']) async {
+  static Future<void> _configureLogger(
+    LogSettings logSettings, [
+    String provider = 'xboard_default_key',
+  ]) async {
     if (!logSettings.enabled) {
       _logger.debug('Logger 已禁用，仅保留控制台输出');
       XBoardLogger.reset();
@@ -121,8 +124,13 @@ class ModuleInitializer {
 
     // 注册远程配置管理器
     ServiceLocator.registerLazySingleton<RemoteConfigManager>(() {
-      _logger.info('Creating RemoteConfigManager with ${config.remoteConfig.sources.length} sources');
-      return RemoteConfigManager.fromSettings(config.remoteConfig, website: config.website);
+      _logger.info(
+        'Creating RemoteConfigManager with ${config.remoteConfig.sources.length} sources',
+      );
+      return RemoteConfigManager.fromSettings(
+        config.remoteConfig,
+        website: config.website,
+      );
     });
 
     // 本地配置功能已移除，只使用远程数据
@@ -153,7 +161,10 @@ class ModuleInitializer {
         final configs = accessor.getOnlineSupportConfigs();
         return OnlineSupportService(configs);
       } catch (e) {
-        _logger.warning('Failed to initialize OnlineSupportService, using empty config', e);
+        _logger.warning(
+          'Failed to initialize OnlineSupportService, using empty config',
+          e,
+        );
         return OnlineSupportService([]);
       }
     });
@@ -187,13 +198,13 @@ class ModuleInitializer {
     bool autoWarmUp = true,
   }) async {
     await initialize(settings: settings);
-    
+
     final accessor = ServiceLocator.get<XBoardConfigAccessor>();
-    
+
     if (autoWarmUp) {
       await accessor.refreshConfiguration();
     }
-    
+
     return accessor;
   }
 }

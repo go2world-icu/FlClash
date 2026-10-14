@@ -9,26 +9,29 @@ class CommissionHistoryDialog extends ConsumerStatefulWidget {
   const CommissionHistoryDialog({super.key});
 
   @override
-  ConsumerState<CommissionHistoryDialog> createState() => _CommissionHistoryDialogState();
+  ConsumerState<CommissionHistoryDialog> createState() =>
+      _CommissionHistoryDialogState();
 }
 
-class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialog> {
+class _CommissionHistoryDialogState
+    extends ConsumerState<CommissionHistoryDialog> {
   final ScrollController _scrollController = ScrollController();
-  
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
   }
-  
+
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       final inviteState = ref.read(inviteProvider);
       if (inviteState.hasMoreHistory && !inviteState.isLoadingHistory) {
         ref.read(inviteProvider.notifier).loadNextHistoryPage();
@@ -39,14 +42,15 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
   @override
   Widget build(BuildContext context) {
     final inviteState = ref.watch(inviteProvider);
-    
+
     return AlertDialog(
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(appLocalizations.commissionHistory),
           IconButton(
-            onPressed: () => ref.read(inviteProvider.notifier).refreshCommissionHistory(),
+            onPressed: () =>
+                ref.read(inviteProvider.notifier).refreshCommissionHistory(),
             icon: const GlyphIcon(AppGlyphs.refresh),
             tooltip: appLocalizations.refresh,
           ),
@@ -63,7 +67,9 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    appLocalizations.totalRecords(inviteState.commissionHistory.length),
+                    appLocalizations.totalRecords(
+                      inviteState.commissionHistory.length,
+                    ),
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   Text(
@@ -80,15 +86,24 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const GlyphIcon(AppGlyphs.history, size: 48, color: Colors.grey),
+                          const GlyphIcon(
+                            AppGlyphs.history,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(height: 8),
-                          Text(appLocalizations.noCommissionRecord, style: const TextStyle(color: Colors.grey)),
+                          Text(
+                            appLocalizations.noCommissionRecord,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                     )
                   : ListView.builder(
                       controller: _scrollController,
-                      itemCount: inviteState.commissionHistory.length + (inviteState.hasMoreHistory ? 1 : 0),
+                      itemCount:
+                          inviteState.commissionHistory.length +
+                          (inviteState.hasMoreHistory ? 1 : 0),
                       itemBuilder: (buildContext, index) {
                         if (index >= inviteState.commissionHistory.length) {
                           return Container(
@@ -99,18 +114,27 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
                                       children: [
                                         const CircularProgressIndicator(),
                                         const SizedBox(height: 8),
-                                        Text(appLocalizations.loading, style: const TextStyle(color: Colors.grey)),
+                                        Text(
+                                          appLocalizations.loading,
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                          ),
+                                        ),
                                       ],
                                     )
                                   : TextButton.icon(
-                                      onPressed: () => ref.read(inviteProvider.notifier).loadNextHistoryPage(),
-                                      icon: const GlyphIcon(AppGlyphs.caretDown),
+                                      onPressed: () => ref
+                                          .read(inviteProvider.notifier)
+                                          .loadNextHistoryPage(),
+                                      icon: const GlyphIcon(
+                                        AppGlyphs.caretDown,
+                                      ),
                                       label: Text(appLocalizations.loadMore),
                                     ),
                             ),
                           );
                         }
-                        
+
                         final commission = inviteState.commissionHistory[index];
                         return _buildCommissionItem(commission);
                       },
@@ -139,11 +163,7 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
       ),
       child: Row(
         children: [
-          GlyphIcon(
-            AppGlyphs.coin,
-            color: Colors.green[600],
-            size: 20,
-          ),
+          GlyphIcon(AppGlyphs.coin, color: Colors.green[600], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -158,10 +178,7 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
                 ),
                 Text(
                   appLocalizations.orderNumber(commission.tradeNo),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -171,10 +188,7 @@ class _CommissionHistoryDialogState extends ConsumerState<CommissionHistoryDialo
             children: [
               Text(
                 '${commission.createdAt.year}-${commission.createdAt.month.toString().padLeft(2, '0')}-${commission.createdAt.day.toString().padLeft(2, '0')}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),

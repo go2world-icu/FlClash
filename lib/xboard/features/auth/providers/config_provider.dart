@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 
 /// 配置数据Provider
@@ -24,17 +24,9 @@ class ConfigState {
   final bool isLoading;
   final String? error;
 
-  const ConfigState({
-    this.data,
-    this.isLoading = false,
-    this.error,
-  });
+  const ConfigState({this.data, this.isLoading = false, this.error});
 
-  ConfigState copyWith({
-    ConfigModel? data,
-    bool? isLoading,
-    String? error,
-  }) {
+  ConfigState copyWith({ConfigModel? data, bool? isLoading, String? error}) {
     return ConfigState(
       data: data ?? this.data,
       isLoading: isLoading ?? this.isLoading,
@@ -52,19 +44,12 @@ class ConfigStateNotifier extends Notifier<ConfigState> {
 
   Future<void> loadConfig() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final config = await XBoardSDK.instance.config.getConfig();
-      state = state.copyWith(
-        data: config,
-        isLoading: false,
-        error: null,
-      );
+      state = state.copyWith(data: config, isLoading: false, error: null);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 

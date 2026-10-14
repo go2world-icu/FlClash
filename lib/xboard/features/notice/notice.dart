@@ -2,4 +2,3 @@
 library;
 
 export 'providers/notice_provider.dart';
-

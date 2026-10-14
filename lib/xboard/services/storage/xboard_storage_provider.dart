@@ -55,8 +55,7 @@ class _LazyStorage implements StorageInterface {
       (await _storage).setString(key, value);
 
   @override
-  Future<Result<int?>> getInt(String key) async =>
-      (await _storage).getInt(key);
+  Future<Result<int?>> getInt(String key) async => (await _storage).getInt(key);
 
   @override
   Future<Result<bool>> setInt(String key, int value) async =>
@@ -87,8 +86,7 @@ class _LazyStorage implements StorageInterface {
       (await _storage).setStringList(key, value);
 
   @override
-  Future<Result<bool>> remove(String key) async =>
-      (await _storage).remove(key);
+  Future<Result<bool>> remove(String key) async => (await _storage).remove(key);
 
   @override
   Future<Result<bool>> clear() async => (await _storage).clear();
@@ -98,6 +96,5 @@ class _LazyStorage implements StorageInterface {
       (await _storage).containsKey(key);
 
   @override
-  Future<Result<Set<String>>> getKeys() async =>
-      (await _storage).getKeys();
+  Future<Result<Set<String>>> getKeys() async => (await _storage).getKeys();
 }

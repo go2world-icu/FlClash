@@ -1,7 +1,7 @@
 import '../models/proxy_info.dart';
 
 /// 代理服务
-/// 
+///
 /// 负责代理相关的基础操作，暂不实现连通性测试等内部方法
 class ProxyService {
   final List<ProxyInfo> _proxies;
@@ -86,6 +86,6 @@ class ProxyService {
   @override
   String toString() {
     return 'ProxyService(proxies: ${_proxies.length}, '
-           'protocols: ${getAvailableProtocols().join(', ')})';
+        'protocols: ${getAvailableProtocols().join(', ')})';
   }
 }

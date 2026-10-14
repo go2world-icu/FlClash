@@ -1,4 +1,4 @@
-﻿import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
@@ -23,7 +23,10 @@ Future<List<InviteCodeModel>> getInviteCodes(Ref ref) async {
 
 /// 获取佣金详情
 @riverpod
-Future<List<CommissionDetailModel>> getCommissionDetails(Ref ref, {int page = 1}) async {
+Future<List<CommissionDetailModel>> getCommissionDetails(
+  Ref ref, {
+  int page = 1,
+}) async {
   final sdk = await ref.watch(xboardSdkProvider.future);
   return await sdk.invite.getCommissionDetails(page: page);
 }

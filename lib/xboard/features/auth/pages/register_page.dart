@@ -1,4 +1,4 @@
-﻿import 'package:fl_clash/xboard/features/auth/auth.dart';
+import 'package:fl_clash/xboard/features/auth/auth.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
@@ -8,11 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart' show ConfigModel;
+
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
   @override
   ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
+
 class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -24,7 +26,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSendingEmailCode = false;
-  
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -34,19 +36,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     _emailCodeController.dispose();
     super.dispose();
   }
+
   Future<void> _register() async {
     // 获取配置
     final configAsync = ref.read(configProvider);
     final config = configAsync.value;
     final isInviteForce = config?.isInviteForce ?? false;
     final isEmailVerify = config?.isEmailVerify ?? false;
-    
+
     // 检查邮请码是否必填
     if (isInviteForce && _inviteCodeController.text.trim().isEmpty) {
       _showInviteCodeDialog();
       return;
     }
-    
+
     // 检查邮箱验证码是否必填
     if (isEmailVerify && _emailCodeController.text.trim().isEmpty) {
       XBoardNotification.showError('请输入邮箱验证码');
@@ -63,18 +66,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         final success = await XBoardSDK.instance.auth.register(
           _emailController.text,
           _passwordController.text,
-          inviteCode: _inviteCodeController.text.trim().isNotEmpty 
-              ? _inviteCodeController.text 
+          inviteCode: _inviteCodeController.text.trim().isNotEmpty
+              ? _inviteCodeController.text
               : null,
-          emailCode: isEmailVerify && _emailCodeController.text.trim().isNotEmpty
+          emailCode:
+              isEmailVerify && _emailCodeController.text.trim().isNotEmpty
               ? _emailCodeController.text
               : null,
         );
-        
+
         if (!success) {
           throw Exception('注册失败');
         }
-        
+
         // 注册成功
         if (mounted) {
           final storageService = ref.read(storageServiceProvider);
@@ -84,7 +88,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             true, // 启用记住密码
           );
           if (mounted) {
-            XBoardNotification.showSuccess(appLocalizations.xboardRegisterSuccess);
+            XBoardNotification.showSuccess(
+              appLocalizations.xboardRegisterSuccess,
+            );
           }
           Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
@@ -96,9 +102,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         if (mounted) {
           // 提取详细的错误信息
           String errorMessage = '注册失败';
-          
+
           final errorStr = e.toString();
-          
+
           // 尝试提取具体的错误信息
           if (errorStr.contains('XBoardException')) {
             // 格式1: XBoardException(400): 具体错误信息
@@ -107,7 +113,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               if (parts.length > 1) {
                 errorMessage = parts.sublist(1).join('): ').trim();
               }
-            } 
+            }
             // 格式2: XBoardException: 具体错误信息
             else if (errorStr.contains('XBoardException: ')) {
               errorMessage = errorStr.split('XBoardException: ').last.trim();
@@ -116,17 +122,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             // 其他类型的错误，直接使用错误文本
             errorMessage = errorStr;
           }
-          
+
           // 移除可能的 "Error: " 前缀
           if (errorMessage.startsWith('Error: ')) {
             errorMessage = errorMessage.substring(7);
           }
-          
+
           // 500错误或通用错误提示：可能是邀请码问题
           if (errorMessage.contains('遇到了些问题') || errorMessage.contains('500')) {
             errorMessage = appLocalizations.inviteCodeIncorrect;
           }
-          
+
           XBoardNotification.showError(errorMessage);
         }
       } finally {
@@ -146,7 +152,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
 
     if (!_emailController.text.contains('@')) {
-      XBoardNotification.showError(appLocalizations.pleaseEnterValidEmailAddress);
+      XBoardNotification.showError(
+        appLocalizations.pleaseEnterValidEmailAddress,
+      );
       return;
     }
 
@@ -160,11 +168,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       await XBoardSDK.instance.auth.sendEmailVerifyCode(_emailController.text);
 
       if (mounted) {
-        XBoardNotification.showSuccess(appLocalizations.verificationCodeSentCheckEmail);
+        XBoardNotification.showSuccess(
+          appLocalizations.verificationCodeSentCheckEmail,
+        );
       }
     } catch (e) {
       if (mounted) {
-        XBoardNotification.showError(appLocalizations.sendVerificationCodeFailed(e.toString()));
+        XBoardNotification.showError(
+          appLocalizations.sendVerificationCodeFailed(e.toString()),
+        );
       }
     } finally {
       if (mounted) {
@@ -199,7 +211,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final configAsync = ref.watch(configProvider);
-    
+
     // 处理异步加载状态
     return configAsync.when(
       loading: () => Scaffold(
@@ -210,8 +222,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       data: (config) => _buildPage(context, colorScheme, config),
     );
   }
-  
-  Widget _buildPage(BuildContext context, ColorScheme colorScheme, ConfigModel? config) {
+
+  Widget _buildPage(
+    BuildContext context,
+    ColorScheme colorScheme,
+    ConfigModel? config,
+  ) {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: XBContainer(
@@ -252,15 +268,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       children: [
                         Text(
                           appLocalizations.fillInfoToRegister,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 32),
                         XBInputField(
                           controller: _emailController,
                           labelText: appLocalizations.emailAddress,
-                          hintText: appLocalizations.pleaseEnterYourEmailAddress,
+                          hintText:
+                              appLocalizations.pleaseEnterYourEmailAddress,
                           prefixIcon: AppGlyphs.email,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
@@ -268,7 +284,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               return appLocalizations.pleaseEnterEmailAddress;
                             }
                             if (!value.contains('@')) {
-                              return appLocalizations.pleaseEnterValidEmailAddress;
+                              return appLocalizations
+                                  .pleaseEnterValidEmailAddress;
                             }
                             return null;
                           },
@@ -277,7 +294,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         XBInputField(
                           controller: _passwordController,
                           labelText: appLocalizations.password,
-                          hintText: appLocalizations.pleaseEnterAtLeast8CharsPassword,
+                          hintText:
+                              appLocalizations.pleaseEnterAtLeast8CharsPassword,
                           prefixIcon: AppGlyphs.lock,
                           obscureText: !_isPasswordVisible,
                           suffixIcon: IconButton(
@@ -323,7 +341,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             ),
                             onPressed: () {
                               setState(() {
-                                _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                _isConfirmPasswordVisible =
+                                    !_isConfirmPasswordVisible;
                               });
                             },
                           ),
@@ -342,40 +361,48 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         if (config?.isEmailVerify == true)
                           Column(
                             children: [
-                                  XBInputField(
-                                    controller: _emailCodeController,
-                                    labelText: appLocalizations.emailVerificationCode,
-                                    hintText: appLocalizations.pleaseEnterEmailVerificationCode,
-                                    prefixIcon: AppGlyphs.shieldCheck,
-                                    keyboardType: TextInputType.number,
-                                    suffixIcon: _isSendingEmailCode
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(strokeWidth: 2),
-                                          )
-                                        : TextButton(
-                                            onPressed: _sendEmailCode,
-                                            child: Text(appLocalizations.sendVerificationCode),
-                                          ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return appLocalizations.pleaseEnterEmailVerificationCode;
-                                      }
-                                      if (value.length != 6) {
-                                        return appLocalizations.verificationCode6Digits;
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 20),
+                              XBInputField(
+                                controller: _emailCodeController,
+                                labelText:
+                                    appLocalizations.emailVerificationCode,
+                                hintText: appLocalizations
+                                    .pleaseEnterEmailVerificationCode,
+                                prefixIcon: AppGlyphs.shieldCheck,
+                                keyboardType: TextInputType.number,
+                                suffixIcon: _isSendingEmailCode
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : TextButton(
+                                        onPressed: _sendEmailCode,
+                                        child: Text(
+                                          appLocalizations.sendVerificationCode,
+                                        ),
+                                      ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return appLocalizations
+                                        .pleaseEnterEmailVerificationCode;
+                                  }
+                                  if (value.length != 6) {
+                                    return appLocalizations
+                                        .verificationCode6Digits;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
                             ],
                           ),
                         // 邀请码：始终显示，根据配置改变标签（必填 vs 可选）
                         XBInputField(
                           controller: _inviteCodeController,
                           labelText: (config?.isInviteForce ?? false)
-                              ? '${appLocalizations.xboardInviteCode} *' 
+                              ? '${appLocalizations.xboardInviteCode} *'
                               : appLocalizations.inviteCodeOptional,
                           hintText: appLocalizations.pleaseEnterInviteCode,
                           prefixIcon: AppGlyphs.giftCard,
@@ -418,9 +445,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           children: [
                             Text(
                               appLocalizations.alreadyHaveAccount,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
@@ -446,4 +474,4 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       ),
     );
   }
-} 
+}

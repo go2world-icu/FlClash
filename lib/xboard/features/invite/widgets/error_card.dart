@@ -10,11 +10,11 @@ class ErrorCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inviteState = ref.watch(inviteProvider);
-    
+
     if (inviteState.errorMessage == null) {
       return const SizedBox.shrink();
     }
-    
+
     return Card(
       color: Theme.of(context).colorScheme.errorContainer,
       child: Padding(

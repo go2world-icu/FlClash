@@ -63,45 +63,44 @@ class LanguageSelector extends ConsumerWidget {
       ),
       tooltip: '切换语言 / Switch Language',
       onSelected: (String languageCode) {
-        ref.read(appSettingProvider.notifier).update(
-          (state) => state.copyWith(locale: languageCode),
-        );
+        ref
+            .read(appSettingProvider.notifier)
+            .update((state) => state.copyWith(locale: languageCode));
       },
       itemBuilder: (BuildContext context) {
-        return supportedLanguages.map<PopupMenuEntry<String>>(
-          (Map<String, String> language) {
-            final isSelected = language['code'] == currentLocale;
-            return PopupMenuItem<String>(
-              value: language['code'],
-              child: Row(
-                children: [
-                  Text(
-                    language['flag']!,
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      language['name']!,
-                      style: TextStyle(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.onSurface,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      ),
+        return supportedLanguages.map<PopupMenuEntry<String>>((
+          Map<String, String> language,
+        ) {
+          final isSelected = language['code'] == currentLocale;
+          return PopupMenuItem<String>(
+            value: language['code'],
+            child: Row(
+              children: [
+                Text(language['flag']!, style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    language['name']!,
+                    style: TextStyle(
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
-                  if (isSelected)
-                    GlyphIcon(
-                      AppGlyphs.check,
-                      color: colorScheme.primary,
-                      size: 18,
-                    ),
-                ],
-              ),
-            );
-          },
-        ).toList();
+                ),
+                if (isSelected)
+                  GlyphIcon(
+                    AppGlyphs.check,
+                    color: colorScheme.primary,
+                    size: 18,
+                  ),
+              ],
+            ),
+          );
+        }).toList();
       },
     );
   }

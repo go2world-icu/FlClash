@@ -40,10 +40,9 @@ class XBoardOutboundModeSelector extends ConsumerWidget {
       }
     }
     if (validProxy != null) {
-      ref.read(proxiesActionProvider.notifier).changeProxy(
-        groupName: globalGroup.name,
-        proxyName: validProxy.name,
-      );
+      ref
+          .read(proxiesActionProvider.notifier)
+          .changeProxy(groupName: globalGroup.name, proxyName: validProxy.name);
     }
   }
 
@@ -56,7 +55,9 @@ class XBoardOutboundModeSelector extends ConsumerWidget {
     );
     return Container(
       decoration: ShapeDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.15,
+        ),
         shape: AppShape.all(12),
       ),
       padding: const EdgeInsets.all(14),

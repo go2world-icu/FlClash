@@ -21,8 +21,6 @@ export 'adapter/state/subscription_state.dart';
 export 'adapter/state/notice_state.dart';
 export 'adapter/state/invite_state.dart';
 
-
-
 // 注意：SubscriptionInfo从SDK层导出，不要从Config层重复导出
 
 // ========== Services 业务服务层 ==========

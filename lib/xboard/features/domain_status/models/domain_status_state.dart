@@ -2,8 +2,10 @@
 enum DomainStatus {
   /// 正在检查域名
   checking,
+
   /// 域名可用
   success,
+
   /// 域名不可用
   failed,
 }

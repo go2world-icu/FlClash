@@ -87,4 +87,3 @@ class NoOpLogger implements LoggerInterface {
   @override
   void error(String message, [Object? error, StackTrace? stackTrace]) {}
 }
-

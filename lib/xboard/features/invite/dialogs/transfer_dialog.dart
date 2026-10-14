@@ -26,7 +26,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
   @override
   Widget build(BuildContext context) {
     final inviteState = ref.read(inviteProvider);
-    final double maxAmount = inviteState.availableCommission;  // 已经是元，不需要再除以100
+    final double maxAmount = inviteState.availableCommission; // 已经是元，不需要再除以100
 
     return AlertDialog(
       title: Text(appLocalizations.transferToWallet),
@@ -43,19 +43,17 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                     key: ValueKey('success'),
                   )
                 : _isTransferring
-                    ? const SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: CircularProgressIndicator(
-                          key: ValueKey('loading'),
-                        ),
-                      )
-                    : const GlyphIcon(
-                        AppGlyphs.wallet,
-                        size: 48,
-                        color: Colors.blue,
-                        key: ValueKey('wallet'),
-                      ),
+                ? const SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(key: ValueKey('loading')),
+                  )
+                : const GlyphIcon(
+                    AppGlyphs.wallet,
+                    size: 48,
+                    color: Colors.blue,
+                    key: ValueKey('wallet'),
+                  ),
           ),
           const SizedBox(height: 16),
           AnimatedSwitcher(
@@ -71,22 +69,24 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                     key: const ValueKey('success-text'),
                   )
                 : _isTransferring
-                    ? Text(
-                        appLocalizations.transferring,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        key: const ValueKey('loading-text'),
-                      )
-                    : Text(
-                        appLocalizations.maxTransferable(inviteState.availableCommission.toStringAsFixed(2)),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        key: const ValueKey('balance-text'),
-                      ),
+                ? Text(
+                    appLocalizations.transferring,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    key: const ValueKey('loading-text'),
+                  )
+                : Text(
+                    appLocalizations.maxTransferable(
+                      inviteState.availableCommission.toStringAsFixed(2),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    key: const ValueKey('balance-text'),
+                  ),
           ),
           const SizedBox(height: 16),
           if (!_isTransferring && !_isSuccess) ...[
@@ -97,17 +97,18 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                 hintText: appLocalizations.enterTransferAmount,
                 border: const OutlineInputBorder(),
                 suffixText: '¥',
-                helperText: appLocalizations.maxTransferable(maxAmount.toStringAsFixed(2)),
+                helperText: appLocalizations.maxTransferable(
+                  maxAmount.toStringAsFixed(2),
+                ),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
               appLocalizations.transferNote,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ],
@@ -136,7 +137,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
       }
       return;
     }
-    
+
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
       if (mounted) {
@@ -144,27 +145,31 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
       }
       return;
     }
-    
+
     if (amount > maxAmount) {
       if (mounted) {
-        XBoardNotification.showError(appLocalizations.transferAmountExceeded(maxAmount.toStringAsFixed(2)));
+        XBoardNotification.showError(
+          appLocalizations.transferAmountExceeded(maxAmount.toStringAsFixed(2)),
+        );
       }
       return;
     }
-    
+
     setState(() {
       _isTransferring = true;
     });
-    
+
     try {
-      final result = await ref.read(inviteProvider.notifier).transferCommission(amount);
-      
+      final result = await ref
+          .read(inviteProvider.notifier)
+          .transferCommission(amount);
+
       if (mounted) {
         setState(() {
           _isTransferring = false;
           _isSuccess = result;
         });
-        
+
         if (result) {
           // 成功后显示动画，然后自动关闭
           await Future.delayed(const Duration(milliseconds: 1500));
@@ -173,7 +178,11 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             // 关闭后显示提示
             Future.microtask(() {
               if (mounted) {
-                XBoardNotification.showSuccess(appLocalizations.transferSuccessMsg(amount.toStringAsFixed(2)));
+                XBoardNotification.showSuccess(
+                  appLocalizations.transferSuccessMsg(
+                    amount.toStringAsFixed(2),
+                  ),
+                );
               }
             });
           }
@@ -187,7 +196,9 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
           _isTransferring = false;
           _isSuccess = false;
         });
-        XBoardNotification.showError(appLocalizations.transferFailed(e.toString()));
+        XBoardNotification.showError(
+          appLocalizations.transferFailed(e.toString()),
+        );
       }
     }
   }

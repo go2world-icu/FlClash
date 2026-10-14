@@ -1,6 +1,7 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
+
 class LatencyIndicator extends StatelessWidget {
   final int? delayValue;
   final VoidCallback? onTap;
@@ -23,6 +24,7 @@ class LatencyIndicator extends StatelessWidget {
     }
     return _buildTestedState(context);
   }
+
   Widget _buildTestingState(BuildContext context) {
     if (isCompact) {
       return SizedBox(
@@ -61,6 +63,7 @@ class LatencyIndicator extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildUntestedState(BuildContext context) {
     if (isCompact) {
       return GestureDetector(
@@ -103,6 +106,7 @@ class LatencyIndicator extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildTestedState(BuildContext context) {
     final displayText = delayValue! < 0 ? 'Timeout' : '${delayValue}ms';
     final color = Theme.of(context).colorScheme.delayColor(delayValue!);
@@ -112,10 +116,14 @@ class LatencyIndicator extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: ShapeDecoration(
-            color: color?.withValues(alpha: 0.1) ?? Colors.grey.withValues(alpha: 0.1),
+            color:
+                color?.withValues(alpha: 0.1) ??
+                Colors.grey.withValues(alpha: 0.1),
             shape: AppShape.xs.copyWith(
               side: BorderSide(
-                color: color?.withValues(alpha: 0.3) ?? Colors.grey.withValues(alpha: 0.3),
+                color:
+                    color?.withValues(alpha: 0.3) ??
+                    Colors.grey.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -143,7 +151,9 @@ class LatencyIndicator extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: color?.withValues(alpha: 0.3) ?? Colors.grey.withValues(alpha: 0.3),
+                  color:
+                      color?.withValues(alpha: 0.3) ??
+                      Colors.grey.withValues(alpha: 0.3),
                   blurRadius: 2,
                   spreadRadius: 1,
                 ),
@@ -163,6 +173,7 @@ class LatencyIndicator extends StatelessWidget {
     );
   }
 }
+
 class LatencyQuality {
   static const int excellent = 50;
   static const int good = 100;
@@ -176,6 +187,7 @@ class LatencyQuality {
     if (delay <= poor) return '较差';
     return '很差';
   }
+
   static String getQualityDescription(int delay) {
     if (delay < 0) return '连接超时，请检查网络';
     if (delay <= excellent) return '网络质量优秀，适合所有应用';
@@ -184,6 +196,7 @@ class LatencyQuality {
     if (delay <= poor) return '网络质量较差，可能影响体验';
     return '网络质量很差，建议更换节点';
   }
+
   static Glyph getQualityIcon(int delay) {
     if (delay < 0) return AppGlyphs.signalNone;
     if (delay <= excellent) return AppGlyphs.signalFull;

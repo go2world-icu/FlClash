@@ -12,7 +12,8 @@ part of '../invite.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 DomainInvite _$DomainInviteFromJson(Map<String, dynamic> json) {
   return _DomainInvite.fromJson(json);
@@ -42,13 +43,15 @@ mixin _$DomainInvite {
 /// @nodoc
 abstract class $DomainInviteCopyWith<$Res> {
   factory $DomainInviteCopyWith(
-          DomainInvite value, $Res Function(DomainInvite) then) =
-      _$DomainInviteCopyWithImpl<$Res, DomainInvite>;
+    DomainInvite value,
+    $Res Function(DomainInvite) then,
+  ) = _$DomainInviteCopyWithImpl<$Res, DomainInvite>;
   @useResult
-  $Res call(
-      {List<DomainInviteCode> codes,
-      InviteStats stats,
-      Map<String, dynamic> metadata});
+  $Res call({
+    List<DomainInviteCode> codes,
+    InviteStats stats,
+    Map<String, dynamic> metadata,
+  });
 
   $InviteStatsCopyWith<$Res> get stats;
 }
@@ -72,20 +75,23 @@ class _$DomainInviteCopyWithImpl<$Res, $Val extends DomainInvite>
     Object? stats = null,
     Object? metadata = null,
   }) {
-    return _then(_value.copyWith(
-      codes: null == codes
-          ? _value.codes
-          : codes // ignore: cast_nullable_to_non_nullable
-              as List<DomainInviteCode>,
-      stats: null == stats
-          ? _value.stats
-          : stats // ignore: cast_nullable_to_non_nullable
-              as InviteStats,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            codes: null == codes
+                ? _value.codes
+                : codes // ignore: cast_nullable_to_non_nullable
+                      as List<DomainInviteCode>,
+            stats: null == stats
+                ? _value.stats
+                : stats // ignore: cast_nullable_to_non_nullable
+                      as InviteStats,
+            metadata: null == metadata
+                ? _value.metadata
+                : metadata // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
+          )
+          as $Val,
+    );
   }
 
   /// Create a copy of DomainInvite
@@ -103,14 +109,16 @@ class _$DomainInviteCopyWithImpl<$Res, $Val extends DomainInvite>
 abstract class _$$DomainInviteImplCopyWith<$Res>
     implements $DomainInviteCopyWith<$Res> {
   factory _$$DomainInviteImplCopyWith(
-          _$DomainInviteImpl value, $Res Function(_$DomainInviteImpl) then) =
-      __$$DomainInviteImplCopyWithImpl<$Res>;
+    _$DomainInviteImpl value,
+    $Res Function(_$DomainInviteImpl) then,
+  ) = __$$DomainInviteImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {List<DomainInviteCode> codes,
-      InviteStats stats,
-      Map<String, dynamic> metadata});
+  $Res call({
+    List<DomainInviteCode> codes,
+    InviteStats stats,
+    Map<String, dynamic> metadata,
+  });
 
   @override
   $InviteStatsCopyWith<$Res> get stats;
@@ -121,8 +129,9 @@ class __$$DomainInviteImplCopyWithImpl<$Res>
     extends _$DomainInviteCopyWithImpl<$Res, _$DomainInviteImpl>
     implements _$$DomainInviteImplCopyWith<$Res> {
   __$$DomainInviteImplCopyWithImpl(
-      _$DomainInviteImpl _value, $Res Function(_$DomainInviteImpl) _then)
-      : super(_value, _then);
+    _$DomainInviteImpl _value,
+    $Res Function(_$DomainInviteImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of DomainInvite
   /// with the given fields replaced by the non-null parameter values.
@@ -133,33 +142,35 @@ class __$$DomainInviteImplCopyWithImpl<$Res>
     Object? stats = null,
     Object? metadata = null,
   }) {
-    return _then(_$DomainInviteImpl(
-      codes: null == codes
-          ? _value._codes
-          : codes // ignore: cast_nullable_to_non_nullable
-              as List<DomainInviteCode>,
-      stats: null == stats
-          ? _value.stats
-          : stats // ignore: cast_nullable_to_non_nullable
-              as InviteStats,
-      metadata: null == metadata
-          ? _value._metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ));
+    return _then(
+      _$DomainInviteImpl(
+        codes: null == codes
+            ? _value._codes
+            : codes // ignore: cast_nullable_to_non_nullable
+                  as List<DomainInviteCode>,
+        stats: null == stats
+            ? _value.stats
+            : stats // ignore: cast_nullable_to_non_nullable
+                  as InviteStats,
+        metadata: null == metadata
+            ? _value._metadata
+            : metadata // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$DomainInviteImpl extends _DomainInvite {
-  const _$DomainInviteImpl(
-      {final List<DomainInviteCode> codes = const [],
-      required this.stats,
-      final Map<String, dynamic> metadata = const {}})
-      : _codes = codes,
-        _metadata = metadata,
-        super._();
+  const _$DomainInviteImpl({
+    final List<DomainInviteCode> codes = const [],
+    required this.stats,
+    final Map<String, dynamic> metadata = const {},
+  }) : _codes = codes,
+       _metadata = metadata,
+       super._();
 
   factory _$DomainInviteImpl.fromJson(Map<String, dynamic> json) =>
       _$$DomainInviteImplFromJson(json);
@@ -210,10 +221,11 @@ class _$DomainInviteImpl extends _DomainInvite {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(_codes),
-      stats,
-      const DeepCollectionEquality().hash(_metadata));
+    runtimeType,
+    const DeepCollectionEquality().hash(_codes),
+    stats,
+    const DeepCollectionEquality().hash(_metadata),
+  );
 
   /// Create a copy of DomainInvite
   /// with the given fields replaced by the non-null parameter values.
@@ -225,17 +237,16 @@ class _$DomainInviteImpl extends _DomainInvite {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$DomainInviteImplToJson(
-      this,
-    );
+    return _$$DomainInviteImplToJson(this);
   }
 }
 
 abstract class _DomainInvite extends DomainInvite {
-  const factory _DomainInvite(
-      {final List<DomainInviteCode> codes,
-      required final InviteStats stats,
-      final Map<String, dynamic> metadata}) = _$DomainInviteImpl;
+  const factory _DomainInvite({
+    final List<DomainInviteCode> codes,
+    required final InviteStats stats,
+    final Map<String, dynamic> metadata,
+  }) = _$DomainInviteImpl;
   const _DomainInvite._() : super._();
 
   factory _DomainInvite.fromJson(Map<String, dynamic> json) =
@@ -295,15 +306,17 @@ mixin _$DomainInviteCode {
 /// @nodoc
 abstract class $DomainInviteCodeCopyWith<$Res> {
   factory $DomainInviteCodeCopyWith(
-          DomainInviteCode value, $Res Function(DomainInviteCode) then) =
-      _$DomainInviteCodeCopyWithImpl<$Res, DomainInviteCode>;
+    DomainInviteCode value,
+    $Res Function(DomainInviteCode) then,
+  ) = _$DomainInviteCodeCopyWithImpl<$Res, DomainInviteCode>;
   @useResult
-  $Res call(
-      {String code,
-      int status,
-      DateTime? createdAt,
-      DateTime? usedAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    String code,
+    int status,
+    DateTime? createdAt,
+    DateTime? usedAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -327,54 +340,60 @@ class _$DomainInviteCodeCopyWithImpl<$Res, $Val extends DomainInviteCode>
     Object? usedAt = freezed,
     Object? metadata = null,
   }) {
-    return _then(_value.copyWith(
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as int,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      usedAt: freezed == usedAt
-          ? _value.usedAt
-          : usedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            code: null == code
+                ? _value.code
+                : code // ignore: cast_nullable_to_non_nullable
+                      as String,
+            status: null == status
+                ? _value.status
+                : status // ignore: cast_nullable_to_non_nullable
+                      as int,
+            createdAt: freezed == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            usedAt: freezed == usedAt
+                ? _value.usedAt
+                : usedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            metadata: null == metadata
+                ? _value.metadata
+                : metadata // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$DomainInviteCodeImplCopyWith<$Res>
     implements $DomainInviteCodeCopyWith<$Res> {
-  factory _$$DomainInviteCodeImplCopyWith(_$DomainInviteCodeImpl value,
-          $Res Function(_$DomainInviteCodeImpl) then) =
-      __$$DomainInviteCodeImplCopyWithImpl<$Res>;
+  factory _$$DomainInviteCodeImplCopyWith(
+    _$DomainInviteCodeImpl value,
+    $Res Function(_$DomainInviteCodeImpl) then,
+  ) = __$$DomainInviteCodeImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String code,
-      int status,
-      DateTime? createdAt,
-      DateTime? usedAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    String code,
+    int status,
+    DateTime? createdAt,
+    DateTime? usedAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
 class __$$DomainInviteCodeImplCopyWithImpl<$Res>
     extends _$DomainInviteCodeCopyWithImpl<$Res, _$DomainInviteCodeImpl>
     implements _$$DomainInviteCodeImplCopyWith<$Res> {
-  __$$DomainInviteCodeImplCopyWithImpl(_$DomainInviteCodeImpl _value,
-      $Res Function(_$DomainInviteCodeImpl) _then)
-      : super(_value, _then);
+  __$$DomainInviteCodeImplCopyWithImpl(
+    _$DomainInviteCodeImpl _value,
+    $Res Function(_$DomainInviteCodeImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of DomainInviteCode
   /// with the given fields replaced by the non-null parameter values.
@@ -387,42 +406,44 @@ class __$$DomainInviteCodeImplCopyWithImpl<$Res>
     Object? usedAt = freezed,
     Object? metadata = null,
   }) {
-    return _then(_$DomainInviteCodeImpl(
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as int,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      usedAt: freezed == usedAt
-          ? _value.usedAt
-          : usedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metadata: null == metadata
-          ? _value._metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ));
+    return _then(
+      _$DomainInviteCodeImpl(
+        code: null == code
+            ? _value.code
+            : code // ignore: cast_nullable_to_non_nullable
+                  as String,
+        status: null == status
+            ? _value.status
+            : status // ignore: cast_nullable_to_non_nullable
+                  as int,
+        createdAt: freezed == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        usedAt: freezed == usedAt
+            ? _value.usedAt
+            : usedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        metadata: null == metadata
+            ? _value._metadata
+            : metadata // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$DomainInviteCodeImpl extends _DomainInviteCode {
-  const _$DomainInviteCodeImpl(
-      {required this.code,
-      this.status = 0,
-      this.createdAt,
-      this.usedAt,
-      final Map<String, dynamic> metadata = const {}})
-      : _metadata = metadata,
-        super._();
+  const _$DomainInviteCodeImpl({
+    required this.code,
+    this.status = 0,
+    this.createdAt,
+    this.usedAt,
+    final Map<String, dynamic> metadata = const {},
+  }) : _metadata = metadata,
+       super._();
 
   factory _$DomainInviteCodeImpl.fromJson(Map<String, dynamic> json) =>
       _$$DomainInviteCodeImplFromJson(json);
@@ -476,8 +497,14 @@ class _$DomainInviteCodeImpl extends _DomainInviteCode {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, code, status, createdAt, usedAt,
-      const DeepCollectionEquality().hash(_metadata));
+  int get hashCode => Object.hash(
+    runtimeType,
+    code,
+    status,
+    createdAt,
+    usedAt,
+    const DeepCollectionEquality().hash(_metadata),
+  );
 
   /// Create a copy of DomainInviteCode
   /// with the given fields replaced by the non-null parameter values.
@@ -486,23 +513,24 @@ class _$DomainInviteCodeImpl extends _DomainInviteCode {
   @pragma('vm:prefer-inline')
   _$$DomainInviteCodeImplCopyWith<_$DomainInviteCodeImpl> get copyWith =>
       __$$DomainInviteCodeImplCopyWithImpl<_$DomainInviteCodeImpl>(
-          this, _$identity);
+        this,
+        _$identity,
+      );
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$DomainInviteCodeImplToJson(
-      this,
-    );
+    return _$$DomainInviteCodeImplToJson(this);
   }
 }
 
 abstract class _DomainInviteCode extends DomainInviteCode {
-  const factory _DomainInviteCode(
-      {required final String code,
-      final int status,
-      final DateTime? createdAt,
-      final DateTime? usedAt,
-      final Map<String, dynamic> metadata}) = _$DomainInviteCodeImpl;
+  const factory _DomainInviteCode({
+    required final String code,
+    final int status,
+    final DateTime? createdAt,
+    final DateTime? usedAt,
+    final Map<String, dynamic> metadata,
+  }) = _$DomainInviteCodeImpl;
   const _DomainInviteCode._() : super._();
 
   factory _DomainInviteCode.fromJson(Map<String, dynamic> json) =
@@ -573,16 +601,18 @@ mixin _$InviteStats {
 /// @nodoc
 abstract class $InviteStatsCopyWith<$Res> {
   factory $InviteStatsCopyWith(
-          InviteStats value, $Res Function(InviteStats) then) =
-      _$InviteStatsCopyWithImpl<$Res, InviteStats>;
+    InviteStats value,
+    $Res Function(InviteStats) then,
+  ) = _$InviteStatsCopyWithImpl<$Res, InviteStats>;
   @useResult
-  $Res call(
-      {int invitedCount,
-      double commissionRate,
-      double pendingCommission,
-      double availableCommission,
-      double totalCommission,
-      Map<String, dynamic> metadata});
+  $Res call({
+    int invitedCount,
+    double commissionRate,
+    double pendingCommission,
+    double availableCommission,
+    double totalCommission,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -607,32 +637,35 @@ class _$InviteStatsCopyWithImpl<$Res, $Val extends InviteStats>
     Object? totalCommission = null,
     Object? metadata = null,
   }) {
-    return _then(_value.copyWith(
-      invitedCount: null == invitedCount
-          ? _value.invitedCount
-          : invitedCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      commissionRate: null == commissionRate
-          ? _value.commissionRate
-          : commissionRate // ignore: cast_nullable_to_non_nullable
-              as double,
-      pendingCommission: null == pendingCommission
-          ? _value.pendingCommission
-          : pendingCommission // ignore: cast_nullable_to_non_nullable
-              as double,
-      availableCommission: null == availableCommission
-          ? _value.availableCommission
-          : availableCommission // ignore: cast_nullable_to_non_nullable
-              as double,
-      totalCommission: null == totalCommission
-          ? _value.totalCommission
-          : totalCommission // ignore: cast_nullable_to_non_nullable
-              as double,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            invitedCount: null == invitedCount
+                ? _value.invitedCount
+                : invitedCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            commissionRate: null == commissionRate
+                ? _value.commissionRate
+                : commissionRate // ignore: cast_nullable_to_non_nullable
+                      as double,
+            pendingCommission: null == pendingCommission
+                ? _value.pendingCommission
+                : pendingCommission // ignore: cast_nullable_to_non_nullable
+                      as double,
+            availableCommission: null == availableCommission
+                ? _value.availableCommission
+                : availableCommission // ignore: cast_nullable_to_non_nullable
+                      as double,
+            totalCommission: null == totalCommission
+                ? _value.totalCommission
+                : totalCommission // ignore: cast_nullable_to_non_nullable
+                      as double,
+            metadata: null == metadata
+                ? _value.metadata
+                : metadata // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -640,17 +673,19 @@ class _$InviteStatsCopyWithImpl<$Res, $Val extends InviteStats>
 abstract class _$$InviteStatsImplCopyWith<$Res>
     implements $InviteStatsCopyWith<$Res> {
   factory _$$InviteStatsImplCopyWith(
-          _$InviteStatsImpl value, $Res Function(_$InviteStatsImpl) then) =
-      __$$InviteStatsImplCopyWithImpl<$Res>;
+    _$InviteStatsImpl value,
+    $Res Function(_$InviteStatsImpl) then,
+  ) = __$$InviteStatsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {int invitedCount,
-      double commissionRate,
-      double pendingCommission,
-      double availableCommission,
-      double totalCommission,
-      Map<String, dynamic> metadata});
+  $Res call({
+    int invitedCount,
+    double commissionRate,
+    double pendingCommission,
+    double availableCommission,
+    double totalCommission,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -658,8 +693,9 @@ class __$$InviteStatsImplCopyWithImpl<$Res>
     extends _$InviteStatsCopyWithImpl<$Res, _$InviteStatsImpl>
     implements _$$InviteStatsImplCopyWith<$Res> {
   __$$InviteStatsImplCopyWithImpl(
-      _$InviteStatsImpl _value, $Res Function(_$InviteStatsImpl) _then)
-      : super(_value, _then);
+    _$InviteStatsImpl _value,
+    $Res Function(_$InviteStatsImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of InviteStats
   /// with the given fields replaced by the non-null parameter values.
@@ -673,47 +709,49 @@ class __$$InviteStatsImplCopyWithImpl<$Res>
     Object? totalCommission = null,
     Object? metadata = null,
   }) {
-    return _then(_$InviteStatsImpl(
-      invitedCount: null == invitedCount
-          ? _value.invitedCount
-          : invitedCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      commissionRate: null == commissionRate
-          ? _value.commissionRate
-          : commissionRate // ignore: cast_nullable_to_non_nullable
-              as double,
-      pendingCommission: null == pendingCommission
-          ? _value.pendingCommission
-          : pendingCommission // ignore: cast_nullable_to_non_nullable
-              as double,
-      availableCommission: null == availableCommission
-          ? _value.availableCommission
-          : availableCommission // ignore: cast_nullable_to_non_nullable
-              as double,
-      totalCommission: null == totalCommission
-          ? _value.totalCommission
-          : totalCommission // ignore: cast_nullable_to_non_nullable
-              as double,
-      metadata: null == metadata
-          ? _value._metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ));
+    return _then(
+      _$InviteStatsImpl(
+        invitedCount: null == invitedCount
+            ? _value.invitedCount
+            : invitedCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        commissionRate: null == commissionRate
+            ? _value.commissionRate
+            : commissionRate // ignore: cast_nullable_to_non_nullable
+                  as double,
+        pendingCommission: null == pendingCommission
+            ? _value.pendingCommission
+            : pendingCommission // ignore: cast_nullable_to_non_nullable
+                  as double,
+        availableCommission: null == availableCommission
+            ? _value.availableCommission
+            : availableCommission // ignore: cast_nullable_to_non_nullable
+                  as double,
+        totalCommission: null == totalCommission
+            ? _value.totalCommission
+            : totalCommission // ignore: cast_nullable_to_non_nullable
+                  as double,
+        metadata: null == metadata
+            ? _value._metadata
+            : metadata // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$InviteStatsImpl extends _InviteStats {
-  const _$InviteStatsImpl(
-      {this.invitedCount = 0,
-      this.commissionRate = 0.0,
-      this.pendingCommission = 0.0,
-      this.availableCommission = 0.0,
-      this.totalCommission = 0.0,
-      final Map<String, dynamic> metadata = const {}})
-      : _metadata = metadata,
-        super._();
+  const _$InviteStatsImpl({
+    this.invitedCount = 0,
+    this.commissionRate = 0.0,
+    this.pendingCommission = 0.0,
+    this.availableCommission = 0.0,
+    this.totalCommission = 0.0,
+    final Map<String, dynamic> metadata = const {},
+  }) : _metadata = metadata,
+       super._();
 
   factory _$InviteStatsImpl.fromJson(Map<String, dynamic> json) =>
       _$$InviteStatsImplFromJson(json);
@@ -781,13 +819,14 @@ class _$InviteStatsImpl extends _InviteStats {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      invitedCount,
-      commissionRate,
-      pendingCommission,
-      availableCommission,
-      totalCommission,
-      const DeepCollectionEquality().hash(_metadata));
+    runtimeType,
+    invitedCount,
+    commissionRate,
+    pendingCommission,
+    availableCommission,
+    totalCommission,
+    const DeepCollectionEquality().hash(_metadata),
+  );
 
   /// Create a copy of InviteStats
   /// with the given fields replaced by the non-null parameter values.
@@ -799,20 +838,19 @@ class _$InviteStatsImpl extends _InviteStats {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$InviteStatsImplToJson(
-      this,
-    );
+    return _$$InviteStatsImplToJson(this);
   }
 }
 
 abstract class _InviteStats extends InviteStats {
-  const factory _InviteStats(
-      {final int invitedCount,
-      final double commissionRate,
-      final double pendingCommission,
-      final double availableCommission,
-      final double totalCommission,
-      final Map<String, dynamic> metadata}) = _$InviteStatsImpl;
+  const factory _InviteStats({
+    final int invitedCount,
+    final double commissionRate,
+    final double pendingCommission,
+    final double availableCommission,
+    final double totalCommission,
+    final Map<String, dynamic> metadata,
+  }) = _$InviteStatsImpl;
   const _InviteStats._() : super._();
 
   factory _InviteStats.fromJson(Map<String, dynamic> json) =
@@ -884,15 +922,17 @@ mixin _$DomainCommission {
 /// @nodoc
 abstract class $DomainCommissionCopyWith<$Res> {
   factory $DomainCommissionCopyWith(
-          DomainCommission value, $Res Function(DomainCommission) then) =
-      _$DomainCommissionCopyWithImpl<$Res, DomainCommission>;
+    DomainCommission value,
+    $Res Function(DomainCommission) then,
+  ) = _$DomainCommissionCopyWithImpl<$Res, DomainCommission>;
   @useResult
-  $Res call(
-      {int id,
-      String tradeNo,
-      double amount,
-      DateTime createdAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    int id,
+    String tradeNo,
+    double amount,
+    DateTime createdAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -916,54 +956,60 @@ class _$DomainCommissionCopyWithImpl<$Res, $Val extends DomainCommission>
     Object? createdAt = null,
     Object? metadata = null,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      tradeNo: null == tradeNo
-          ? _value.tradeNo
-          : tradeNo // ignore: cast_nullable_to_non_nullable
-              as String,
-      amount: null == amount
-          ? _value.amount
-          : amount // ignore: cast_nullable_to_non_nullable
-              as double,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as int,
+            tradeNo: null == tradeNo
+                ? _value.tradeNo
+                : tradeNo // ignore: cast_nullable_to_non_nullable
+                      as String,
+            amount: null == amount
+                ? _value.amount
+                : amount // ignore: cast_nullable_to_non_nullable
+                      as double,
+            createdAt: null == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            metadata: null == metadata
+                ? _value.metadata
+                : metadata // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$DomainCommissionImplCopyWith<$Res>
     implements $DomainCommissionCopyWith<$Res> {
-  factory _$$DomainCommissionImplCopyWith(_$DomainCommissionImpl value,
-          $Res Function(_$DomainCommissionImpl) then) =
-      __$$DomainCommissionImplCopyWithImpl<$Res>;
+  factory _$$DomainCommissionImplCopyWith(
+    _$DomainCommissionImpl value,
+    $Res Function(_$DomainCommissionImpl) then,
+  ) = __$$DomainCommissionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {int id,
-      String tradeNo,
-      double amount,
-      DateTime createdAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    int id,
+    String tradeNo,
+    double amount,
+    DateTime createdAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
 class __$$DomainCommissionImplCopyWithImpl<$Res>
     extends _$DomainCommissionCopyWithImpl<$Res, _$DomainCommissionImpl>
     implements _$$DomainCommissionImplCopyWith<$Res> {
-  __$$DomainCommissionImplCopyWithImpl(_$DomainCommissionImpl _value,
-      $Res Function(_$DomainCommissionImpl) _then)
-      : super(_value, _then);
+  __$$DomainCommissionImplCopyWithImpl(
+    _$DomainCommissionImpl _value,
+    $Res Function(_$DomainCommissionImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of DomainCommission
   /// with the given fields replaced by the non-null parameter values.
@@ -976,42 +1022,44 @@ class __$$DomainCommissionImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? metadata = null,
   }) {
-    return _then(_$DomainCommissionImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      tradeNo: null == tradeNo
-          ? _value.tradeNo
-          : tradeNo // ignore: cast_nullable_to_non_nullable
-              as String,
-      amount: null == amount
-          ? _value.amount
-          : amount // ignore: cast_nullable_to_non_nullable
-              as double,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      metadata: null == metadata
-          ? _value._metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ));
+    return _then(
+      _$DomainCommissionImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as int,
+        tradeNo: null == tradeNo
+            ? _value.tradeNo
+            : tradeNo // ignore: cast_nullable_to_non_nullable
+                  as String,
+        amount: null == amount
+            ? _value.amount
+            : amount // ignore: cast_nullable_to_non_nullable
+                  as double,
+        createdAt: null == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        metadata: null == metadata
+            ? _value._metadata
+            : metadata // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$DomainCommissionImpl extends _DomainCommission {
-  const _$DomainCommissionImpl(
-      {required this.id,
-      required this.tradeNo,
-      required this.amount,
-      required this.createdAt,
-      final Map<String, dynamic> metadata = const {}})
-      : _metadata = metadata,
-        super._();
+  const _$DomainCommissionImpl({
+    required this.id,
+    required this.tradeNo,
+    required this.amount,
+    required this.createdAt,
+    final Map<String, dynamic> metadata = const {},
+  }) : _metadata = metadata,
+       super._();
 
   factory _$DomainCommissionImpl.fromJson(Map<String, dynamic> json) =>
       _$$DomainCommissionImplFromJson(json);
@@ -1064,8 +1112,14 @@ class _$DomainCommissionImpl extends _DomainCommission {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, tradeNo, amount, createdAt,
-      const DeepCollectionEquality().hash(_metadata));
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    tradeNo,
+    amount,
+    createdAt,
+    const DeepCollectionEquality().hash(_metadata),
+  );
 
   /// Create a copy of DomainCommission
   /// with the given fields replaced by the non-null parameter values.
@@ -1074,23 +1128,24 @@ class _$DomainCommissionImpl extends _DomainCommission {
   @pragma('vm:prefer-inline')
   _$$DomainCommissionImplCopyWith<_$DomainCommissionImpl> get copyWith =>
       __$$DomainCommissionImplCopyWithImpl<_$DomainCommissionImpl>(
-          this, _$identity);
+        this,
+        _$identity,
+      );
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$DomainCommissionImplToJson(
-      this,
-    );
+    return _$$DomainCommissionImplToJson(this);
   }
 }
 
 abstract class _DomainCommission extends DomainCommission {
-  const factory _DomainCommission(
-      {required final int id,
-      required final String tradeNo,
-      required final double amount,
-      required final DateTime createdAt,
-      final Map<String, dynamic> metadata}) = _$DomainCommissionImpl;
+  const factory _DomainCommission({
+    required final int id,
+    required final String tradeNo,
+    required final double amount,
+    required final DateTime createdAt,
+    final Map<String, dynamic> metadata,
+  }) = _$DomainCommissionImpl;
   const _DomainCommission._() : super._();
 
   factory _DomainCommission.fromJson(Map<String, dynamic> json) =

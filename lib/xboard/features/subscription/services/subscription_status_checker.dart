@@ -47,8 +47,9 @@ class SubscriptionStatusChecker {
       // 不再调用 refreshSubscriptionInfo()，避免重复导入
       // Token验证成功后已经通过 _silentUpdateUserData() 获取了最新订阅信息
       final updatedUserState = userState;
-      final profileSubscriptionInfo =
-          ref.read(currentProfileProvider)?.subscriptionInfo;
+      final profileSubscriptionInfo = ref
+          .read(currentProfileProvider)
+          ?.subscriptionInfo;
       final statusResult = subscriptionStatusService.checkSubscriptionStatus(
         userState: updatedUserState,
         profileSubscriptionInfo: profileSubscriptionInfo,
@@ -56,11 +57,7 @@ class SubscriptionStatusChecker {
       _logger.info('[订阅状态检查] 检查结果: ${statusResult.type}');
       _logger.info('[订阅状态检查] 是否需要弹窗: ${statusResult.shouldShowDialog}');
       if (subscriptionStatusService.shouldShowStartupDialog(statusResult)) {
-        await _showSubscriptionStatusDialog(
-          context,
-          ref,
-          statusResult,
-        );
+        await _showSubscriptionStatusDialog(context, ref, statusResult);
       } else {
         // 订阅状态正常，不需要额外导入配置
         // 配置导入已由 Token 验证成功后的 _silentUpdateUserData() 完成
@@ -102,11 +99,14 @@ class SubscriptionStatusChecker {
   }
 
   Future<void> _handleRenewFromDialog(
-      BuildContext context, WidgetRef ref) async {
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final website = XBoardConfig.appWebsite;
     if (website.isNotEmpty) {
-      final uri =
-          Uri.parse(website.startsWith('http') ? website : 'https://$website');
+      final uri = Uri.parse(
+        website.startsWith('http') ? website : 'https://$website',
+      );
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
@@ -122,8 +122,9 @@ class SubscriptionStatusChecker {
     try {
       final userState = ref.read(xboardUserProvider);
       if (!userState.isAuthenticated) return false;
-      final profileSubscriptionInfo =
-          ref.read(currentProfileProvider)?.subscriptionInfo;
+      final profileSubscriptionInfo = ref
+          .read(currentProfileProvider)
+          ?.subscriptionInfo;
       final statusResult = subscriptionStatusService.checkSubscriptionStatus(
         userState: userState,
         profileSubscriptionInfo: profileSubscriptionInfo,
@@ -139,8 +140,9 @@ class SubscriptionStatusChecker {
     try {
       final userState = ref.read(xboardUserProvider);
       if (!userState.isAuthenticated) return '未登录';
-      final profileSubscriptionInfo =
-          ref.read(currentProfileProvider)?.subscriptionInfo;
+      final profileSubscriptionInfo = ref
+          .read(currentProfileProvider)
+          ?.subscriptionInfo;
       final statusResult = subscriptionStatusService.checkSubscriptionStatus(
         userState: userState,
         profileSubscriptionInfo: profileSubscriptionInfo,

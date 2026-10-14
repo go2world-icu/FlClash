@@ -51,8 +51,10 @@ class ConfigFileLoader {
       // 构建配置对象
       return ConfigSettings(
         currentProvider: provider,
-        remoteConfig:
-            _parseRemoteConfig(remoteConfigJson, defaultPkey: provider),
+        remoteConfig: _parseRemoteConfig(
+          remoteConfigJson,
+          defaultPkey: provider,
+        ),
         subscription: _parseSubscriptionSettings(subscriptionJson),
         log: _parseLogSettings(logJson),
         appTitle: appJson['title'] as String? ?? 'ToWorld',
@@ -80,14 +82,20 @@ class ConfigFileLoader {
   }
 
   /// 解析远程配置
-  static RemoteConfigSettings _parseRemoteConfig(Map<String, dynamic> json,
-      {String defaultPkey = ''}) {
+  static RemoteConfigSettings _parseRemoteConfig(
+    Map<String, dynamic> json, {
+    String defaultPkey = '',
+  }) {
     final sourcesList = json['sources'] as List<dynamic>? ?? [];
     _logger.info('[ConfigLoader] 解析远程配置源: ${sourcesList.length} 个源');
 
     final sources = sourcesList
-        .map((item) => _parseRemoteSource(item as Map<String, dynamic>,
-            defaultPkey: defaultPkey))
+        .map(
+          (item) => _parseRemoteSource(
+            item as Map<String, dynamic>,
+            defaultPkey: defaultPkey,
+          ),
+        )
         .toList();
 
     _logger.info('[ConfigLoader] 成功解析 ${sources.length} 个配置源');
@@ -104,22 +112,26 @@ class ConfigFileLoader {
   }
 
   /// 解析远程源配置
-  static RemoteSourceConfig _parseRemoteSource(Map<String, dynamic> json,
-      {String defaultPkey = ''}) {
+  static RemoteSourceConfig _parseRemoteSource(
+    Map<String, dynamic> json, {
+    String defaultPkey = '',
+  }) {
     final authData = json['auth'] as Map<String, dynamic>?;
     SourceAuthConfig? auth;
     if (authData != null) {
       final pkey = (authData['pkey'] as String?)?.isNotEmpty == true
           ? authData['pkey'] as String
           : defaultPkey;
-      auth =
-          SourceAuthConfig(type: authData['type'] as String? ?? '', pkey: pkey);
+      auth = SourceAuthConfig(
+        type: authData['type'] as String? ?? '',
+        pkey: pkey,
+      );
     }
     return RemoteSourceConfig(
       name: json['name'] as String? ?? '',
       url: json['url'] as String? ?? '',
-      headers:
-          (json['headers'] as Map<String, dynamic>?)?.cast<String, String>(),
+      headers: (json['headers'] as Map<String, dynamic>?)
+          ?.cast<String, String>(),
       timeout: json['timeout_seconds'] != null
           ? Duration(seconds: json['timeout_seconds'] as int)
           : null,
@@ -130,7 +142,8 @@ class ConfigFileLoader {
 
   /// 解析订阅设置
   static SubscriptionSettings _parseSubscriptionSettings(
-      Map<String, dynamic> json) {
+    Map<String, dynamic> json,
+  ) {
     return SubscriptionSettings(
       preferEncrypt: json['prefer_encrypt'] as bool? ?? false,
     );
@@ -266,10 +279,7 @@ extension ConfigFileLoaderHelper on ConfigFileLoader {
   /// 获取证书配置
   static Future<Map<String, dynamic>> getCertificateConfig() async {
     // 硬编码证书配置，不再从配置文件读取
-    return {
-      'path': 'assets/cer/client-cert.crt',
-      'enabled': true,
-    };
+    return {'path': 'assets/cer/client-cert.crt', 'enabled': true};
   }
 
   /// 获取应用标题

@@ -39,7 +39,8 @@ class ConfigSettings {
         retryDelay: Duration(seconds: json['retryDelaySeconds'] as int? ?? 2),
       ),
       subscription: SubscriptionSettings.fromJson(
-          json['subscription'] as Map<String, dynamic>? ?? {}),
+        json['subscription'] as Map<String, dynamic>? ?? {},
+      ),
       log: LogSettings.fromJson(json['log'] as Map<String, dynamic>? ?? {}),
       website: json['website'] as String? ?? '',
       appTitle: json['appTitle'] as String? ?? 'ToWorld',
@@ -75,7 +76,9 @@ class ConfigSettings {
     // 移除 provider 硬编码限制
     // provider 仅作为 key 从远程配置的 panels 对象中选择数据
 
-    errors.addAll(remoteConfig.getValidationErrors()); // 来自 RemoteConfigSettingsValidation 扩展
+    errors.addAll(
+      remoteConfig.getValidationErrors(),
+    ); // 来自 RemoteConfigSettingsValidation 扩展
     errors.addAll(subscription.getValidationErrors());
     errors.addAll(log.getValidationErrors());
 
@@ -104,7 +107,8 @@ extension RemoteConfigSettingsValidation on RemoteConfigSettings {
     if (timeout.inSeconds <= 0) errors.add('Timeout must be greater than 0');
     for (int i = 0; i < sources.length; i++) {
       final src = sources[i];
-      if (src.name.isEmpty) errors.add('sources[$i]: Source name cannot be empty');
+      if (src.name.isEmpty)
+        errors.add('sources[$i]: Source name cannot be empty');
       if (src.url.isEmpty) {
         errors.add('sources[$i]: Source URL cannot be empty');
       } else {
@@ -122,25 +126,22 @@ extension RemoteConfigSettingsValidation on RemoteConfigSettings {
 class SubscriptionSettings {
   final bool preferEncrypt;
 
-  const SubscriptionSettings({
-    this.preferEncrypt = false,
-  });
+  const SubscriptionSettings({this.preferEncrypt = false});
 
   /// 是否启用竞速（自动跟随加密选项）
   bool get enableRace => preferEncrypt;
 
   factory SubscriptionSettings.fromJson(Map<String, dynamic> json) {
     return SubscriptionSettings(
-      preferEncrypt: json['preferEncrypt'] as bool? ??
+      preferEncrypt:
+          json['preferEncrypt'] as bool? ??
           json['prefer_encrypt'] as bool? ??
           false,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'preferEncrypt': preferEncrypt,
-    };
+    return {'preferEncrypt': preferEncrypt};
   }
 
   bool validate() {
@@ -180,11 +181,7 @@ class LogSettings {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'enabled': enabled,
-      'level': level,
-      'prefix': prefix,
-    };
+    return {'enabled': enabled, 'level': level, 'prefix': prefix};
   }
 
   bool validate() {

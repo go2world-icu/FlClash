@@ -986,10 +986,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage":
-        MessageLookupByLibrary.simpleMessage(
-          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-        ),
+    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
+      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+    ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -1387,10 +1386,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "onlineSupportUnsupportedHttpMethod": m41,
     "onlineSupportUploadFailed": m42,
-    "onlineSupportWebSocketConfigNotFound":
-        MessageLookupByLibrary.simpleMessage(
-          "Online support WebSocket configuration not found, please check configuration",
-        ),
+    "onlineSupportWebSocketConfigNotFound": MessageLookupByLibrary.simpleMessage(
+      "Online support WebSocket configuration not found, please check configuration",
+    ),
     "onlyIcon": MessageLookupByLibrary.simpleMessage("Icon"),
     "onlyOtherApps": MessageLookupByLibrary.simpleMessage(
       "Only third-party apps",

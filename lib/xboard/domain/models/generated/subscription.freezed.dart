@@ -12,7 +12,8 @@ part of '../subscription.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 DomainSubscription _$DomainSubscriptionFromJson(Map<String, dynamic> json) {
   return _DomainSubscription.fromJson(json);
@@ -75,24 +76,26 @@ mixin _$DomainSubscription {
 /// @nodoc
 abstract class $DomainSubscriptionCopyWith<$Res> {
   factory $DomainSubscriptionCopyWith(
-          DomainSubscription value, $Res Function(DomainSubscription) then) =
-      _$DomainSubscriptionCopyWithImpl<$Res, DomainSubscription>;
+    DomainSubscription value,
+    $Res Function(DomainSubscription) then,
+  ) = _$DomainSubscriptionCopyWithImpl<$Res, DomainSubscription>;
   @useResult
-  $Res call(
-      {String subscribeUrl,
-      String email,
-      String uuid,
-      int planId,
-      String? planName,
-      String? token,
-      int transferLimit,
-      int uploadedBytes,
-      int downloadedBytes,
-      int? speedLimit,
-      int? deviceLimit,
-      DateTime? expiredAt,
-      DateTime? nextResetAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    String subscribeUrl,
+    String email,
+    String uuid,
+    int planId,
+    String? planName,
+    String? token,
+    int transferLimit,
+    int uploadedBytes,
+    int downloadedBytes,
+    int? speedLimit,
+    int? deviceLimit,
+    DateTime? expiredAt,
+    DateTime? nextResetAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -125,99 +128,105 @@ class _$DomainSubscriptionCopyWithImpl<$Res, $Val extends DomainSubscription>
     Object? nextResetAt = freezed,
     Object? metadata = null,
   }) {
-    return _then(_value.copyWith(
-      subscribeUrl: null == subscribeUrl
-          ? _value.subscribeUrl
-          : subscribeUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as String,
-      planId: null == planId
-          ? _value.planId
-          : planId // ignore: cast_nullable_to_non_nullable
-              as int,
-      planName: freezed == planName
-          ? _value.planName
-          : planName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      token: freezed == token
-          ? _value.token
-          : token // ignore: cast_nullable_to_non_nullable
-              as String?,
-      transferLimit: null == transferLimit
-          ? _value.transferLimit
-          : transferLimit // ignore: cast_nullable_to_non_nullable
-              as int,
-      uploadedBytes: null == uploadedBytes
-          ? _value.uploadedBytes
-          : uploadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      downloadedBytes: null == downloadedBytes
-          ? _value.downloadedBytes
-          : downloadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      speedLimit: freezed == speedLimit
-          ? _value.speedLimit
-          : speedLimit // ignore: cast_nullable_to_non_nullable
-              as int?,
-      deviceLimit: freezed == deviceLimit
-          ? _value.deviceLimit
-          : deviceLimit // ignore: cast_nullable_to_non_nullable
-              as int?,
-      expiredAt: freezed == expiredAt
-          ? _value.expiredAt
-          : expiredAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      nextResetAt: freezed == nextResetAt
-          ? _value.nextResetAt
-          : nextResetAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            subscribeUrl: null == subscribeUrl
+                ? _value.subscribeUrl
+                : subscribeUrl // ignore: cast_nullable_to_non_nullable
+                      as String,
+            email: null == email
+                ? _value.email
+                : email // ignore: cast_nullable_to_non_nullable
+                      as String,
+            uuid: null == uuid
+                ? _value.uuid
+                : uuid // ignore: cast_nullable_to_non_nullable
+                      as String,
+            planId: null == planId
+                ? _value.planId
+                : planId // ignore: cast_nullable_to_non_nullable
+                      as int,
+            planName: freezed == planName
+                ? _value.planName
+                : planName // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            token: freezed == token
+                ? _value.token
+                : token // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            transferLimit: null == transferLimit
+                ? _value.transferLimit
+                : transferLimit // ignore: cast_nullable_to_non_nullable
+                      as int,
+            uploadedBytes: null == uploadedBytes
+                ? _value.uploadedBytes
+                : uploadedBytes // ignore: cast_nullable_to_non_nullable
+                      as int,
+            downloadedBytes: null == downloadedBytes
+                ? _value.downloadedBytes
+                : downloadedBytes // ignore: cast_nullable_to_non_nullable
+                      as int,
+            speedLimit: freezed == speedLimit
+                ? _value.speedLimit
+                : speedLimit // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            deviceLimit: freezed == deviceLimit
+                ? _value.deviceLimit
+                : deviceLimit // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            expiredAt: freezed == expiredAt
+                ? _value.expiredAt
+                : expiredAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            nextResetAt: freezed == nextResetAt
+                ? _value.nextResetAt
+                : nextResetAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            metadata: null == metadata
+                ? _value.metadata
+                : metadata // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
+          )
+          as $Val,
+    );
   }
 }
 
 /// @nodoc
 abstract class _$$DomainSubscriptionImplCopyWith<$Res>
     implements $DomainSubscriptionCopyWith<$Res> {
-  factory _$$DomainSubscriptionImplCopyWith(_$DomainSubscriptionImpl value,
-          $Res Function(_$DomainSubscriptionImpl) then) =
-      __$$DomainSubscriptionImplCopyWithImpl<$Res>;
+  factory _$$DomainSubscriptionImplCopyWith(
+    _$DomainSubscriptionImpl value,
+    $Res Function(_$DomainSubscriptionImpl) then,
+  ) = __$$DomainSubscriptionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String subscribeUrl,
-      String email,
-      String uuid,
-      int planId,
-      String? planName,
-      String? token,
-      int transferLimit,
-      int uploadedBytes,
-      int downloadedBytes,
-      int? speedLimit,
-      int? deviceLimit,
-      DateTime? expiredAt,
-      DateTime? nextResetAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    String subscribeUrl,
+    String email,
+    String uuid,
+    int planId,
+    String? planName,
+    String? token,
+    int transferLimit,
+    int uploadedBytes,
+    int downloadedBytes,
+    int? speedLimit,
+    int? deviceLimit,
+    DateTime? expiredAt,
+    DateTime? nextResetAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
 class __$$DomainSubscriptionImplCopyWithImpl<$Res>
     extends _$DomainSubscriptionCopyWithImpl<$Res, _$DomainSubscriptionImpl>
     implements _$$DomainSubscriptionImplCopyWith<$Res> {
-  __$$DomainSubscriptionImplCopyWithImpl(_$DomainSubscriptionImpl _value,
-      $Res Function(_$DomainSubscriptionImpl) _then)
-      : super(_value, _then);
+  __$$DomainSubscriptionImplCopyWithImpl(
+    _$DomainSubscriptionImpl _value,
+    $Res Function(_$DomainSubscriptionImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of DomainSubscription
   /// with the given fields replaced by the non-null parameter values.
@@ -239,87 +248,89 @@ class __$$DomainSubscriptionImplCopyWithImpl<$Res>
     Object? nextResetAt = freezed,
     Object? metadata = null,
   }) {
-    return _then(_$DomainSubscriptionImpl(
-      subscribeUrl: null == subscribeUrl
-          ? _value.subscribeUrl
-          : subscribeUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
-              as String,
-      uuid: null == uuid
-          ? _value.uuid
-          : uuid // ignore: cast_nullable_to_non_nullable
-              as String,
-      planId: null == planId
-          ? _value.planId
-          : planId // ignore: cast_nullable_to_non_nullable
-              as int,
-      planName: freezed == planName
-          ? _value.planName
-          : planName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      token: freezed == token
-          ? _value.token
-          : token // ignore: cast_nullable_to_non_nullable
-              as String?,
-      transferLimit: null == transferLimit
-          ? _value.transferLimit
-          : transferLimit // ignore: cast_nullable_to_non_nullable
-              as int,
-      uploadedBytes: null == uploadedBytes
-          ? _value.uploadedBytes
-          : uploadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      downloadedBytes: null == downloadedBytes
-          ? _value.downloadedBytes
-          : downloadedBytes // ignore: cast_nullable_to_non_nullable
-              as int,
-      speedLimit: freezed == speedLimit
-          ? _value.speedLimit
-          : speedLimit // ignore: cast_nullable_to_non_nullable
-              as int?,
-      deviceLimit: freezed == deviceLimit
-          ? _value.deviceLimit
-          : deviceLimit // ignore: cast_nullable_to_non_nullable
-              as int?,
-      expiredAt: freezed == expiredAt
-          ? _value.expiredAt
-          : expiredAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      nextResetAt: freezed == nextResetAt
-          ? _value.nextResetAt
-          : nextResetAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metadata: null == metadata
-          ? _value._metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ));
+    return _then(
+      _$DomainSubscriptionImpl(
+        subscribeUrl: null == subscribeUrl
+            ? _value.subscribeUrl
+            : subscribeUrl // ignore: cast_nullable_to_non_nullable
+                  as String,
+        email: null == email
+            ? _value.email
+            : email // ignore: cast_nullable_to_non_nullable
+                  as String,
+        uuid: null == uuid
+            ? _value.uuid
+            : uuid // ignore: cast_nullable_to_non_nullable
+                  as String,
+        planId: null == planId
+            ? _value.planId
+            : planId // ignore: cast_nullable_to_non_nullable
+                  as int,
+        planName: freezed == planName
+            ? _value.planName
+            : planName // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        token: freezed == token
+            ? _value.token
+            : token // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        transferLimit: null == transferLimit
+            ? _value.transferLimit
+            : transferLimit // ignore: cast_nullable_to_non_nullable
+                  as int,
+        uploadedBytes: null == uploadedBytes
+            ? _value.uploadedBytes
+            : uploadedBytes // ignore: cast_nullable_to_non_nullable
+                  as int,
+        downloadedBytes: null == downloadedBytes
+            ? _value.downloadedBytes
+            : downloadedBytes // ignore: cast_nullable_to_non_nullable
+                  as int,
+        speedLimit: freezed == speedLimit
+            ? _value.speedLimit
+            : speedLimit // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        deviceLimit: freezed == deviceLimit
+            ? _value.deviceLimit
+            : deviceLimit // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        expiredAt: freezed == expiredAt
+            ? _value.expiredAt
+            : expiredAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        nextResetAt: freezed == nextResetAt
+            ? _value.nextResetAt
+            : nextResetAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        metadata: null == metadata
+            ? _value._metadata
+            : metadata // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$DomainSubscriptionImpl extends _DomainSubscription {
-  const _$DomainSubscriptionImpl(
-      {required this.subscribeUrl,
-      required this.email,
-      required this.uuid,
-      required this.planId,
-      this.planName,
-      this.token,
-      required this.transferLimit,
-      required this.uploadedBytes,
-      required this.downloadedBytes,
-      this.speedLimit,
-      this.deviceLimit,
-      this.expiredAt,
-      this.nextResetAt,
-      final Map<String, dynamic> metadata = const {}})
-      : _metadata = metadata,
-        super._();
+  const _$DomainSubscriptionImpl({
+    required this.subscribeUrl,
+    required this.email,
+    required this.uuid,
+    required this.planId,
+    this.planName,
+    this.token,
+    required this.transferLimit,
+    required this.uploadedBytes,
+    required this.downloadedBytes,
+    this.speedLimit,
+    this.deviceLimit,
+    this.expiredAt,
+    this.nextResetAt,
+    final Map<String, dynamic> metadata = const {},
+  }) : _metadata = metadata,
+       super._();
 
   factory _$DomainSubscriptionImpl.fromJson(Map<String, dynamic> json) =>
       _$$DomainSubscriptionImplFromJson(json);
@@ -426,21 +437,22 @@ class _$DomainSubscriptionImpl extends _DomainSubscription {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      subscribeUrl,
-      email,
-      uuid,
-      planId,
-      planName,
-      token,
-      transferLimit,
-      uploadedBytes,
-      downloadedBytes,
-      speedLimit,
-      deviceLimit,
-      expiredAt,
-      nextResetAt,
-      const DeepCollectionEquality().hash(_metadata));
+    runtimeType,
+    subscribeUrl,
+    email,
+    uuid,
+    planId,
+    planName,
+    token,
+    transferLimit,
+    uploadedBytes,
+    downloadedBytes,
+    speedLimit,
+    deviceLimit,
+    expiredAt,
+    nextResetAt,
+    const DeepCollectionEquality().hash(_metadata),
+  );
 
   /// Create a copy of DomainSubscription
   /// with the given fields replaced by the non-null parameter values.
@@ -449,32 +461,33 @@ class _$DomainSubscriptionImpl extends _DomainSubscription {
   @pragma('vm:prefer-inline')
   _$$DomainSubscriptionImplCopyWith<_$DomainSubscriptionImpl> get copyWith =>
       __$$DomainSubscriptionImplCopyWithImpl<_$DomainSubscriptionImpl>(
-          this, _$identity);
+        this,
+        _$identity,
+      );
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$DomainSubscriptionImplToJson(
-      this,
-    );
+    return _$$DomainSubscriptionImplToJson(this);
   }
 }
 
 abstract class _DomainSubscription extends DomainSubscription {
-  const factory _DomainSubscription(
-      {required final String subscribeUrl,
-      required final String email,
-      required final String uuid,
-      required final int planId,
-      final String? planName,
-      final String? token,
-      required final int transferLimit,
-      required final int uploadedBytes,
-      required final int downloadedBytes,
-      final int? speedLimit,
-      final int? deviceLimit,
-      final DateTime? expiredAt,
-      final DateTime? nextResetAt,
-      final Map<String, dynamic> metadata}) = _$DomainSubscriptionImpl;
+  const factory _DomainSubscription({
+    required final String subscribeUrl,
+    required final String email,
+    required final String uuid,
+    required final int planId,
+    final String? planName,
+    final String? token,
+    required final int transferLimit,
+    required final int uploadedBytes,
+    required final int downloadedBytes,
+    final int? speedLimit,
+    final int? deviceLimit,
+    final DateTime? expiredAt,
+    final DateTime? nextResetAt,
+    final Map<String, dynamic> metadata,
+  }) = _$DomainSubscriptionImpl;
   const _DomainSubscription._() : super._();
 
   factory _DomainSubscription.fromJson(Map<String, dynamic> json) =

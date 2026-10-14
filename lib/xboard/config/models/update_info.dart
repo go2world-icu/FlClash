@@ -1,7 +1,7 @@
 import 'config_entry.dart';
 
 /// 更新信息
-/// 
+///
 /// 扩展ConfigEntry，添加更新服务特有的属性
 class UpdateInfo extends ConfigEntry {
   final String? version;
@@ -50,16 +50,16 @@ class UpdateInfo extends ConfigEntry {
   /// 获取文件大小的可读格式
   String get fileSizeFormatted {
     if (fileSize == null) return 'Unknown';
-    
+
     const units = ['B', 'KB', 'MB', 'GB'];
     double size = fileSize!.toDouble();
     int unitIndex = 0;
-    
+
     while (size >= 1024 && unitIndex < units.length - 1) {
       size /= 1024;
       unitIndex++;
     }
-    
+
     return '${size.toStringAsFixed(1)} ${units[unitIndex]}';
   }
 

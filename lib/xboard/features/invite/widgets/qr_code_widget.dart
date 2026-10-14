@@ -25,26 +25,19 @@ class QrCodeWidget extends StatelessWidget {
         height: size,
         decoration: ShapeDecoration(
           color: backgroundColor ?? Colors.white,
-          shape: AppShape.all(12).copyWith(
-            side: BorderSide(color: Colors.grey.shade300),
-          ),
+          shape: AppShape.all(
+            12,
+          ).copyWith(side: BorderSide(color: Colors.grey.shade300)),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const GlyphIcon(
-                AppGlyphs.qrCode,
-                size: 48,
-                color: Colors.grey,
-              ),
+              const GlyphIcon(AppGlyphs.qrCode, size: 48, color: Colors.grey),
               const SizedBox(height: 8),
               Text(
                 appLocalizations.noInvitationData,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
             ],
           ),
@@ -56,9 +49,9 @@ class QrCodeWidget extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: ShapeDecoration(
         color: backgroundColor ?? Colors.white,
-        shape: AppShape.all(12).copyWith(
-          side: BorderSide(color: Colors.grey.shade300),
-        ),
+        shape: AppShape.all(
+          12,
+        ).copyWith(side: BorderSide(color: Colors.grey.shade300)),
       ),
       child: QrImageView(
         data: data,

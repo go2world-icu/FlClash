@@ -18,13 +18,12 @@ String _formatTimeDifference(DateTime dateTime) {
 
 class XBoardConnectButton extends ConsumerStatefulWidget {
   final bool isFloating; // 是否为浮动按钮模式
-  const XBoardConnectButton({
-    super.key,
-    this.isFloating = false,
-  });
+  const XBoardConnectButton({super.key, this.isFloating = false});
   @override
-  ConsumerState<XBoardConnectButton> createState() => _XBoardConnectButtonState();
+  ConsumerState<XBoardConnectButton> createState() =>
+      _XBoardConnectButtonState();
 }
+
 class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
@@ -43,33 +42,31 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
       parent: _controller,
       curve: Curves.easeOutBack,
     );
-    ref.listenManual(
-      runTimeProvider.select((state) => state != null),
-      (prev, next) {
-        if (next != isStart) {
-          isStart = next;
-          updateController();
-        }
-      },
-      fireImmediately: true,
-    );
+    ref.listenManual(runTimeProvider.select((state) => state != null), (
+      prev,
+      next,
+    ) {
+      if (next != isStart) {
+        isStart = next;
+        updateController();
+      }
+    }, fireImmediately: true);
   }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
+
   handleSwitchStart() {
     isStart = !isStart;
     updateController();
-    debouncer.call(
-      FunctionTag.updateStatus,
-      () {
-        ref.read(setupActionProvider.notifier).updateStatus(isStart);
-      },
-      duration: commonDuration,
-    );
+    debouncer.call(FunctionTag.updateStatus, () {
+      ref.read(setupActionProvider.notifier).updateStatus(isStart);
+    }, duration: commonDuration);
   }
+
   updateController() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (isStart) {
@@ -79,6 +76,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
       }
     });
   }
+
   @override
   Widget build(BuildContext context) {
     final isInit = ref.watch(initProvider);
@@ -95,6 +93,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
       return _buildInlineButton(context);
     }
   }
+
   Widget _buildFloatingButton(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -107,21 +106,17 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
         floatingActionButtonTheme: FloatingActionButtonThemeData(
           backgroundColor: isStart ? startColor : stopColor,
           foregroundColor: isDark ? Colors.black : Colors.white,
-          sizeConstraints: const BoxConstraints(
-            minWidth: 56,
-            maxWidth: 200,
-          ),
+          sizeConstraints: const BoxConstraints(minWidth: 56, maxWidth: 200),
         ),
       ),
       child: AnimatedBuilder(
         animation: _controller.view,
         builder: (_, child) {
-          final textWidth = globalState.measure
+          final textWidth =
+              globalState.measure
                   .computeTextSize(
                     Text(
-                      _formatTimeDifference(
-                        DateTime.now(),
-                      ),
+                      _formatTimeDifference(DateTime.now()),
                       style: context.textTheme.titleMedium?.toSoftBold,
                     ),
                   )
@@ -134,34 +129,28 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
             onPressed: () {
               handleSwitchStart();
             },
-              icon: GlyphIcon(
-                AppGlyphs.playPause(_animation.value),
-                fill: 1,
-              ),
-              label: SizedBox(
-                width: textWidth * _animation.value,
-                child: child!,
-              ),
+            icon: GlyphIcon(AppGlyphs.playPause(_animation.value), fill: 1),
+            label: SizedBox(width: textWidth * _animation.value, child: child!),
+          );
+        },
+        child: Consumer(
+          builder: (_, ref, __) {
+            final runTime = ref.watch(runTimeProvider);
+            final text = getTimeText(runTime);
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.visible,
+              style: Theme.of(context).textTheme.titleMedium?.toSoftBold
+                  .copyWith(color: isDark ? Colors.black : Colors.white),
             );
           },
-          child: Consumer(
-            builder: (_, ref, __) {
-              final runTime = ref.watch(runTimeProvider);
-              final text = getTimeText(runTime);
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return Text(
-                text,
-                maxLines: 1,
-                overflow: TextOverflow.visible,
-                style: Theme.of(context).textTheme.titleMedium?.toSoftBold.copyWith(
-                  color: isDark ? Colors.black : Colors.white,
-                ),
-              );
-            },
-          ),
         ),
-      );
+      ),
+    );
   }
+
   Widget _buildInlineButton(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -185,7 +174,10 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
               },
               customBorder: AppShape.all(12),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 20,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -200,12 +192,13 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
                       children: [
                         Text(
                           isStart
-                            ? AppLocalizations.of(context).xboardStopProxy
-                            : AppLocalizations.of(context).xboardStartProxy,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: isDark ? Colors.black : Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              ? AppLocalizations.of(context).xboardStopProxy
+                              : AppLocalizations.of(context).xboardStartProxy,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: isDark ? Colors.black : Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         if (isStart) ...[
                           const SizedBox(height: 3),
@@ -214,13 +207,16 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
                               final runTime = ref.watch(runTimeProvider);
                               final text = getTimeText(runTime);
                               return Text(
-                                AppLocalizations.of(context).xboardRunningTime(text),
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: isDark
-                                      ? Colors.black.withValues(alpha: 0.7)
-                                      : Colors.white.withValues(alpha: 0.9),
-                                  fontSize: 12,
-                                ),
+                                AppLocalizations.of(
+                                  context,
+                                ).xboardRunningTime(text),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: isDark
+                                          ? Colors.black.withValues(alpha: 0.7)
+                                          : Colors.white.withValues(alpha: 0.9),
+                                      fontSize: 12,
+                                    ),
                               );
                             },
                           ),
@@ -236,4 +232,4 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
       },
     );
   }
-} 
+}

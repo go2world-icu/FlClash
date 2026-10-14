@@ -12,7 +12,8 @@ part of '../notice.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
+);
 
 DomainNotice _$DomainNoticeFromJson(Map<String, dynamic> json) {
   return _DomainNotice.fromJson(json);
@@ -60,19 +61,21 @@ mixin _$DomainNotice {
 /// @nodoc
 abstract class $DomainNoticeCopyWith<$Res> {
   factory $DomainNoticeCopyWith(
-          DomainNotice value, $Res Function(DomainNotice) then) =
-      _$DomainNoticeCopyWithImpl<$Res, DomainNotice>;
+    DomainNotice value,
+    $Res Function(DomainNotice) then,
+  ) = _$DomainNoticeCopyWithImpl<$Res, DomainNotice>;
   @useResult
-  $Res call(
-      {int id,
-      String title,
-      String content,
-      List<String> imageUrls,
-      List<String> tags,
-      bool isVisible,
-      DateTime createdAt,
-      DateTime? updatedAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    int id,
+    String title,
+    String content,
+    List<String> imageUrls,
+    List<String> tags,
+    bool isVisible,
+    DateTime createdAt,
+    DateTime? updatedAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -100,44 +103,47 @@ class _$DomainNoticeCopyWithImpl<$Res, $Val extends DomainNotice>
     Object? updatedAt = freezed,
     Object? metadata = null,
   }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-      content: null == content
-          ? _value.content
-          : content // ignore: cast_nullable_to_non_nullable
-              as String,
-      imageUrls: null == imageUrls
-          ? _value.imageUrls
-          : imageUrls // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      tags: null == tags
-          ? _value.tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      isVisible: null == isVisible
-          ? _value.isVisible
-          : isVisible // ignore: cast_nullable_to_non_nullable
-              as bool,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metadata: null == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ) as $Val);
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as int,
+            title: null == title
+                ? _value.title
+                : title // ignore: cast_nullable_to_non_nullable
+                      as String,
+            content: null == content
+                ? _value.content
+                : content // ignore: cast_nullable_to_non_nullable
+                      as String,
+            imageUrls: null == imageUrls
+                ? _value.imageUrls
+                : imageUrls // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            tags: null == tags
+                ? _value.tags
+                : tags // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            isVisible: null == isVisible
+                ? _value.isVisible
+                : isVisible // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            createdAt: null == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            updatedAt: freezed == updatedAt
+                ? _value.updatedAt
+                : updatedAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            metadata: null == metadata
+                ? _value.metadata
+                : metadata // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>,
+          )
+          as $Val,
+    );
   }
 }
 
@@ -145,20 +151,22 @@ class _$DomainNoticeCopyWithImpl<$Res, $Val extends DomainNotice>
 abstract class _$$DomainNoticeImplCopyWith<$Res>
     implements $DomainNoticeCopyWith<$Res> {
   factory _$$DomainNoticeImplCopyWith(
-          _$DomainNoticeImpl value, $Res Function(_$DomainNoticeImpl) then) =
-      __$$DomainNoticeImplCopyWithImpl<$Res>;
+    _$DomainNoticeImpl value,
+    $Res Function(_$DomainNoticeImpl) then,
+  ) = __$$DomainNoticeImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {int id,
-      String title,
-      String content,
-      List<String> imageUrls,
-      List<String> tags,
-      bool isVisible,
-      DateTime createdAt,
-      DateTime? updatedAt,
-      Map<String, dynamic> metadata});
+  $Res call({
+    int id,
+    String title,
+    String content,
+    List<String> imageUrls,
+    List<String> tags,
+    bool isVisible,
+    DateTime createdAt,
+    DateTime? updatedAt,
+    Map<String, dynamic> metadata,
+  });
 }
 
 /// @nodoc
@@ -166,8 +174,9 @@ class __$$DomainNoticeImplCopyWithImpl<$Res>
     extends _$DomainNoticeCopyWithImpl<$Res, _$DomainNoticeImpl>
     implements _$$DomainNoticeImplCopyWith<$Res> {
   __$$DomainNoticeImplCopyWithImpl(
-      _$DomainNoticeImpl _value, $Res Function(_$DomainNoticeImpl) _then)
-      : super(_value, _then);
+    _$DomainNoticeImpl _value,
+    $Res Function(_$DomainNoticeImpl) _then,
+  ) : super(_value, _then);
 
   /// Create a copy of DomainNotice
   /// with the given fields replaced by the non-null parameter values.
@@ -184,64 +193,66 @@ class __$$DomainNoticeImplCopyWithImpl<$Res>
     Object? updatedAt = freezed,
     Object? metadata = null,
   }) {
-    return _then(_$DomainNoticeImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-      content: null == content
-          ? _value.content
-          : content // ignore: cast_nullable_to_non_nullable
-              as String,
-      imageUrls: null == imageUrls
-          ? _value._imageUrls
-          : imageUrls // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      tags: null == tags
-          ? _value._tags
-          : tags // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      isVisible: null == isVisible
-          ? _value.isVisible
-          : isVisible // ignore: cast_nullable_to_non_nullable
-              as bool,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metadata: null == metadata
-          ? _value._metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-    ));
+    return _then(
+      _$DomainNoticeImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as int,
+        title: null == title
+            ? _value.title
+            : title // ignore: cast_nullable_to_non_nullable
+                  as String,
+        content: null == content
+            ? _value.content
+            : content // ignore: cast_nullable_to_non_nullable
+                  as String,
+        imageUrls: null == imageUrls
+            ? _value._imageUrls
+            : imageUrls // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        tags: null == tags
+            ? _value._tags
+            : tags // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        isVisible: null == isVisible
+            ? _value.isVisible
+            : isVisible // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        createdAt: null == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        updatedAt: freezed == updatedAt
+            ? _value.updatedAt
+            : updatedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        metadata: null == metadata
+            ? _value._metadata
+            : metadata // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>,
+      ),
+    );
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$DomainNoticeImpl extends _DomainNotice {
-  const _$DomainNoticeImpl(
-      {required this.id,
-      required this.title,
-      required this.content,
-      final List<String> imageUrls = const [],
-      final List<String> tags = const [],
-      this.isVisible = true,
-      required this.createdAt,
-      this.updatedAt,
-      final Map<String, dynamic> metadata = const {}})
-      : _imageUrls = imageUrls,
-        _tags = tags,
-        _metadata = metadata,
-        super._();
+  const _$DomainNoticeImpl({
+    required this.id,
+    required this.title,
+    required this.content,
+    final List<String> imageUrls = const [],
+    final List<String> tags = const [],
+    this.isVisible = true,
+    required this.createdAt,
+    this.updatedAt,
+    final Map<String, dynamic> metadata = const {},
+  }) : _imageUrls = imageUrls,
+       _tags = tags,
+       _metadata = metadata,
+       super._();
 
   factory _$DomainNoticeImpl.fromJson(Map<String, dynamic> json) =>
       _$$DomainNoticeImplFromJson(json);
@@ -320,8 +331,10 @@ class _$DomainNoticeImpl extends _DomainNotice {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.content, content) || other.content == content) &&
-            const DeepCollectionEquality()
-                .equals(other._imageUrls, _imageUrls) &&
+            const DeepCollectionEquality().equals(
+              other._imageUrls,
+              _imageUrls,
+            ) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.isVisible, isVisible) ||
                 other.isVisible == isVisible) &&
@@ -335,16 +348,17 @@ class _$DomainNoticeImpl extends _DomainNotice {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      title,
-      content,
-      const DeepCollectionEquality().hash(_imageUrls),
-      const DeepCollectionEquality().hash(_tags),
-      isVisible,
-      createdAt,
-      updatedAt,
-      const DeepCollectionEquality().hash(_metadata));
+    runtimeType,
+    id,
+    title,
+    content,
+    const DeepCollectionEquality().hash(_imageUrls),
+    const DeepCollectionEquality().hash(_tags),
+    isVisible,
+    createdAt,
+    updatedAt,
+    const DeepCollectionEquality().hash(_metadata),
+  );
 
   /// Create a copy of DomainNotice
   /// with the given fields replaced by the non-null parameter values.
@@ -356,23 +370,22 @@ class _$DomainNoticeImpl extends _DomainNotice {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$DomainNoticeImplToJson(
-      this,
-    );
+    return _$$DomainNoticeImplToJson(this);
   }
 }
 
 abstract class _DomainNotice extends DomainNotice {
-  const factory _DomainNotice(
-      {required final int id,
-      required final String title,
-      required final String content,
-      final List<String> imageUrls,
-      final List<String> tags,
-      final bool isVisible,
-      required final DateTime createdAt,
-      final DateTime? updatedAt,
-      final Map<String, dynamic> metadata}) = _$DomainNoticeImpl;
+  const factory _DomainNotice({
+    required final int id,
+    required final String title,
+    required final String content,
+    final List<String> imageUrls,
+    final List<String> tags,
+    final bool isVisible,
+    required final DateTime createdAt,
+    final DateTime? updatedAt,
+    final Map<String, dynamic> metadata,
+  }) = _$DomainNoticeImpl;
   const _DomainNotice._() : super._();
 
   factory _DomainNotice.fromJson(Map<String, dynamic> json) =

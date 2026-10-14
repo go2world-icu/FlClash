@@ -4,7 +4,8 @@ import 'package:fl_clash/models/models.dart';
 ///
 /// 从订阅链接响应头解析订阅信息并创建 SubscriptionInfo
 class ProfileSubscriptionInfoService {
-  static const ProfileSubscriptionInfoService _instance = ProfileSubscriptionInfoService._();
+  static const ProfileSubscriptionInfoService _instance =
+      ProfileSubscriptionInfoService._();
 
   const ProfileSubscriptionInfoService._();
 

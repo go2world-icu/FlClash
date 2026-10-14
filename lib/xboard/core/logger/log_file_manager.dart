@@ -96,7 +96,9 @@ class EncryptedFileLogOutput extends LogOutput {
     if (_currentFile == null) return;
 
     try {
-      final encrypter = encrypt.Encrypter(encrypt.AES(_key, mode: encrypt.AESMode.cbc));
+      final encrypter = encrypt.Encrypter(
+        encrypt.AES(_key, mode: encrypt.AESMode.cbc),
+      );
       final encrypted = encrypter.encrypt(line, iv: _iv);
       final base64Line = '${encrypted.base64}\n';
 
@@ -116,13 +118,18 @@ class EncryptedFileLogOutput extends LogOutput {
   }
 
   /// 解密日志文件内容
-  static Future<String> decryptFile(File file, {String appKey = 'xboard_default_key'}) async {
+  static Future<String> decryptFile(
+    File file, {
+    String appKey = 'xboard_default_key',
+  }) async {
     final keyHash = sha256.convert(utf8.encode(appKey)).bytes;
     final key = encrypt.Key(Uint8List.fromList(keyHash));
     // IV = SHA-256(appKey + "_iv") 前 16 字节，与加密端一致的确定性派生
     final ivHash = sha256.convert(utf8.encode('${appKey}_iv')).bytes;
     final iv = encrypt.IV(Uint8List.fromList(ivHash.sublist(0, 16)));
-    final encrypter = encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
+    final encrypter = encrypt.Encrypter(
+      encrypt.AES(key, mode: encrypt.AESMode.cbc),
+    );
     final lines = await file.readAsLines();
     final buffer = StringBuffer();
 

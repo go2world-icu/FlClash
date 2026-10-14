@@ -59,4 +59,3 @@ abstract interface class StorageInterface {
   /// 获取所有键
   Future<Result<Set<String>>> getKeys();
 }
-

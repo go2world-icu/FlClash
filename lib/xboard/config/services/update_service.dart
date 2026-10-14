@@ -1,7 +1,7 @@
 import '../models/update_info.dart';
 
 /// 更新服务
-/// 
+///
 /// 负责更新相关的基础操作，暂不实现可用性测试等内部方法
 class UpdateService {
   final List<UpdateInfo> _updates;
@@ -99,11 +99,11 @@ class UpdateService {
   double getAverageFileSize() {
     final sourcesWithSize = getUpdateSourcesWithFileSize();
     if (sourcesWithSize.isEmpty) return 0.0;
-    
+
     final totalSize = sourcesWithSize
         .map((update) => update.fileSize!)
         .fold(0, (sum, size) => sum + size);
-    
+
     return totalSize / sourcesWithSize.length;
   }
 
@@ -147,7 +147,7 @@ class UpdateService {
   @override
   String toString() {
     return 'UpdateService(updateSources: ${_updates.length}, '
-           'secure: ${getSecureUpdateSources().length}, '
-           'versions: ${getAvailableVersions().join(', ')})';
+        'secure: ${getSecureUpdateSources().length}, '
+        'versions: ${getAvailableVersions().join(', ')})';
   }
 }

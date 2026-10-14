@@ -38,7 +38,10 @@ class UserMenuWidget extends ConsumerWidget {
             children: [
               const GlyphIcon(AppGlyphs.logout, color: Colors.red),
               const SizedBox(width: 8),
-              Text(appLocalizations.logout, style: const TextStyle(color: Colors.red)),
+              Text(
+                appLocalizations.logout,
+                style: const TextStyle(color: Colors.red),
+              ),
             ],
           ),
         ),
@@ -47,16 +50,10 @@ class UserMenuWidget extends ConsumerWidget {
   }
 
   void _showThemeDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const ThemeDialog(),
-    );
+    showDialog(context: context, builder: (context) => const ThemeDialog());
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const LogoutDialog(),
-    );
+    showDialog(context: context, builder: (context) => const LogoutDialog());
   }
 }

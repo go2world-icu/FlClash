@@ -233,10 +233,7 @@ class ApplicationState extends ConsumerState<Application> {
       connectionControl: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Card(
-            margin: EdgeInsets.zero,
-            child: NodeSelectorBar(),
-          ),
+          Card(margin: EdgeInsets.zero, child: NodeSelectorBar()),
           SizedBox(height: 12),
           XBoardConnectButton(),
         ],

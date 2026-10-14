@@ -1,4 +1,3 @@
-
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
@@ -11,11 +10,13 @@ import 'forgot_password_page.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
+
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
 }
+
 class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -23,11 +24,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _rememberPassword = false;
   bool _isPasswordVisible = false;
   late XBoardStorageService _storageService;
-  
+
   // 从配置文件加载的应用信息
   String _appTitle = 'XBoard';
   String _appWebsite = 'example.com';
-  
+
   @override
   void initState() {
     super.initState();
@@ -46,7 +47,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // ✅ 调用统一初始化服务
     _initializeXBoard();
   }
-  
+
   /// 加载应用信息（标题和网站，本地YAML兜底，远程base覆盖）
   Future<void> _loadAppInfo() async {
     final title = XBoardConfig.appTitle;
@@ -58,13 +59,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       });
     }
   }
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   /// 冷启动重试间隔。首次失败多半是「刚启动还没连上网」，退避重试即可自愈。
   static const _initRetryDelays = [
     Duration(seconds: 2),
@@ -117,9 +119,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       // 失败态由 UI 呈现
     }
   }
+
   void refreshCredentials() {
     _loadSavedCredentials();
   }
+
   Future<void> _loadSavedCredentials() async {
     try {
       final savedEmail = await _storageService.getSavedEmail();
@@ -128,7 +132,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (savedEmail != null && savedEmail.isNotEmpty) {
         _emailController.text = savedEmail;
       }
-      if (savedPassword != null && savedPassword.isNotEmpty && rememberPassword) {
+      if (savedPassword != null &&
+          savedPassword.isNotEmpty &&
+          rememberPassword) {
         _passwordController.text = savedPassword;
       }
       _rememberPassword = rememberPassword;
@@ -139,6 +145,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       // 忽略加载凭据失败,继续正常流程
     }
   }
+
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       final userNotifier = ref.read(xboardUserProvider.notifier);
@@ -181,270 +188,266 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
     }
   }
+
   void _navigateToRegister() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const RegisterPage()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const RegisterPage()));
     _loadSavedCredentials();
     _initializeXBoard(); // 重新初始化
   }
-  
+
   void _navigateToForgotPassword() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const ForgotPasswordPage()));
     _initializeXBoard(); // 重新初始化
   }
-    @override
-    Widget build(BuildContext context) {
-      final colorScheme = Theme.of(context).colorScheme;
-      final textTheme = Theme.of(context).textTheme;
-      final initState = ref.watch(initializationProvider);
-      final userState = ref.watch(xboardUserProvider);
-  
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          actions: [
-            const LanguageSelector(),
-            const SizedBox(width: 8),
-            // ✅ 显示初始化状态指示器
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: _buildInitializationIndicator(initState),
-            ),
-          ],
-        ),
-        extendBodyBehindAppBar: true,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colorScheme.surface,
-                colorScheme.surface.withValues(alpha: 0.8),
-              ],
-            ),
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final initState = ref.watch(initializationProvider);
+    final userState = ref.watch(xboardUserProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          const LanguageSelector(),
+          const SizedBox(width: 8),
+          // ✅ 显示初始化状态指示器
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: _buildInitializationIndicator(initState),
           ),
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: colorScheme.primary.withValues(alpha: 0.1),
-                              ),
-                              child: GlyphIcon(
-                                AppGlyphs.key,
-                                size: 48,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              _appTitle,
-                              style: textTheme.displaySmall?.copyWith(
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _appWebsite,
-                              style: textTheme.titleMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 48),
-                      XBInputField(
-                        controller: _emailController,
-                        labelText: appLocalizations.xboardEmail,
-                        hintText: appLocalizations.xboardEmail,
-                        prefixIcon: AppGlyphs.email,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return appLocalizations.xboardEmail;
-                          }
-                          if (!value.contains('@')) {
-                            return appLocalizations.xboardEmail;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      XBInputField(
-                        controller: _passwordController,
-                        labelText: appLocalizations.xboardPassword,
-                        hintText: appLocalizations.xboardPassword,
-                        prefixIcon: AppGlyphs.lock,
-                        obscureText: !_isPasswordVisible,
-                        suffixIcon: IconButton(
-                          tooltip: _isPasswordVisible
-                              ? appLocalizations.hidePassword
-                              : appLocalizations.showPassword,
-                          icon: GlyphIcon(
-                            _isPasswordVisible
-                                ? AppGlyphs.eye
-                                : AppGlyphs.eyeOff,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return appLocalizations.xboardPassword;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
+        ],
+      ),
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.surface,
+              colorScheme.surface.withValues(alpha: 0.8),
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 32.0,
+              vertical: 24.0,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Column(
                         children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: Checkbox(
-                              value: _rememberPassword,
-                              onChanged: (value) {
-                                setState(() {
-                                  _rememberPassword = value ?? false;
-                                });
-                              },
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colorScheme.primary.withValues(alpha: 0.1),
+                            ),
+                            child: GlyphIcon(
+                              AppGlyphs.key,
+                              size: 48,
+                              color: colorScheme.primary,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
+                          const SizedBox(height: 24),
+                          Text(
+                            _appTitle,
+                            style: textTheme.displaySmall?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _appWebsite,
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    XBInputField(
+                      controller: _emailController,
+                      labelText: appLocalizations.xboardEmail,
+                      hintText: appLocalizations.xboardEmail,
+                      prefixIcon: AppGlyphs.email,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return appLocalizations.xboardEmail;
+                        }
+                        if (!value.contains('@')) {
+                          return appLocalizations.xboardEmail;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    XBInputField(
+                      controller: _passwordController,
+                      labelText: appLocalizations.xboardPassword,
+                      hintText: appLocalizations.xboardPassword,
+                      prefixIcon: AppGlyphs.lock,
+                      obscureText: !_isPasswordVisible,
+                      suffixIcon: IconButton(
+                        tooltip: _isPasswordVisible
+                            ? appLocalizations.hidePassword
+                            : appLocalizations.showPassword,
+                        icon: GlyphIcon(
+                          _isPasswordVisible ? AppGlyphs.eye : AppGlyphs.eyeOff,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return appLocalizations.xboardPassword;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: _rememberPassword,
+                            onChanged: (value) {
                               setState(() {
-                                _rememberPassword = !_rememberPassword;
+                                _rememberPassword = value ?? false;
                               });
                             },
-                            child: Text(
-                              appLocalizations.xboardRememberPassword,
-                              style: textTheme.bodyMedium,
-                            ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        height: 48,
-                        child: FilledButton(
-                          onPressed: initState.isReady && !userState.isLoading ? _login : null,
-                          child: userState.isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : Text(appLocalizations.xboardLogin),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          TextButton(
-                            onPressed: _navigateToForgotPassword,
-                            child: Text(
-                              appLocalizations.xboardForgotPassword,
-                            ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _rememberPassword = !_rememberPassword;
+                            });
+                          },
+                          child: Text(
+                            appLocalizations.xboardRememberPassword,
+                            style: textTheme.bodyMedium,
                           ),
-                          TextButton(
-                            onPressed: _navigateToRegister,
-                            child: Text(
-                              appLocalizations.xboardRegister,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      height: 48,
+                      child: FilledButton(
+                        onPressed: initState.isReady && !userState.isLoading
+                            ? _login
+                            : null,
+                        child: userState.isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(appLocalizations.xboardLogin),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: _navigateToForgotPassword,
+                          child: Text(appLocalizations.xboardForgotPassword),
+                        ),
+                        TextButton(
+                          onPressed: _navigateToRegister,
+                          child: Text(appLocalizations.xboardRegister),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ),
-      );
-    }
-    
-    /// 构建初始化状态指示器
-    Widget _buildInitializationIndicator(InitializationState initState) {
-      Color statusColor;
-      Glyph statusIcon;
-
-      switch (initState.status) {
-        case InitializationStatus.checkingDomain:
-        case InitializationStatus.initializingSDK:
-          statusColor = Colors.orange;
-          statusIcon = AppGlyphs.sync;
-          break;
-        case InitializationStatus.ready:
-          statusColor = Colors.green;
-          statusIcon = AppGlyphs.checkCircle;
-          break;
-        case InitializationStatus.failed:
-          statusColor = Colors.red;
-          statusIcon = AppGlyphs.error;
-          break;
-        case InitializationStatus.idle:
-          statusColor = Colors.grey;
-          statusIcon = AppGlyphs.dns;
-          break;
-      }
-      
-      final indicator = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          initState.isInitializing
-              ? SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                  ),
-                )
-              : GlyphIcon(
-                  statusIcon,
-                  size: 12,
-                  color: statusColor,
-                ),
-        ],
-      );
-
-      // 失败态给一个手动重试入口，否则退避重试用尽后就是死路
-      if (initState.status != InitializationStatus.failed) {
-        return indicator;
-      }
-      return InkWell(
-        onTap: _retryInitialization,
-        customBorder: AppShape.all(12),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: indicator,
-        ),
-      );
-    }
+      ),
+    );
   }
+
+  /// 构建初始化状态指示器
+  Widget _buildInitializationIndicator(InitializationState initState) {
+    Color statusColor;
+    Glyph statusIcon;
+
+    switch (initState.status) {
+      case InitializationStatus.checkingDomain:
+      case InitializationStatus.initializingSDK:
+        statusColor = Colors.orange;
+        statusIcon = AppGlyphs.sync;
+        break;
+      case InitializationStatus.ready:
+        statusColor = Colors.green;
+        statusIcon = AppGlyphs.checkCircle;
+        break;
+      case InitializationStatus.failed:
+        statusColor = Colors.red;
+        statusIcon = AppGlyphs.error;
+        break;
+      case InitializationStatus.idle:
+        statusColor = Colors.grey;
+        statusIcon = AppGlyphs.dns;
+        break;
+    }
+
+    final indicator = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        initState.isInitializing
+            ? SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                ),
+              )
+            : GlyphIcon(statusIcon, size: 12, color: statusColor),
+      ],
+    );
+
+    // 失败态给一个手动重试入口，否则退避重试用尽后就是死路
+    if (initState.status != InitializationStatus.failed) {
+      return indicator;
+    }
+    return InkWell(
+      onTap: _retryInitialization,
+      customBorder: AppShape.all(12),
+      child: Padding(padding: const EdgeInsets.all(8), child: indicator),
+    );
+  }
+}

@@ -41,11 +41,11 @@ class LoggerConfig {
 
   /// 将 LogLevel 转为 logger 包的 Level
   pkg.Level get _packageLevel => switch (minLevel) {
-        LogLevel.debug => pkg.Level.debug,
-        LogLevel.info => pkg.Level.info,
-        LogLevel.warning => pkg.Level.warning,
-        LogLevel.error => pkg.Level.error,
-      };
+    LogLevel.debug => pkg.Level.debug,
+    LogLevel.info => pkg.Level.info,
+    LogLevel.warning => pkg.Level.warning,
+    LogLevel.error => pkg.Level.error,
+  };
 }
 
 /// XBoard 日志管理器
@@ -76,7 +76,9 @@ class XBoardLogger {
   ///
   /// 在应用启动时调用，建议传入自定义配置。
   /// 调用后全局实例被替换。
-  static Future<void> configure([LoggerConfig config = const LoggerConfig()]) async {
+  static Future<void> configure([
+    LoggerConfig config = const LoggerConfig(),
+  ]) async {
     final outputs = <pkg.LogOutput>[];
 
     if (config.enableConsole) {
@@ -140,7 +142,9 @@ class _PrintLogOutput extends pkg.LogOutput {
   @override
   void output(pkg.OutputEvent event) {
     // ignore: avoid_print
-    for (final line in event.lines) { print(line); }
+    for (final line in event.lines) {
+      print(line);
+    }
   }
 }
 
@@ -149,9 +153,11 @@ class _Printer extends pkg.LogPrinter {
   @override
   List<String> log(pkg.LogEvent event) {
     final now = DateTime.now();
-    final ts = '${now.year}-${_p(now.month)}-${_p(now.day)} '
+    final ts =
+        '${now.year}-${_p(now.month)}-${_p(now.day)} '
         '${_p(now.hour)}:${_p(now.minute)}:${_p(now.second)}';
     return ['$ts [${event.level.name.toUpperCase()}] ${event.message}'];
   }
+
   String _p(int n) => n.toString().padLeft(2, '0');
 }

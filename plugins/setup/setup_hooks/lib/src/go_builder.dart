@@ -89,7 +89,11 @@ class GoBuilder {
         final env = await _buildEnvironment(target);
         _log.info(
           'Building Go core: $target '
-          '${target.isStaticLib ? "(CGO, c-archive)" : target.isLib ? "(CGO, c-shared)" : "(standalone)"}',
+          '${target.isStaticLib
+              ? "(CGO, c-archive)"
+              : target.isLib
+              ? "(CGO, c-shared)"
+              : "(standalone)"}',
         );
 
         // A failed build must not destroy the previous artifacts.

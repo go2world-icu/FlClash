@@ -13,7 +13,10 @@ final domainStatusServiceProvider = Provider<DomainStatusService>((ref) {
 });
 
 /// 域名状态提供者
-final domainStatusProvider = NotifierProvider<DomainStatusNotifier, DomainStatusState>(DomainStatusNotifier.new);
+final domainStatusProvider =
+    NotifierProvider<DomainStatusNotifier, DomainStatusState>(
+      DomainStatusNotifier.new,
+    );
 
 /// 域名就绪状态提供者
 final domainReadyProvider = Provider<bool>((ref) {
@@ -61,10 +64,7 @@ class DomainStatusNotifier extends Notifier<DomainStatusState> {
       await _initialize();
     }
 
-    state = state.copyWith(
-      status: DomainStatus.checking,
-      errorMessage: null,
-    );
+    state = state.copyWith(status: DomainStatus.checking, errorMessage: null);
 
     try {
       _logger.info('开始检查域名');
@@ -76,8 +76,11 @@ class DomainStatusNotifier extends Notifier<DomainStatusState> {
           status: DomainStatus.success,
           currentDomain: result['domain'] as String?,
           latency: result['latency'] as int?,
-          availableDomains: (result['availableDomains'] as List<dynamic>?)
-              ?.map((e) => e.toString()).toList() ?? [],
+          availableDomains:
+              (result['availableDomains'] as List<dynamic>?)
+                  ?.map((e) => e.toString())
+                  .toList() ??
+              [],
           lastChecked: DateTime.now(),
           errorMessage: null,
         );
@@ -108,9 +111,7 @@ class DomainStatusNotifier extends Notifier<DomainStatusState> {
       await checkDomain();
     } catch (e) {
       _logger.error('刷新失败', e);
-      state = state.copyWith(
-        errorMessage: '刷新失败: $e',
-      );
+      state = state.copyWith(errorMessage: '刷新失败: $e');
     }
   }
 

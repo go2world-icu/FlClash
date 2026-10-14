@@ -2,7 +2,7 @@ import '../models/config_entry.dart';
 import '../models/panel_configuration.dart';
 
 /// 面板服务
-/// 
+///
 /// 负责面板相关的基础操作，暂不实现连通性测试等内部方法
 class PanelService {
   final PanelConfiguration _panelConfig;
@@ -30,7 +30,7 @@ class PanelService {
   }
 
   /// 并发竞速获取最快的面板URL
-  /// 
+  ///
   /// 使用并发竞速机制选择当前提供商最快响应的面板URL
   /// 这是推荐的获取面板URL方法，可以提供更好的用户体验
   Future<String?> getFastestPanelUrl() async {
@@ -79,6 +79,6 @@ class PanelService {
   @override
   String toString() {
     return 'PanelService(provider: ${getCurrentProvider()}, '
-           'panels: ${getCurrentProviderPanels().length})';
+        'panels: ${getCurrentProviderPanels().length})';
   }
 }
