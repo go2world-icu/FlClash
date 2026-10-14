@@ -14,6 +14,10 @@ final _declaration = RegExp(
   multiLine: true,
 );
 
+/// Forward slashes throughout: the checks below compare against paths written
+/// with `/`, while `File.path` is `lib\views\...` on Windows.
+String _posix(String path) => path.replaceAll('\\', '/');
+
 Iterable<File> _dartFiles({required bool includeGenerated}) sync* {
   for (final root in ['lib', 'test', 'tool', 'plugins']) {
     final directory = Directory(root);
@@ -22,10 +26,11 @@ Iterable<File> _dartFiles({required bool includeGenerated}) sync* {
     }
     for (final entity in directory.listSync(recursive: true)) {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final path = _posix(entity.path);
       final generated =
-          entity.path.endsWith('.g.dart') ||
-          entity.path.endsWith('.freezed.dart') ||
-          entity.path.contains('/generated/');
+          path.endsWith('.g.dart') ||
+          path.endsWith('.freezed.dart') ||
+          path.contains('/generated/');
       if (generated && !includeGenerated) continue;
       yield entity;
     }
@@ -49,11 +54,11 @@ void main() {
     // notifier is reached through the provider its annotation generates.
     final consumers = {
       for (final file in _dartFiles(includeGenerated: true))
-        file.path: file.readAsStringSync(),
+        _posix(file.path): file.readAsStringSync(),
     };
     final sources = {
       for (final file in _dartFiles(includeGenerated: false))
-        file.path: consumers[file.path]!,
+        _posix(file.path): consumers[_posix(file.path)]!,
     };
     final barrels = {
       for (final MapEntry(key: path, value: source) in sources.entries)
@@ -66,6 +71,9 @@ void main() {
       if (!path.startsWith('lib/')) continue;
       if (barrels.contains(path) || _entryPoints.contains(path)) continue;
       if (path.startsWith('lib/l10n/')) continue;
+      // The vendored panel SDK is a separate package (a submodule), excluded
+      // from analysis too. Its unused API surface is upstream's to prune.
+      if (path.startsWith('lib/sdk/')) continue;
 
       // Extensions and typedefs are reached through the types they attach to,
       // never by name, so a file that publishes only those cannot be measured
