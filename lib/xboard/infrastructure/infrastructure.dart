@@ -39,5 +39,4 @@ export 'http/http.dart';
 export 'network/network.dart';
 
 // ===== 导出缓存模块 =====
-export 'cache/cache.dart';
 

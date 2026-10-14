@@ -9,7 +9,6 @@ library;
 export 'logger_interface.dart';
 export 'file_logger.dart';
 export 'log_file_manager.dart';
-export 'log_upload_service.dart';
 
 import 'dart:async';
 
