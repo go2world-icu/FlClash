@@ -159,6 +159,12 @@ self-checks its SHA256), the bundle id `com.follow.clash`, the URL scheme `flcla
 - `Push to telegram`, the telegram-bot-api service, and the Homebrew/fdroid steps stay commented out — the script
   posts to `@FlClash`, upstream's channel, and the service is disabled here.
 
+Upstream has none of the fork's other workflows — `build-ios-fastlane.yaml` (signed IPA + TestFlight),
+`regen-ios-profiles.yaml`, `pages.yaml`, `sync-gitee-gitcode.yaml` — so a merge never touches them and whatever they pin
+drifts silently. **Check their toolchain pins against `build.yaml` after every merge**: v0.9.0 moved to
+Flutter 3.47.6 / Go 1.27.1, and `build-ios-fastlane.yaml` had been left on 3.44.4 / 1.26.4. Go is the sharp one —
+`core/go.mod`'s `go` line makes an older toolchain download a newer one mid-build rather than fail cleanly.
+
 ## Upstream tests that assert upstream's values
 
 Upstream's new tests hardcode upstream's choices, which this fork deliberately changed. Fix the **test** (the fork's

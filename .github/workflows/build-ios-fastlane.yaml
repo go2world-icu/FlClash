@@ -9,7 +9,11 @@ on:
         default: ''
 
 env:
-  FLUTTER_VERSION: '3.44.4'
+  # 必须跟 build.yaml 的 FLUTTER_VERSION / GO_VERSION 一致：上游升工具链时不会碰到
+  # 这个文件（它不存在于上游），钉住的版本会悄悄落后。Go 尤其硬——core/go.mod 的
+  # `go 1.27.0` 会让 1.26 的 toolchain 现去下载一个新版本。
+  FLUTTER_VERSION: '3.47.6'
+  GO_VERSION: '1.27.1'
 
 jobs:
   build-ios:
@@ -25,7 +29,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.4'
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: |
             core/go.sum
 
