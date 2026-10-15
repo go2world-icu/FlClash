@@ -25,6 +25,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory home;
+  // Resolved once in setUpAll: the home directory is an app-name subdirectory
+  // of the support directory, and awaiting it inside a testWidgets body would
+  // hang — widget tests run in a fake-async zone where real futures never
+  // complete.
+  late String homeDir;
   final supportDirectory = AppPath.supportDirectory;
   final temporaryDirectory = AppPath.temporaryDirectory;
   final cacheDirectory = AppPath.cacheDirectory;
@@ -34,7 +39,7 @@ void main() {
     AppPath.supportDirectory = () async => home;
     AppPath.temporaryDirectory = () async => home;
     AppPath.cacheDirectory = () async => home;
-    await appPath.homeDirPath;
+    homeDir = await appPath.homeDirPath;
   });
 
   tearDownAll(() {
@@ -207,7 +212,9 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final file = File(join(home.path, MMDB))
+    // The app reads its resources from the app-name subdirectory of the
+    // support directory, so seed the file where it actually looks.
+    final file = File(join(homeDir, MMDB))
       ..writeAsBytesSync([0])
       ..setLastModifiedSync(DateTime.now().subtract(const Duration(days: 3)));
     addTearDown(file.deleteSync);
