@@ -4,12 +4,16 @@ import Foundation
 /// `Mobile.xcframework` both targets link.
 ///
 /// It used to call a hand-built c-archive through C function pointers set at
-/// startup; gomobile replaces those with the `MobileResultHandler` protocol and
+/// startup; gomobile replaces those with the `MobileResultHandlerProtocol` interface and
 /// a generated function per export, so there is no initialize step any more.
 enum ClashCore {
     /// One handler per outstanding call. gomobile hands the Core's `[]byte`
     /// over as `Data`; throwing is how a handler reports a failure back into Go.
-    final class ResultHandler: NSObject, MobileResultHandler {
+    ///
+    /// gobind emits an abstract class *and* a protocol of the same name for a
+    /// Go interface, so Swift renames the protocol to `<name>Protocol` and it
+    /// is the one to conform to.
+    final class ResultHandler: NSObject, MobileResultHandlerProtocol {
         private let completion: (String) -> Void
 
         init(_ completion: @escaping (String) -> Void) {
