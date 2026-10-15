@@ -34,6 +34,27 @@ Resolve them by kind, not file by file — most of the 77 fall into the first th
 The last row is the important one. Do not try to preserve upstream's structure and the fork's edit hunk by hunk; take
 upstream, then re-add the fork's lines. That is the direction the refactors in the next section push towards.
 
+### The arb files are sources, not generated output
+
+Upstream did a localization rework and renamed most of its keys; the union in `merge_postprocess.sh` keeps the fork's
+copies of the old names next to upstream's new ones, which is invisible until the next rework. The 2026-10 merge left
+**554** keys upstream does not have, 314 of them upstream's own pre-rewrite names, and `lib/l10n/l10n.dart` grew a getter
+for each — which is why it is the largest conflict in the repository.
+
+355 of those were referenced nowhere and have been deleted. Fix the rest the same way rather than by union alone: after
+a merge, check every key the fork adds against `lib/` and delete the ones nothing reads. `flutter analyze` catches a
+key that was still in use, so the check is safe to run.
+
+```bash
+# keys the fork has and upstream does not
+comm -13 <(git show <upstream>:arb/intl_en.arb | jq -r 'keys[]' | sort) \
+         <(jq -r 'keys[]' arb/intl_en.arb | sort) > /tmp/extra.txt
+# of those, the ones nothing references
+while read -r k; do grep -rqF ".$k" lib/ --include=*.dart || echo "$k"; done < /tmp/extra.txt
+```
+
+`jq -r` on Windows emits CRLF — strip it (`tr -d '\r'`) or every key looks unreferenced.
+
 ## Where the fork attaches (the anchors)
 
 The fork's code lives in fork-owned files; upstream files only name it. One line that calls into a fork file survives a
