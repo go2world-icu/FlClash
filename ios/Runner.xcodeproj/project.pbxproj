@@ -16,7 +16,6 @@
 		4104B653B1D1F653946E0568 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2EAFD32F93BCF4412DC4EBE3 /* Foundation.framework */; };
 		6B5789FE4FDB5C93880E8DA5 /* EventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03266A68C59D0C1BEE7F7B15 /* EventBuffer.swift */; };
 		742B939CF953A0C37C678203 /* Mobile.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B203D511F8CF9AEDF9C08552 /* Mobile.xcframework */; };
-		7C41E5A9B3D24F8E9A0C7B41 /* Mobile.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B203D511F8CF9AEDF9C08552 /* Mobile.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
@@ -58,7 +57,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				7C41E5A9B3D24F8E9A0C7B41 /* Mobile.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
