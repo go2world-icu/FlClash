@@ -166,6 +166,27 @@ void main() {
       );
       expect(_read('lib/views/navigation.dart'), isNot(contains('hasXboard')));
     });
+
+    test('application.dart names the panel seams, not its internals', () {
+      final source = _read('lib/application.dart');
+      expect(source, contains('buildXBoardHome()'));
+      expect(source, contains('preloadXBoard(ref)'));
+      expect(source, contains('mobileManagerStack(state)'));
+      for (final internal in const [
+        'XBoardIosShell',
+        'NodeSelectorBar',
+        'hasXboardConfig',
+        'warmUpXBoardStorage',
+      ]) {
+        expect(
+          source,
+          isNot(contains(internal)),
+          reason:
+              'the shell decision belongs to lib/xboard/bridge.dart; inlining '
+              'it here is what made this file a 38-line conflict',
+        );
+      }
+    });
   });
 
   group('fork identity', () {

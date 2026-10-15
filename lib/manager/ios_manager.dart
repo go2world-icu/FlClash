@@ -3,12 +3,21 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/manager/android_manager.dart';
+import 'package:fl_clash/manager/tile_manager.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
+
+/// The manager stack `lib/application.dart` builds on mobile. iOS has neither a
+/// VpnService nor a tile, so it takes the tunnel-backed manager — the upstream
+/// file names this one function rather than branching on the platform itself.
+Widget mobileManagerStack(Widget child) => system.isIOS
+    ? IosManager(child: child)
+    : AndroidManager(child: TileManager(child: child));
 
 class IosManager extends ConsumerStatefulWidget {
   final Widget child;

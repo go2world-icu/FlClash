@@ -1,6 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/pages/pages.dart';
+import 'package:fl_clash/xboard/config_check.dart';
+import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/xboard.dart';
+
+import 'features/ios_shell/ios_shell.dart';
 
 /// iOS 专用外壳（仅 iOS 使用，接管整个 App 界面）
 export 'features/ios_shell/ios_shell.dart';
@@ -20,4 +26,33 @@ class XBoardPage extends ConsumerWidget {
     }
     return const LoginPage();
   }
+}
+
+/// The shell's home: the panel's iOS form, or upstream's page everywhere else.
+///
+/// `lib/application.dart` only names this, so what the panel adds to the shell
+/// can change without adding fork diff to an upstream file.
+Widget buildXBoardHome() {
+  if (!system.isIOS || !hasXboardConfig) {
+    return const HomePage();
+  }
+  return const XBoardIosShell(
+    connectionControl: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Card(margin: EdgeInsets.zero, child: NodeSelectorBar()),
+        SizedBox(height: 12),
+        XBoardConnectButton(),
+      ],
+    ),
+  );
+}
+
+/// Warms the panel's storage and runs its initialization — the panel's screens
+/// assume both have happened, and neither is part of the core's own startup.
+void preloadXBoard(WidgetRef ref) {
+  if (!hasXboardConfig) return;
+  warmUpXBoardStorage().then((_) {
+    ref.read(initializationProvider.notifier).initialize().catchError((_) {});
+  });
 }
