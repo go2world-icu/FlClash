@@ -38,9 +38,7 @@ class LogoutDialog extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        XBoardNotification.showError(
-          xboardL10n.logoutFailed(e.toString()),
-        );
+        XBoardNotification.showError(xboardL10n.logoutFailed(e.toString()));
       }
     }
   }

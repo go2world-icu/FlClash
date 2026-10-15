@@ -89,9 +89,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             true, // 启用记住密码
           );
           if (mounted) {
-            XBoardNotification.showSuccess(
-              xboardL10n.xboardRegisterSuccess,
-            );
+            XBoardNotification.showSuccess(xboardL10n.xboardRegisterSuccess);
           }
           Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
@@ -153,9 +151,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
 
     if (!_emailController.text.contains('@')) {
-      XBoardNotification.showError(
-        xboardL10n.pleaseEnterValidEmailAddress,
-      );
+      XBoardNotification.showError(xboardL10n.pleaseEnterValidEmailAddress);
       return;
     }
 
@@ -276,8 +272,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         XBInputField(
                           controller: _emailController,
                           labelText: xboardL10n.emailAddress,
-                          hintText:
-                              xboardL10n.pleaseEnterYourEmailAddress,
+                          hintText: xboardL10n.pleaseEnterYourEmailAddress,
                           prefixIcon: AppGlyphs.email,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
@@ -294,8 +289,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         XBInputField(
                           controller: _passwordController,
                           labelText: appLocalizations.password,
-                          hintText:
-                              xboardL10n.pleaseEnterAtLeast8CharsPassword,
+                          hintText: xboardL10n.pleaseEnterAtLeast8CharsPassword,
                           prefixIcon: AppGlyphs.lock,
                           obscureText: !_isPasswordVisible,
                           suffixIcon: IconButton(
@@ -363,9 +357,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             children: [
                               XBInputField(
                                 controller: _emailCodeController,
-                                labelText:
-                                    xboardL10n.emailVerificationCode,
-                                hintText: xboardL10n.pleaseEnterEmailVerificationCode,
+                                labelText: xboardL10n.emailVerificationCode,
+                                hintText:
+                                    xboardL10n.pleaseEnterEmailVerificationCode,
                                 prefixIcon: AppGlyphs.shieldCheck,
                                 keyboardType: TextInputType.number,
                                 suffixIcon: _isSendingEmailCode
@@ -384,7 +378,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                       ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return xboardL10n.pleaseEnterEmailVerificationCode;
+                                    return xboardL10n
+                                        .pleaseEnterEmailVerificationCode;
                                   }
                                   if (value.length != 6) {
                                     return xboardL10n.verificationCode6Digits;

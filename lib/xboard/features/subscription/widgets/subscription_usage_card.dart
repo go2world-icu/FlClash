@@ -365,9 +365,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
                               color: theme.colorScheme.onSecondaryContainer,
                             ),
                           )
-                        : Text(
-                            xboardL10n.xboardUpdateSubscription,
-                          ),
+                        : Text(xboardL10n.xboardUpdateSubscription),
                   );
                 },
               ),

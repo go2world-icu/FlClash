@@ -206,9 +206,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     );
     _stopProxy();
     // 用全局 navigatorKey 提示，页面此刻正在被换掉，不能依赖某个 State 还活着
-    XBoardNotification.showError(
-      xboardL10n.xboardTokenExpiredContent,
-    );
+    XBoardNotification.showError(xboardL10n.xboardTokenExpiredContent);
   }
 
   /// 关闭代理开关。

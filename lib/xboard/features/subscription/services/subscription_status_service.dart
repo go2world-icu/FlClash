@@ -47,9 +47,9 @@ class SubscriptionStatusService {
     if (debugForceExpired && userState.isAuthenticated) {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.expired,
-        messageBuilder: (context) =>
-            xboardL10n.subscriptionExpired,
-        detailMessageBuilder: (context) => xboardL10n.subscriptionExpiredDetail('2024-11-01'),
+        messageBuilder: (context) => xboardL10n.subscriptionExpired,
+        detailMessageBuilder: (context) =>
+            xboardL10n.subscriptionExpiredDetail('2024-11-01'),
         expiredAt: DateTime.now().subtract(const Duration(days: 3)),
         remainingDays: -3,
         needsDialog: true,
@@ -59,8 +59,7 @@ class SubscriptionStatusService {
     if (!userState.isAuthenticated) {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.notLoggedIn,
-        messageBuilder: (context) =>
-            xboardL10n.subscriptionNotLoggedIn,
+        messageBuilder: (context) => xboardL10n.subscriptionNotLoggedIn,
         detailMessageBuilder: (context) =>
             xboardL10n.subscriptionNotLoggedInDetail,
         needsDialog: false,
@@ -73,16 +72,14 @@ class SubscriptionStatusService {
       if (isRefreshing) {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.valid,
-          messageBuilder: (context) =>
-              xboardL10n.subscriptionValid,
+          messageBuilder: (context) => xboardL10n.subscriptionValid,
           detailMessageBuilder: null,
           needsDialog: false,
         );
       }
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.noSubscription,
-        messageBuilder: (context) =>
-            xboardL10n.subscriptionNoSubscription,
+        messageBuilder: (context) => xboardL10n.subscriptionNoSubscription,
         detailMessageBuilder: (context) =>
             xboardL10n.subscriptionNoSubscriptionDetail,
         needsDialog: true,
@@ -98,9 +95,9 @@ class SubscriptionStatusService {
       if (isExpired || remainingDays < 0) {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.expired,
-          messageBuilder: (context) =>
-              xboardL10n.subscriptionExpired,
-          detailMessageBuilder: (context) => xboardL10n.subscriptionExpiredDetail(_formatDate(expiredAt)),
+          messageBuilder: (context) => xboardL10n.subscriptionExpired,
+          detailMessageBuilder: (context) =>
+              xboardL10n.subscriptionExpiredDetail(_formatDate(expiredAt)),
           expiredAt: expiredAt,
           remainingDays: remainingDays,
           needsDialog: true,
@@ -109,8 +106,7 @@ class SubscriptionStatusService {
       if (remainingDays == 0) {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.expired,
-          messageBuilder: (context) =>
-              xboardL10n.subscriptionExpiresToday,
+          messageBuilder: (context) => xboardL10n.subscriptionExpiresToday,
           detailMessageBuilder: (context) =>
               xboardL10n.subscriptionExpiresTodayDetail,
           expiredAt: expiredAt,
@@ -121,9 +117,9 @@ class SubscriptionStatusService {
       if (remainingDays <= 3) {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.valid,
-          messageBuilder: (context) =>
-              xboardL10n.subscriptionExpiringInDays,
-          detailMessageBuilder: (context) => xboardL10n.subscriptionExpiringInDaysDetail(remainingDays),
+          messageBuilder: (context) => xboardL10n.subscriptionExpiringInDays,
+          detailMessageBuilder: (context) =>
+              xboardL10n.subscriptionExpiringInDaysDetail(remainingDays),
           expiredAt: expiredAt,
           remainingDays: remainingDays,
           needsDialog: false, // 即将过期不强制弹窗
@@ -140,8 +136,7 @@ class SubscriptionStatusService {
     final remainingDays = expiredAt?.difference(DateTime.now()).inDays;
     return SubscriptionStatusResult(
       type: SubscriptionStatusType.valid,
-      messageBuilder: (context) =>
-          xboardL10n.subscriptionValid,
+      messageBuilder: (context) => xboardL10n.subscriptionValid,
       detailMessageBuilder: remainingDays != null
           ? (context) => xboardL10n.subscriptionValidDetail(remainingDays)
           : null,
@@ -177,8 +172,7 @@ class SubscriptionStatusService {
     if (usageRatio >= 0.95) {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.exhausted,
-        messageBuilder: (context) =>
-            xboardL10n.subscriptionTrafficExhausted,
+        messageBuilder: (context) => xboardL10n.subscriptionTrafficExhausted,
         detailMessageBuilder: (context) =>
             xboardL10n.subscriptionTrafficExhaustedDetail,
         needsDialog: true,

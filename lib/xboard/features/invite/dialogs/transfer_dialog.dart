@@ -180,9 +180,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             Future.microtask(() {
               if (mounted) {
                 XBoardNotification.showSuccess(
-                  xboardL10n.transferSuccessMsg(
-                    amount.toStringAsFixed(2),
-                  ),
+                  xboardL10n.transferSuccessMsg(amount.toStringAsFixed(2)),
                 );
               }
             });
@@ -197,9 +195,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
           _isTransferring = false;
           _isSuccess = false;
         });
-        XBoardNotification.showError(
-          xboardL10n.transferFailed(e.toString()),
-        );
+        XBoardNotification.showError(xboardL10n.transferFailed(e.toString()));
       }
     }
   }

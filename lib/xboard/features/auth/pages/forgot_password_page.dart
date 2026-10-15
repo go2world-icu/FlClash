@@ -57,15 +57,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         setState(() {
           _currentStep = ResetPasswordStep.resetPassword;
         });
-        XBoardNotification.showSuccess(
-          xboardL10n.verificationCodeSent,
-        );
+        XBoardNotification.showSuccess(xboardL10n.verificationCodeSent);
       }
     } catch (e) {
       if (mounted) {
-        XBoardNotification.showError(
-          '${xboardL10n.sendCodeFailed}: $e',
-        );
+        XBoardNotification.showError('${xboardL10n.sendCodeFailed}: $e');
       }
     } finally {
       if (mounted) {
@@ -82,9 +78,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      XBoardNotification.showError(
-        xboardL10n.passwordMismatch,
-      );
+      XBoardNotification.showError(xboardL10n.passwordMismatch);
       return;
     }
 
@@ -106,16 +100,12 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       }
 
       if (mounted) {
-        XBoardNotification.showSuccess(
-          xboardL10n.passwordResetSuccessful,
-        );
+        XBoardNotification.showSuccess(xboardL10n.passwordResetSuccessful);
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
-        XBoardNotification.showError(
-          '${xboardL10n.passwordResetFailed}: $e',
-        );
+        XBoardNotification.showError('${xboardL10n.passwordResetFailed}: $e');
       }
     } finally {
       if (mounted) {
