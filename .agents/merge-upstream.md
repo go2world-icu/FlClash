@@ -50,8 +50,14 @@ the fork's, and it is wired into upstream files. Checklist, outermost to innermo
 3. **`rust_api` skips iOS.** It builds for every target Flutter builds, but `rquickjs-sys` publishes no iOS bindings.
    The hook returns early on `OS.iOS`, which is only safe because `main.dart` keeps `RustLib.init()` behind
    `system.isDesktop`.
-4. **Handler/glue files** (`core/{config,hook,dns,limit}_ios.go`, `config_default.go`) and `ios/` are fork-owned — a
-   merge never conflicts on them, only on the upstream files they hook into.
+4. **Handler/glue files** (`core/{config,hook,dns,limit}_ios.go`, `config_default.go`, `core/tun/options_{ios,android}.go`,
+   `core/handle_suspend.go`) and `ios/` are fork-owned — a merge never conflicts on them, only on the upstream files
+   they hook into. Keep it that way: when an upstream `core/` file needs an iOS branch, add the branch to the fork-owned
+   side of a tag pair and leave a one-line call behind. `core/common.go` and `core/tun/tun.go` are the two that already
+   are; both used to carry ~20 lines of inline `runtime.GOOS == "ios"` and now carry one call each.
+
+   The iOS side of a pair is compiled by nothing before a release tag (CI vets only host and Android), so the
+   invariants test asserts both sides still define every hook.
 
 Background: the fork's original iOS pipeline (`build-ios-fastlane.yaml`) pinned **Flutter 3.44.4**, before
 `package:hooks` existed. iOS never ran a build hook there, so the whole class of problems only appeared once the fork
@@ -107,6 +113,11 @@ choice is the product), and prefer referencing a constant over the literal so th
 | `test/providers/backup_action_test.dart`, `test/views/resources_view_test.dart` | homeDir is the support dir | `<supportDir>/<appName>` (commit `838f15a`) |
 | `test/common/tray_menu_test.dart` | `isTemplate: true` on macOS | `false` — the tray art is a full-colour app icon |
 | `test/lint/*` | `p.relative()` compared against `'/'` paths | normalize with `p.posix.joinAll(p.split(...))`; otherwise they vacuously pass on Windows |
+
+Not a value conflict, just a Windows-only failure — leave it, CI's `go test` is ubuntu-only:
+`core/hub_test.go`'s `TestHandleValidateProxiesLeavesARunningProxysResolverInPlace` asserts the resolved path contains
+`"/outside"`, which is `C:\outside` here. Editing an upstream test for a local-only failure adds a file to the
+conflict set for no gain.
 
 ## Deliberate divergences (do not "fix" these)
 

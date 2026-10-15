@@ -82,11 +82,9 @@ func Start(fd int, stack string, address, dns string) *sing_tun.Listener {
 		Inet6Address:        prefix6,
 		MTU:                 9000,
 		FileDescriptor:      dupFd,
-		// iOS: the packet tunnel hands us a raw fd, and only the msgX syscall
-		// paths let the gVisor stack move packets off it.
-		RecvMsgX: true,
-		SendMsgX: true,
 	}
+
+	applyPlatformTunOptions(&options)
 
 	listener, err := sing_tun.New(options, tunnel.Tunnel)
 

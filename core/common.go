@@ -24,7 +24,6 @@ import (
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	"github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/constant/features"
 	cp "github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
@@ -155,9 +154,7 @@ func updateListeners(cfg *config.Config) {
 	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
 	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
 	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
-	// iOS runs inside the packet tunnel provider, which owns the TUN device
-	// itself — recreating one from here would fight the NE for the interface.
-	if !features.Android && runtime.GOOS != "ios" {
+	if recreateTunOnReload {
 		listener.ReCreateTun(general.Tun, tunnel.Tunnel)
 	}
 }
@@ -402,22 +399,7 @@ func applyConfig(params *SetupParams) error {
 	defer configMu.Unlock()
 
 	setTestURL(params.TestURL)
-	configPath := filepath.Join(constant.Path.HomeDir(), "config.yaml")
-	var cfg *config.Config
-	var err error
-	if runtime.GOOS == "ios" {
-		cfg, err = parseConfigPathFiltered(configPath)
-		// Fresh install: the app only writes config.yaml after the tunnel is up
-		// (IosManager.onServiceStatus → applyProfile). A missing file must not
-		// fail the tunnel start — boot with the default config instead, and the
-		// real profile is applied once the tunnel reports connected.
-		if os.IsNotExist(err) {
-			cfg, _ = config.ParseRawConfig(config.DefaultRawConfig())
-			err = nil
-		}
-	} else {
-		cfg, err = loadConfig(configPath)
-	}
+	cfg, err := loadConfigForPlatform(filepath.Join(constant.Path.HomeDir(), "config.yaml"))
 	if err != nil {
 		// The fallback is what keeps the listeners serving while the host
 		// reports the error, but it applies a config with no proxies in it.

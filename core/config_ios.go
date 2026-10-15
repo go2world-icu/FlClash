@@ -26,6 +26,24 @@ var dnsGeodataKeyRE = regexp.MustCompile(`(?im)^(\s+)(geosite)(:.*)?$`)
 // geoip-code are preserved so GEOIP rules can work.
 var dnsGeodataInlineRE = regexp.MustCompile(`(geosite)\s*:\s*\[?[^\],}\s]*\]?,?\s*`)
 
+// loadConfigForPlatform is how common.go reaches the profile config.
+//
+// A missing file is not an error here: the app only writes config.yaml after
+// the tunnel is up (IosManager.onServiceStatus → applyProfile), so a fresh
+// install must still boot — on the default config, until the real profile is
+// applied once the tunnel reports connected.
+func loadConfigForPlatform(path string) (*config.Config, error) {
+	cfg, err := parseConfigPathFiltered(path)
+	if os.IsNotExist(err) {
+		return config.ParseRawConfig(config.DefaultRawConfig())
+	}
+	return cfg, err
+}
+
+// The packet tunnel provider owns the TUN device, so a listener reload must
+// not recreate one — that would fight the NE for the interface.
+const recreateTunOnReload = false
+
 func parseConfigPathFiltered(path string) (*config.Config, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {

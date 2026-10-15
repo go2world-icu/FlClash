@@ -105,6 +105,45 @@ void main() {
     });
   });
 
+  group('platform differences live behind a build-tag pair', () {
+    // CI compiles the Android side; nothing compiles the iOS side before a
+    // release tag, so these two files are otherwise unguarded.
+    const hooks = {
+      'loadConfigForPlatform': ('core/config_ios.go', 'core/config_default.go'),
+      'recreateTunOnReload': ('core/config_ios.go', 'core/config_default.go'),
+      'applyPlatformTunOptions': (
+        'core/tun/options_ios.go',
+        'core/tun/options_android.go',
+      ),
+    };
+
+    for (final MapEntry(key: hook, value: (ios, other)) in hooks.entries) {
+      test('$hook is defined on both sides', () {
+        expect(_read(ios), contains(hook));
+        expect(_read(other), contains(hook));
+      });
+    }
+
+    test('common.go names the hooks instead of branching on GOOS', () {
+      final source = _read('core/common.go');
+      expect(source, contains('loadConfigForPlatform('));
+      expect(source, contains('recreateTunOnReload'));
+      expect(
+        source,
+        isNot(contains('runtime.GOOS == "ios"')),
+        reason:
+            'keeping the iOS branches inline put 19 lines of fork diff in an '
+            'upstream file; behind the tag pair it is two one-line calls',
+      );
+    });
+
+    test('tun.go leaves the fd options to the hook', () {
+      final source = _read('core/tun/tun.go');
+      expect(source, contains('applyPlatformTunOptions(&options)'));
+      expect(source, isNot(contains('RecvMsgX')));
+    });
+  });
+
   group('upstream files the fork keeps clean', () {
     test('core/hub.go carries no fork-specific code', () {
       expect(
