@@ -45,175 +45,150 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m9(label) => "${label} cannot be empty";
 
-  static String m10(count) => "${count} entries";
+  static String m10(label) => "${label} already exists";
 
-  static String m11(label) => "${label} already exists";
+  static String m11(name) => "${name} is already up to date";
 
-  static String m12(name) => "${name} is already up to date";
+  static String m12(name) => "${name} updated";
 
-  static String m13(name) => "${name} updated";
-
-  static String m14(name) => "Updating ${name}...";
-
-  static String m15(action) =>
+  static String m13(action) =>
       "Already used by “${action}”. Saving moves it here.";
 
-  static String m16(modifiers) => "Include at least one of ${modifiers}";
+  static String m14(modifiers) => "Include at least one of ${modifiers}";
 
-  static String m17(count) =>
+  static String m15(count) =>
       "${Intl.plural(count, one: '1 hour ago', other: '${count} hours ago')}";
 
-  static String m18(count) =>
+  static String m16(count) =>
       "${Intl.plural(count, one: '1 hour', other: '${count} hours')}";
 
-  static String m19(target) => "${target} is an invalid policy";
+  static String m17(target) => "${target} is an invalid policy";
 
-  static String m20(proxyName) => "${proxyName} is an invalid proxy";
+  static String m18(proxyName) => "${proxyName} is an invalid proxy";
 
-  static String m21(providerName) =>
+  static String m19(providerName) =>
       "${providerName} is an invalid proxy provider";
 
-  static String m22(ruleSet) => "${ruleSet} is an invalid rule set";
+  static String m20(ruleSet) => "${ruleSet} is an invalid rule set";
 
-  static String m23(subRule) => "${subRule} is an invalid SUB_RULE";
+  static String m21(subRule) => "${subRule} is an invalid SUB_RULE";
 
-  static String m24(line, message) => "Line ${line}: ${message}";
+  static String m22(line, message) => "Line ${line}: ${message}";
 
-  static String m25(appName) =>
+  static String m23(appName) =>
       "1. Open System Settings > Privacy & Security\n2. Choose Location Services\n3. Find and check ${appName} in the list\n\nWhen you are done, return to the app to continue. Thank you for your cooperation.";
 
-  static String m26(error) => "Logout failed: ${error}";
+  static String m24(error) => "Logout failed: ${error}";
 
-  static String m27(label, max) => "${label} must be at most ${max} characters";
+  static String m25(label, max) => "${label} must be at most ${max} characters";
 
-  static String m28(amount) => "Max transferable: ¥${amount}";
+  static String m26(amount) => "Max transferable: ¥${amount}";
 
-  static String m29(size) => "Released ${size}";
+  static String m27(size) => "Released ${size}";
 
-  static String m30(count) =>
+  static String m28(count) =>
       "${Intl.plural(count, one: '1 minute ago', other: '${count} minutes ago')}";
 
-  static String m31(count) =>
+  static String m29(count) =>
       "${Intl.plural(count, one: '1 month ago', other: '${count} months ago')}";
 
-  static String m32(code) =>
+  static String m30(code) =>
       "The server denied access (HTTP ${code}). The link may have expired, or the credentials are wrong";
 
-  static String m33(code) => "The server rejected the request (HTTP ${code})";
+  static String m31(code) => "The server rejected the request (HTTP ${code})";
 
-  static String m34(code) =>
+  static String m32(code) =>
       "Nothing was found at this address (HTTP ${code}). Check that the URL is correct";
 
-  static String m35(detail) => "Network request failed: ${detail}";
+  static String m33(detail) => "Network request failed: ${detail}";
 
-  static String m36(code) =>
+  static String m34(code) =>
       "The server ran into a problem (HTTP ${code}). Try again later";
 
-  static String m37(label) => "No ${label} yet";
+  static String m35(label) => "No ${label} yet";
 
-  static String m38(label) => "${label} must be a number";
+  static String m36(label) => "${label} must be a number";
 
-  static String m39(statusCode) => "Failed to get messages: ${statusCode}";
+  static String m37(amount) => "Order amount: ${amount}";
 
-  static String m40(error) => "Failed to select images: ${error}";
+  static String m38(orderNo) => "Order: ${orderNo}";
 
-  static String m41(method) => "Unsupported HTTP method: ${method}";
+  static String m39(message) => "The core cannot parse this proxy: ${message}";
 
-  static String m42(error) => "Upload failed: ${error}";
-
-  static String m43(amount) => "Order amount: ${amount}";
-
-  static String m44(orderNo) => "Order: ${orderNo}";
-
-  static String m45(message) => "The core cannot parse this proxy: ${message}";
-
-  static String m46(name) =>
+  static String m40(name) =>
       "The name ${name} is already used by another proxy or proxy group";
 
-  static String m47(path) =>
+  static String m41(path) =>
       "Proxy groups reference each other in a loop: ${path}";
 
-  static String m48(names) => "These proxy providers do not exist: ${names}";
+  static String m42(names) => "These proxy providers do not exist: ${names}";
 
-  static String m49(names) =>
+  static String m43(names) =>
       "These proxies or policies do not exist: ${names}";
 
-  static String m50(name) =>
+  static String m44(name) =>
       "${name} is a built-in policy name and cannot be used here";
 
-  static String m51(names) =>
+  static String m45(names) =>
       "The profile\'s own proxy groups name proxies that the custom proxies no longer include: ${names}";
 
-  static String m52(count) =>
+  static String m46(count) =>
       "${count} items have problems, and applying this override may fail";
 
-  static String m53(page) => "Page ${page}";
+  static String m47(page) => "Page ${page}";
 
-  static String m54(label) => "${label} must be between 1024 and 49151";
+  static String m48(label) => "${label} must be between 1024 and 49151";
 
-  static String m55(label, profiles) =>
+  static String m49(label, profiles) =>
       "${label} is still used by the custom proxy groups or rules of ${profiles}. Remove it there first";
 
-  static String m56(profiles, label) =>
+  static String m50(profiles, label) =>
       "The subscriptions of ${profiles} already have ${label}, so those profiles would switch to theirs. Choose another name";
 
-  static String m57(count) =>
+  static String m51(count) =>
       "${Intl.plural(count, one: '1 proxy', other: '${count} proxies')}";
 
-  static String m58(e) => "Registration failed: ${e}";
-
-  static String m59(count) =>
+  static String m52(count) =>
       "${Intl.plural(count, one: '1 rule', other: '${count} rules')}";
 
-  static String m60(appName) => "${appName} (Safe mode)";
+  static String m53(appName) => "${appName} (Safe mode)";
 
-  static String m61(count) =>
+  static String m54(count) =>
       "${Intl.plural(count, one: '1 second', other: '${count} seconds')}";
 
-  static String m62(count) => "${count} selected";
+  static String m55(count) => "${count} selected";
 
-  static String m63(e) => "Failed to send verification code: ${e}";
+  static String m56(e) => "Failed to send verification code: ${e}";
 
-  static String m64(time) => "Checked at ${time}";
+  static String m57(time) => "Checked at ${time}";
 
-  static String m65(label) => "${label} must be a single item";
+  static String m58(label) => "${label} must be a single item";
 
-  static String m66(date) =>
+  static String m59(date) =>
       "Plan expired on ${date}, please renew to continue using";
 
-  static String m67(days) =>
+  static String m60(days) =>
       "Plan will expire in ${days} days, please renew in time";
 
-  static String m68(days) => "Subscription will expire in ${days} days";
+  static String m61(days) => "Subscription will expire in ${days} days";
 
-  static String m69(count) => "Total ${count} records";
+  static String m62(count) => "Total ${count} records";
 
-  static String m70(amount) => "Transfer amount cannot exceed ¥${amount}";
+  static String m63(amount) => "Transfer amount cannot exceed ¥${amount}";
 
-  static String m71(error) => "Transfer failed: ${error}";
+  static String m64(error) => "Transfer failed: ${error}";
 
-  static String m72(amount) =>
+  static String m65(amount) =>
       "Transfer success! Transferred ¥${amount} to wallet";
 
-  static String m73(version) => "Current version: ${version}";
+  static String m66(label) => "${label} must be a URL";
 
-  static String m74(version) => "Force update: ${version}";
-
-  static String m75(version) => "New version found: ${version}";
-
-  static String m76(statusCode) =>
-      "Server returned error status code ${statusCode}";
-
-  static String m77(label) => "${label} must be a URL";
-
-  static String m78(email) =>
+  static String m67(email) =>
       "Verification code has been sent to ${email}, please check and enter the verification code and new password";
 
-  static String m79(amount) => "Withdrawable amount: ${amount}";
+  static String m68(time) => "Running time: ${time}";
 
-  static String m80(time) => "Running time: ${time}";
-
-  static String m81(count) =>
+  static String m69(count) =>
       "${Intl.plural(count, one: '1 year ago', other: '${count} years ago')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -249,11 +224,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Update profiles",
     ),
     "actionView": MessageLookupByLibrary.simpleMessage("Show/Hide"),
-    "action_mode": MessageLookupByLibrary.simpleMessage("Switch mode"),
-    "action_proxy": MessageLookupByLibrary.simpleMessage("System proxy"),
-    "action_start": MessageLookupByLibrary.simpleMessage("Start/Stop"),
-    "action_tun": MessageLookupByLibrary.simpleMessage("TUN"),
-    "action_view": MessageLookupByLibrary.simpleMessage("Show/Hide"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
     "addCustomProxy": MessageLookupByLibrary.simpleMessage("Add proxy"),
     "addOverrideEntry": MessageLookupByLibrary.simpleMessage(
@@ -268,9 +238,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "addRule": MessageLookupByLibrary.simpleMessage("Add rule"),
     "addSsid": MessageLookupByLibrary.simpleMessage("Add SSID"),
     "addWidget": MessageLookupByLibrary.simpleMessage("Add widget"),
-    "addedOriginRules": MessageLookupByLibrary.simpleMessage(
-      "Attach on the original rules",
-    ),
     "addedRules": MessageLookupByLibrary.simpleMessage("Added rules"),
     "additionalParameters": MessageLookupByLibrary.simpleMessage(
       "Additional parameters",
@@ -282,31 +249,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "addressTip": MessageLookupByLibrary.simpleMessage(
       "Please enter a valid WebDAV address",
     ),
-    "adminAutoLaunch": MessageLookupByLibrary.simpleMessage(
-      "Admin auto launch",
-    ),
-    "adminAutoLaunchDesc": MessageLookupByLibrary.simpleMessage(
-      "Boot up by using admin mode",
-    ),
     "advancedConfig": MessageLookupByLibrary.simpleMessage(
       "Advanced configuration",
     ),
     "advancedConfigDesc": MessageLookupByLibrary.simpleMessage(
       "Network, DNS, added rules, and scripts",
     ),
-    "ago": MessageLookupByLibrary.simpleMessage(" Ago"),
     "agree": MessageLookupByLibrary.simpleMessage("Agree"),
-    "allApps": MessageLookupByLibrary.simpleMessage("All apps"),
     "allowBypass": MessageLookupByLibrary.simpleMessage(
       "Allow apps to bypass VPN",
     ),
-    "allowBypassDesc": MessageLookupByLibrary.simpleMessage(
-      "Some apps can bypass VPN when turned on",
-    ),
     "allowLan": MessageLookupByLibrary.simpleMessage("Allow LAN"),
-    "allowLanDesc": MessageLookupByLibrary.simpleMessage(
-      "Allow access proxy through the LAN",
-    ),
     "alreadyHaveAccount": MessageLookupByLibrary.simpleMessage(
       "Already have an account?",
     ),
@@ -322,13 +275,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "appendSystemDns": MessageLookupByLibrary.simpleMessage(
       "Append system DNS",
     ),
-    "appendSystemDnsTip": MessageLookupByLibrary.simpleMessage(
-      "Forcefully append system DNS to the configuration",
-    ),
     "application": MessageLookupByLibrary.simpleMessage("Application"),
-    "applicationDesc": MessageLookupByLibrary.simpleMessage(
-      "Modify application related settings",
-    ),
     "authentication": MessageLookupByLibrary.simpleMessage("Authentication"),
     "authenticationDesc": MessageLookupByLibrary.simpleMessage(
       "Require credentials on the local proxy port to keep other local apps from using it",
@@ -341,9 +288,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "auto": MessageLookupByLibrary.simpleMessage("Auto"),
     "autoCheckUpdate": MessageLookupByLibrary.simpleMessage(
       "Auto check for updates",
-    ),
-    "autoCheckUpdateDesc": MessageLookupByLibrary.simpleMessage(
-      "Auto check for updates when the app starts",
     ),
     "autoCloseConnections": MessageLookupByLibrary.simpleMessage(
       "Auto close connections",
@@ -370,12 +314,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "back": MessageLookupByLibrary.simpleMessage("Back"),
     "backToLogin": MessageLookupByLibrary.simpleMessage("Back to Login"),
     "backup": MessageLookupByLibrary.simpleMessage("Backup"),
-    "backupAndRecovery": MessageLookupByLibrary.simpleMessage(
-      "Backup and Recovery",
-    ),
-    "backupAndRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "Sync data via WebDAV or file",
-    ),
     "backupAndRestore": MessageLookupByLibrary.simpleMessage(
       "Backup and restore",
     ),
@@ -386,10 +324,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "This backup comes from a newer version of the app. Update the app before restoring it",
     ),
     "backupSuccess": MessageLookupByLibrary.simpleMessage("Backup successful"),
-    "basicConfig": MessageLookupByLibrary.simpleMessage("Basic configuration"),
-    "basicConfigDesc": MessageLookupByLibrary.simpleMessage(
-      "Modify the basic configuration globally",
-    ),
     "basicInfo": MessageLookupByLibrary.simpleMessage("Basic info"),
     "basicStrategy": MessageLookupByLibrary.simpleMessage("Basic strategies"),
     "batchAdd": MessageLookupByLibrary.simpleMessage("Batch add"),
@@ -430,16 +364,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Camera unavailable",
     ),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
-    "cancelFilterSystemApp": MessageLookupByLibrary.simpleMessage(
-      "Cancel filter system app",
-    ),
     "cancelSelectAll": MessageLookupByLibrary.simpleMessage("Deselect all"),
-    "cannotGetWebUrl": MessageLookupByLibrary.simpleMessage(
-      "Cannot get web URL, please contact support",
-    ),
-    "cannotOpenBrowser": MessageLookupByLibrary.simpleMessage(
-      "Cannot open browser, please visit web manually",
-    ),
     "changeProxyFailedTip": MessageLookupByLibrary.simpleMessage(
       "Failed to switch proxy; the previous selection has been restored",
     ),
@@ -456,7 +381,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "checkCertificateDesc": MessageLookupByLibrary.simpleMessage(
       "Reject untrusted certificates. Turning this off exposes subscriptions and backups to man-in-the-middle attacks",
     ),
-    "checkError": MessageLookupByLibrary.simpleMessage("Check error"),
     "checkNetwork": MessageLookupByLibrary.simpleMessage(
       "Please check network and retry",
     ),
@@ -491,18 +415,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Commission settled after friend subscription",
     ),
     "compatible": MessageLookupByLibrary.simpleMessage("Compatibility mode"),
-    "compatibleDesc": MessageLookupByLibrary.simpleMessage(
-      "Opening it will lose part of its application ability and gain the support of full amount of Clash.",
-    ),
     "complete": MessageLookupByLibrary.simpleMessage("Complete"),
-    "completeWithdrawal": MessageLookupByLibrary.simpleMessage(
-      "Web version provides complete withdrawal features",
-    ),
     "configDataDetected": MessageLookupByLibrary.simpleMessage(
       "Data detected in the configuration",
-    ),
-    "configurationError": MessageLookupByLibrary.simpleMessage(
-      "Application configuration error, please contact support",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "confirmClearAllData": MessageLookupByLibrary.simpleMessage(
@@ -529,12 +444,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "connecting": MessageLookupByLibrary.simpleMessage("Connecting…"),
     "connection": MessageLookupByLibrary.simpleMessage("Connection"),
     "connections": MessageLookupByLibrary.simpleMessage("Connections"),
-    "connectionsDesc": MessageLookupByLibrary.simpleMessage(
-      "View current connections data",
-    ),
     "connectivity": MessageLookupByLibrary.simpleMessage("Connectivity: "),
-    "contactMe": MessageLookupByLibrary.simpleMessage("Contact me"),
-    "contactSupport": MessageLookupByLibrary.simpleMessage("Support"),
     "content": MessageLookupByLibrary.simpleMessage("Content"),
     "contentNotEmpty": MessageLookupByLibrary.simpleMessage(
       "Content cannot be empty",
@@ -558,7 +468,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "coreBlockedBySmartAppControlTip": MessageLookupByLibrary.simpleMessage(
       "Windows Smart App Control blocked FlClashCore.exe because it is not signed. Open Windows Security → App & browser control → Smart App Control settings, choose Off, then start ToWorld again. Smart App Control cannot be turned back on without reinstalling Windows.",
     ),
-    "coreInfo": MessageLookupByLibrary.simpleMessage("Core info"),
     "coreStatus": MessageLookupByLibrary.simpleMessage("Core status"),
     "country": MessageLookupByLibrary.simpleMessage("Region"),
     "crashDetected": MessageLookupByLibrary.simpleMessage("Crash detected"),
@@ -573,9 +482,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "createProfile": MessageLookupByLibrary.simpleMessage("Create Profile"),
     "createProfileFromUrlTip": m3,
     "creationTime": MessageLookupByLibrary.simpleMessage("Creation time"),
-    "credentialsSaved": MessageLookupByLibrary.simpleMessage(
-      "Credentials saved",
-    ),
     "currentCommissionRate": m4,
     "custom": MessageLookupByLibrary.simpleMessage("Custom"),
     "customProxiesEmpty": MessageLookupByLibrary.simpleMessage(
@@ -601,13 +507,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "defaultNameserver": MessageLookupByLibrary.simpleMessage(
       "Default nameserver",
     ),
-    "defaultNameserverDesc": MessageLookupByLibrary.simpleMessage(
-      "For resolving DNS server",
-    ),
-    "defaultSort": MessageLookupByLibrary.simpleMessage("Sort by default"),
     "defaultText": MessageLookupByLibrary.simpleMessage("Default"),
     "delay": MessageLookupByLibrary.simpleMessage("Delay"),
-    "delaySort": MessageLookupByLibrary.simpleMessage("Sort by delay"),
     "delayTest": MessageLookupByLibrary.simpleMessage("Delay test"),
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
     "deleteMultipTip": m6,
@@ -730,27 +631,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "discoverNewVersion": MessageLookupByLibrary.simpleMessage(
       "New version found",
     ),
-    "discovery": MessageLookupByLibrary.simpleMessage(
-      "Discovery a new version",
-    ),
-    "dnsDesc": MessageLookupByLibrary.simpleMessage(
-      "Update DNS related settings",
-    ),
     "dnsHijacking": MessageLookupByLibrary.simpleMessage("DNS hijacking"),
     "dnsMode": MessageLookupByLibrary.simpleMessage("DNS mode"),
     "dnsQueries": MessageLookupByLibrary.simpleMessage("DNS queries"),
-    "doYouWantToPass": MessageLookupByLibrary.simpleMessage(
-      "Do you want to pass",
-    ),
     "docked": MessageLookupByLibrary.simpleMessage("Docked"),
     "domain": MessageLookupByLibrary.simpleMessage("Domain"),
-    "domainStatusAvailable": MessageLookupByLibrary.simpleMessage(
-      "Service Available",
-    ),
-    "domainStatusChecking": MessageLookupByLibrary.simpleMessage("Checking..."),
-    "domainStatusUnavailable": MessageLookupByLibrary.simpleMessage(
-      "Service Unavailable",
-    ),
     "download": MessageLookupByLibrary.simpleMessage("Download"),
     "edit": MessageLookupByLibrary.simpleMessage("Edit"),
     "editGlobalRules": MessageLookupByLibrary.simpleMessage(
@@ -769,7 +654,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "emptyTip": m9,
     "en": MessageLookupByLibrary.simpleMessage("English"),
-    "enableOverride": MessageLookupByLibrary.simpleMessage("Enable override"),
     "enabled": MessageLookupByLibrary.simpleMessage("Enabled"),
     "enterEmailForReset": MessageLookupByLibrary.simpleMessage(
       "Please enter your email address and we will send a verification code to your email",
@@ -781,7 +665,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Please enter transfer amount",
     ),
     "entries": MessageLookupByLibrary.simpleMessage(" entries"),
-    "entriesCount": m10,
     "error": MessageLookupByLibrary.simpleMessage("Error"),
     "exclude": MessageLookupByLibrary.simpleMessage("Hide from recent tasks"),
     "excludeDesc": MessageLookupByLibrary.simpleMessage(
@@ -795,12 +678,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "When connected to Wi-Fi with an excluded SSID, the app\'s running state switches automatically",
     ),
     "excludeType": MessageLookupByLibrary.simpleMessage("Exclude type"),
-    "existsTip": m11,
+    "existsTip": m10,
     "exit": MessageLookupByLibrary.simpleMessage("Exit"),
     "exitFullScreen": MessageLookupByLibrary.simpleMessage("Exit full screen"),
     "expand": MessageLookupByLibrary.simpleMessage("Standard"),
     "expectedStatus": MessageLookupByLibrary.simpleMessage("Expected status"),
-    "expirationTime": MessageLookupByLibrary.simpleMessage("Expiration time"),
     "expireTime": MessageLookupByLibrary.simpleMessage("Expiration time"),
     "exportFile": MessageLookupByLibrary.simpleMessage("Export file"),
     "exportLogs": MessageLookupByLibrary.simpleMessage("Export logs"),
@@ -812,11 +694,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "externalControllerDesc": MessageLookupByLibrary.simpleMessage(
       "When enabled, the Clash core can be controlled on port 9090",
     ),
-    "externalFetch": MessageLookupByLibrary.simpleMessage("External fetch"),
     "externalLink": MessageLookupByLibrary.simpleMessage("External link"),
-    "externalResources": MessageLookupByLibrary.simpleMessage(
-      "External resources",
-    ),
     "extraLarge": MessageLookupByLibrary.simpleMessage("Extra large"),
     "fade": MessageLookupByLibrary.simpleMessage("Fade"),
     "fakeipFilter": MessageLookupByLibrary.simpleMessage("Fake-IP filter"),
@@ -832,9 +710,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "fakeipTtl": MessageLookupByLibrary.simpleMessage("Fake-IP TTL"),
     "fallback": MessageLookupByLibrary.simpleMessage("Fallback"),
-    "fallbackDesc": MessageLookupByLibrary.simpleMessage(
-      "Generally use offshore DNS",
-    ),
     "fallbackFilter": MessageLookupByLibrary.simpleMessage("Fallback filter"),
     "fidelityScheme": MessageLookupByLibrary.simpleMessage("Fidelity"),
     "file": MessageLookupByLibrary.simpleMessage("File"),
@@ -852,9 +727,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Filter system app",
     ),
     "findProcessMode": MessageLookupByLibrary.simpleMessage("Find process"),
-    "findProcessModeDesc": MessageLookupByLibrary.simpleMessage(
-      "There is a certain performance loss after opening",
-    ),
     "floating": MessageLookupByLibrary.simpleMessage("Floating"),
     "followProfile": MessageLookupByLibrary.simpleMessage("Follow profile"),
     "followSystem": MessageLookupByLibrary.simpleMessage("Follow system"),
@@ -865,15 +737,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "forgotPassword": MessageLookupByLibrary.simpleMessage("Forgot Password"),
     "format": MessageLookupByLibrary.simpleMessage("Format"),
-    "fourColumns": MessageLookupByLibrary.simpleMessage("Four columns"),
     "friendInviteReward": MessageLookupByLibrary.simpleMessage(
       "Earn commission when your invited friends spend",
     ),
     "fruitSaladScheme": MessageLookupByLibrary.simpleMessage("Fruit salad"),
     "general": MessageLookupByLibrary.simpleMessage("General"),
-    "generalDesc": MessageLookupByLibrary.simpleMessage(
-      "Modify general settings",
-    ),
     "generatingInviteCode": MessageLookupByLibrary.simpleMessage(
       "Generating invite code...",
     ),
@@ -884,29 +752,20 @@ class MessageLookup extends MessageLookupByLibrary {
     "geoAutoUpdateIntervalTip": MessageLookupByLibrary.simpleMessage(
       "The auto-update interval must be greater than 0",
     ),
-    "geoData": MessageLookupByLibrary.simpleMessage("GeoData"),
     "geoOptions": MessageLookupByLibrary.simpleMessage("Geo options"),
     "geoResources": MessageLookupByLibrary.simpleMessage("Geo resources"),
-    "geoSkipped": m12,
-    "geoUpdated": m13,
-    "geoUpdating": m14,
+    "geoSkipped": m11,
+    "geoUpdated": m12,
     "geodataLoader": MessageLookupByLibrary.simpleMessage(
       "Geo low-memory mode",
     ),
-    "geodataLoaderDesc": MessageLookupByLibrary.simpleMessage(
-      "Enabling will use the Geo low memory loader",
-    ),
     "geoipCode": MessageLookupByLibrary.simpleMessage("Geoip code"),
-    "getOriginRules": MessageLookupByLibrary.simpleMessage(
-      "Get original rules",
-    ),
     "global": MessageLookupByLibrary.simpleMessage("Global"),
     "go": MessageLookupByLibrary.simpleMessage("Go"),
     "goDownload": MessageLookupByLibrary.simpleMessage("Download"),
     "goToConfigureScript": MessageLookupByLibrary.simpleMessage(
       "Go to script configuration",
     ),
-    "goToWeb": MessageLookupByLibrary.simpleMessage("Go to Web"),
     "hasCacheChange": MessageLookupByLibrary.simpleMessage(
       "Cache the changes?",
     ),
@@ -923,31 +782,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "Leave out nodes whose last delay test timed out",
     ),
     "host": MessageLookupByLibrary.simpleMessage("Host"),
-    "hostsDesc": MessageLookupByLibrary.simpleMessage("Add Hosts"),
     "hotkeyConflict": MessageLookupByLibrary.simpleMessage("Hotkey conflict"),
-    "hotkeyConflictWith": m15,
+    "hotkeyConflictWith": m13,
     "hotkeyDesc": MessageLookupByLibrary.simpleMessage(
       "Global hotkeys work even while the window is hidden. Tap an action to record its key combination.",
     ),
     "hotkeyManagement": MessageLookupByLibrary.simpleMessage(
       "Hotkey management",
     ),
-    "hotkeyManagementDesc": MessageLookupByLibrary.simpleMessage(
-      "Use keyboard to control applications",
-    ),
-    "hotkeyNeedsModifier": m16,
+    "hotkeyNeedsModifier": m14,
     "hotkeyNotSet": MessageLookupByLibrary.simpleMessage("Not set"),
     "hotkeyUnavailable": MessageLookupByLibrary.simpleMessage(
       "Not registered, it may be taken by another app",
     ),
     "hours": MessageLookupByLibrary.simpleMessage("hours"),
-    "hoursAgo": m17,
-    "hoursCount": m18,
+    "hoursAgo": m15,
+    "hoursCount": m16,
     "iUnderstand": MessageLookupByLibrary.simpleMessage("I Understand"),
     "icon": MessageLookupByLibrary.simpleMessage("Icon"),
-    "iconConfiguration": MessageLookupByLibrary.simpleMessage(
-      "Icon configuration",
-    ),
     "iconRecords": MessageLookupByLibrary.simpleMessage("Icon records"),
     "iconStyle": MessageLookupByLibrary.simpleMessage("Icon style"),
     "iconStyleFilled": MessageLookupByLibrary.simpleMessage("Filled"),
@@ -977,18 +829,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "infiniteTime": MessageLookupByLibrary.simpleMessage("Never expires"),
     "init": MessageLookupByLibrary.simpleMessage("Init"),
     "initiator": MessageLookupByLibrary.simpleMessage("Initiator"),
-    "inputCorrectHotkey": MessageLookupByLibrary.simpleMessage(
-      "Please enter the correct hotkey",
-    ),
     "inputProxyGroupName": MessageLookupByLibrary.simpleMessage(
       "Enter the proxy group name",
     ),
     "inputRuleContent": MessageLookupByLibrary.simpleMessage(
       "Enter the rule content",
     ),
-    "installedAppsPermissionDeniedMessage": MessageLookupByLibrary.simpleMessage(
-      "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
-    ),
+    "installedAppsPermissionDeniedMessage":
+        MessageLookupByLibrary.simpleMessage(
+          "The app list permission was denied, so installed apps cannot be listed. Please grant it manually in system settings.",
+        ),
     "installedAppsPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "This system hides the installed app list until the permission is granted. Authorize it to configure the per-app proxy.",
     ),
@@ -1022,17 +872,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidNetworkContent": MessageLookupByLibrary.simpleMessage(
       "Only tcp or udp is supported",
     ),
-    "invalidPolicy": m19,
+    "invalidPolicy": m17,
     "invalidProfileQrcode": MessageLookupByLibrary.simpleMessage(
       "This QR code doesn\'t contain a profile link",
     ),
-    "invalidProxy": m20,
-    "invalidProxyProvider": m21,
+    "invalidProxy": m18,
+    "invalidProxyProvider": m19,
     "invalidRangeContent": MessageLookupByLibrary.simpleMessage(
       "Enter numbers or ranges such as 80 or 8000-9000, separated by /",
     ),
-    "invalidRuleSet": m22,
-    "invalidSubRule": m23,
+    "invalidRuleSet": m20,
+    "invalidSubRule": m21,
     "invalidTransferAmount": MessageLookupByLibrary.simpleMessage(
       "Please enter valid transfer amount",
     ),
@@ -1052,9 +902,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "inviteCodeRequiredMessage": MessageLookupByLibrary.simpleMessage(
       "Registration requires an invite code. Please contact a registered user to get an invite code before registering.",
-    ),
-    "inviteLinkCopied": MessageLookupByLibrary.simpleMessage(
-      "Invite link copied, share with friends",
     ),
     "inviteRegisterReward": MessageLookupByLibrary.simpleMessage(
       "Invite friends to register and subscribe to earn commission",
@@ -1115,7 +962,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "layout": MessageLookupByLibrary.simpleMessage("Layout"),
     "light": MessageLookupByLibrary.simpleMessage("Light"),
-    "lineIssueTip": m24,
+    "lineIssueTip": m22,
     "lineWrap": MessageLookupByLibrary.simpleMessage("Word wrap"),
     "list": MessageLookupByLibrary.simpleMessage("List"),
     "listen": MessageLookupByLibrary.simpleMessage("Listen"),
@@ -1125,17 +972,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "listenRoutingMarkDesc": MessageLookupByLibrary.simpleMessage("Linux only"),
     "liveConnections": MessageLookupByLibrary.simpleMessage("Live connections"),
     "loadMore": MessageLookupByLibrary.simpleMessage("Load More"),
-    "loadTest": MessageLookupByLibrary.simpleMessage("Load test"),
     "loading": MessageLookupByLibrary.simpleMessage("Loading…"),
     "local": MessageLookupByLibrary.simpleMessage("Local"),
-    "localBackupDesc": MessageLookupByLibrary.simpleMessage(
-      "Backup local data to local",
-    ),
     "localNetworkDeniedTip": MessageLookupByLibrary.simpleMessage(
       "Local network permission denied: using the gvisor stack, LAN is unreachable.",
-    ),
-    "localRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "Recovery data from file",
     ),
     "locationPermission": MessageLookupByLibrary.simpleMessage(
       "Location permission",
@@ -1146,7 +986,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "locationPermissionDesc": MessageLookupByLibrary.simpleMessage(
       "The system requires location permission to read the Wi-Fi name. On Android choose \"Allow all the time\", otherwise the Wi-Fi name cannot be read while the app is in the background.",
     ),
-    "locationPermissionGuide": m25,
+    "locationPermissionGuide": m23,
     "locationPermissionRequired": MessageLookupByLibrary.simpleMessage(
       "Location permission required",
     ),
@@ -1164,23 +1004,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "logoutConfirmMsg": MessageLookupByLibrary.simpleMessage(
       "Are you sure to logout? You need to login again.",
     ),
-    "logoutFailed": m26,
+    "logoutFailed": m24,
     "logs": MessageLookupByLibrary.simpleMessage("Logs"),
     "logsAndDiagnostics": MessageLookupByLibrary.simpleMessage(
       "Logs and diagnostics",
     ),
-    "logsDesc": MessageLookupByLibrary.simpleMessage("Log capture records"),
     "logsTest": MessageLookupByLibrary.simpleMessage("Logs test"),
     "loopback": MessageLookupByLibrary.simpleMessage("UWP loopback exemption"),
-    "loopbackDesc": MessageLookupByLibrary.simpleMessage(
-      "Used for UWP loopback unlocking",
-    ),
     "loose": MessageLookupByLibrary.simpleMessage("Loose"),
     "matchSourceIp": MessageLookupByLibrary.simpleMessage("Match source IP"),
     "matchTarget": MessageLookupByLibrary.simpleMessage("MATCH-TARGET"),
     "maxFailedTimes": MessageLookupByLibrary.simpleMessage("Max failures"),
-    "maxLengthTip": m27,
-    "maxTransferable": m28,
+    "maxLengthTip": m25,
+    "maxTransferable": m26,
     "maximize": MessageLookupByLibrary.simpleMessage("Maximize"),
     "memoryAppResident": MessageLookupByLibrary.simpleMessage(
       "Resident memory",
@@ -1203,7 +1039,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "memoryInfo": MessageLookupByLibrary.simpleMessage("Memory info"),
     "memoryReleased": MessageLookupByLibrary.simpleMessage("Memory released"),
-    "memoryReleasedSize": m29,
+    "memoryReleasedSize": m27,
     "messageTest": MessageLookupByLibrary.simpleMessage("Message test"),
     "messageTestTip": MessageLookupByLibrary.simpleMessage(
       "This is a message.",
@@ -1211,58 +1047,42 @@ class MessageLookup extends MessageLookupByLibrary {
     "min": MessageLookupByLibrary.simpleMessage("Minimal"),
     "minimize": MessageLookupByLibrary.simpleMessage("Minimize"),
     "minimizeOnExit": MessageLookupByLibrary.simpleMessage("Minimize on exit"),
-    "minimizeOnExitDesc": MessageLookupByLibrary.simpleMessage(
-      "Modify the default system exit event",
-    ),
     "minutes": MessageLookupByLibrary.simpleMessage("Minutes"),
-    "minutesAgo": m30,
+    "minutesAgo": m28,
     "mixedPort": MessageLookupByLibrary.simpleMessage("Mixed port"),
     "mode": MessageLookupByLibrary.simpleMessage("Mode"),
     "monochromeScheme": MessageLookupByLibrary.simpleMessage("Monochrome"),
     "months": MessageLookupByLibrary.simpleMessage("Months"),
-    "monthsAgo": m31,
+    "monthsAgo": m29,
     "more": MessageLookupByLibrary.simpleMessage("More"),
     "myInviteQr": MessageLookupByLibrary.simpleMessage("My Invite QR"),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
-    "nameSort": MessageLookupByLibrary.simpleMessage("Sort by name"),
     "nameserver": MessageLookupByLibrary.simpleMessage("Nameserver"),
-    "nameserverDesc": MessageLookupByLibrary.simpleMessage(
-      "For resolving domain",
-    ),
     "nameserverPolicy": MessageLookupByLibrary.simpleMessage(
       "Nameserver policy",
     ),
-    "nameserverPolicyDesc": MessageLookupByLibrary.simpleMessage(
-      "Specify the corresponding nameserver policy",
-    ),
     "navigationBarStyle": MessageLookupByLibrary.simpleMessage("Bottom bar"),
     "network": MessageLookupByLibrary.simpleMessage("Network"),
-    "networkAccessDeniedError": m32,
-    "networkBadResponseError": m33,
+    "networkAccessDeniedError": m30,
+    "networkBadResponseError": m31,
     "networkCancelledError": MessageLookupByLibrary.simpleMessage(
       "The request was cancelled",
     ),
     "networkConnectionError": MessageLookupByLibrary.simpleMessage(
       "Couldn\'t connect to the server. Check your network connection or proxy settings",
     ),
-    "networkDesc": MessageLookupByLibrary.simpleMessage(
-      "Modify network-related settings",
-    ),
     "networkDetection": MessageLookupByLibrary.simpleMessage(
       "Network detection",
-    ),
-    "networkException": MessageLookupByLibrary.simpleMessage(
-      "Network exception, please check your connection and try again",
     ),
     "networkHostLookupError": MessageLookupByLibrary.simpleMessage(
       "Couldn\'t resolve the server address. Check that the URL is correct and DNS is working",
     ),
-    "networkNotFoundError": m34,
+    "networkNotFoundError": m32,
     "networkRateLimitedError": MessageLookupByLibrary.simpleMessage(
       "Too many requests (HTTP 429). Wait a moment and try again",
     ),
-    "networkRequestFailed": m35,
-    "networkServerError": m36,
+    "networkRequestFailed": m33,
+    "networkServerError": m34,
     "networkSpeed": MessageLookupByLibrary.simpleMessage("Network speed"),
     "networkTimeoutError": MessageLookupByLibrary.simpleMessage(
       "The request timed out. Check your network or proxy, then try again",
@@ -1272,9 +1092,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "networkType": MessageLookupByLibrary.simpleMessage("Network type"),
     "neutralScheme": MessageLookupByLibrary.simpleMessage("Neutral"),
-    "newMessageFromSupport": MessageLookupByLibrary.simpleMessage(
-      "New message from support",
-    ),
     "newPassword": MessageLookupByLibrary.simpleMessage("New Password"),
     "nextMatch": MessageLookupByLibrary.simpleMessage("Next match"),
     "no": MessageLookupByLibrary.simpleMessage("No"),
@@ -1282,8 +1099,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "No commission records",
     ),
     "noData": MessageLookupByLibrary.simpleMessage("No data"),
-    "noHotKey": MessageLookupByLibrary.simpleMessage("No HotKey"),
-    "noIcon": MessageLookupByLibrary.simpleMessage("None"),
     "noInfo": MessageLookupByLibrary.simpleMessage("No info"),
     "noInvitationData": MessageLookupByLibrary.simpleMessage(
       "No invitation data",
@@ -1291,13 +1106,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noLongerRemind": MessageLookupByLibrary.simpleMessage(
       "Don\'t remind me again",
     ),
-    "noMoreInfoDesc": MessageLookupByLibrary.simpleMessage("No more info"),
     "noNetwork": MessageLookupByLibrary.simpleMessage("No network"),
     "noNetworkApp": MessageLookupByLibrary.simpleMessage("No-network apps"),
     "noProxy": MessageLookupByLibrary.simpleMessage("No proxy"),
-    "noProxyDesc": MessageLookupByLibrary.simpleMessage(
-      "Please create a profile or add a valid profile",
-    ),
     "noRecords": MessageLookupByLibrary.simpleMessage("No records"),
     "noResolve": MessageLookupByLibrary.simpleMessage("Don\'t resolve IP"),
     "noResolveHostname": MessageLookupByLibrary.simpleMessage(
@@ -1322,90 +1133,20 @@ class MessageLookup extends MessageLookupByLibrary {
     "nullProfileDesc": MessageLookupByLibrary.simpleMessage(
       "Add a profile to get started",
     ),
-    "nullTip": m37,
-    "numberTip": m38,
+    "nullTip": m35,
+    "numberTip": m36,
     "onDemand": MessageLookupByLibrary.simpleMessage("On demand"),
     "onDemandDesc": MessageLookupByLibrary.simpleMessage(
       "Configure the app\'s running state for specific scenarios",
     ),
-    "oneColumn": MessageLookupByLibrary.simpleMessage("One column"),
     "onlineSupport": MessageLookupByLibrary.simpleMessage("Support"),
-    "onlineSupportAddMore": MessageLookupByLibrary.simpleMessage("Add More"),
-    "onlineSupportApiConfigNotFound": MessageLookupByLibrary.simpleMessage(
-      "Online support API configuration not found, please check configuration",
-    ),
-    "onlineSupportCancel": MessageLookupByLibrary.simpleMessage("Cancel"),
-    "onlineSupportClearHistory": MessageLookupByLibrary.simpleMessage(
-      "Clear history",
-    ),
-    "onlineSupportClearHistoryConfirm": MessageLookupByLibrary.simpleMessage(
-      "Are you sure you want to clear all chat history? This action cannot be undone.",
-    ),
-    "onlineSupportClickToSelect": MessageLookupByLibrary.simpleMessage(
-      "Click to select images",
-    ),
-    "onlineSupportConfirm": MessageLookupByLibrary.simpleMessage("Confirm"),
-    "onlineSupportConnected": MessageLookupByLibrary.simpleMessage(
-      "Successfully connected to support system",
-    ),
-    "onlineSupportConnecting": MessageLookupByLibrary.simpleMessage(
-      "Connecting...",
-    ),
-    "onlineSupportConnectionError": MessageLookupByLibrary.simpleMessage(
-      "Connection error",
-    ),
-    "onlineSupportDisconnected": MessageLookupByLibrary.simpleMessage(
-      "Disconnected",
-    ),
-    "onlineSupportGetMessagesFailed": m39,
-    "onlineSupportInputHint": MessageLookupByLibrary.simpleMessage(
-      "Please enter your question...",
-    ),
-    "onlineSupportNoMessages": MessageLookupByLibrary.simpleMessage(
-      "No messages yet, send a message to start consultation",
-    ),
-    "onlineSupportSelectImages": MessageLookupByLibrary.simpleMessage(
-      "Select Images",
-    ),
-    "onlineSupportSelectImagesFailed": m40,
-    "onlineSupportSend": MessageLookupByLibrary.simpleMessage("Send"),
-    "onlineSupportSendImage": MessageLookupByLibrary.simpleMessage(
-      "Send image",
-    ),
-    "onlineSupportSendMessageFailed": MessageLookupByLibrary.simpleMessage(
-      "Failed to send message: Unable to get authentication token",
-    ),
-    "onlineSupportSupportedFormats": MessageLookupByLibrary.simpleMessage(
-      "Supports JPG, PNG, GIF, WebP, BMP\nMax 10MB",
-    ),
-    "onlineSupportTitle": MessageLookupByLibrary.simpleMessage(
-      "Online Support",
-    ),
-    "onlineSupportTokenNotFound": MessageLookupByLibrary.simpleMessage(
-      "Authentication token not found",
-    ),
-    "onlineSupportUnsupportedHttpMethod": m41,
-    "onlineSupportUploadFailed": m42,
-    "onlineSupportWebSocketConfigNotFound": MessageLookupByLibrary.simpleMessage(
-      "Online support WebSocket configuration not found, please check configuration",
-    ),
-    "onlyIcon": MessageLookupByLibrary.simpleMessage("Icon"),
-    "onlyOtherApps": MessageLookupByLibrary.simpleMessage(
-      "Only third-party apps",
-    ),
     "onlyStatisticsProxy": MessageLookupByLibrary.simpleMessage(
       "Only count proxy traffic",
     ),
-    "onlyStatisticsProxyDesc": MessageLookupByLibrary.simpleMessage(
-      "When turned on, only statistics proxy traffic",
-    ),
-    "openWebFailed": MessageLookupByLibrary.simpleMessage(
-      "Failed to open web, please visit manually",
-    ),
     "optional": MessageLookupByLibrary.simpleMessage("Optional"),
     "options": MessageLookupByLibrary.simpleMessage("Options"),
-    "orderAmount": m43,
-    "orderNumber": m44,
+    "orderAmount": m37,
+    "orderNumber": m38,
     "other": MessageLookupByLibrary.simpleMessage("Other"),
     "otherContributors": MessageLookupByLibrary.simpleMessage(
       "Other contributors",
@@ -1413,42 +1154,30 @@ class MessageLookup extends MessageLookupByLibrary {
     "outboundIp": MessageLookupByLibrary.simpleMessage("Outbound IP"),
     "outboundMode": MessageLookupByLibrary.simpleMessage("Outbound mode"),
     "override": MessageLookupByLibrary.simpleMessage("Override"),
-    "overrideDesc": MessageLookupByLibrary.simpleMessage(
-      "Override Proxy related config",
-    ),
     "overrideDns": MessageLookupByLibrary.simpleMessage("Override DNS"),
-    "overrideDnsDesc": MessageLookupByLibrary.simpleMessage(
-      "Turning it on will override the DNS options in the profile",
-    ),
     "overrideEntries": MessageLookupByLibrary.simpleMessage("Override entries"),
-    "overrideInvalidTip": MessageLookupByLibrary.simpleMessage(
-      "Does not take effect in script mode",
-    ),
     "overrideMode": MessageLookupByLibrary.simpleMessage("Override mode"),
     "overrideNtp": MessageLookupByLibrary.simpleMessage("Override NTP"),
-    "overrideOriginRules": MessageLookupByLibrary.simpleMessage(
-      "Override the original rule",
-    ),
     "overrideScript": MessageLookupByLibrary.simpleMessage("Override script"),
-    "overwriteIssueCoreRejected": m45,
-    "overwriteIssueDuplicateName": m46,
+    "overwriteIssueCoreRejected": m39,
+    "overwriteIssueDuplicateName": m40,
     "overwriteIssueEmptyName": MessageLookupByLibrary.simpleMessage(
       "The name is empty",
     ),
-    "overwriteIssueGroupLoop": m47,
-    "overwriteIssueMissingProviders": m48,
-    "overwriteIssueMissingProxies": m49,
+    "overwriteIssueGroupLoop": m41,
+    "overwriteIssueMissingProviders": m42,
+    "overwriteIssueMissingProxies": m43,
     "overwriteIssueNoProxySource": MessageLookupByLibrary.simpleMessage(
       "No proxies or proxy providers are selected, so the core rejects this group",
     ),
-    "overwriteIssueReservedName": m50,
-    "overwriteIssueSubscriptionGroupMissingProxies": m51,
-    "overwriteIssuesSummary": m52,
+    "overwriteIssueReservedName": m44,
+    "overwriteIssueSubscriptionGroupMissingProxies": m45,
+    "overwriteIssuesSummary": m46,
     "overwriteTypeCustom": MessageLookupByLibrary.simpleMessage("Custom"),
     "overwriteTypeCustomDesc": MessageLookupByLibrary.simpleMessage(
       "Custom mode: fully customize proxies, proxy groups and rules",
     ),
-    "pageNumber": m53,
+    "pageNumber": m47,
     "palette": MessageLookupByLibrary.simpleMessage("Palette"),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
     "passwordMin8Chars": MessageLookupByLibrary.simpleMessage(
@@ -1473,7 +1202,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "pendingCommission": MessageLookupByLibrary.simpleMessage("Pending"),
     "pickFromAlbum": MessageLookupByLibrary.simpleMessage("Choose from album"),
     "pinWindow": MessageLookupByLibrary.simpleMessage("Pin window"),
-    "plans": MessageLookupByLibrary.simpleMessage("Plans"),
     "pleaseBindWebDAV": MessageLookupByLibrary.simpleMessage(
       "Please bind WebDAV",
     ),
@@ -1522,14 +1250,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterYourEmailAddress": MessageLookupByLibrary.simpleMessage(
       "Please enter your email address",
     ),
-    "pleaseInputAdminPassword": MessageLookupByLibrary.simpleMessage(
-      "Please enter the admin password",
-    ),
     "pleaseReEnterPassword": MessageLookupByLibrary.simpleMessage(
       "Please re-enter password",
-    ),
-    "pleaseUploadFile": MessageLookupByLibrary.simpleMessage(
-      "Please upload file",
     ),
     "pleaseUploadValidQrcode": MessageLookupByLibrary.simpleMessage(
       "Please upload a valid QR code",
@@ -1538,10 +1260,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "portConflictTip": MessageLookupByLibrary.simpleMessage(
       "Please enter a different port",
     ),
-    "portTip": m54,
-    "preferH3Desc": MessageLookupByLibrary.simpleMessage(
-      "Prioritize the use of DOH\'s http/3",
-    ),
+    "portTip": m48,
     "prerequisites": MessageLookupByLibrary.simpleMessage("Prerequisites"),
     "pressKeyboard": MessageLookupByLibrary.simpleMessage(
       "Press a key combination",
@@ -1562,9 +1281,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "profileNameNullValidationDesc": MessageLookupByLibrary.simpleMessage(
       "Please enter the profile name",
     ),
-    "profileParseErrorDesc": MessageLookupByLibrary.simpleMessage(
-      "profile parse error",
-    ),
     "profileUrlInvalidValidationDesc": MessageLookupByLibrary.simpleMessage(
       "Please enter a valid profile URL",
     ),
@@ -1574,8 +1290,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "profiles": MessageLookupByLibrary.simpleMessage("Profiles"),
     "profilesSort": MessageLookupByLibrary.simpleMessage("Sort profiles"),
     "project": MessageLookupByLibrary.simpleMessage("Project"),
-    "providerInUse": m55,
-    "providerRenameShadowed": m56,
+    "providerInUse": m49,
+    "providerRenameShadowed": m50,
     "providerSourceSubscription": MessageLookupByLibrary.simpleMessage(
       "Subscription",
     ),
@@ -1584,9 +1300,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "providers": MessageLookupByLibrary.simpleMessage("External resources"),
     "proxies": MessageLookupByLibrary.simpleMessage("Proxies"),
-    "proxiesCount": m57,
+    "proxiesCount": m51,
     "proxiesEmpty": MessageLookupByLibrary.simpleMessage("Proxies are empty"),
-    "proxiesSetting": MessageLookupByLibrary.simpleMessage("Proxies setting"),
     "proxyChains": MessageLookupByLibrary.simpleMessage("Proxy chain"),
     "proxyDefinition": MessageLookupByLibrary.simpleMessage(
       "Full configuration",
@@ -1594,35 +1309,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "proxyDefinitionNotMap": MessageLookupByLibrary.simpleMessage(
       "The configuration must be a YAML mapping with a name and a type",
     ),
-    "proxyDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
-      "Detected selected proxies are abnormal",
-    ),
     "proxyFilter": MessageLookupByLibrary.simpleMessage("Proxy filter"),
     "proxyGroup": MessageLookupByLibrary.simpleMessage("Proxy group"),
-    "proxyGroupDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
-      "Detected current proxy group is abnormal",
-    ),
     "proxyGroupEmpty": MessageLookupByLibrary.simpleMessage(
       "Proxy group is empty",
     ),
     "proxyGroupNameDuplicate": MessageLookupByLibrary.simpleMessage(
       "Duplicate proxy group name",
     ),
-    "proxyGroupNameEmpty": MessageLookupByLibrary.simpleMessage(
-      "Proxy group name cannot be empty",
-    ),
-    "proxyNameserver": MessageLookupByLibrary.simpleMessage("Proxy nameserver"),
-    "proxyNameserverDesc": MessageLookupByLibrary.simpleMessage(
-      "Domain for resolving proxy nodes",
-    ),
     "proxyNode": MessageLookupByLibrary.simpleMessage("Proxy node"),
-    "proxyPort": MessageLookupByLibrary.simpleMessage("ProxyPort"),
-    "proxyPortDesc": MessageLookupByLibrary.simpleMessage(
-      "Set the Clash listening port",
-    ),
-    "proxyProviderDetectedAbnormal": MessageLookupByLibrary.simpleMessage(
-      "Detected selected proxy providers are abnormal",
-    ),
     "proxyProviders": MessageLookupByLibrary.simpleMessage("Proxy providers"),
     "proxyProvidersEmpty": MessageLookupByLibrary.simpleMessage(
       "Proxy providers are empty",
@@ -1645,29 +1340,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "recentRequests": MessageLookupByLibrary.simpleMessage("Recent requests"),
     "recordType": MessageLookupByLibrary.simpleMessage("Record type"),
     "recovery": MessageLookupByLibrary.simpleMessage("Recovery"),
-    "recoveryAll": MessageLookupByLibrary.simpleMessage("Recovery all data"),
-    "recoveryProfiles": MessageLookupByLibrary.simpleMessage(
-      "Only recovery profiles",
-    ),
-    "recoveryStrategy": MessageLookupByLibrary.simpleMessage(
-      "Recovery strategy",
-    ),
-    "recoveryStrategy_compatible": MessageLookupByLibrary.simpleMessage(
-      "Compatible",
-    ),
-    "recoveryStrategy_override": MessageLookupByLibrary.simpleMessage(
-      "Override",
-    ),
-    "recoverySuccess": MessageLookupByLibrary.simpleMessage("Recovery success"),
     "redirPort": MessageLookupByLibrary.simpleMessage("Redir port"),
     "redo": MessageLookupByLibrary.simpleMessage("Redo"),
     "refresh": MessageLookupByLibrary.simpleMessage("Refresh"),
-    "regExp": MessageLookupByLibrary.simpleMessage("RegExp"),
     "registerAccount": MessageLookupByLibrary.simpleMessage("Register Account"),
-    "registerSuccessSaveCredentials": MessageLookupByLibrary.simpleMessage(
-      "Registration successful - Saving credentials:",
-    ),
-    "registrationFailed": m58,
     "releaseMemory": MessageLookupByLibrary.simpleMessage("Release memory"),
     "releaseMemoryFailed": MessageLookupByLibrary.simpleMessage(
       "Failed to release memory",
@@ -1676,14 +1352,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remember your password?",
     ),
     "remote": MessageLookupByLibrary.simpleMessage("Remote"),
-    "remoteBackupDesc": MessageLookupByLibrary.simpleMessage(
-      "Backup local data to WebDAV",
-    ),
     "remoteDestination": MessageLookupByLibrary.simpleMessage(
       "Remote destination",
-    ),
-    "remoteRecoveryDesc": MessageLookupByLibrary.simpleMessage(
-      "Recovery data from WebDAV",
     ),
     "remove": MessageLookupByLibrary.simpleMessage("Remove"),
     "rename": MessageLookupByLibrary.simpleMessage("Rename"),
@@ -1693,9 +1363,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "requests": MessageLookupByLibrary.simpleMessage("Requests"),
     "requestsAndUpdates": MessageLookupByLibrary.simpleMessage(
       "Requests and updates",
-    ),
-    "requestsDesc": MessageLookupByLibrary.simpleMessage(
-      "View recently request records",
     ),
     "resendVerificationCode": MessageLookupByLibrary.simpleMessage(
       "Resend Verification Code",
@@ -1709,9 +1376,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Are you sure you want to reset?",
     ),
     "resources": MessageLookupByLibrary.simpleMessage("Resources"),
-    "resourcesDesc": MessageLookupByLibrary.simpleMessage(
-      "External resource related info",
-    ),
     "respectRules": MessageLookupByLibrary.simpleMessage("Respect rules"),
     "respectRulesDesc": MessageLookupByLibrary.simpleMessage(
       "DNS connections follow rules; requires Proxy Server Nameserver",
@@ -1723,15 +1387,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restore": MessageLookupByLibrary.simpleMessage("Restore"),
     "restoreAllData": MessageLookupByLibrary.simpleMessage("Restore all data"),
-    "restoreException": MessageLookupByLibrary.simpleMessage(
-      "Recovery exception",
-    ),
-    "restoreFromFileDesc": MessageLookupByLibrary.simpleMessage(
-      "Restore data via file",
-    ),
-    "restoreFromWebDAVDesc": MessageLookupByLibrary.simpleMessage(
-      "Restore data via WebDAV",
-    ),
     "restoreOnlyConfig": MessageLookupByLibrary.simpleMessage(
       "Restore profiles only",
     ),
@@ -1740,29 +1395,16 @@ class MessageLookup extends MessageLookupByLibrary {
       "Compatible",
     ),
     "restoreStrategyOverride": MessageLookupByLibrary.simpleMessage("Override"),
-    "restoreStrategy_compatible": MessageLookupByLibrary.simpleMessage(
-      "Compatible",
-    ),
-    "restoreStrategy_override": MessageLookupByLibrary.simpleMessage(
-      "Override",
-    ),
     "restoreSuccess": MessageLookupByLibrary.simpleMessage(
       "Restore successful",
     ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "routeAddress": MessageLookupByLibrary.simpleMessage("Route addresses"),
-    "routeAddressDesc": MessageLookupByLibrary.simpleMessage(
-      "Config listen route address",
-    ),
     "routeMode": MessageLookupByLibrary.simpleMessage("Route mode"),
     "routeModeBypassPrivate": MessageLookupByLibrary.simpleMessage(
       "Bypass private addresses",
     ),
     "routeModeConfig": MessageLookupByLibrary.simpleMessage("Use config"),
-    "routeMode_bypassPrivate": MessageLookupByLibrary.simpleMessage(
-      "Bypass private route address",
-    ),
-    "routeMode_config": MessageLookupByLibrary.simpleMessage("Use config"),
     "ru": MessageLookupByLibrary.simpleMessage("Russian"),
     "rule": MessageLookupByLibrary.simpleMessage("Rule"),
     "ruleActionAndDesc": MessageLookupByLibrary.simpleMessage(
@@ -1892,18 +1534,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "ruleSet": MessageLookupByLibrary.simpleMessage("Rule set"),
     "ruleTarget": MessageLookupByLibrary.simpleMessage("Rule target"),
     "rules": MessageLookupByLibrary.simpleMessage("Rules"),
-    "rulesCount": m59,
+    "rulesCount": m52,
     "runTime": MessageLookupByLibrary.simpleMessage("Run time"),
     "safeMode": MessageLookupByLibrary.simpleMessage("Safe mode"),
-    "safeModeAppTitle": m60,
+    "safeModeAppTitle": m53,
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Save the changes?"),
     "saveQr": MessageLookupByLibrary.simpleMessage("Save QR"),
     "saveQrCodeFeature": MessageLookupByLibrary.simpleMessage(
       "Save QR feature coming soon",
-    ),
-    "saveTip": MessageLookupByLibrary.simpleMessage(
-      "Are you sure you want to save?",
     ),
     "script": MessageLookupByLibrary.simpleMessage("Script"),
     "scriptModeDesc": MessageLookupByLibrary.simpleMessage(
@@ -1914,7 +1553,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "search": MessageLookupByLibrary.simpleMessage("Search"),
     "seconds": MessageLookupByLibrary.simpleMessage("seconds"),
-    "secondsCount": m61,
+    "secondsCount": m54,
     "selectAll": MessageLookupByLibrary.simpleMessage("Select all"),
     "selectProxies": MessageLookupByLibrary.simpleMessage("Select proxies"),
     "selectProxyProviders": MessageLookupByLibrary.simpleMessage(
@@ -1931,20 +1570,20 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "selectTheme": MessageLookupByLibrary.simpleMessage("Select Theme"),
     "selected": MessageLookupByLibrary.simpleMessage("Selected"),
-    "selectedCountTitle": m62,
+    "selectedCountTitle": m55,
     "sendCodeFailed": MessageLookupByLibrary.simpleMessage(
       "Failed to send verification code",
     ),
     "sendVerificationCode": MessageLookupByLibrary.simpleMessage(
       "Send Verification Code",
     ),
-    "sendVerificationCodeFailed": m63,
+    "sendVerificationCodeFailed": m56,
     "server": MessageLookupByLibrary.simpleMessage("Server"),
     "serviceAvailable": MessageLookupByLibrary.simpleMessage("Available"),
     "serviceBlocked": MessageLookupByLibrary.simpleMessage("Blocked"),
     "serviceCheck": MessageLookupByLibrary.simpleMessage("Check"),
     "serviceCheckAll": MessageLookupByLibrary.simpleMessage("Check all"),
-    "serviceCheckedAt": m64,
+    "serviceCheckedAt": m57,
     "serviceComingSoon": MessageLookupByLibrary.simpleMessage("Coming soon"),
     "serviceDisallowedIsp": MessageLookupByLibrary.simpleMessage(
       "Disallowed ISP",
@@ -1982,7 +1621,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Start without showing the window",
     ),
     "singleAdd": MessageLookupByLibrary.simpleMessage("Single add"),
-    "singleValueTip": m65,
+    "singleValueTip": m58,
     "size": MessageLookupByLibrary.simpleMessage("Size"),
     "slide": MessageLookupByLibrary.simpleMessage("Slide"),
     "socksPort": MessageLookupByLibrary.simpleMessage("SOCKS port"),
@@ -2027,7 +1666,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionExpired": MessageLookupByLibrary.simpleMessage(
       "Subscription expired",
     ),
-    "subscriptionExpiredDetail": m66,
+    "subscriptionExpiredDetail": m59,
     "subscriptionExpiresToday": MessageLookupByLibrary.simpleMessage(
       "Subscription expires today",
     ),
@@ -2037,7 +1676,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionExpiringInDays": MessageLookupByLibrary.simpleMessage(
       "Subscription expiring soon",
     ),
-    "subscriptionExpiringInDaysDetail": m67,
+    "subscriptionExpiringInDaysDetail": m60,
     "subscriptionInfo": MessageLookupByLibrary.simpleMessage(
       "Subscription info",
     ),
@@ -2062,28 +1701,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionValid": MessageLookupByLibrary.simpleMessage(
       "Subscription valid",
     ),
-    "subscriptionValidDetail": m68,
+    "subscriptionValidDetail": m61,
     "suspended": MessageLookupByLibrary.simpleMessage("Suspended…"),
     "switchProfile": MessageLookupByLibrary.simpleMessage("Switch profile"),
     "switchTheme": MessageLookupByLibrary.simpleMessage("Switch Theme"),
     "sync": MessageLookupByLibrary.simpleMessage("Sync"),
     "system": MessageLookupByLibrary.simpleMessage("System"),
     "systemApp": MessageLookupByLibrary.simpleMessage("System apps"),
-    "systemFont": MessageLookupByLibrary.simpleMessage("System font"),
     "systemProxy": MessageLookupByLibrary.simpleMessage("System proxy"),
-    "systemProxyDesc": MessageLookupByLibrary.simpleMessage(
-      "Attach HTTP proxy to VpnService",
-    ),
     "tab": MessageLookupByLibrary.simpleMessage("Tab"),
     "tabAnimation": MessageLookupByLibrary.simpleMessage("Tab animation"),
-    "tabAnimationDesc": MessageLookupByLibrary.simpleMessage(
-      "Effective only in mobile view",
-    ),
     "tapToAuthorize": MessageLookupByLibrary.simpleMessage("Tap to authorize"),
     "tcpConcurrent": MessageLookupByLibrary.simpleMessage("TCP concurrent"),
-    "tcpConcurrentDesc": MessageLookupByLibrary.simpleMessage(
-      "Enabling it will allow TCP concurrency",
-    ),
     "testInterval": MessageLookupByLibrary.simpleMessage("Test interval"),
     "testUrl": MessageLookupByLibrary.simpleMessage("Test URL"),
     "testWhenUsed": MessageLookupByLibrary.simpleMessage("Test when used"),
@@ -2097,7 +1726,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Set dark mode and adjust colors",
     ),
     "themeMode": MessageLookupByLibrary.simpleMessage("Theme mode"),
-    "threeColumns": MessageLookupByLibrary.simpleMessage("Three columns"),
     "tight": MessageLookupByLibrary.simpleMessage("Tight"),
     "time": MessageLookupByLibrary.simpleMessage("Time"),
     "timeout": MessageLookupByLibrary.simpleMessage("Timeout"),
@@ -2110,21 +1738,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "total": MessageLookupByLibrary.simpleMessage("Total"),
     "totalCommission": MessageLookupByLibrary.simpleMessage("Earnings"),
     "totalInvites": MessageLookupByLibrary.simpleMessage("Invites"),
-    "totalRecords": m69,
+    "totalRecords": m62,
     "totalTraffic": MessageLookupByLibrary.simpleMessage("Total traffic"),
     "tproxyPort": MessageLookupByLibrary.simpleMessage("TProxy port"),
     "trafficUsage": MessageLookupByLibrary.simpleMessage("Traffic usage"),
     "transfer": MessageLookupByLibrary.simpleMessage("Transfer"),
     "transferAmount": MessageLookupByLibrary.simpleMessage("Transfer Amount"),
-    "transferAmountExceeded": m70,
-    "transferFailed": m71,
+    "transferAmountExceeded": m63,
+    "transferFailed": m64,
     "transferNote": MessageLookupByLibrary.simpleMessage(
       "Transferred balance can be used for in-app purchases",
     ),
     "transferSuccess": MessageLookupByLibrary.simpleMessage(
       "Transfer Success!",
     ),
-    "transferSuccessMsg": m72,
+    "transferSuccessMsg": m65,
     "transferToWallet": MessageLookupByLibrary.simpleMessage(
       "Transfer to Wallet",
     ),
@@ -2135,15 +1763,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "turnOff": MessageLookupByLibrary.simpleMessage("Turn off"),
     "turnOn": MessageLookupByLibrary.simpleMessage("Turn on"),
-    "twoColumns": MessageLookupByLibrary.simpleMessage("Two columns"),
-    "unableToUpdateCurrentProfileDesc": MessageLookupByLibrary.simpleMessage(
-      "unable to update current profile",
-    ),
     "undo": MessageLookupByLibrary.simpleMessage("Undo"),
     "unifiedDelay": MessageLookupByLibrary.simpleMessage("Unified delay"),
-    "unifiedDelayDesc": MessageLookupByLibrary.simpleMessage(
-      "Remove extra delays such as handshaking",
-    ),
     "unknown": MessageLookupByLibrary.simpleMessage("Unknown"),
     "unknownNetworkError": MessageLookupByLibrary.simpleMessage(
       "Unknown network error",
@@ -2152,39 +1773,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "unnamed": MessageLookupByLibrary.simpleMessage("Unnamed"),
     "unpinWindow": MessageLookupByLibrary.simpleMessage("Unpin window"),
     "update": MessageLookupByLibrary.simpleMessage("Update"),
-    "updateCheckAllServersUnavailable": MessageLookupByLibrary.simpleMessage(
-      "All configured update servers are unavailable",
-    ),
-    "updateCheckCurrentVersion": m73,
-    "updateCheckForceUpdate": m74,
-    "updateCheckMustUpdate": MessageLookupByLibrary.simpleMessage(
-      "Must Update",
-    ),
-    "updateCheckNewVersionFound": m75,
-    "updateCheckNoServerUrlsConfigured": MessageLookupByLibrary.simpleMessage(
-      "No update server URLs configured, please check configuration",
-    ),
-    "updateCheckReleaseNotes": MessageLookupByLibrary.simpleMessage(
-      "Release Notes:",
-    ),
-    "updateCheckServerError": m76,
-    "updateCheckServerTemporarilyUnavailable":
-        MessageLookupByLibrary.simpleMessage(
-          "Server temporarily unavailable, please try again later",
-        ),
-    "updateCheckServerUrlNotConfigured": MessageLookupByLibrary.simpleMessage(
-      "Update server URL not configured, please check configuration",
-    ),
-    "updateCheckUpdateLater": MessageLookupByLibrary.simpleMessage(
-      "Update Later",
-    ),
-    "updateCheckUpdateNow": MessageLookupByLibrary.simpleMessage("Update Now"),
     "upload": MessageLookupByLibrary.simpleMessage("Upload"),
     "url": MessageLookupByLibrary.simpleMessage("URL"),
     "urlDesc": MessageLookupByLibrary.simpleMessage(
       "Obtain a profile from a URL",
     ),
-    "urlTip": m77,
+    "urlTip": m66,
     "useHosts": MessageLookupByLibrary.simpleMessage("Use hosts"),
     "useSystemHosts": MessageLookupByLibrary.simpleMessage("Use system hosts"),
     "usedTraffic": MessageLookupByLibrary.simpleMessage("Used traffic"),
@@ -2203,24 +1797,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "verificationCodeSentCheckEmail": MessageLookupByLibrary.simpleMessage(
       "Verification code sent, please check your email",
     ),
-    "verificationCodeSentTo": m78,
+    "verificationCodeSentTo": m67,
     "vibrantScheme": MessageLookupByLibrary.simpleMessage("Vibrant"),
     "view": MessageLookupByLibrary.simpleMessage("View"),
     "viewHistory": MessageLookupByLibrary.simpleMessage("View History"),
-    "visitWebVersion": MessageLookupByLibrary.simpleMessage(
-      "Please visit web version to withdraw",
-    ),
     "vpnConfigChangeDetected": MessageLookupByLibrary.simpleMessage(
       "VPN-related configuration change detected",
     ),
-    "vpnDesc": MessageLookupByLibrary.simpleMessage(
-      "Modify VPN related settings",
-    ),
     "vpnEnableDesc": MessageLookupByLibrary.simpleMessage(
       "Route all system traffic through VpnService automatically",
-    ),
-    "vpnSystemProxyDesc": MessageLookupByLibrary.simpleMessage(
-      "Attach HTTP proxy to VpnService",
     ),
     "vpnTip": MessageLookupByLibrary.simpleMessage(
       "Changes take effect after restarting the VPN",
@@ -2235,7 +1820,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "withdrawCommission": MessageLookupByLibrary.simpleMessage(
       "Withdraw Commission",
     ),
-    "withdrawableAmount": m79,
     "withdrawalAvailable": MessageLookupByLibrary.simpleMessage(
       "Available commission can be withdrawn",
     ),
@@ -2247,231 +1831,39 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboard24HourCustomerService": MessageLookupByLibrary.simpleMessage(
       "24-hour customer service support",
     ),
-    "xboardAccountBalance": MessageLookupByLibrary.simpleMessage(
-      "Account balance",
-    ),
-    "xboardAddLinkToConfig": MessageLookupByLibrary.simpleMessage(
-      "Add this subscription link to your configuration",
-    ),
-    "xboardAddingToConfigList": MessageLookupByLibrary.simpleMessage(
-      "Adding to configuration list",
-    ),
     "xboardAfterPurchasingPlan": MessageLookupByLibrary.simpleMessage(
       "After purchasing a plan, you will enjoy:",
-    ),
-    "xboardApiUrlNotConfigured": MessageLookupByLibrary.simpleMessage(
-      "API URL not configured",
-    ),
-    "xboardAutoCheckEvery5Seconds": MessageLookupByLibrary.simpleMessage(
-      "System checks every 5 seconds, will redirect automatically after payment",
-    ),
-    "xboardAutoDetectPaymentStatus": MessageLookupByLibrary.simpleMessage(
-      "Auto-detect payment status",
-    ),
-    "xboardAutoOpeningPaymentPage": MessageLookupByLibrary.simpleMessage(
-      "Auto-opening payment page, please return to app after payment",
-    ),
-    "xboardAutoTesting": MessageLookupByLibrary.simpleMessage("Auto testing"),
-    "xboardBack": MessageLookupByLibrary.simpleMessage("Back"),
-    "xboardBrowserNotOpenedTip": MessageLookupByLibrary.simpleMessage(
-      "If browser doesn\'t open automatically, click \\\"Reopen\\\" or copy link manually",
     ),
     "xboardBuyMoreTrafficOrUpgrade": MessageLookupByLibrary.simpleMessage(
       "Please buy more traffic or upgrade plan",
     ),
-    "xboardBuyNow": MessageLookupByLibrary.simpleMessage("Buy Now"),
-    "xboardBuyoutPlan": MessageLookupByLibrary.simpleMessage("Buyout plan"),
-    "xboardCancel": MessageLookupByLibrary.simpleMessage("Cancel"),
-    "xboardCancelPayment": MessageLookupByLibrary.simpleMessage(
-      "Cancel payment",
-    ),
-    "xboardCheckPaymentFailed": MessageLookupByLibrary.simpleMessage(
-      "Failed to check payment status",
-    ),
-    "xboardCheckStatus": MessageLookupByLibrary.simpleMessage("Check status"),
-    "xboardChecking": MessageLookupByLibrary.simpleMessage("Checking"),
-    "xboardCleaningOldConfig": MessageLookupByLibrary.simpleMessage(
-      "Cleaning old configuration",
-    ),
-    "xboardClearError": MessageLookupByLibrary.simpleMessage("Clear error"),
-    "xboardClickToCopy": MessageLookupByLibrary.simpleMessage("Click to copy"),
-    "xboardClickToSetupNodes": MessageLookupByLibrary.simpleMessage(
-      "Click to setup nodes",
-    ),
-    "xboardCompletePaymentInBrowser": MessageLookupByLibrary.simpleMessage(
-      "2. Please complete payment in your browser",
-    ),
-    "xboardConfigDownloadFailed": MessageLookupByLibrary.simpleMessage(
-      "Configuration download failed, please check subscription link",
-    ),
-    "xboardConfigFormatError": MessageLookupByLibrary.simpleMessage(
-      "Configuration format error, please contact service provider",
-    ),
-    "xboardConfigSaveFailed": MessageLookupByLibrary.simpleMessage(
-      "Configuration save failed, please check storage space",
-    ),
-    "xboardConfigurationError": MessageLookupByLibrary.simpleMessage(
-      "Configuration error",
-    ),
     "xboardConfirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "xboardConfirmAction": MessageLookupByLibrary.simpleMessage("Confirm"),
-    "xboardConfirmPassword": MessageLookupByLibrary.simpleMessage(
-      "Confirm Password",
-    ),
-    "xboardConfirmPurchase": MessageLookupByLibrary.simpleMessage(
-      "Confirm purchase",
-    ),
-    "xboardCongratulationsSubscriptionActivated":
-        MessageLookupByLibrary.simpleMessage(
-          "Congratulations! Your subscription has been successfully purchased and activated",
-        ),
     "xboardConnectGlobalQualityNodes": MessageLookupByLibrary.simpleMessage(
       "Connect to global quality nodes",
     ),
-    "xboardConnectionTimeout": MessageLookupByLibrary.simpleMessage(
-      "Connection timeout, please check network connection",
-    ),
-    "xboardCopyFailed": MessageLookupByLibrary.simpleMessage("Copy failed"),
-    "xboardCopyLink": MessageLookupByLibrary.simpleMessage("Copy Link"),
-    "xboardCopyPaymentLink": MessageLookupByLibrary.simpleMessage("Copy Link"),
-    "xboardCopySubscriptionLinkAbove": MessageLookupByLibrary.simpleMessage(
-      "Copy the subscription link above",
-    ),
-    "xboardCouponExpired": MessageLookupByLibrary.simpleMessage(
-      "Coupon expired",
-    ),
-    "xboardCouponNotYetActive": MessageLookupByLibrary.simpleMessage(
-      "Coupon not yet active",
-    ),
-    "xboardCouponOptional": MessageLookupByLibrary.simpleMessage(
-      "Coupon (optional)",
-    ),
-    "xboardCreatingOrder": MessageLookupByLibrary.simpleMessage(
-      "Creating order",
-    ),
-    "xboardCreatingOrderPleaseWait": MessageLookupByLibrary.simpleMessage(
-      "We are creating a new order for you, please wait",
-    ),
-    "xboardCurrentNode": MessageLookupByLibrary.simpleMessage("Current Node"),
-    "xboardCurrentVersion": MessageLookupByLibrary.simpleMessage(
-      "Current version",
-    ),
     "xboardDays": MessageLookupByLibrary.simpleMessage("days"),
-    "xboardDeductibleDuringPayment": MessageLookupByLibrary.simpleMessage(
-      "Deductible during payment",
-    ),
-    "xboardDiscounted": MessageLookupByLibrary.simpleMessage("Discounted"),
-    "xboardDownloadingConfig": MessageLookupByLibrary.simpleMessage(
-      "Downloading configuration file",
-    ),
     "xboardEmail": MessageLookupByLibrary.simpleMessage("Email"),
-    "xboardEnableTun": MessageLookupByLibrary.simpleMessage("Enable TUN"),
     "xboardEnjoyFastNetworkExperience": MessageLookupByLibrary.simpleMessage(
       "Enjoy fast network experience",
     ),
-    "xboardEnterCouponCode": MessageLookupByLibrary.simpleMessage(
-      "Enter coupon code",
-    ),
-    "xboardExcellent": MessageLookupByLibrary.simpleMessage("Excellent"),
     "xboardExpiryTime": MessageLookupByLibrary.simpleMessage("Expiry time"),
-    "xboardFailedToCheckPaymentStatus": MessageLookupByLibrary.simpleMessage(
-      "Failed to check payment status",
-    ),
-    "xboardFailedToGetSubscriptionInfo": MessageLookupByLibrary.simpleMessage(
-      "Failed to get subscription information",
-    ),
-    "xboardFailedToOpenPaymentLink": MessageLookupByLibrary.simpleMessage(
-      "Failed to open payment link",
-    ),
-    "xboardFailedToOpenPaymentPage": MessageLookupByLibrary.simpleMessage(
-      "Failed to open payment page",
-    ),
-    "xboardFair": MessageLookupByLibrary.simpleMessage("Fair"),
-    "xboardForceUpdate": MessageLookupByLibrary.simpleMessage("Force update"),
     "xboardForgotPassword": MessageLookupByLibrary.simpleMessage(
       "Forgot Password",
     ),
-    "xboardGettingIP": MessageLookupByLibrary.simpleMessage("Getting..."),
     "xboardGlobalNodes": MessageLookupByLibrary.simpleMessage("Global nodes"),
-    "xboardGood": MessageLookupByLibrary.simpleMessage("Good"),
-    "xboardGroup": MessageLookupByLibrary.simpleMessage("Group"),
-    "xboardHalfYearlyPayment": MessageLookupByLibrary.simpleMessage(
-      "Half-yearly",
-    ),
     "xboardHandleLater": MessageLookupByLibrary.simpleMessage("Handle later"),
-    "xboardHandlingFee": MessageLookupByLibrary.simpleMessage("Handling fee"),
     "xboardHighSpeedNetwork": MessageLookupByLibrary.simpleMessage(
       "High-speed network",
     ),
     "xboardHome": MessageLookupByLibrary.simpleMessage("Home"),
-    "xboardImportFailed": MessageLookupByLibrary.simpleMessage("Import failed"),
-    "xboardImportSuccess": MessageLookupByLibrary.simpleMessage(
-      "Import successful",
-    ),
-    "xboardInsufficientBalance": MessageLookupByLibrary.simpleMessage(
-      "Insufficient balance",
-    ),
-    "xboardInvalidCredentials": MessageLookupByLibrary.simpleMessage(
-      "Invalid username or password",
-    ),
-    "xboardInvalidOrExpiredCoupon": MessageLookupByLibrary.simpleMessage(
-      "Invalid or expired coupon code",
-    ),
-    "xboardInvalidResponseFormat": MessageLookupByLibrary.simpleMessage(
-      "Invalid response format from server",
-    ),
     "xboardInviteCode": MessageLookupByLibrary.simpleMessage("Invite Code"),
-    "xboardKeepSubscriptionLinkSafe": MessageLookupByLibrary.simpleMessage(
-      "Please keep your subscription link safe and don\'t share with others",
-    ),
-    "xboardLater": MessageLookupByLibrary.simpleMessage("Later"),
-    "xboardLoadingFailed": MessageLookupByLibrary.simpleMessage(
-      "Loading failed",
-    ),
-    "xboardLoadingPaymentPage": MessageLookupByLibrary.simpleMessage(
-      "Loading payment page",
-    ),
-    "xboardLocalIP": MessageLookupByLibrary.simpleMessage("Local IP"),
-    "xboardLoggedIn": MessageLookupByLibrary.simpleMessage("Logged In"),
     "xboardLogin": MessageLookupByLibrary.simpleMessage("Login"),
-    "xboardLoginExpired": MessageLookupByLibrary.simpleMessage(
-      "Login expired, please login again",
-    ),
-    "xboardLoginFailed": MessageLookupByLibrary.simpleMessage("Login failed"),
     "xboardLoginSuccess": MessageLookupByLibrary.simpleMessage(
       "Login successful",
     ),
     "xboardLoginToViewSubscription": MessageLookupByLibrary.simpleMessage(
       "Please login to view subscription usage",
-    ),
-    "xboardLogout": MessageLookupByLibrary.simpleMessage("Logout"),
-    "xboardLogoutConfirmContent": MessageLookupByLibrary.simpleMessage(
-      "Are you sure you want to logout? You will need to re-enter your credentials.",
-    ),
-    "xboardLogoutConfirmTitle": MessageLookupByLibrary.simpleMessage(
-      "Confirm Logout",
-    ),
-    "xboardLogoutFailed": MessageLookupByLibrary.simpleMessage("Logout failed"),
-    "xboardLogoutSuccess": MessageLookupByLibrary.simpleMessage(
-      "Successfully logged out",
-    ),
-    "xboardMissingRequiredField": MessageLookupByLibrary.simpleMessage(
-      "Missing required field",
-    ),
-    "xboardMonthlyPayment": MessageLookupByLibrary.simpleMessage("Monthly"),
-    "xboardMonthlyRenewal": MessageLookupByLibrary.simpleMessage(
-      "Monthly renewal",
-    ),
-    "xboardMustUpdate": MessageLookupByLibrary.simpleMessage("Must update"),
-    "xboardNetworkConnectionFailed": MessageLookupByLibrary.simpleMessage(
-      "Network connection failed, please check network settings",
-    ),
-    "xboardNewVersionFound": MessageLookupByLibrary.simpleMessage(
-      "New version found",
-    ),
-    "xboardNext": MessageLookupByLibrary.simpleMessage("Next"),
-    "xboardNoAvailableNodes": MessageLookupByLibrary.simpleMessage(
-      "No available nodes",
     ),
     "xboardNoAvailablePlan": MessageLookupByLibrary.simpleMessage(
       "No available plan",
@@ -2479,130 +1871,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardNoAvailableSubscription": MessageLookupByLibrary.simpleMessage(
       "No available subscription",
     ),
-    "xboardNoInternetConnection": MessageLookupByLibrary.simpleMessage(
-      "No internet connection, please check network settings",
-    ),
     "xboardNoSubscriptionInfo": MessageLookupByLibrary.simpleMessage(
       "No subscription information",
     ),
-    "xboardNoSubscriptionPlans": MessageLookupByLibrary.simpleMessage(
-      "No subscription plans",
-    ),
-    "xboardNodeName": MessageLookupByLibrary.simpleMessage("Node Name"),
-    "xboardNone": MessageLookupByLibrary.simpleMessage("None"),
-    "xboardNotLoggedIn": MessageLookupByLibrary.simpleMessage("Not Logged In"),
-    "xboardOneTimePayment": MessageLookupByLibrary.simpleMessage("One-time"),
-    "xboardOpenPaymentFailed": MessageLookupByLibrary.simpleMessage(
-      "Failed to open payment page",
-    ),
-    "xboardOpenPaymentLinkFailed": MessageLookupByLibrary.simpleMessage(
-      "Failed to open payment link",
-    ),
-    "xboardOperationFailed": MessageLookupByLibrary.simpleMessage(
-      "Operation failed",
-    ),
-    "xboardOperationTips": MessageLookupByLibrary.simpleMessage(
-      "Operation tips",
-    ),
-    "xboardOrderCreationFailed": MessageLookupByLibrary.simpleMessage(
-      "Order creation failed",
-    ),
-    "xboardOrderNotFound": MessageLookupByLibrary.simpleMessage(
-      "Order not found",
-    ),
-    "xboardOrderNumber": MessageLookupByLibrary.simpleMessage("Order number"),
-    "xboardOrderStatusPending": MessageLookupByLibrary.simpleMessage(
-      "Order status: Pending payment",
-    ),
     "xboardPassword": MessageLookupByLibrary.simpleMessage("Password"),
-    "xboardPaymentCancelled": MessageLookupByLibrary.simpleMessage(
-      "Payment cancelled",
-    ),
-    "xboardPaymentComplete": MessageLookupByLibrary.simpleMessage(
-      "Payment Complete",
-    ),
-    "xboardPaymentCompleted": MessageLookupByLibrary.simpleMessage(
-      "Payment completed!",
-    ),
-    "xboardPaymentFailed": MessageLookupByLibrary.simpleMessage(
-      "Payment failed",
-    ),
-    "xboardPaymentGateway": MessageLookupByLibrary.simpleMessage(
-      "Payment gateway",
-    ),
-    "xboardPaymentInfo": MessageLookupByLibrary.simpleMessage(
-      "Payment information",
-    ),
-    "xboardPaymentInstructions1": MessageLookupByLibrary.simpleMessage(
-      "1. Payment page has been opened automatically",
-    ),
-    "xboardPaymentInstructions2": MessageLookupByLibrary.simpleMessage(
-      "2. Please complete payment in your browser",
-    ),
-    "xboardPaymentInstructions3": MessageLookupByLibrary.simpleMessage(
-      "3. Return to app after payment, system will detect automatically",
-    ),
-    "xboardPaymentLink": MessageLookupByLibrary.simpleMessage("Payment link"),
-    "xboardPaymentLinkCopied": MessageLookupByLibrary.simpleMessage(
-      "Payment link copied to clipboard",
-    ),
-    "xboardPaymentMethodVerified": MessageLookupByLibrary.simpleMessage(
-      "Payment method verified",
-    ),
-    "xboardPaymentMethodVerifiedPreparing":
-        MessageLookupByLibrary.simpleMessage(
-          "Payment method verified, preparing to redirect to payment page",
-        ),
-    "xboardPaymentPageAutoOpened": MessageLookupByLibrary.simpleMessage(
-      "1. Payment page has been opened automatically",
-    ),
-    "xboardPaymentPageOpenedCompleteAndReturn":
-        MessageLookupByLibrary.simpleMessage(
-          "Payment page opened, please complete payment and return to app",
-        ),
-    "xboardPaymentPageOpenedInBrowser": MessageLookupByLibrary.simpleMessage(
-      "Payment page opened in browser, please return to app after payment",
-    ),
-    "xboardPaymentSuccess": MessageLookupByLibrary.simpleMessage(
-      "Payment successful",
-    ),
-    "xboardPaymentSuccessful": MessageLookupByLibrary.simpleMessage(
-      "🎉 Payment successful!",
-    ),
-    "xboardPlanInfo": MessageLookupByLibrary.simpleMessage("Plans"),
-    "xboardPlanNotFound": MessageLookupByLibrary.simpleMessage(
-      "Plan not found",
-    ),
-    "xboardPlans": MessageLookupByLibrary.simpleMessage("Plans"),
-    "xboardPleaseSelectPaymentPeriod": MessageLookupByLibrary.simpleMessage(
-      "Please select payment period",
-    ),
-    "xboardPoor": MessageLookupByLibrary.simpleMessage("Poor"),
-    "xboardPreparingImport": MessageLookupByLibrary.simpleMessage(
-      "Preparing import",
-    ),
-    "xboardPreparingPaymentPage": MessageLookupByLibrary.simpleMessage(
-      "Preparing payment page, redirecting soon",
-    ),
-    "xboardPrevious": MessageLookupByLibrary.simpleMessage("Previous"),
-    "xboardProcessing": MessageLookupByLibrary.simpleMessage("Processing..."),
     "xboardProfessionalSupport": MessageLookupByLibrary.simpleMessage(
       "Professional support",
     ),
-    "xboardProfile": MessageLookupByLibrary.simpleMessage("Profile"),
     "xboardProtectNetworkPrivacy": MessageLookupByLibrary.simpleMessage(
       "Protect your network privacy",
-    ),
-    "xboardProxy": MessageLookupByLibrary.simpleMessage("Proxy"),
-    "xboardProxyMode": MessageLookupByLibrary.simpleMessage("Proxy Mode"),
-    "xboardProxyModeDirectDescription": MessageLookupByLibrary.simpleMessage(
-      "All traffic connects directly without proxy",
-    ),
-    "xboardProxyModeGlobalDescription": MessageLookupByLibrary.simpleMessage(
-      "All traffic goes through proxy server",
-    ),
-    "xboardProxyModeRuleDescription": MessageLookupByLibrary.simpleMessage(
-      "Automatically select direct or proxy based on rules",
     ),
     "xboardPurchasePlan": MessageLookupByLibrary.simpleMessage("Purchase plan"),
     "xboardPurchaseSubscription": MessageLookupByLibrary.simpleMessage(
@@ -2614,20 +1891,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardPurchaseTraffic": MessageLookupByLibrary.simpleMessage(
       "Purchase traffic",
     ),
-    "xboardQuarterlyPayment": MessageLookupByLibrary.simpleMessage("Quarterly"),
     "xboardRefresh": MessageLookupByLibrary.simpleMessage("Refresh"),
     "xboardRefreshStatus": MessageLookupByLibrary.simpleMessage(
       "Refresh status",
     ),
     "xboardRegister": MessageLookupByLibrary.simpleMessage("Register"),
-    "xboardRegisterFailed": MessageLookupByLibrary.simpleMessage(
-      "Registration failed",
-    ),
     "xboardRegisterSuccess": MessageLookupByLibrary.simpleMessage(
       "Registration successful! Redirecting to login page...",
     ),
-    "xboardReload": MessageLookupByLibrary.simpleMessage("Reload"),
-    "xboardRelogin": MessageLookupByLibrary.simpleMessage("Login Again"),
     "xboardRememberPassword": MessageLookupByLibrary.simpleMessage(
       "Remember Password",
     ),
@@ -2635,89 +1906,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardRenewToContinue": MessageLookupByLibrary.simpleMessage(
       "Please renew to continue using",
     ),
-    "xboardReopen": MessageLookupByLibrary.simpleMessage("Reopen"),
-    "xboardReopenPayment": MessageLookupByLibrary.simpleMessage(
-      "Reopen Payment",
-    ),
-    "xboardReopenPaymentPageTip": MessageLookupByLibrary.simpleMessage(
-      "To reopen, click the \\\"Reopen\\\" button below",
-    ),
-    "xboardRetry": MessageLookupByLibrary.simpleMessage("Retry"),
-    "xboardRetryGet": MessageLookupByLibrary.simpleMessage("Retry"),
-    "xboardReturn": MessageLookupByLibrary.simpleMessage("Return"),
-    "xboardReturnAfterPaymentAutoDetect": MessageLookupByLibrary.simpleMessage(
-      "3. Return to app after payment, system will detect automatically",
-    ),
-    "xboardRunningTime": m80,
+    "xboardRunningTime": m68,
     "xboardSecureEncryption": MessageLookupByLibrary.simpleMessage(
       "Secure encryption",
     ),
-    "xboardSelectPaymentMethod": MessageLookupByLibrary.simpleMessage(
-      "Select payment method",
-    ),
-    "xboardSelectPaymentPeriod": MessageLookupByLibrary.simpleMessage(
-      "Select payment period",
-    ),
-    "xboardSelectPeriod": MessageLookupByLibrary.simpleMessage(
-      "Please select purchase period",
-    ),
-    "xboardSendVerificationCode": MessageLookupByLibrary.simpleMessage(
-      "Send Verification Code",
-    ),
-    "xboardServerError": MessageLookupByLibrary.simpleMessage("Server error"),
-    "xboardSetup": MessageLookupByLibrary.simpleMessage("Setup"),
-    "xboardSixMonthCycle": MessageLookupByLibrary.simpleMessage(
-      "6-month cycle",
-    ),
-    "xboardSpeedLimit": MessageLookupByLibrary.simpleMessage("Speed"),
     "xboardStartProxy": MessageLookupByLibrary.simpleMessage("Start Proxy"),
-    "xboardStartProxyToSelectNode": MessageLookupByLibrary.simpleMessage(
-      "Start the proxy to select nodes",
-    ),
     "xboardStop": MessageLookupByLibrary.simpleMessage("Stop"),
     "xboardStopProxy": MessageLookupByLibrary.simpleMessage("Stop Proxy"),
     "xboardSubscription": MessageLookupByLibrary.simpleMessage("Subscription"),
-    "xboardSubscriptionCopied": MessageLookupByLibrary.simpleMessage(
-      "Subscription link copied to clipboard",
-    ),
     "xboardSubscriptionExpired": MessageLookupByLibrary.simpleMessage(
       "Subscription expired",
     ),
     "xboardSubscriptionHasExpired": MessageLookupByLibrary.simpleMessage(
       "Subscription has expired",
     ),
-    "xboardSubscriptionInfo": MessageLookupByLibrary.simpleMessage(
-      "Subscription information",
-    ),
-    "xboardSubscriptionLink": MessageLookupByLibrary.simpleMessage(
-      "Subscription link",
-    ),
-    "xboardSubscriptionLinkCopied": MessageLookupByLibrary.simpleMessage(
-      "Subscription link copied to clipboard",
-    ),
-    "xboardSubscriptionPurchase": MessageLookupByLibrary.simpleMessage(
-      "Subscription purchase",
-    ),
     "xboardSubscriptionStatus": MessageLookupByLibrary.simpleMessage(
       "Subscription status",
     ),
     "xboardSwitch": MessageLookupByLibrary.simpleMessage("Switch"),
-    "xboardTesting": MessageLookupByLibrary.simpleMessage("Testing"),
-    "xboardThirtySixMonthCycle": MessageLookupByLibrary.simpleMessage(
-      "36-month cycle",
-    ),
-    "xboardThreeMonthCycle": MessageLookupByLibrary.simpleMessage(
-      "3-month cycle",
-    ),
-    "xboardThreeYearPayment": MessageLookupByLibrary.simpleMessage(
-      "Three-year",
-    ),
-    "xboardTimeout": MessageLookupByLibrary.simpleMessage("Timeout"),
     "xboardTokenExpiredContent": MessageLookupByLibrary.simpleMessage(
       "Your login session has expired. Please login again to continue.",
-    ),
-    "xboardTokenExpiredTitle": MessageLookupByLibrary.simpleMessage(
-      "Login Expired",
     ),
     "xboardTraffic": MessageLookupByLibrary.simpleMessage("Traffic"),
     "xboardTrafficExhausted": MessageLookupByLibrary.simpleMessage(
@@ -2726,62 +1934,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "xboardTrafficUsedUp": MessageLookupByLibrary.simpleMessage(
       "Traffic used up",
     ),
-    "xboardTunEnabled": MessageLookupByLibrary.simpleMessage("TUN enabled"),
-    "xboardTwelveMonthCycle": MessageLookupByLibrary.simpleMessage(
-      "12-month cycle",
-    ),
-    "xboardTwentyFourMonthCycle": MessageLookupByLibrary.simpleMessage(
-      "24-month cycle",
-    ),
-    "xboardTwoYearPayment": MessageLookupByLibrary.simpleMessage("Two-year"),
-    "xboardUnauthorizedAccess": MessageLookupByLibrary.simpleMessage(
-      "Unauthorized access, please login first",
-    ),
-    "xboardUnknownErrorRetry": MessageLookupByLibrary.simpleMessage(
-      "Unknown error, please retry",
-    ),
-    "xboardUnknownUser": MessageLookupByLibrary.simpleMessage("Unknown User"),
-    "xboardUnlimited": MessageLookupByLibrary.simpleMessage("Unlimited"),
-    "xboardUnselected": MessageLookupByLibrary.simpleMessage("Unselected"),
-    "xboardUnsupportedCouponType": MessageLookupByLibrary.simpleMessage(
-      "Unsupported coupon type",
-    ),
-    "xboardUpdateContent": MessageLookupByLibrary.simpleMessage(
-      "Update content:",
-    ),
-    "xboardUpdateLater": MessageLookupByLibrary.simpleMessage("Update Later"),
-    "xboardUpdateNow": MessageLookupByLibrary.simpleMessage("Update Now"),
     "xboardUpdateSubscription": MessageLookupByLibrary.simpleMessage(
       "Update subscription",
     ),
-    "xboardUpdateSubscriptionRegularly": MessageLookupByLibrary.simpleMessage(
-      "Update subscription regularly to get latest nodes",
-    ),
-    "xboardUsageInstructions": MessageLookupByLibrary.simpleMessage(
-      "Usage instructions",
-    ),
     "xboardUsed": MessageLookupByLibrary.simpleMessage("Used"),
     "xboardUsedTraffic": MessageLookupByLibrary.simpleMessage("Used"),
-    "xboardValidatingConfigFormat": MessageLookupByLibrary.simpleMessage(
-      "Validating configuration format",
-    ),
-    "xboardValidationFailed": MessageLookupByLibrary.simpleMessage(
-      "Validation failed",
-    ),
     "xboardValidityPeriod": MessageLookupByLibrary.simpleMessage("Expires"),
-    "xboardVerify": MessageLookupByLibrary.simpleMessage("Verify"),
-    "xboardVeryPoor": MessageLookupByLibrary.simpleMessage("Very poor"),
-    "xboardWaitingForPayment": MessageLookupByLibrary.simpleMessage(
-      "Waiting for payment",
-    ),
-    "xboardWaitingPaymentCompletion": MessageLookupByLibrary.simpleMessage(
-      "Waiting for payment completion",
-    ),
-    "xboardYearlyPayment": MessageLookupByLibrary.simpleMessage("Yearly"),
     "years": MessageLookupByLibrary.simpleMessage("Years"),
-    "yearsAgo": m81,
+    "yearsAgo": m69,
     "yes": MessageLookupByLibrary.simpleMessage("Yes"),
     "zhCN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
-    "zh_CN": MessageLookupByLibrary.simpleMessage("Simplified Chinese"),
   };
 }
