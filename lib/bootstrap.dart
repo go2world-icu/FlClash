@@ -18,6 +18,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/disclaimer.dart';
 import 'package:fl_clash/views/navigation.dart';
+import 'package:fl_clash/xboard/navigation_port.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,7 +44,7 @@ class Bootstrap {
     );
     windowPort = window;
     trayPort = appTray;
-    navigationPort = navigation;
+    navigationPort = XBoardNavigationPort(navigation);
     final dynamicColor = await _initDynamicColor();
     return _initData(version, dynamicColor);
   }

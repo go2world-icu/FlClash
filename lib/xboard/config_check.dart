@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 bool _hasXboardConfig = false;
 
@@ -18,8 +17,3 @@ Future<void> resolveXboardConfig() async {
     _hasXboardConfig = false;
   }
 }
-
-/// xboard 是否启用
-final xboardEnabledProvider = Provider<bool>((ref) {
-  return hasXboardConfig;
-});

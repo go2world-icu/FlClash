@@ -10,7 +10,6 @@ NavigationItemsState navigationItemsState(Ref ref) {
     currentGroupsStateProvider.select((state) => state.value.isNotEmpty),
   );
   final isInit = ref.watch(initProvider);
-  final hasXboard = ref.watch(xboardEnabledProvider);
   // iOS: requests/connections/logs are only available while the tunnel runs.
   final iosCoreOff = system.isIOS && !ref.watch(isStartProvider);
   var navItems =
@@ -19,7 +18,6 @@ NavigationItemsState navigationItemsState(Ref ref) {
         // iOS: the core only lives inside the NE while the tunnel runs, so
         // groups are empty until started — a profile is enough to show the tab.
         hasProxies: !isInit || system.isIOS ? hasProfiles : hasProxies,
-        hasXboard: hasXboard,
       ) ??
       const [];
   if (iosCoreOff) {

@@ -115,6 +115,18 @@ void main() {
             'fork diff to resolve on every merge',
       );
     });
+
+    test('NavigationPort carries no fork-facing parameter', () {
+      expect(
+        _read('lib/common/app_ports.dart'),
+        isNot(contains('hasXboard')),
+        reason:
+            'the panel shape is applied by XBoardNavigationPort, a decorator '
+            'in lib/xboard/; adding a parameter here would drag both this '
+            'interface and lib/views/navigation.dart into every merge',
+      );
+      expect(_read('lib/views/navigation.dart'), isNot(contains('hasXboard')));
+    });
   });
 
   group('fork identity', () {

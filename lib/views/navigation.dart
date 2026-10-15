@@ -3,7 +3,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/app_glyphs.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/views.dart';
-import 'package:fl_clash/xboard/bridge.dart';
 import 'package:material_ui/material_ui.dart';
 
 class Navigation implements NavigationPort {
@@ -13,7 +12,6 @@ class Navigation implements NavigationPort {
   List<NavigationItem> getItems({
     bool openLogs = false,
     bool hasProxies = false,
-    bool hasXboard = false,
   }) {
     return [
       NavigationItem(
@@ -28,15 +26,16 @@ class Navigation implements NavigationPort {
         label: PageLabel.proxies,
         builder: (_) =>
             const ProxiesView(key: GlobalObjectKey(PageLabel.proxies)),
-        modes: [], // 代理菜单已隐藏，改为通过仪表盘节点选择器访问
+        modes: hasProxies
+            ? [NavigationItemMode.mobile, NavigationItemMode.desktop]
+            : [],
       ),
-      if (!hasXboard)
-        NavigationItem(
-          glyph: AppGlyphs.profiles,
-          label: PageLabel.profiles,
-          builder: (_) =>
-              const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
-        ),
+      NavigationItem(
+        glyph: AppGlyphs.profiles,
+        label: PageLabel.profiles,
+        builder: (_) =>
+            const ProfilesView(key: GlobalObjectKey(PageLabel.profiles)),
+      ),
       NavigationItem(
         glyph: AppGlyphs.requests,
         label: PageLabel.requests,
@@ -79,12 +78,6 @@ class Navigation implements NavigationPort {
         builder: (_) => const ToolsView(key: GlobalObjectKey(PageLabel.tools)),
         modes: [NavigationItemMode.desktop, NavigationItemMode.mobile],
       ),
-      if (hasXboard)
-        NavigationItem(
-          glyph: AppGlyphs.account,
-          label: PageLabel.xboard,
-          builder: (_) => const XBoardPage(),
-        ),
     ];
   }
 
