@@ -89,25 +89,33 @@ Accepted residuals — small, additive, self-contained, and not worth a seam: `l
 Upstream has no iOS at all — no `ios/`, no iOS build tags in `core/`, no iOS in the build tooling. The whole layer is
 the fork's, and it is wired into upstream files. Checklist, outermost to innermost:
 
-1. **Core build tags.** `core/{bride.go,bride.c,lib.go,main_cgo.go,tun/tun.go}` must be `(android || ios) && cgo`;
-   `core/{main.go,server.go,exit.go}` and `dial_socket.go` must exclude iOS. Go applies build constraints to `.c`
-   files too — missing `bride.c` leaves `result`/`release_object`/`free_string` undefined at link. The invariants test
-   asserts all of these.
-2. **The xcframework must exist before `flutter build ios`.** `Runner` links
-   `libclash/ios/Libclash.xcframework`, and the build hook reports its output too late for Xcode's link step, so
-   `plugins/setup/setup_hooks/bin/build_ios.dart` builds it explicitly. The CI's `Build iOS` step and `setup.dart`'s
-   iOS branch both run it first.
-3. **`rust_api` skips iOS.** It builds for every target Flutter builds, but `rquickjs-sys` publishes no iOS bindings.
-   The hook returns early on `OS.iOS`, which is only safe because `main.dart` keeps `RustLib.init()` behind
+1. **Core build tags.** `core/{lib.go, tun/tun.go}` must be `android || ios`; `core/{cmd/core/main.go, server.go,
+   exit.go}` and `dial_socket.go` must exclude iOS. The invariants test asserts all of these. Upstream v0.9.0 moved
+   `main.go` to `cmd/core/` and dropped the c-archive, so the old `(android || ios) && cgo` spellings are gone.
+2. **iOS is bound with gomobile, like Android.** `core/mobile/mobile_ios.go` is the iOS half of the binding package;
+   `plugins/setup/setup_hooks` builds one `Mobile.framework` per slice with `gomobile bind` and combines them into
+   `libclash/ios/Mobile.xcframework`, which `Runner` and `PacketTunnel` link. That xcframework has to exist before
+   `flutter build ios` reaches Xcode's link step, so `bin/build_ios.dart` builds it explicitly — the CI's `Build iOS`
+   step and `setup.dart`'s iOS branch both run it first. The Swift side is `ios/PacketTunnel/ClashCore.swift`, which
+   talks to the generated `Mobile*` API rather than the C function pointers the hand-built archive used.
+3. **A few things upstream shares between the mobile targets only compile on Android.** `handleUpdateDns` calls
+   `dns.UpdateSystemDNS`, which mihomo builds behind an `android` tag; `lib.go`'s protect/resolve hooks call
+   `core/platform`, which is android/linux only. Both are behind a tag pair (`dns_{android,ios}.go`,
+   `platform/limit_ios.go`) with the shared file naming them. Expect more of this: `go build` for iOS is the only
+   thing that finds it, and no local machine here can.
+4. **`rust_api` skips iOS.** It builds for every target Flutter builds, but `rquickjs-sys` publishes no iOS bindings.
+   The hook returns early on `OS.IOS`, which is only safe because `main.dart` keeps `RustLib.init()` behind
    `system.isDesktop`.
-4. **Handler/glue files** (`core/{config,hook,dns,limit}_ios.go`, `config_default.go`, `core/tun/options_{ios,android}.go`,
-   `core/handle_suspend.go`) and `ios/` are fork-owned — a merge never conflicts on them, only on the upstream files
-   they hook into. Keep it that way: when an upstream `core/` file needs an iOS branch, add the branch to the fork-owned
-   side of a tag pair and leave a one-line call behind. `core/common.go` and `core/tun/tun.go` are the two that already
-   are; both used to carry ~20 lines of inline `runtime.GOOS == "ios"` and now carry one call each.
+5. **Handler/glue files** (`core/{config,dns,limit}_ios.go`, `config_default.go`, `core/platform/limit_ios.go`,
+   `core/handle_suspend.go`, `core/mobile/mobile_ios.go`) and `ios/` are fork-owned — a merge never conflicts on them,
+   only on the upstream files they hook into. Keep it that way: when an upstream `core/` file needs an iOS branch, add
+   the branch to the fork-owned side of a tag pair and leave a one-line call behind. `core/config.go`, `core/lifecycle.go`
+   and `core/tun/tun.go` are the three that already are.
 
-   The iOS side of a pair is compiled by nothing before a release tag (CI vets only host and Android), so the
-   invariants test asserts both sides still define every hook.
+   The iOS side of a pair is compiled by nothing before a release tag (CI vets host and Android only), so the
+   invariants test asserts both sides still define every hook — and locally, `GOOS=darwin GOARCH=arm64 CGO_ENABLED=0
+   go build -tags "ios <build_config tags>" ./...` type-checks the same file set `GOOS=ios` would, which real
+   `GOOS=ios` cannot because it forces cgo.
 
 Background: the fork's original iOS pipeline (`build-ios-fastlane.yaml`) pinned **Flutter 3.44.4**, before
 `package:hooks` existed. iOS never ran a build hook there, so the whole class of problems only appeared once the fork
@@ -162,7 +170,9 @@ choice is the product), and prefer referencing a constant over the literal so th
 | `test/state_run_globals_test.dart` | UA contains `'FlClash/v…'` | `'$appName/v…'` |
 | `test/providers/backup_action_test.dart`, `test/views/resources_view_test.dart` | homeDir is the support dir | `<supportDir>/<appName>` (commit `838f15a`) |
 | `test/common/tray_menu_test.dart` | `isTemplate: true` on macOS | `false` — the tray art is a full-colour app icon |
-| `test/lint/*` | `p.relative()` compared against `'/'` paths | normalize with `p.posix.joinAll(p.split(...))`; otherwise they vacuously pass on Windows |
+| `test/lint/*` | `p.relative()` compared against `'/'` paths | normalize with `p.posix.joinAll(p.split(...))`; otherwise they vacuously pass on Windows (and their `_allowed` allowlists silently stop matching, so they *fail* on files they mean to skip) |
+| `test/lint/length_unit_test.dart` | nothing may contain `Npx` | allowlist `lib/xboard/features/shared/styles/html_styles.dart` — it builds CSS declarations for the HTML renderer, where `px` is the unit |
+| `test/lint/{reorder_proxy_decorator,sheet_scroll_controller,scaffold_bottom_inset}_test.dart` | *(new in v0.9.0)* | the path fix above; `commission_history_dialog.dart` also had to move to `sheetScrollController(context)` |
 
 Not a value conflict, just a Windows-only failure — leave it, CI's `go test` is ubuntu-only:
 `core/hub_test.go`'s `TestHandleValidateProxiesLeavesARunningProxysResolverInPlace` asserts the resolved path contains

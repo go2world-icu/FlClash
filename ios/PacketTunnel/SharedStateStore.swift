@@ -12,10 +12,25 @@ struct VpnOptions: Decodable {
     var bypassDomain: [String] = []
     var stack: String = "system"
     var routeAddress: [String] = []
+    var mtu: Int = 9000
+    var congestionController: String?
+
+    /// The Core's TUN options, spelled the way `core/tun` unmarshals them; the
+    /// Core rejects a descriptor whose options it cannot read. Mirrors
+    /// `VpnOptions.tunOptions` on Android, clamping included.
+    var tunOptions: String {
+        var options: [String: Any] = [
+            "mtu": mtu > 0 ? min(max(mtu, 1280), 65535) : 9000
+        ]
+        options["congestion-controller"] = congestionController ?? ""
+        let data =
+            (try? JSONSerialization.data(withJSONObject: options)) ?? Data()
+        return String(data: data, encoding: .utf8) ?? "{}"
+    }
 
     enum CodingKeys: String, CodingKey {
         case enable, port, ipv6, dnsHijacking, allowBypass, systemProxy,
-             bypassDomain, stack, routeAddress
+             bypassDomain, stack, routeAddress, mtu, congestionController
     }
 
     init() {}
@@ -36,6 +51,9 @@ struct VpnOptions: Decodable {
         stack = try c.decodeIfPresent(String.self, forKey: .stack) ?? "system"
         routeAddress =
             try c.decodeIfPresent([String].self, forKey: .routeAddress) ?? []
+        mtu = try c.decodeIfPresent(Int.self, forKey: .mtu) ?? 9000
+        congestionController = try c.decodeIfPresent(
+            String.self, forKey: .congestionController)
     }
 }
 

@@ -1,6 +1,6 @@
-//go:build !(ios && cgo)
+//go:build !ios
 
-package main
+package core
 
 import (
 	"github.com/metacubex/mihomo/config"

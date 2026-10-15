@@ -1,127 +1,63 @@
 import Foundation
 
-/// Box carried through the Go core as the opaque `void *callback` pointer.
+/// Swift facade over the Core, which `gomobile bind` turns into the
+/// `Mobile.xcframework` both targets link.
 ///
-/// Memory contract (mirrors the Android JNI global-ref lifecycle):
-/// - `invokeAction`: Go invokes `result_func` once, then `release_object_func`
-///   for every method except `message` → box is retained at the call site and
-///   released by `release_object_func`.
-/// - `quickSetup`: Go invokes `invokeResult` directly and never releases →
-///   `selfReleasing` boxes release themselves after the first completion.
-/// - event listener: retained until Go replaces/clears it via
-///   `release_object_func`.
-final class GoCallback {
-    let selfReleasing: Bool
-    let completion: (String) -> Void
-
-    init(selfReleasing: Bool = false, completion: @escaping (String) -> Void) {
-        self.selfReleasing = selfReleasing
-        self.completion = completion
-    }
-}
-
-/// Swift facade over the libclash.a c-archive exports (see libclash.h) and
-/// the bride.h host callback function pointers.
+/// It used to call a hand-built c-archive through C function pointers set at
+/// startup; gomobile replaces those with the `MobileResultHandler` protocol and
+/// a generated function per export, so there is no initialize step any more.
 enum ClashCore {
-    private static var initialized = false
+    /// One handler per outstanding call. gomobile hands the Core's `[]byte`
+    /// over as `Data`; throwing is how a handler reports a failure back into Go.
+    final class ResultHandler: NSObject, MobileResultHandler {
+        private let completion: (String) -> Void
 
-    /// Assign the bride.h function pointers. Must run before any other call.
-    /// `protect_func` / `resolve_process_func` stay NULL on iOS — the hooks
-    /// that would invoke them are compiled out (core/hook_ios.go).
-    static func initialize() {
-        guard !initialized else { return }
-        initialized = true
+        init(_ completion: @escaping (String) -> Void) {
+            self.completion = completion
+        }
 
-        result_func = { iface, cstr in
-            guard let iface, let cstr else { return }
-            let data = String(cString: cstr)
-            let box = Unmanaged<GoCallback>.fromOpaque(iface)
-            let callback = box.takeUnretainedValue()
-            callback.completion(data)
-            if callback.selfReleasing {
-                box.release()
-            }
-        }
-        release_object_func = { obj in
-            guard let obj else { return }
-            Unmanaged<GoCallback>.fromOpaque(obj).release()
-        }
-        free_string_func = { ptr in
-            free(ptr)
+        func onResult(_ data: Data?) throws {
+            completion(data.flatMap { String(data: $0, encoding: .utf8) } ?? "")
         }
     }
 
-    /// Strings handed to Go are freed by Go through `free_string_func`,
-    /// so they must be malloc-allocated.
-    private static func goOwned(_ value: String) -> UnsafeMutablePointer<CChar> {
-        strdup(value)
+    static func invoke(action json: String, completion: @escaping (String) -> Void) {
+        MobileInvokeMethod(json, ResultHandler(completion))
     }
 
-    static func invoke(
-        action json: String, completion: @escaping (String) -> Void
-    ) {
-        initialize()
-        let box = Unmanaged.passRetained(GoCallback(completion: completion))
-        invokeMethod(box.toOpaque(), goOwned(json))
-    }
-
-    static func quickSetup(
-        initParams: String, setupParams: String
-    ) async -> String {
-        initialize()
-        return await withCheckedContinuation { continuation in
-            let box = Unmanaged.passRetained(
-                GoCallback(selfReleasing: true) { message in
-                    continuation.resume(returning: message)
-                })
-            libclash.quickSetup(
-                box.toOpaque(), goOwned(initParams), goOwned(setupParams))
+    static func quickSetup(initParams: String, setupParams: String) async -> String {
+        await withCheckedContinuation { continuation in
+            MobileQuickSetup(
+                initParams, setupParams,
+                ResultHandler { continuation.resume(returning: $0) })
         }
     }
 
     static func setEventListener(_ sink: ((String) -> Void)?) {
-        initialize()
-        if let sink {
-            let box = Unmanaged.passRetained(GoCallback(completion: sink))
-            libclash.setEventListener(box.toOpaque())
-        } else {
-            libclash.setEventListener(nil)
-        }
+        MobileSetEventListener(sink.map { ResultHandler($0) })
     }
 
+    /// `options` carries the Core's TUN settings (`mtu`,
+    /// `congestion-controller`); the Core rejects a descriptor it cannot
+    /// unmarshal.
     @discardableResult
     static func startTun(
-        fd: Int32, stack: String, address: String, dns: String
+        fd: Int32, stack: String, address: String, dns: String, options: String
     ) -> Bool {
-        initialize()
-        // The TUN callback is only used by protect/resolve hooks (android);
-        // pass a retained no-op box so the shared clear() path can release it.
-        let box = Unmanaged.passRetained(GoCallback { _ in })
-        return libclash.startTUN(
-            box.toOpaque(), fd, goOwned(stack), goOwned(address), goOwned(dns)
-        ) != 0
+        // No protect/resolve handler: the packet tunnel provider owns the
+        // routes, and iOS attributes no per-app traffic to hand back.
+        MobileStartTun(fd, nil, stack, address, dns, options)
     }
 
     static func stopTun() {
-        libclash.stopTun()
+        MobileStopTun()
     }
 
     static func suspend(_ suspended: Bool) {
-        libclash.suspend(suspended ? 1 : 0)
+        MobileSuspend(suspended)
     }
 
     static func forceGC() {
-        libclash.forceGC()
+        MobileForceGC()
     }
-}
-
-/// Namespaced aliases for the raw C exports so wrapper methods with the same
-/// name can call through without infinite recursion.
-private enum libclash {
-    static let quickSetup = PacketTunnel.quickSetup
-    static let setEventListener = PacketTunnel.setEventListener
-    static let startTUN = PacketTunnel.startTUN
-    static let stopTun = PacketTunnel.stopTun
-    static let suspend = PacketTunnel.suspend
-    static let forceGC = PacketTunnel.forceGC
 }

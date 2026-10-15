@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:setup_hooks/setup_hooks.dart';
 
 /// Builds every iOS Core slice and bundles them into
-/// `libclash/ios/Libclash.xcframework`.
+/// `libclash/ios/Mobile.xcframework`.
 ///
 /// The Flutter code-asset hook cannot stand in for this on iOS: `Runner` links
 /// the xcframework, so it has to exist before `flutter build ios` reaches
@@ -38,6 +38,6 @@ Future<void> main(List<String> args) async {
   }
 
   stdout.writeln(
-    'Built ${p.join(repoRoot, 'libclash', 'ios', 'Libclash.xcframework')}',
+    'Built ${p.join(repoRoot, 'libclash', 'ios', 'Mobile.xcframework')}',
   );
 }

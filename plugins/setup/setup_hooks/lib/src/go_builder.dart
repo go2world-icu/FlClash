@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 
-import 'build.dart';
 import 'build_cache.dart';
 import 'error.dart';
 import 'fingerprint.dart';
@@ -17,14 +16,9 @@ final _log = Logger('go_builder');
 /// The oldest iOS the Core targets; matches the app's deployment target.
 const _kIosMinVersion = '15.0';
 
-/// Asks Xcode's toolchain where a tool lives (iOS Clang is not on PATH).
-Future<String> _xcrun(List<String> args) async {
-  final result = await Process.run('xcrun', args);
-  if (result.exitCode != 0) {
-    throw BuildException('xcrun ${args.join(' ')} failed: ${result.stderr}');
-  }
-  return (result.stdout as String).trim();
-}
+/// gomobile names the framework after the bound package and has no option to
+/// change it — the Xcode project links this name.
+const _kIosFrameworkName = 'Mobile';
 
 class GoBuilder {
   GoBuilder({
@@ -33,7 +27,6 @@ class GoBuilder {
     required this.cache,
     required this.notice,
     this.harnessInputs = const [],
-    this.androidToolchain,
   });
 
   final String rootDir;
@@ -41,60 +34,33 @@ class GoBuilder {
   final BuildCache cache;
   final BuildNotice notice;
   final List<String> harnessInputs;
-  final AndroidToolchain? androidToolchain;
+
+  static const _mainPackage = './cmd/core';
+
+  /// iOS binds this package with gomobile; its Android half ships as the AAR
+  /// gradle builds, which does not go through this class.
+  static const _iosPackage = './mobile';
 
   String get _corePath => p.join(rootDir, config.coreDir);
   String get _outputPath => p.join(rootDir, config.outputDir);
 
-  String _resolveCc(Target target) {
-    final toolchain = androidToolchain;
-    if (toolchain == null) {
-      throw BuildException('Android target $target needs an NDK toolchain');
-    }
-    final cc = toolchain.clangFor(target);
-    if (!File(cc).existsSync()) {
-      throw BuildException(
-        'NDK compiler not found: $cc (API ${toolchain.apiLevel} from the '
-        'app minSdk; the NDK Flutter selected may be too old)',
-      );
-    }
-    return cc;
-  }
-
   Future<BuildExecution> build(Target target) async {
-    // Desktop: libclash/{platform}/; Android: libclash/android/{abi}/;
-    // iOS: libclash/ios/{abi}/ (c-archive, later bundled into an xcframework).
-    final outDir = target.isLib
-        ? p.join(_outputPath, target.platformDir, target.abi!)
-        : p.join(_outputPath, target.platformDir);
+    if (target.isFramework) return _buildFramework(target);
+
+    final outDir = p.join(_outputPath, target.platformDir);
     ensureDir(outDir);
 
-    final fileName = target.isStaticLib
-        ? '${config.libName}${target.staticLibExtension}'
-        : target.isLib
-        ? '${config.libName}.so'
-        : '${config.coreName}${target.executableExtension}';
+    final fileName = '${config.coreName}${target.executableExtension}';
     final outFile = p.join(outDir, fileName);
 
     return cache.run(
-      // Both iOS slices share GOARCH arm64, so the SDK disambiguates the cache
-      // entry (the artifact directory already differs via `abi`).
-      key: target.sdk == null
-          ? '${target.platformDir}-${target.goarch}-core'
-          : '${target.platformDir}-${target.sdk}-${target.goarch}-core',
+      key: '${target.platformDir}-${target.goarch}-core',
       fingerprint: () => _calculateFingerprint(target),
       primaryOutput: outFile,
       notice: notice,
       build: () async {
-        final env = await _buildEnvironment(target);
-        _log.info(
-          'Building Go core: $target '
-          '${target.isStaticLib
-              ? "(CGO, c-archive)"
-              : target.isLib
-              ? "(CGO, c-shared)"
-              : "(standalone)"}',
-        );
+        final env = _buildEnvironment(target);
+        _log.info('Building Go core: $target');
 
         // A failed build must not destroy the previous artifacts.
         final stagingDir = Directory(
@@ -108,29 +74,10 @@ class GoBuilder {
             workingDirectory: _corePath,
             environment: env,
           );
-
-          final outputs = <String>[outFile];
-          if (target.goos == 'ios') {
-            replaceFile(staged, outFile);
-            outputs.addAll(
-              _installIosOutput(abiDir: outDir, stagingDir: stagingDir.path),
-            );
-          } else if (target.isLib) {
-            outputs.addAll(
-              _installAndroidOutput(
-                abi: target.abi!,
-                platformDir: p.join(_outputPath, target.platformDir),
-                stagingDir: stagingDir.path,
-                libName: fileName,
-                outFile: outFile,
-              ),
-            );
-          } else {
-            replaceFile(staged, outFile);
-          }
+          replaceFile(staged, outFile);
 
           _log.info('Built: $outFile');
-          return outputs;
+          return [outFile];
         } finally {
           if (stagingDir.existsSync()) {
             stagingDir.deleteSync(recursive: true);
@@ -140,72 +87,172 @@ class GoBuilder {
     );
   }
 
-  Future<Map<String, String>> _buildEnvironment(Target target) async {
-    final env = <String, String>{'GOOS': target.goos, 'GOARCH': target.goarch};
+  /// Builds one iOS slice and installs it under `libclash/ios/<abi>/`; the
+  /// slices are combined by [createXcframework].
+  Future<BuildExecution> _buildFramework(Target target) async {
+    final outDir = p.join(_outputPath, target.platformDir, target.abi!);
+    ensureDir(outDir);
+    final sliceDir = p.join(outDir, _kIosFrameworkName);
+    final sliceBinary = p.join(sliceDir, _kIosFrameworkName);
 
-    if (target.goos == 'ios') {
-      // iOS has no usable system network stack (no iptables, and a
-      // PacketTunnel extension cannot get those privileges), so the Core is
-      // built against gVisor's user-space stack. `-tags` carries that.
-      final sdk = target.sdk!;
-      final cc = await _xcrun(['--sdk', sdk, '--find', 'clang']);
-      final sdkPath = await _xcrun(['--sdk', sdk, '--show-sdk-path']);
-      final arch = target.goarch == 'amd64' ? 'x86_64' : 'arm64';
-      final versionFlag = sdk == 'iphonesimulator'
-          ? '-target $arch-apple-ios$_kIosMinVersion-simulator'
-          : '-miphoneos-version-min=$_kIosMinVersion';
-      final cflags = '-isysroot $sdkPath -arch arm64 $versionFlag';
-      env
-        ..['CGO_ENABLED'] = '1'
-        ..['CC'] = cc
-        ..['CGO_CFLAGS'] = cflags
-        ..['CGO_LDFLAGS'] = cflags;
-    } else if (target.isLib) {
-      env
-        ..['CGO_ENABLED'] = '1'
-        ..['CC'] = _resolveCc(target)
-        ..['CFLAGS'] = '-O3 -Werror';
-    } else {
-      env['CGO_ENABLED'] = '0';
-    }
-    return env;
+    return cache.run(
+      // Both iOS slices share GOARCH arm64, so the SDK is what tells their
+      // cache entries apart.
+      key: '${target.platformDir}-${target.sdk}-${target.goarch}-core',
+      fingerprint: () => _calculateFingerprint(target),
+      primaryOutput: sliceBinary,
+      notice: notice,
+      build: () async {
+        final gomobile = await _ensureGomobile();
+        _log.info('Binding Go core: $target (CGO, gomobile framework)');
+
+        final stagingDir = Directory(
+          p.join(outDir, '.staging-${target.sdk}-$pid'),
+        );
+        ensureDir(stagingDir.path);
+        final staged = p.join(stagingDir.path, _kIosFrameworkName);
+        try {
+          await runCommandStream(
+            gomobile,
+            _bindArguments(target, outFramework: staged),
+            workingDirectory: _corePath,
+          );
+          if (Directory(sliceDir).existsSync()) {
+            Directory(sliceDir).deleteSync(recursive: true);
+          }
+          Directory(staged).renameSync(sliceDir);
+          _log.info('Built: $sliceBinary');
+          return [sliceBinary];
+        } finally {
+          if (stagingDir.existsSync()) {
+            stagingDir.deleteSync(recursive: true);
+          }
+        }
+      },
+    );
   }
 
-  // AGP strips the copy it packages into the APK, and Crashlytics reads the
-  // unstripped one from the merged native libs, so Android keeps its symbols.
-  // iOS ships the archive itself, so it keeps the caller's -ldflags verbatim.
-  String _ldflags(Target target) => target.goos == 'android'
-      ? config.goLdflags
-            .split(' ')
-            .where((flag) => flag != '-s' && flag != '-w')
-            .join(' ')
-      : config.goLdflags;
+  List<String> _bindArguments(
+    Target target, {
+    required String outFramework,
+  }) => [
+    'bind',
+    '-target=${target.sdk == 'iphonesimulator' ? 'iossimulator' : 'ios'}/${target.goarch}',
+    '-iosversion',
+    _kIosMinVersion,
+    '-ldflags=${_ldflags()}',
+    '-tags=${config.tags}',
+    '-o',
+    outFramework,
+    _iosPackage,
+  ];
+
+  /// gomobile and gobind are built from the module's own dependency rather than
+  /// installed on PATH — the same pair the Android gradle builds.
+  Future<String> _ensureGomobile() async {
+    final toolsDir = p.join(rootDir, '.dart_tool', 'setup_hooks', 'tools');
+    final executable = p.join(
+      toolsDir,
+      'gomobile${Platform.isWindows ? '.exe' : ''}',
+    );
+    if (File(executable).existsSync()) return executable;
+    ensureDir(toolsDir);
+    _log.info('Building gomobile');
+    await runCommandStream('go', [
+      'build',
+      '-o',
+      '$toolsDir${p.separator}',
+      'golang.org/x/mobile/cmd/gomobile',
+      'golang.org/x/mobile/cmd/gobind',
+    ], workingDirectory: _corePath);
+    if (!File(executable).existsSync()) {
+      throw BuildException('gomobile did not land at $executable');
+    }
+    return executable;
+  }
+
+  /// Bundles every built iOS slice into `<output>/ios/Mobile.xcframework`,
+  /// which the Runner and PacketTunnel targets link.
+  Future<String> createXcframework() async {
+    final iosDir = p.join(_outputPath, 'ios');
+    final frameworkPath = p.join(iosDir, '$_kIosFrameworkName.xcframework');
+
+    final slices = Directory(iosDir)
+        .listSync()
+        .whereType<Directory>()
+        .where(
+          (d) => Directory(p.join(d.path, _kIosFrameworkName)).existsSync(),
+        )
+        .toList();
+    if (slices.isEmpty) {
+      throw BuildException('No iOS slices found in $iosDir');
+    }
+
+    final framework = Directory(frameworkPath);
+    if (framework.existsSync()) {
+      framework.deleteSync(recursive: true);
+    }
+
+    _log.info(
+      'Creating xcframework from '
+      '${slices.map((s) => p.basename(s.path)).join(', ')}',
+    );
+    await runCommandStream('xcodebuild', [
+      '-create-xcframework',
+      for (final slice in slices) ...[
+        '-framework',
+        p.join(slice.path, _kIosFrameworkName),
+      ],
+      '-output',
+      frameworkPath,
+    ], workingDirectory: rootDir);
+    _log.info('Built: $frameworkPath');
+    return frameworkPath;
+  }
+
+  Map<String, String> _buildEnvironment(Target target) => {
+    'GOOS': target.goos,
+    'GOARCH': target.goarch,
+    'CGO_ENABLED': '0',
+  };
+
+  // Package-level vars in mihomo copy constant.Version during init, so only the
+  // linker can set it for every reader.
+  static const _versionSymbol = 'github.com/metacubex/mihomo/constant.Version';
+
+  String _ldflags() => [
+    config.goLdflags,
+    if (config.coreVersion.isNotEmpty)
+      '-X $_versionSymbol=${config.coreVersion}',
+  ].join(' ');
 
   List<String> _buildArguments(Target target, {String? outFile}) => [
     'build',
-    '-ldflags=${_ldflags(target)}',
+    '-ldflags=${_ldflags()}',
     '-tags=${config.tags}',
-    if (target.isStaticLib)
-      '-buildmode=c-archive'
-    else if (target.isLib)
-      '-buildmode=c-shared',
     if (outFile != null) ...['-o', outFile],
+    _mainPackage,
   ];
 
   Future<Fingerprint> _calculateFingerprint(Target target) async {
-    final env = await _buildEnvironment(target);
+    final env = _buildEnvironment(target);
     final builder = FingerprintBuilder(rootDir: rootDir)
       ..addValue('cache_schema', BuildCache.schemaVersion)
       ..addValue('kind', 'go-core')
       ..addValue('target', {
         'goos': target.goos,
         'goarch': target.goarch,
-        'abi': target.abi,
-        'sdk': target.sdk,
+        if (target.abi != null) 'abi': target.abi,
+        if (target.sdk != null) 'sdk': target.sdk,
       })
       ..addValue('config', config.toFingerprintMap())
       ..addValue('environment', env)
-      ..addValue('arguments', _buildArguments(target));
+      ..addValue(
+        'arguments',
+        target.isFramework
+            ? _bindArguments(target, outFramework: '<out>')
+            : _buildArguments(target),
+      );
 
     final goEnvResult = runCommand(
       'go',
@@ -234,7 +281,7 @@ class GoBuilder {
     final goEnv = jsonDecode((goEnvResult.stdout as String).trim());
     builder.addValue('go_env', goEnv);
 
-    final inputs = _resolveGoInputs(env);
+    final inputs = _resolveGoInputs(env, target);
     final goWork = (goEnv as Map<String, dynamic>)['GOWORK'];
     if (goWork is String && goWork.isNotEmpty && goWork != 'off') {
       inputs.add(goWork);
@@ -243,27 +290,23 @@ class GoBuilder {
     }
     inputs.addAll(harnessInputs);
 
-    // The Android compiler version comes from the NDK. iOS compiles with
-    // Xcode's clang, whose version is already captured in `environment`.
-    if (target.isLib && target.goos != 'ios') {
-      final compilerVersion = runCommand(env['CC']!, ['--version']);
-      builder.addValue(
-        'android_compiler',
-        '${(compilerVersion.stdout as String).trim()}\n'
-            '${(compilerVersion.stderr as String).trim()}',
-      );
-    }
-
     builder.addFiles(inputs);
     return builder.finishWithInputs();
   }
 
-  Set<String> _resolveGoInputs(Map<String, String> environment) {
+  Set<String> _resolveGoInputs(Map<String, String> environment, Target target) {
     const template =
         r'''{{range .GoFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .CgoFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .CFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .CXXFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .MFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .HFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .FFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .SFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .SwigFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .SwigCXXFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .SysoFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{range .EmbedFiles}}{{$.Dir}}/{{.}}{{"\n"}}{{end}}{{with .Module}}{{if .GoMod}}{{.GoMod}}{{"\n"}}{{end}}{{end}}''';
     final result = runCommand(
       'go',
-      ['list', '-deps', '-tags=${config.tags}', '-f', template, '.'],
+      [
+        'list',
+        '-deps',
+        '-tags=${config.tags}',
+        '-f',
+        template,
+        target.isFramework ? _iosPackage : _mainPackage,
+      ],
       workingDirectory: _corePath,
       environment: environment,
     );
@@ -291,130 +334,5 @@ class GoBuilder {
       if (File(filePath).existsSync()) inputs.add(filePath);
     }
     return inputs;
-  }
-
-  /// Moves the c-archive header (`libclash.h`) plus `bride.h` into
-  /// `<abi>/include/`, the layout `xcodebuild -create-xcframework` and the
-  /// Swift bridging header expect.
-  List<String> _installIosOutput({
-    required String abiDir,
-    required String stagingDir,
-  }) {
-    final includeDir = p.join(abiDir, 'include');
-    ensureDir(includeDir);
-    _clearDirectory(includeDir);
-
-    final outputs = <String>[];
-    final generatedHeader = File(p.join(stagingDir, '${config.libName}.h'));
-    if (generatedHeader.existsSync()) {
-      final includePath = p.join(includeDir, '${config.libName}.h');
-      copyFile(generatedHeader.path, includePath);
-      outputs.add(includePath);
-    }
-    final brideHeader = File(p.join(_corePath, 'bride.h'));
-    if (brideHeader.existsSync()) {
-      final includePath = p.join(includeDir, 'bride.h');
-      copyFile(brideHeader.path, includePath);
-      outputs.add(includePath);
-    }
-    return outputs;
-  }
-
-  /// Bundles every built iOS slice into `<output>/ios/Libclash.xcframework`,
-  /// which the Runner and PacketTunnel targets link.
-  Future<String> createXcframework() async {
-    final iosDir = p.join(_outputPath, 'ios');
-    final frameworkPath = p.join(iosDir, 'Libclash.xcframework');
-
-    final slices = Directory(iosDir)
-        .listSync()
-        .whereType<Directory>()
-        .where((d) => File(p.join(d.path, '${config.libName}.a')).existsSync())
-        .toList();
-    if (slices.isEmpty) {
-      throw BuildException('No iOS slices found in $iosDir');
-    }
-
-    final framework = Directory(frameworkPath);
-    if (framework.existsSync()) {
-      framework.deleteSync(recursive: true);
-    }
-
-    final args = [
-      '-create-xcframework',
-      for (final slice in slices) ...[
-        '-library',
-        p.join(slice.path, '${config.libName}.a'),
-        '-headers',
-        p.join(slice.path, 'include'),
-      ],
-      '-output',
-      frameworkPath,
-    ];
-
-    _log.info(
-      'Creating xcframework from '
-      '${slices.map((s) => p.basename(s.path)).join(', ')}',
-    );
-    await runCommandStream('xcodebuild', args, workingDirectory: rootDir);
-    _log.info('Built: $frameworkPath');
-    return frameworkPath;
-  }
-
-  List<String> _installAndroidOutput({
-    required String abi,
-    required String platformDir,
-    required String stagingDir,
-    required String libName,
-    required String outFile,
-  }) {
-    final includesPath = p.join(platformDir, 'includes', abi);
-    final androidCoreMainPath = p.join(
-      rootDir,
-      'android',
-      'core',
-      'src',
-      'main',
-    );
-    final jniLibsPath = p.join(androidCoreMainPath, 'jniLibs', abi);
-    final cppIncludesPath = p.join(androidCoreMainPath, 'cpp', 'includes', abi);
-    final outputs = <String>[];
-
-    ensureDir(includesPath);
-    _clearDirectory(includesPath);
-    ensureDir(cppIncludesPath);
-    _clearDirectory(cppIncludesPath);
-
-    replaceFile(p.join(stagingDir, libName), outFile);
-    copyFile(outFile, p.join(jniLibsPath, libName));
-    outputs.add(p.join(jniLibsPath, libName));
-
-    final generatedHeaders = Directory(stagingDir).listSync();
-    final staticHeaders = Directory(_corePath).listSync();
-    for (final file in [...generatedHeaders, ...staticHeaders]) {
-      if (!file.path.endsWith('.h')) continue;
-      final headerName = p.basename(file.path);
-      final includePath = p.join(includesPath, headerName);
-      final cppIncludePath = p.join(cppIncludesPath, headerName);
-      copyFile(file.path, includePath);
-      copyFile(file.path, cppIncludePath);
-      outputs
-        ..add(includePath)
-        ..add(cppIncludePath);
-    }
-    return outputs;
-  }
-
-  void _clearDirectory(String dirPath) {
-    final dir = Directory(dirPath);
-    if (!dir.existsSync()) return;
-
-    for (final entity in dir.listSync()) {
-      if (entity is File || entity is Link) {
-        entity.deleteSync();
-      } else if (entity is Directory) {
-        entity.deleteSync(recursive: true);
-      }
-    }
   }
 }

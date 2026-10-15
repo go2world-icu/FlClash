@@ -6,8 +6,8 @@ void main() {
   group('resolve', () {
     test('finds the target for a platform and GOARCH', () {
       expect(
-        Target.resolve(platform: 'android', goarch: 'arm'),
-        Target.androidArm,
+        Target.resolve(platform: 'linux', goarch: 'arm64'),
+        Target.linuxArm64,
       );
       expect(
         Target.resolve(platform: 'macos', goarch: 'arm64'),
@@ -31,7 +31,6 @@ void main() {
     });
 
     test('finds an iOS slice by SDK, which GOARCH alone cannot', () {
-      expect(Target.resolve(platform: 'ios', goarch: 'arm64'), Target.iosArm64);
       expect(
         Target.resolveIos(sdk: 'iphoneos', goarch: 'arm64'),
         Target.iosArm64,
@@ -47,18 +46,11 @@ void main() {
     });
   });
 
-  test('iOS ships a static archive and needs a macOS host', () {
-    expect(Target.iosArm64.isStaticLib, isTrue);
-    expect(Target.iosArm64.staticLibExtension, '.a');
-    expect(Target.androidArm64.isStaticLib, isFalse);
-  });
-
-  test('Android ABIs match the :core Gradle module', () {
-    expect(Target.forPlatform('android').map((target) => target.abi), [
-      'armeabi-v7a',
-      'arm64-v8a',
-      'x86_64',
-    ]);
+  test('iOS is bound with gomobile and needs a macOS host', () {
+    expect(Target.iosArm64.isFramework, isTrue);
+    expect(Target.iosArm64.sdk, 'iphoneos');
+    expect(Target.iosSimArm64.sdk, 'iphonesimulator');
+    expect(Target.macosArm64.isFramework, isFalse);
   });
 
   test('only Linux and Windows ship the Helper', () {
@@ -68,13 +60,6 @@ void main() {
       Target.windowsAmd64,
       Target.windowsArm64,
     ]);
-  });
-
-  test('names the NDK clang wrapper per ABI', () {
-    expect(Target.androidArm.ndkTriple, 'armv7a-linux-androideabi');
-    expect(Target.androidArm64.ndkTriple, 'aarch64-linux-android');
-    expect(Target.androidAmd64.ndkTriple, 'x86_64-linux-android');
-    expect(() => Target.macosArm64.ndkTriple, throwsA(isA<BuildException>()));
   });
 
   test('names the Rust target triple for Helper platforms', () {

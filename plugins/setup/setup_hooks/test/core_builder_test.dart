@@ -35,8 +35,8 @@ void main() {
     required Architecture architecture,
     bool codeAssets = true,
     Uri? compiler,
-    int ndkApi = 23,
     Directory? package,
+    IOSSdk iosSdk = IOSSdk.iPhoneOS,
     Map<String, Object?> userDefines = const {},
   }) {
     final builder = BuildInputBuilder()
@@ -66,11 +66,9 @@ void main() {
                 archiver: compiler.resolve('llvm-ar'),
                 linker: compiler.resolve('ld.lld'),
               ),
-        android: os == OS.android
-            ? AndroidCodeConfig(targetNdkApi: ndkApi)
-            : null,
+        android: os == OS.android ? AndroidCodeConfig(targetNdkApi: 23) : null,
         iOS: os == OS.iOS
-            ? IOSCodeConfig(targetSdk: IOSSdk.iPhoneOS, targetVersion: 15)
+            ? IOSCodeConfig(targetSdk: iosSdk, targetVersion: 15)
             : null,
       ).setupBuildInput(builder);
     }
@@ -79,8 +77,10 @@ void main() {
 
   group('requestFor', () {
     test('has nothing to build without code assets', () {
+      const builder = CoreBuilder();
+
       expect(
-        const CoreBuilder().requestFor(
+        builder.requestFor(
           buildInput(
             os: OS.linux,
             architecture: Architecture.x64,
@@ -91,14 +91,12 @@ void main() {
       );
     });
 
-    test('resolves the iOS device slice from the Xcode SDK', () {
+    test('resolves the iOS slice the SDK names, not just the architecture', () {
       final request = const CoreBuilder().requestFor(
         buildInput(os: OS.iOS, architecture: Architecture.arm64),
       )!;
 
       expect(request.target, Target.iosArm64);
-      expect(request.target.sdk, 'iphoneos');
-      expect(request.androidToolchain, isNull);
     });
 
     test('resolves the repository and target from the hook input', () {
@@ -109,7 +107,6 @@ void main() {
       expect(request.rootDir, repository.path);
       expect(request.harnessDir, p.join(packageRoot.path, 'setup_hooks'));
       expect(request.target, Target.linuxAmd64);
-      expect(request.androidToolchain, isNull);
     });
 
     test('skips the macOS slice the host does not run', () {
@@ -131,30 +128,18 @@ void main() {
       );
     });
 
-    test('derives the Android compiler from the NDK clang Flutter passes', () {
+    test('leaves Android to the :core Gradle module', () {
       final bin = p.join(repository.path, 'ndk', 'prebuilt', 'host', 'bin');
-      final request = const CoreBuilder().requestFor(
-        buildInput(
-          os: OS.android,
-          architecture: Architecture.arm64,
-          compiler: Uri.file(p.join(bin, 'clang')),
-          ndkApi: 23,
-        ),
-      )!;
 
-      expect(request.target, Target.androidArm64);
       expect(
-        request.androidToolchain!.clangFor(Target.androidArm64),
-        p.join(bin, 'aarch64-linux-android23-clang'),
-      );
-    });
-
-    test('fails when Flutter passes no Android compiler', () {
-      expect(
-        () => const CoreBuilder().requestFor(
-          buildInput(os: OS.android, architecture: Architecture.arm64),
+        const CoreBuilder().requestFor(
+          buildInput(
+            os: OS.android,
+            architecture: Architecture.arm64,
+            compiler: Uri.file(p.join(bin, 'clang')),
+          ),
         ),
-        throwsA(isA<InfraError>()),
+        isNull,
       );
     });
 
@@ -222,11 +207,7 @@ void main() {
 
     test('declares no dependencies when nothing is built', () async {
       var built = false;
-      // A macOS slice for an architecture the host is not: requestFor skips it,
-      // so nothing is built. (iOS used to be the skip case upstream, but the
-      // fork builds iOS slices, so it now resolves a target.)
       final builder = CoreBuilder(
-        hostArchitecture: Architecture.arm64,
         build: (_) async {
           built = true;
           throw StateError('unreachable');
@@ -234,8 +215,9 @@ void main() {
       );
       final output = BuildOutputBuilder();
 
+      // Android's Core is the gomobile AAR the :core Gradle module builds.
       await builder.run(
-        input: buildInput(os: OS.macOS, architecture: Architecture.x64),
+        input: buildInput(os: OS.android, architecture: Architecture.arm64),
         output: output,
       );
 

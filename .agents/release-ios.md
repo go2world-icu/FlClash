@@ -14,7 +14,7 @@ dart setup.dart ios --env stable \
 
 `setup.dart` 的 iOS 分支做两件事：
 
-1. `make core-ios` —— 编 Go core（产出 `libclash/ios/Libclash.xcframework`，Xcode 嵌入用）。
+1. `make core-ios` —— 编 Go core（产出 `libclash/ios/Mobile.xcframework`，Xcode 嵌入用）。
 2. `flutter build ipa --release --dart-define-from-file=env.json [--build-number N] [--export-options-plist <path>]`。
    - `--build-number` 直接覆盖 `CFBundleVersion`（Info.plist 引用 `$(FLUTTER_BUILD_NUMBER)`，flutter 的 flag 正确处理）。
    - TestFlight 构建号必须**严格递增**，否则上传被拒。

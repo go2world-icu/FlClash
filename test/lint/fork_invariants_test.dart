@@ -75,46 +75,67 @@ void main() {
 
   group('iOS: the Core build tags', () {
     // Built for both mobile targets; upstream tags these android-only.
-    const mobile = [
-      'core/bride.go',
-      'core/bride.c',
-      'core/lib.go',
-      'core/main_cgo.go',
-      'core/tun/tun.go',
-    ];
+    const mobile = ['core/lib.go', 'core/tun/tun.go'];
 
     // Excluded on iOS; upstream excludes only Android.
-    const desktop = ['core/main.go', 'core/server.go', 'core/exit.go'];
+    const desktop = ['core/cmd/core/main.go', 'core/server.go', 'core/exit.go'];
 
     for (final path in mobile) {
       test('$path is built for iOS too', () {
-        expect(_goBuildTag(path), '(android || ios) && cgo');
+        expect(_goBuildTag(path), 'android || ios');
       });
     }
 
     for (final path in desktop) {
       test('$path is excluded on iOS', () {
-        expect(_goBuildTag(path), '!((android || ios) && cgo)');
+        expect(_goBuildTag(path), '!android && !ios');
       });
     }
 
     test('core/dial_socket.go is excluded on iOS', () {
       expect(
         _goBuildTag('core/dial_socket.go'),
-        '!((android || ios) && cgo) && !windows',
+        '!android && !ios && !windows',
+      );
+    });
+  });
+
+  group('iOS: the Core is bound with gomobile', () {
+    test('the binding package has an iOS half', () {
+      expect(_read('core/mobile/mobile_ios.go'), contains('package mobile'));
+      expect(
+        _read('core/mobile/mobile_ios.go'),
+        contains('func Suspend('),
+        reason:
+            'the packet tunnel provider parks the tunnel from sleep()/wake()',
+      );
+    });
+
+    test('the bound package is what the iOS slices build', () {
+      expect(
+        _read('plugins/setup/setup_hooks/lib/src/go_builder.dart'),
+        contains("'./mobile'"),
+        reason:
+            'the iOS slices come from `gomobile bind ./mobile`; the '
+            '`./cmd/core` binary is desktop-only',
       );
     });
   });
 
   group('platform differences live behind a build-tag pair', () {
     // CI compiles the Android side; nothing compiles the iOS side before a
-    // release tag, so these two files are otherwise unguarded.
+    // release tag, so these are otherwise unguarded.
     const hooks = {
       'loadConfigForPlatform': ('core/config_ios.go', 'core/config_default.go'),
       'recreateTunOnReload': ('core/config_ios.go', 'core/config_default.go'),
+      'handleUpdateDns': ('core/dns_ios.go', 'core/dns_android.go'),
       'applyPlatformTunOptions': (
         'core/tun/options_ios.go',
         'core/tun/options_android.go',
+      ),
+      'ShouldBlockConnection': (
+        'core/platform/limit_ios.go',
+        'core/platform/limit.go',
       ),
     };
 
@@ -125,17 +146,16 @@ void main() {
       });
     }
 
-    test('common.go names the hooks instead of branching on GOOS', () {
-      final source = _read('core/common.go');
+    test('config.go names the hook instead of branching on GOOS', () {
+      final source = _read('core/config.go');
       expect(source, contains('loadConfigForPlatform('));
+      expect(source, isNot(contains('runtime.GOOS == "ios"')));
+    });
+
+    test('lifecycle.go names the hook too', () {
+      final source = _read('core/lifecycle.go');
       expect(source, contains('recreateTunOnReload'));
-      expect(
-        source,
-        isNot(contains('runtime.GOOS == "ios"')),
-        reason:
-            'keeping the iOS branches inline put 19 lines of fork diff in an '
-            'upstream file; behind the tag pair it is two one-line calls',
-      );
+      expect(source, isNot(contains('features.Android')));
     });
 
     test('tun.go leaves the fd options to the hook', () {
@@ -146,13 +166,19 @@ void main() {
   });
 
   group('upstream files the fork keeps clean', () {
-    test('core/hub.go carries no fork-specific code', () {
+    test('the tunnel park lives in its own file', () {
       expect(
-        _read('core/hub.go'),
-        isNot(contains('handleSuspend')),
+        _read('core/handle_suspend.go'),
+        contains('func Suspend('),
         reason:
-            'it moved to handle_suspend.go precisely so that hub.go has no '
-            'fork diff to resolve on every merge',
+            'iOS parks the tunnel from the packet tunnel provider\'s '
+            'sleep()/wake(); keeping it out of any upstream file is what stops '
+            'a merge from dropping it',
+      );
+      expect(
+        _read('core/mobile/mobile_ios.go'),
+        contains('core.Suspend('),
+        reason: 'the packet tunnel reaches it through the gomobile binding',
       );
     });
 

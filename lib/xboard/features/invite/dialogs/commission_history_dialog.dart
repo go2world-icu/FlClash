@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/widgets/widgets.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class CommissionHistoryDialog extends ConsumerStatefulWidget {
@@ -16,11 +17,14 @@ class CommissionHistoryDialog extends ConsumerStatefulWidget {
 
 class _CommissionHistoryDialogState
     extends ConsumerState<CommissionHistoryDialog> {
-  final ScrollController _scrollController = ScrollController();
+  // The dialog is a stacked bottom sheet, so the controller has to hand an
+  // unconsumed drag back to it.
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
+    _scrollController = sheetScrollController(context);
     _scrollController.addListener(_onScroll);
   }
 

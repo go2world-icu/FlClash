@@ -4,15 +4,19 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/views/about.dart';
 import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/general.dart';
+import 'package:fl_clash/views/hotkey.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'config/advanced.dart';
+import 'config/custom_resources.dart';
 import 'developer.dart';
+import 'disclaimer.dart';
 import 'theme.dart';
 
 class ToolsView extends ConsumerStatefulWidget {
@@ -32,26 +36,13 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     );
   }
 
-  Widget _buildNavigationMenu(List<NavigationItem> navigationItems) {
-    return Column(
-      children: [
-        for (final navigationItem in navigationItems) ...[
-          _buildNavigationMenuItem(navigationItem),
-          navigationItems.last != navigationItem
-              ? const Divider(height: 0)
-              : Container(),
-        ],
-      ],
-    );
-  }
-
   List<Widget> _getOtherList(bool enableDeveloperMode) {
     return generateSection(
       title: context.appLocalizations.other,
       items: [
-        // const _DisclaimerItem(),
+        const _DisclaimerItem(),
         if (enableDeveloperMode) const _DeveloperItem(),
-        // const _InfoItem(),
+        const _InfoItem(),
       ],
     );
   }
@@ -63,9 +54,10 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         const _LocaleItem(),
         const _ThemeItem(),
         const _BackupItem(),
-        // if (system.isDesktop) const _HotkeyItem(),
+        if (system.isDesktop) const _HotkeyItem(),
         if (system.isAndroid) const _AccessItem(),
         const _AdvancedConfigItem(),
+        const _CustomResourcesItem(),
         const _GeneralItem(),
       ],
     );
@@ -86,10 +78,10 @@ class _ToolViewState extends ConsumerState<ToolsView> {
             return Container();
           }
           return Column(
-            children: [
-              ListHeader(title: context.appLocalizations.more),
-              _buildNavigationMenu(state.navigationItems),
-            ],
+            children: generateSection(
+              title: context.appLocalizations.more,
+              items: state.navigationItems.map(_buildNavigationMenuItem),
+            ),
           );
         },
       ),
@@ -98,13 +90,15 @@ class _ToolViewState extends ConsumerState<ToolsView> {
     ];
     return CommonScaffold(
       title: context.appLocalizations.tools,
-      body: ListView.builder(
-        key: toolsStoreKey,
-        itemCount: items.length,
-        itemBuilder: (_, index) => items[index],
-        padding: EdgeInsets.only(
-          top: context.appBarInset,
-          bottom: 20 + BottomInsetScope.of(context),
+      body: Builder(
+        builder: (context) => ListView.builder(
+          key: toolsStoreKey,
+          itemCount: items.length,
+          itemBuilder: (_, index) => items[index],
+          padding: EdgeInsets.only(
+            top: context.appBarInset,
+            bottom: 20 + BottomInsetScope.of(context),
+          ),
         ),
       ),
     );
@@ -170,6 +164,19 @@ class _BackupItem extends StatelessWidget {
   }
 }
 
+class _HotkeyItem extends StatelessWidget {
+  const _HotkeyItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.keyboard),
+      title: Text(context.appLocalizations.hotkeyManagement),
+      widget: const HotKeyView(),
+    );
+  }
+}
+
 class _AccessItem extends StatelessWidget {
   const _AccessItem();
 
@@ -207,6 +214,46 @@ class _AdvancedConfigItem extends StatelessWidget {
       title: Text(context.appLocalizations.advancedConfig),
       subtitle: Text(context.appLocalizations.advancedConfigDesc),
       widget: const AdvancedConfigView(),
+    );
+  }
+}
+
+class _CustomResourcesItem extends StatelessWidget {
+  const _CustomResourcesItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.customize),
+      title: Text(context.appLocalizations.customProfileResources),
+      subtitle: Text(context.appLocalizations.customProfileResourcesDesc),
+      widget: const CustomResourcesView(),
+    );
+  }
+}
+
+class _DisclaimerItem extends StatelessWidget {
+  const _DisclaimerItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.gavel),
+      title: Text(context.appLocalizations.disclaimer),
+      widget: const DisclaimerView(),
+    );
+  }
+}
+
+class _InfoItem extends StatelessWidget {
+  const _InfoItem();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem.open(
+      leading: const GlyphIcon(AppGlyphs.info),
+      title: Text(context.appLocalizations.about),
+      widget: const AboutView(),
     );
   }
 }

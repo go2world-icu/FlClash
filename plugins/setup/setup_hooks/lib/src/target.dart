@@ -7,28 +7,15 @@ class Target {
 
   final String goos;
   final String goarch;
+
+  /// Slice directory name on iOS: `ios-arm64` / `ios-arm64-simulator`.
   final String? abi;
 
   /// Apple SDK name (iOS only): `iphoneos` / `iphonesimulator`.
   final String? sdk;
 
-  static const androidArm = Target(
-    goos: 'android',
-    goarch: 'arm',
-    abi: 'armeabi-v7a',
-  );
-  static const androidArm64 = Target(
-    goos: 'android',
-    goarch: 'arm64',
-    abi: 'arm64-v8a',
-  );
-  static const androidAmd64 = Target(
-    goos: 'android',
-    goarch: 'amd64',
-    abi: 'x86_64',
-  );
-
-  // iOS is a c-archive static library, packaged into Libclash.xcframework.
+  /// Bound with gomobile into `Mobile.xcframework`, which the Runner and
+  /// PacketTunnel targets link.
   static const iosArm64 = Target(
     goos: 'ios',
     goarch: 'arm64',
@@ -52,9 +39,6 @@ class Target {
   static const windowsArm64 = Target(goos: 'windows', goarch: 'arm64');
 
   static const all = [
-    androidArm,
-    androidArm64,
-    androidAmd64,
     iosArm64,
     iosSimArm64,
     macosArm64,
@@ -85,33 +69,21 @@ class Target {
     throw BuildException('No iOS Core target for SDK $sdk and GOARCH $goarch');
   }
 
-  bool get isLib => abi != null;
-
-  /// iOS only supports `-buildmode=c-archive` (a static library).
-  bool get isStaticLib => goos == 'ios';
+  /// iOS is bound with gomobile, so it produces a framework rather than the
+  /// standalone Core binary every other target builds.
+  bool get isFramework => goos == 'ios';
 
   bool get hasHelper => goos == 'linux' || goos == 'windows';
 
   String get executableExtension => goos == 'windows' ? '.exe' : '';
-
-  /// The static archive extension produced by `-buildmode=c-archive`.
-  String get staticLibExtension => '.a';
 
   String get platformDir => goos == 'darwin' ? 'macos' : goos;
 
   /// iOS cross-compiles from macOS: only there do `xcrun` and the SDK exist.
   bool get canBuildOnHost {
     if (goos == 'ios') return Platform.isMacOS;
-    if (isLib) return true;
     return goos == Platform.operatingSystem;
   }
-
-  String get ndkTriple => switch (abi) {
-    'armeabi-v7a' => 'armv7a-linux-androideabi',
-    'arm64-v8a' => 'aarch64-linux-android',
-    'x86_64' => 'x86_64-linux-android',
-    _ => throw BuildException('Not an Android target: $this'),
-  };
 
   String get rustTriple {
     final arch = switch (goarch) {
@@ -127,5 +99,5 @@ class Target {
   }
 
   @override
-  String toString() => '$goos/$goarch${abi != null ? ' ($abi)' : ''}';
+  String toString() => '$goos/$goarch';
 }

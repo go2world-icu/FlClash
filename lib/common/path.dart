@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/enum/enum.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -123,13 +122,10 @@ class AppPath {
     return join(directory, providersDirectoryName);
   }
 
-  Future<String> getProviderCachePath(
-    ProviderKind kind,
-    String fileName,
-  ) async {
+  Future<String> getProviderCachePath(String fileName) async {
     return join(
       await providerCacheRootPath,
-      providerCacheDirectoryName(kind),
+      rulesProviderDirectoryName,
       fileName,
     );
   }

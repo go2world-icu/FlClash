@@ -28,7 +28,7 @@ extension DnsQueryInitiatorL10n on DnsQueryInitiator {
       DnsQueryInitiator.app => appLocalizations.app,
       DnsQueryInitiator.rule => appLocalizations.rule,
       DnsQueryInitiator.direct => appLocalizations.direct,
-      DnsQueryInitiator.proxy => appLocalizations.proxyNode,
+      DnsQueryInitiator.proxy => appLocalizations.proxies,
       DnsQueryInitiator.other => appLocalizations.other,
     };
   }
@@ -82,16 +82,6 @@ extension HotActionL10n on HotAction {
       HotAction.updateProfiles => appLocalizations.actionUpdateProfiles,
       HotAction.copyEnv => appLocalizations.copyEnvVar,
       HotAction.exit => appLocalizations.exit,
-    };
-  }
-}
-
-extension RouteModeL10n on RouteMode {
-  String get label {
-    final appLocalizations = currentAppLocalizations;
-    return switch (this) {
-      RouteMode.bypassPrivate => appLocalizations.routeModeBypassPrivate,
-      RouteMode.config => appLocalizations.routeModeConfig,
     };
   }
 }

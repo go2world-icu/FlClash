@@ -63,7 +63,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         )
 
         // 1. Boot the core headlessly (mirrors android State.setupAndStart).
-        ClashCore.initialize()
         ClashCore.setEventListener { data in
             EventBuffer.shared.append(data)
         }
@@ -138,7 +137,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             ? Self.netAny
             : (vpn.ipv6 ? "\(Self.dns),\(Self.dns6)" : Self.dns)
         ClashCore.startTun(
-            fd: fd, stack: vpn.stack, address: address, dns: dns)
+            fd: fd, stack: vpn.stack, address: address, dns: dns,
+            options: vpn.tunOptions)
         ClashCore.forceGC()
         observeMemoryPressure()
         tunnelLog.notice(

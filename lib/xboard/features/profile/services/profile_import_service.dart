@@ -268,7 +268,7 @@ class XBoardProfileImportService {
       final bytes = utf8.encode(result.content!);
       final profileWithContent = await profile.saveFile(
         bytes,
-        validate: (path) => coreController.validateConfig(path),
+        validate: (path, key) => coreController.validateProfile(path, key),
       );
       _logger.info('✅ 配置内容已成功保存并通过ClashMeta核心验证');
 

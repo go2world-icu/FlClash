@@ -15,7 +15,8 @@
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		4104B653B1D1F653946E0568 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2EAFD32F93BCF4412DC4EBE3 /* Foundation.framework */; };
 		6B5789FE4FDB5C93880E8DA5 /* EventBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03266A68C59D0C1BEE7F7B15 /* EventBuffer.swift */; };
-		742B939CF953A0C37C678203 /* Libclash.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B203D511F8CF9AEDF9C08552 /* Libclash.xcframework */; };
+		742B939CF953A0C37C678203 /* Mobile.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B203D511F8CF9AEDF9C08552 /* Mobile.xcframework */; };
+		7C41E5A9B3D24F8E9A0C7B41 /* Mobile.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B203D511F8CF9AEDF9C08552 /* Mobile.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
@@ -57,6 +58,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				7C41E5A9B3D24F8E9A0C7B41 /* Mobile.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -112,7 +114,7 @@
 		A9CB66E105B4DA5F0DADE401 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		A9D5E64154348264B24E5455 /* ClashCore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClashCore.swift; sourceTree = "<group>"; };
 		AEC6F0C3636CD03E4118403E /* PacketTunnel-Bridging-Header.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "PacketTunnel-Bridging-Header.h"; sourceTree = "<group>"; };
-		B203D511F8CF9AEDF9C08552 /* Libclash.xcframework */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = wrapper.xcframework; name = Libclash.xcframework; path = ../libclash/ios/Libclash.xcframework; sourceTree = "<group>"; };
+		B203D511F8CF9AEDF9C08552 /* Mobile.xcframework */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = wrapper.xcframework; name = Mobile.xcframework; path = ../libclash/ios/Mobile.xcframework; sourceTree = "<group>"; };
 		D96539CDFE2575E7DB7D05BB /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC10000000000000000000A1 /* ServiceChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceChannel.swift; sourceTree = "<group>"; };
 		FC10000000000000000000A2 /* AppChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppChannel.swift; sourceTree = "<group>"; };
@@ -124,7 +126,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4104B653B1D1F653946E0568 /* Foundation.framework in Frameworks */,
-				742B939CF953A0C37C678203 /* Libclash.xcframework in Frameworks */,
+				742B939CF953A0C37C678203 /* Mobile.xcframework in Frameworks */,
 				ABDA15EB5AE447A54E55004F /* NetworkExtension.framework in Frameworks */,
 				D62AFF4DF1A3B2F612212A75 /* libresolv.tbd in Frameworks */,
 			);
@@ -232,7 +234,7 @@
 				93D6F9BA47225066C3A2D27F /* Pods_Runner.framework */,
 				D96539CDFE2575E7DB7D05BB /* Pods_RunnerTests.framework */,
 				DE02B6BFE9FEB0B6FC4155CF /* iOS */,
-				B203D511F8CF9AEDF9C08552 /* Libclash.xcframework */,
+				B203D511F8CF9AEDF9C08552 /* Mobile.xcframework */,
 				343A9A2B294387E110C50232 /* NetworkExtension.framework */,
 				0D2D89CF02D447E3B9CF11AA /* libresolv.tbd */,
 			);
@@ -520,7 +522,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "if [ -d \"${SRCROOT}/../libclash/ios/Libclash.xcframework\" ]; then exit 0; fi\necho \"error: libclash/ios/Libclash.xcframework is missing - build with flutter build ios so the setup build hook produces it\" >&2\nexit 1";
+			shellScript = "if [ -d \"${SRCROOT}/../libclash/ios/Mobile.xcframework\" ]; then exit 0; fi\necho \"error: libclash/ios/Mobile.xcframework is missing - build with flutter build ios so the setup build hook produces it\" >&2\nexit 1";
 		};
 /* End PBXShellScriptBuildPhase section */
 

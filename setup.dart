@@ -196,7 +196,7 @@ Future<int> _package(
   if (depExit != 0) return depExit;
 
   // iOS 统一入口：先编 Go core，再 flutter build ipa。
-  // Runner 链接 libclash/ios/Libclash.xcframework，它必须在 Xcode 之前就存在；
+  // Runner 链接 libclash/ios/Mobile.xcframework，它必须在 Xcode 之前就存在；
   // setup 构建 hook 的产出要等这次构建布局完成才上报，赶不上链接，所以这里显式先建。
   // 签名走项目 Manual 配置（pbxproj PROVISIONING_PROFILE_SPECIFIER）+ 已装证书/profile。
   if (platform == 'ios') {
@@ -230,7 +230,7 @@ Future<int> _package(
     'git',
     'https://github.com/chen08209/flutter_distributor.git',
     '--git-ref',
-    'v0.6.11-flclash.2',
+    'v0.6.11-flclash.3',
     '--git-path',
     'packages/flutter_distributor',
   ]);

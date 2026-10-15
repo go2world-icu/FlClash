@@ -1,6 +1,6 @@
-//go:build android && cgo
+//go:build android
 
-package main
+package core
 
 import (
 	"strings"
@@ -11,6 +11,9 @@ import (
 	"github.com/metacubex/mihomo/log"
 )
 
+// Android only: mihomo's UpdateSystemDNS lives behind an android build tag, so
+// this has to sit behind the same one rather than in lib.go, which both mobile
+// platforms share.
 var (
 	dnsUpdateMu  sync.Mutex
 	dnsUpdateSeq atomic.Uint64
@@ -24,7 +27,7 @@ func handleUpdateDns(value string) {
 		addr = strings.Split(value, ",")
 	}
 	seq := dnsUpdateSeq.Add(1)
-	safeGoDetached("updateDns", func() {
+	safeGo("updateDns", func() {
 		dnsUpdateMu.Lock()
 		defer dnsUpdateMu.Unlock()
 		if seq != dnsUpdateSeq.Load() {

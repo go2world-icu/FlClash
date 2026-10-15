@@ -110,7 +110,7 @@ class SubscriptionDownloader {
       final bytes = utf8.encode(result.content);
       final savedProfile = await profile.saveFile(
         bytes,
-        validate: (path) => coreController.validateConfig(path),
+        validate: (path, key) => coreController.validateProfile(path, key),
       );
 
       // 更新订阅信息
