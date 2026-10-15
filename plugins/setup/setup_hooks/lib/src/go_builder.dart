@@ -121,7 +121,13 @@ class GoBuilder {
           throw BuildException('gomobile produced no framework in $slice');
         }
         _log.info('Built: $framework');
-        return [sliceMarker, framework, p.join(framework, _kIosFrameworkName)];
+        // Files only: the cache stats every output, and a .framework is a
+        // directory.
+        return [
+          sliceMarker,
+          p.join(framework, 'Info.plist'),
+          p.join(framework, _kIosFrameworkName),
+        ];
       },
     );
   }

@@ -67,7 +67,8 @@ Future<BuildReport> buildPlatform(BuildRequest request) async {
     // gomobile just produced, so it is rebuilt once the slice is in place.
     final frameworkPath = await goBuilder.createXcframework();
     _log.info('Done in ${stopwatch.elapsed}: $frameworkPath');
-    return _report([core], extraOutputs: [frameworkPath]);
+    // The declared output is the file a directory dependency cannot be.
+    return _report([core], extraOutputs: [p.join(frameworkPath, 'Info.plist')]);
   }
   if (!target.hasHelper) {
     _log.info('Done in ${stopwatch.elapsed}: ${core.primaryOutput}');
