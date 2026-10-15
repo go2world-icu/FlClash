@@ -87,54 +87,48 @@ class GoBuilder {
     );
   }
 
-  /// Builds one iOS slice and installs it under `libclash/ios/<abi>/`; the
+  /// Builds one iOS slice into `libclash/ios/<abi>/Mobile.xcframework`; the
   /// slices are combined by [createXcframework].
+  ///
+  /// gomobile writes an xcframework itself and rejects any `-o` that does not
+  /// end in `.xcframework`, so a slice is a one-slice xcframework rather than
+  /// the bare `.framework` the Android side produces.
   Future<BuildExecution> _buildFramework(Target target) async {
     final outDir = p.join(_outputPath, target.platformDir, target.abi!);
     ensureDir(outDir);
-    final sliceDir = p.join(outDir, _kIosFrameworkName);
-    final sliceBinary = p.join(sliceDir, _kIosFrameworkName);
+    final slice = p.join(outDir, '$_kIosFrameworkName.xcframework');
+    // xcodebuild names the directory inside after the platform, which is not
+    // worth guessing at; its Info.plist sits at the root either way.
+    final sliceMarker = p.join(slice, 'Info.plist');
 
     return cache.run(
       // Both iOS slices share GOARCH arm64, so the SDK is what tells their
       // cache entries apart.
       key: '${target.platformDir}-${target.sdk}-${target.goarch}-core',
       fingerprint: () => _calculateFingerprint(target),
-      primaryOutput: sliceBinary,
+      primaryOutput: sliceMarker,
       notice: notice,
       build: () async {
         final gomobile = await _ensureGomobile();
-        _log.info('Binding Go core: $target (CGO, gomobile framework)');
-
-        final stagingDir = Directory(
-          p.join(outDir, '.staging-${target.sdk}-$pid'),
+        _log.info('Binding Go core: $target (gomobile xcframework)');
+        await runCommandStream(
+          gomobile,
+          _bindArguments(target, outXcframework: slice),
+          workingDirectory: _corePath,
         );
-        ensureDir(stagingDir.path);
-        final staged = p.join(stagingDir.path, _kIosFrameworkName);
-        try {
-          await runCommandStream(
-            gomobile,
-            _bindArguments(target, outFramework: staged),
-            workingDirectory: _corePath,
-          );
-          if (Directory(sliceDir).existsSync()) {
-            Directory(sliceDir).deleteSync(recursive: true);
-          }
-          Directory(staged).renameSync(sliceDir);
-          _log.info('Built: $sliceBinary');
-          return [sliceBinary];
-        } finally {
-          if (stagingDir.existsSync()) {
-            stagingDir.deleteSync(recursive: true);
-          }
+        final framework = _frameworkIn(slice);
+        if (framework == null) {
+          throw BuildException('gomobile produced no framework in $slice');
         }
+        _log.info('Built: $framework');
+        return [sliceMarker, framework, p.join(framework, _kIosFrameworkName)];
       },
     );
   }
 
   List<String> _bindArguments(
     Target target, {
-    required String outFramework,
+    required String outXcframework,
   }) => [
     'bind',
     '-target=${target.sdk == 'iphonesimulator' ? 'iossimulator' : 'ios'}/${target.goarch}',
@@ -143,9 +137,20 @@ class GoBuilder {
     '-ldflags=${_ldflags()}',
     '-tags=${config.tags}',
     '-o',
-    outFramework,
+    outXcframework,
     _iosPackage,
   ];
+
+  /// The concrete `.framework` inside a one-slice xcframework.
+  String? _frameworkIn(String xcframeworkPath) {
+    final root = Directory(xcframeworkPath);
+    if (!root.existsSync()) return null;
+    for (final entity in root.listSync().whereType<Directory>()) {
+      final framework = p.join(entity.path, '$_kIosFrameworkName.framework');
+      if (Directory(framework).existsSync()) return framework;
+    }
+    return null;
+  }
 
   /// gomobile and gobind are built from the module's own dependency rather than
   /// installed on PATH — the same pair the Android gradle builds.
@@ -177,13 +182,18 @@ class GoBuilder {
     final iosDir = p.join(_outputPath, 'ios');
     final frameworkPath = p.join(iosDir, '$_kIosFrameworkName.xcframework');
 
-    final slices = Directory(iosDir)
-        .listSync()
-        .whereType<Directory>()
-        .where(
-          (d) => Directory(p.join(d.path, _kIosFrameworkName)).existsSync(),
-        )
-        .toList();
+    final slices =
+        Directory(iosDir)
+            .listSync()
+            .whereType<Directory>()
+            .map(
+              (d) => _frameworkIn(
+                p.join(d.path, '$_kIosFrameworkName.xcframework'),
+              ),
+            )
+            .whereType<String>()
+            .toList()
+          ..sort();
     if (slices.isEmpty) {
       throw BuildException('No iOS slices found in $iosDir');
     }
@@ -195,14 +205,11 @@ class GoBuilder {
 
     _log.info(
       'Creating xcframework from '
-      '${slices.map((s) => p.basename(s.path)).join(', ')}',
+      '${slices.map((s) => p.basename(p.dirname(s))).join(', ')}',
     );
     await runCommandStream('xcodebuild', [
       '-create-xcframework',
-      for (final slice in slices) ...[
-        '-framework',
-        p.join(slice.path, _kIosFrameworkName),
-      ],
+      for (final slice in slices) ...['-framework', slice],
       '-output',
       frameworkPath,
     ], workingDirectory: rootDir);
@@ -250,7 +257,7 @@ class GoBuilder {
       ..addValue(
         'arguments',
         target.isFramework
-            ? _bindArguments(target, outFramework: '<out>')
+            ? _bindArguments(target, outXcframework: '<out>')
             : _buildArguments(target),
       );
 

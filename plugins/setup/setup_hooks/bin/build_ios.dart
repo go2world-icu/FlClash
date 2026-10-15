@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 import 'package:setup_hooks/setup_hooks.dart';
 
@@ -13,6 +14,15 @@ import 'package:setup_hooks/setup_hooks.dart';
 ///
 /// Run from this package: `dart run bin/build_ios.dart`.
 Future<void> main(List<String> args) async {
+  // The builder reports through package:logging, and a failing gomobile or
+  // xcodebuild writes the only copy of its reason there. With no listener
+  // configured those lines are dropped and the failure reads as a bare exit
+  // code — which is exactly how the first CI run of this script failed.
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    stderr.writeln('${record.level.name}: ${record.message}');
+  });
+
   final index = args.indexOf('--root');
   final repoRoot = index >= 0 && args.length > index + 1
       ? p.normalize(args[index + 1])
