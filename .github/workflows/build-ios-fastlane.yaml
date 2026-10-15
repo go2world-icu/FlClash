@@ -177,8 +177,34 @@ jobs:
             BN="--build-number=${{ github.event.inputs.build_number }}"
           fi
 
+          # codesign 卡死时 flutter 会把 xcodebuild 的输出全缓冲住，日志里一个字都没有，
+          # job 只能干等到 60 分钟超时——什么都学不到。看门狗到点抓栈、打钥匙串状态，
+          # 然后杀掉构建，让这一步快速失败并留下可诊断的信息。
+          (
+            sleep 720
+            echo "=== 构建超过 12 分钟，判定为挂死，开始取证 ==="
+            for name in codesign xcodebuild; do
+              for p in $(pgrep -x "$name" || true); do
+                echo "--- $name pid=$p ---"
+                ps -o pid,etime,stat,command -p "$p" || true
+                sample "$p" 2 -mayDie 2>&1 | sed -n '1,60p' || true
+              done
+            done
+            echo "--- 钥匙串 ---"
+            security list-keychains || true
+            security default-keychain || true
+            security find-identity -v -p codesigning || true
+            echo "=== 杀掉挂死的构建 ==="
+            pkill -x codesign || true
+            pkill -x xcodebuild || true
+          ) &
+          WATCHDOG=$!
+
           # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
           dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v
+          BUILD_RC=$?
+          kill "$WATCHDOG" 2>/dev/null || true
+          [ "$BUILD_RC" -eq 0 ] || exit "$BUILD_RC"
 
           # 重命名 IPA（flutter build ipa 输出到 build/ios/ipa/）
           mkdir -p dist
