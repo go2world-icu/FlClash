@@ -9,14 +9,23 @@ import 'error.dart';
 
 final _log = Logger('util');
 
-/// Recovers the toolchains that Xcode's and Gradle's stripped PATH would hide.
-final String? _toolSearchPath = _resolveToolSearchPath();
+/// Directories a builder populated itself. They have to reach PATH because
+/// gomobile finds gobind with `exec.LookPath` — building the two side by side
+/// is not enough — so a hook that builds its own tools registers them here.
+final _extraToolDirs = <String>{};
+
+void registerToolDirectory(String dir) => _extraToolDirs.add(dir);
+
+/// Recovers the toolchains that Xcode's and Gradle's stripped PATH would hide,
+/// plus whatever the hooks registered.
+String? get _toolSearchPath => _resolveToolSearchPath();
 
 String? _resolveToolSearchPath() {
   if (Platform.isWindows) return null;
   final entries = (Platform.environment['PATH'] ?? '').split(':');
   final home = Platform.environment['HOME'];
   final candidates = [
+    ..._extraToolDirs,
     '/opt/homebrew/bin',
     '/usr/local/bin',
     '/usr/local/go/bin',

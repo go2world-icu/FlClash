@@ -154,14 +154,21 @@ class GoBuilder {
 
   /// gomobile and gobind are built from the module's own dependency rather than
   /// installed on PATH — the same pair the Android gradle builds.
+  ///
+  /// gomobile looks for gobind with `exec.LookPath`, not next to itself, so the
+  /// directory has to be registered as well as built into.
   Future<String> _ensureGomobile() async {
     final toolsDir = p.join(rootDir, '.dart_tool', 'setup_hooks', 'tools');
     final executable = p.join(
       toolsDir,
       'gomobile${Platform.isWindows ? '.exe' : ''}',
     );
-    if (File(executable).existsSync()) return executable;
+    if (File(executable).existsSync()) {
+      registerToolDirectory(toolsDir);
+      return executable;
+    }
     ensureDir(toolsDir);
+    registerToolDirectory(toolsDir);
     _log.info('Building gomobile');
     await runCommandStream('go', [
       'build',
