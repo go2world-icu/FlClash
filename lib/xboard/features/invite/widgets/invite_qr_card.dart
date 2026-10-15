@@ -1,12 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/qr_code_widget.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class InviteQrCard extends ConsumerWidget {
   const InviteQrCard({super.key});
@@ -32,7 +32,7 @@ class InviteQrCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              appLocalizations.myInviteQr,
+              xboardL10n.myInviteQr,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -49,7 +49,7 @@ class InviteQrCard extends ConsumerWidget {
                   ElevatedButton.icon(
                     onPressed: () => _saveQrCode(context, inviteUrl),
                     icon: const GlyphIcon(AppGlyphs.save),
-                    label: Text(appLocalizations.saveQr),
+                    label: Text(xboardL10n.saveQr),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -60,7 +60,7 @@ class InviteQrCard extends ConsumerWidget {
                   ElevatedButton.icon(
                     onPressed: () => _copyToClipboard(context, inviteUrl),
                     icon: const GlyphIcon(AppGlyphs.link),
-                    label: Text(appLocalizations.copyInviteLink),
+                    label: Text(xboardL10n.copyInviteLink),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -78,7 +78,7 @@ class InviteQrCard extends ConsumerWidget {
                     const CircularProgressIndicator(),
                     const SizedBox(height: 16),
                     Text(
-                      appLocalizations.generatingInviteCode,
+                      xboardL10n.generatingInviteCode,
                       style: TextStyle(
                         fontSize: 16,
                         color: Theme.of(
@@ -103,7 +103,7 @@ class InviteQrCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      appLocalizations.inviteCodeGenFailed,
+                      xboardL10n.inviteCodeGenFailed,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -114,7 +114,7 @@ class InviteQrCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      appLocalizations.checkNetwork,
+                      xboardL10n.checkNetwork,
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(
@@ -135,11 +135,11 @@ class InviteQrCard extends ConsumerWidget {
 
   void _copyToClipboard(BuildContext context, String text) {
     Clipboard.setData(ClipboardData(text: text));
-    XBoardNotification.showSuccess(appLocalizations.copiedToClipboard);
+    XBoardNotification.showSuccess(xboardL10n.copiedToClipboard);
   }
 
   void _saveQrCode(BuildContext context, String inviteUrl) {
-    XBoardNotification.showInfo(appLocalizations.saveQrCodeFeature);
+    XBoardNotification.showInfo(xboardL10n.saveQrCodeFeature);
   }
 
   String _getSdkBaseUrl() {

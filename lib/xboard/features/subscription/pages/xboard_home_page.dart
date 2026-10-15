@@ -1,11 +1,9 @@
 ﻿import 'dart:async';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/l10n/l10n.dart';
 
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/features/latency/services/auto_latency_service.dart';
@@ -21,6 +19,8 @@ import 'package:fl_clash/xboard/features/invite/widgets/wallet_details_card.dart
 import 'package:fl_clash/xboard/features/invite/widgets/commission_history_card.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/common/common.dart';
 
 class XBoardHomePage extends ConsumerStatefulWidget {
   const XBoardHomePage({super.key});
@@ -226,7 +226,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
         onPressed: () => _showLogoutDialog(),
         icon: const GlyphIcon(AppGlyphs.logout, color: Colors.red),
         label: Text(
-          AppLocalizations.of(context).logout,
+          xboardL10n.logout,
           style: const TextStyle(color: Colors.red),
         ),
         style: OutlinedButton.styleFrom(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class TransferDialog extends ConsumerStatefulWidget {
   const TransferDialog({super.key});
@@ -29,7 +30,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
     final double maxAmount = inviteState.availableCommission; // 已经是元，不需要再除以100
 
     return AlertDialog(
-      title: Text(appLocalizations.transferToWallet),
+      title: Text(xboardL10n.transferToWallet),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -60,7 +61,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             duration: const Duration(milliseconds: 300),
             child: _isSuccess
                 ? Text(
-                    appLocalizations.transferSuccess,
+                    xboardL10n.transferSuccess,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -70,7 +71,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                   )
                 : _isTransferring
                 ? Text(
-                    appLocalizations.transferring,
+                    xboardL10n.transferring,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -78,7 +79,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                     key: const ValueKey('loading-text'),
                   )
                 : Text(
-                    appLocalizations.maxTransferable(
+                    xboardL10n.maxTransferable(
                       inviteState.availableCommission.toStringAsFixed(2),
                     ),
                     style: const TextStyle(
@@ -93,11 +94,11 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             TextField(
               controller: _amountController,
               decoration: InputDecoration(
-                labelText: appLocalizations.transferAmount,
-                hintText: appLocalizations.enterTransferAmount,
+                labelText: xboardL10n.transferAmount,
+                hintText: xboardL10n.enterTransferAmount,
                 border: const OutlineInputBorder(),
                 suffixText: '¥',
-                helperText: appLocalizations.maxTransferable(
+                helperText: xboardL10n.maxTransferable(
                   maxAmount.toStringAsFixed(2),
                 ),
               ),
@@ -107,7 +108,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             ),
             const SizedBox(height: 12),
             Text(
-              appLocalizations.transferNote,
+              xboardL10n.transferNote,
               style: const TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
@@ -122,7 +123,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
           ),
           ElevatedButton(
             onPressed: () => _performTransfer(maxAmount),
-            child: Text(appLocalizations.confirmTransfer),
+            child: Text(xboardL10n.confirmTransfer),
           ),
         ],
       ],
@@ -133,7 +134,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) {
       if (mounted) {
-        XBoardNotification.showError(appLocalizations.enterTransferAmountError);
+        XBoardNotification.showError(xboardL10n.enterTransferAmountError);
       }
       return;
     }
@@ -141,7 +142,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
     final amount = double.tryParse(amountText);
     if (amount == null || amount <= 0) {
       if (mounted) {
-        XBoardNotification.showError(appLocalizations.invalidTransferAmount);
+        XBoardNotification.showError(xboardL10n.invalidTransferAmount);
       }
       return;
     }
@@ -149,7 +150,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
     if (amount > maxAmount) {
       if (mounted) {
         XBoardNotification.showError(
-          appLocalizations.transferAmountExceeded(maxAmount.toStringAsFixed(2)),
+          xboardL10n.transferAmountExceeded(maxAmount.toStringAsFixed(2)),
         );
       }
       return;
@@ -179,7 +180,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             Future.microtask(() {
               if (mounted) {
                 XBoardNotification.showSuccess(
-                  appLocalizations.transferSuccessMsg(
+                  xboardL10n.transferSuccessMsg(
                     amount.toStringAsFixed(2),
                   ),
                 );
@@ -187,7 +188,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
             });
           }
         } else {
-          XBoardNotification.showError(appLocalizations.transferFailed("划转失败"));
+          XBoardNotification.showError(xboardL10n.transferFailed("划转失败"));
         }
       }
     } catch (e) {
@@ -197,7 +198,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
           _isSuccess = false;
         });
         XBoardNotification.showError(
-          appLocalizations.transferFailed(e.toString()),
+          xboardL10n.transferFailed(e.toString()),
         );
       }
     }

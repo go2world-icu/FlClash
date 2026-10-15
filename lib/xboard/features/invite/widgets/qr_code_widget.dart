@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -36,7 +37,7 @@ class QrCodeWidget extends StatelessWidget {
               const GlyphIcon(AppGlyphs.qrCode, size: 48, color: Colors.grey),
               const SizedBox(height: 8),
               Text(
-                appLocalizations.noInvitationData,
+                xboardL10n.noInvitationData,
                 style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
             ],

@@ -1,4 +1,3 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,7 +7,8 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import '../services/subscription_status_service.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/common/common.dart';
 
 class SubscriptionUsageCard extends ConsumerWidget {
   final DomainSubscription? subscriptionInfo;
@@ -63,14 +63,14 @@ class SubscriptionUsageCard extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            AppLocalizations.of(context).xboardNoSubscriptionInfo,
+            xboardL10n.xboardNoSubscriptionInfo,
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            AppLocalizations.of(context).xboardLoginToViewSubscription,
+            xboardL10n.xboardLoginToViewSubscription,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
@@ -93,26 +93,24 @@ class SubscriptionUsageCard extends ConsumerWidget {
       case SubscriptionStatusType.noSubscription:
         statusIcon = AppGlyphs.giftCard;
         statusColor = Colors.blue.shade600;
-        statusText = AppLocalizations.of(context).xboardNoAvailableSubscription;
-        statusDetail = AppLocalizations.of(
-          context,
-        ).xboardPurchaseSubscriptionToUse;
+        statusText = xboardL10n.xboardNoAvailableSubscription;
+        statusDetail = xboardL10n.xboardPurchaseSubscriptionToUse;
         break;
       case SubscriptionStatusType.expired:
         statusIcon = AppGlyphs.clock;
         statusColor = Colors.red.shade600;
-        statusText = AppLocalizations.of(context).xboardSubscriptionExpired;
+        statusText = xboardL10n.xboardSubscriptionExpired;
         statusDetail =
             statusResult.getDetailMessage(context) ??
-            AppLocalizations.of(context).xboardRenewToContinue;
+            xboardL10n.xboardRenewToContinue;
         break;
       case SubscriptionStatusType.exhausted:
         statusIcon = AppGlyphs.dataUsage;
         statusColor = Colors.orange.shade600;
-        statusText = AppLocalizations.of(context).xboardTrafficExhausted;
+        statusText = xboardL10n.xboardTrafficExhausted;
         statusDetail =
             statusResult.getDetailMessage(context) ??
-            AppLocalizations.of(context).xboardBuyMoreTrafficOrUpgrade;
+            xboardL10n.xboardBuyMoreTrafficOrUpgrade;
         break;
       default:
         statusIcon = AppGlyphs.info;
@@ -226,7 +224,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${AppLocalizations.of(context).xboardExpiryTime}: ${_formatDateTime(statusResult.expiredAt!)}',
+                    '${xboardL10n.xboardExpiryTime}: ${_formatDateTime(statusResult.expiredAt!)}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
@@ -271,13 +269,13 @@ class SubscriptionUsageCard extends ConsumerWidget {
   ) {
     switch (type) {
       case SubscriptionStatusType.noSubscription:
-        return AppLocalizations.of(context).xboardPurchasePlan;
+        return xboardL10n.xboardPurchasePlan;
       case SubscriptionStatusType.expired:
-        return AppLocalizations.of(context).xboardRenewPlan;
+        return xboardL10n.xboardRenewPlan;
       case SubscriptionStatusType.exhausted:
-        return AppLocalizations.of(context).xboardPurchaseTraffic;
+        return xboardL10n.xboardPurchaseTraffic;
       default:
-        return AppLocalizations.of(context).xboardPurchasePlan;
+        return xboardL10n.xboardPurchasePlan;
     }
   }
 
@@ -328,7 +326,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${(progress * 100).toInt()}% ${AppLocalizations.of(context).xboardUsed}',
+                  '${(progress * 100).toInt()}% ${xboardL10n.xboardUsed}',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onSurface,
@@ -368,9 +366,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
                             ),
                           )
                         : Text(
-                            AppLocalizations.of(
-                              context,
-                            ).xboardUpdateSubscription,
+                            xboardL10n.xboardUpdateSubscription,
                           ),
                   );
                 },
@@ -403,7 +399,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
                 flex: 2,
                 child: _buildStatItem(
                   icon: AppGlyphs.cloudDownload,
-                  label: AppLocalizations.of(context).xboardUsedTraffic,
+                  label: xboardL10n.xboardUsedTraffic,
                   value: _formatBytes(usedTraffic),
                   subtitle: '/ ${_formatBytes(totalTraffic)}',
                   theme: theme,
@@ -418,9 +414,9 @@ class SubscriptionUsageCard extends ConsumerWidget {
               Expanded(
                 child: _buildStatItem(
                   icon: AppGlyphs.clock,
-                  label: AppLocalizations.of(context).xboardValidityPeriod,
+                  label: xboardL10n.xboardValidityPeriod,
                   value: '$remainingDays',
-                  subtitle: AppLocalizations.of(context).xboardDays,
+                  subtitle: xboardL10n.xboardDays,
                   theme: theme,
                 ),
               ),

@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/models/models.dart' as fl_models;
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 enum SubscriptionStatusType {
   valid,
@@ -48,10 +48,8 @@ class SubscriptionStatusService {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.expired,
         messageBuilder: (context) =>
-            AppLocalizations.of(context).subscriptionExpired,
-        detailMessageBuilder: (context) => AppLocalizations.of(
-          context,
-        ).subscriptionExpiredDetail('2024-11-01'),
+            xboardL10n.subscriptionExpired,
+        detailMessageBuilder: (context) => xboardL10n.subscriptionExpiredDetail('2024-11-01'),
         expiredAt: DateTime.now().subtract(const Duration(days: 3)),
         remainingDays: -3,
         needsDialog: true,
@@ -62,9 +60,9 @@ class SubscriptionStatusService {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.notLoggedIn,
         messageBuilder: (context) =>
-            AppLocalizations.of(context).subscriptionNotLoggedIn,
+            xboardL10n.subscriptionNotLoggedIn,
         detailMessageBuilder: (context) =>
-            AppLocalizations.of(context).subscriptionNotLoggedInDetail,
+            xboardL10n.subscriptionNotLoggedInDetail,
         needsDialog: false,
       );
     }
@@ -76,7 +74,7 @@ class SubscriptionStatusService {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.valid,
           messageBuilder: (context) =>
-              AppLocalizations.of(context).subscriptionValid,
+              xboardL10n.subscriptionValid,
           detailMessageBuilder: null,
           needsDialog: false,
         );
@@ -84,9 +82,9 @@ class SubscriptionStatusService {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.noSubscription,
         messageBuilder: (context) =>
-            AppLocalizations.of(context).subscriptionNoSubscription,
+            xboardL10n.subscriptionNoSubscription,
         detailMessageBuilder: (context) =>
-            AppLocalizations.of(context).subscriptionNoSubscriptionDetail,
+            xboardL10n.subscriptionNoSubscriptionDetail,
         needsDialog: true,
       );
     }
@@ -101,10 +99,8 @@ class SubscriptionStatusService {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.expired,
           messageBuilder: (context) =>
-              AppLocalizations.of(context).subscriptionExpired,
-          detailMessageBuilder: (context) => AppLocalizations.of(
-            context,
-          ).subscriptionExpiredDetail(_formatDate(expiredAt)),
+              xboardL10n.subscriptionExpired,
+          detailMessageBuilder: (context) => xboardL10n.subscriptionExpiredDetail(_formatDate(expiredAt)),
           expiredAt: expiredAt,
           remainingDays: remainingDays,
           needsDialog: true,
@@ -114,9 +110,9 @@ class SubscriptionStatusService {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.expired,
           messageBuilder: (context) =>
-              AppLocalizations.of(context).subscriptionExpiresToday,
+              xboardL10n.subscriptionExpiresToday,
           detailMessageBuilder: (context) =>
-              AppLocalizations.of(context).subscriptionExpiresTodayDetail,
+              xboardL10n.subscriptionExpiresTodayDetail,
           expiredAt: expiredAt,
           remainingDays: remainingDays,
           needsDialog: true,
@@ -126,10 +122,8 @@ class SubscriptionStatusService {
         return SubscriptionStatusResult(
           type: SubscriptionStatusType.valid,
           messageBuilder: (context) =>
-              AppLocalizations.of(context).subscriptionExpiringInDays,
-          detailMessageBuilder: (context) => AppLocalizations.of(
-            context,
-          ).subscriptionExpiringInDaysDetail(remainingDays),
+              xboardL10n.subscriptionExpiringInDays,
+          detailMessageBuilder: (context) => xboardL10n.subscriptionExpiringInDaysDetail(remainingDays),
           expiredAt: expiredAt,
           remainingDays: remainingDays,
           needsDialog: false, // 即将过期不强制弹窗
@@ -147,11 +141,9 @@ class SubscriptionStatusService {
     return SubscriptionStatusResult(
       type: SubscriptionStatusType.valid,
       messageBuilder: (context) =>
-          AppLocalizations.of(context).subscriptionValid,
+          xboardL10n.subscriptionValid,
       detailMessageBuilder: remainingDays != null
-          ? (context) => AppLocalizations.of(
-              context,
-            ).subscriptionValidDetail(remainingDays)
+          ? (context) => xboardL10n.subscriptionValidDetail(remainingDays)
           : null,
       expiredAt: expiredAt,
       remainingDays: remainingDays,
@@ -186,9 +178,9 @@ class SubscriptionStatusService {
       return SubscriptionStatusResult(
         type: SubscriptionStatusType.exhausted,
         messageBuilder: (context) =>
-            AppLocalizations.of(context).subscriptionTrafficExhausted,
+            xboardL10n.subscriptionTrafficExhausted,
         detailMessageBuilder: (context) =>
-            AppLocalizations.of(context).subscriptionTrafficExhaustedDetail,
+            xboardL10n.subscriptionTrafficExhaustedDetail,
         needsDialog: true,
       );
     }

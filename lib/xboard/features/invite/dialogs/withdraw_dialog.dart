@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class WithdrawDialog extends ConsumerStatefulWidget {
   const WithdrawDialog({super.key});
@@ -36,7 +37,7 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
         inviteState.availableCommission; // 已经是元，不需要再除以100
 
     return AlertDialog(
-      title: Text(appLocalizations.withdrawCommission),
+      title: Text(xboardL10n.withdrawCommission),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -57,13 +58,13 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           _currentStep = ResetPasswordStep.resetPassword;
         });
         XBoardNotification.showSuccess(
-          AppLocalizations.of(context).verificationCodeSent,
+          xboardL10n.verificationCodeSent,
         );
       }
     } catch (e) {
       if (mounted) {
         XBoardNotification.showError(
-          '${AppLocalizations.of(context).sendCodeFailed}: $e',
+          '${xboardL10n.sendCodeFailed}: $e',
         );
       }
     } finally {
@@ -82,7 +83,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
 
     if (_passwordController.text != _confirmPasswordController.text) {
       XBoardNotification.showError(
-        AppLocalizations.of(context).passwordMismatch,
+        xboardL10n.passwordMismatch,
       );
       return;
     }
@@ -106,14 +107,14 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
 
       if (mounted) {
         XBoardNotification.showSuccess(
-          AppLocalizations.of(context).passwordResetSuccessful,
+          xboardL10n.passwordResetSuccessful,
         );
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         XBoardNotification.showError(
-          '${AppLocalizations.of(context).passwordResetFailed}: $e',
+          '${xboardL10n.passwordResetFailed}: $e',
         );
       }
     } finally {
@@ -139,7 +140,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          AppLocalizations.of(context).enterEmailForReset,
+          xboardL10n.enterEmailForReset,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -147,17 +148,17 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         const SizedBox(height: 32),
         XBInputField(
           controller: _emailController,
-          labelText: AppLocalizations.of(context).emailAddress,
-          hintText: AppLocalizations.of(context).pleaseEnterEmail,
+          labelText: xboardL10n.emailAddress,
+          hintText: xboardL10n.pleaseEnterEmail,
           prefixIcon: AppGlyphs.email,
           keyboardType: TextInputType.emailAddress,
           enabled: !_isLoading,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return AppLocalizations.of(context).pleaseEnterEmail;
+              return xboardL10n.pleaseEnterEmail;
             }
             if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-              return AppLocalizations.of(context).pleaseEnterValidEmail;
+              return xboardL10n.pleaseEnterValidEmail;
             }
             return null;
           },
@@ -183,7 +184,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                     shape: AppShape.all(12),
                   ),
                   child: Text(
-                    AppLocalizations.of(context).sendVerificationCode,
+                    xboardL10n.sendVerificationCode,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -197,9 +198,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          AppLocalizations.of(
-            context,
-          ).verificationCodeSentTo(_emailController.text),
+          xboardL10n.verificationCodeSentTo(_emailController.text),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -207,19 +206,17 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         const SizedBox(height: 32),
         XBInputField(
           controller: _codeController,
-          labelText: AppLocalizations.of(context).verificationCode,
-          hintText: AppLocalizations.of(context).pleaseEnterVerificationCode,
+          labelText: xboardL10n.verificationCode,
+          hintText: xboardL10n.pleaseEnterVerificationCode,
           prefixIcon: AppGlyphs.shieldCheck,
           keyboardType: TextInputType.number,
           enabled: !_isLoading,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return AppLocalizations.of(context).pleaseEnterVerificationCode;
+              return xboardL10n.pleaseEnterVerificationCode;
             }
             if (value.length < 4) {
-              return AppLocalizations.of(
-                context,
-              ).pleaseEnterValidVerificationCode;
+              return xboardL10n.pleaseEnterValidVerificationCode;
             }
             return null;
           },
@@ -227,8 +224,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         const SizedBox(height: 16),
         XBInputField(
           controller: _passwordController,
-          labelText: AppLocalizations.of(context).newPassword,
-          hintText: AppLocalizations.of(context).pleaseEnterNewPassword,
+          labelText: xboardL10n.newPassword,
+          hintText: xboardL10n.pleaseEnterNewPassword,
           prefixIcon: AppGlyphs.lock,
           obscureText: _obscurePassword,
           enabled: !_isLoading,
@@ -247,10 +244,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return AppLocalizations.of(context).pleaseEnterNewPassword;
+              return xboardL10n.pleaseEnterNewPassword;
             }
             if (value.length < 6) {
-              return AppLocalizations.of(context).passwordMinLength;
+              return xboardL10n.passwordMinLength;
             }
             return null;
           },
@@ -258,8 +255,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         const SizedBox(height: 16),
         XBInputField(
           controller: _confirmPasswordController,
-          labelText: AppLocalizations.of(context).confirmNewPassword,
-          hintText: AppLocalizations.of(context).pleaseConfirmNewPassword,
+          labelText: xboardL10n.confirmNewPassword,
+          hintText: xboardL10n.pleaseConfirmNewPassword,
           prefixIcon: AppGlyphs.lock,
           obscureText: _obscureConfirmPassword,
           enabled: !_isLoading,
@@ -278,10 +275,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return AppLocalizations.of(context).pleaseConfirmNewPassword;
+              return xboardL10n.pleaseConfirmNewPassword;
             }
             if (value != _passwordController.text) {
-              return AppLocalizations.of(context).passwordMismatch;
+              return xboardL10n.passwordMismatch;
             }
             return null;
           },
@@ -307,7 +304,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                     shape: AppShape.all(12),
                   ),
                   child: Text(
-                    AppLocalizations.of(context).resetPassword,
+                    xboardL10n.resetPassword,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -316,7 +313,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         TextButton(
           onPressed: _isLoading ? null : _goBackToSendCode,
           child: Text(
-            AppLocalizations.of(context).resendVerificationCode,
+            xboardL10n.resendVerificationCode,
             style: TextStyle(
               color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w600,
@@ -356,8 +353,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                   const SizedBox(width: 16),
                   Text(
                     _currentStep == ResetPasswordStep.sendCode
-                        ? AppLocalizations.of(context).resetPassword
-                        : AppLocalizations.of(context).setNewPassword,
+                        ? xboardL10n.resetPassword
+                        : xboardL10n.setNewPassword,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
@@ -385,7 +382,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              AppLocalizations.of(context).rememberPassword,
+                              xboardL10n.rememberPassword,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
@@ -394,7 +391,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
                               child: Text(
-                                AppLocalizations.of(context).backToLogin,
+                                xboardL10n.backToLogin,
                                 style: TextStyle(
                                   color: colorScheme.primary,
                                   fontWeight: FontWeight.w600,

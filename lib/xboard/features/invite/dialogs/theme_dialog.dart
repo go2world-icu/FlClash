@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class ThemeDialog extends ConsumerWidget {
   const ThemeDialog({super.key});
@@ -14,7 +15,7 @@ class ThemeDialog extends ConsumerWidget {
     );
 
     return AlertDialog(
-      title: Text(appLocalizations.selectTheme),
+      title: Text(xboardL10n.selectTheme),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

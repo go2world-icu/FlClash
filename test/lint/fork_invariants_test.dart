@@ -190,6 +190,29 @@ void main() {
     });
   });
 
+  group('the panel keeps its strings out of upstream\'s arb', () {
+    test('no arb file carries a panel key', () {
+      for (final file in Directory('arb').listSync().whereType<File>()) {
+        final name = file.path.replaceAll(r'\', '/');
+        if (!name.endsWith('.arb')) continue;
+        final source = _read(name);
+        expect(
+          RegExp(r'^\s+"xboard[A-Z]', multiLine: true).hasMatch(source),
+          isFalse,
+          reason:
+              '$name has a panel key again. They made lib/l10n/l10n.dart the '
+              'largest conflict in the repository; they live in '
+              'lib/xboard/l10n/xboard_strings.dart now.',
+        );
+      }
+    });
+
+    test('the panel string table is what the call sites use', () {
+      expect(File('lib/xboard/l10n/xboard_strings.dart').existsSync(), isTrue);
+      expect(_read('lib/xboard/bridge.dart'), contains("export 'l10n/"));
+    });
+  });
+
   group('fork identity', () {
     test('the app is branded ToWorld', () {
       final source = _read('lib/common/constant.dart');

@@ -13,6 +13,7 @@ import 'package:fl_clash/xboard/adapter/state/subscription_state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_user_provider.dart');
@@ -206,7 +207,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     _stopProxy();
     // 用全局 navigatorKey 提示，页面此刻正在被换掉，不能依赖某个 State 还活着
     XBoardNotification.showError(
-      currentAppLocalizations.xboardTokenExpiredContent,
+      xboardL10n.xboardTokenExpiredContent,
     );
   }
 

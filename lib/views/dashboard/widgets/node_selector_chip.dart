@@ -3,6 +3,9 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
+// The chip shows the panel's label, and the panel keeps its strings in its own
+// module — the arb copy of them is what made l10n.dart the largest conflict.
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -127,7 +130,7 @@ class NodeSelectorChip extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  context.appLocalizations.xboardSwitch,
+                  xboardL10n.xboardSwitch,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w600,

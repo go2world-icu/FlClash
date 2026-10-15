@@ -1,11 +1,11 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/common/common.dart';
 
 /// 上游移除了旧的 `utils.getTimeDifference`（`Utils` 单例已删除），
 /// 这里用上游保留的顶层 [getDateStringLast2] 复现原有格式化行为。
@@ -192,8 +192,8 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
                       children: [
                         Text(
                           isStart
-                              ? AppLocalizations.of(context).xboardStopProxy
-                              : AppLocalizations.of(context).xboardStartProxy,
+                              ? xboardL10n.xboardStopProxy
+                              : xboardL10n.xboardStartProxy,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: isDark ? Colors.black : Colors.white,
@@ -207,9 +207,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
                               final runTime = ref.watch(runTimeProvider);
                               final text = getTimeText(runTime);
                               return Text(
-                                AppLocalizations.of(
-                                  context,
-                                ).xboardRunningTime(text),
+                                xboardL10n.xboardRunningTime(text),
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: isDark

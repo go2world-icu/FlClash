@@ -10,6 +10,7 @@ import 'forgot_password_page.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -169,7 +170,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             );
           }
           if (mounted) {
-            XBoardNotification.showSuccess(appLocalizations.xboardLoginSuccess);
+            XBoardNotification.showSuccess(xboardL10n.xboardLoginSuccess);
             Future.delayed(const Duration(milliseconds: 500), () {
               // canPop 守卫：登录页也可能是根页面（iOS 外壳未登录态），
               // 此时 pop() 会弹掉 home 路由导致黑屏。
@@ -287,16 +288,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     const SizedBox(height: 48),
                     XBInputField(
                       controller: _emailController,
-                      labelText: appLocalizations.xboardEmail,
-                      hintText: appLocalizations.xboardEmail,
+                      labelText: xboardL10n.xboardEmail,
+                      hintText: xboardL10n.xboardEmail,
                       prefixIcon: AppGlyphs.email,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return appLocalizations.xboardEmail;
+                          return xboardL10n.xboardEmail;
                         }
                         if (!value.contains('@')) {
-                          return appLocalizations.xboardEmail;
+                          return xboardL10n.xboardEmail;
                         }
                         return null;
                       },
@@ -304,8 +305,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     const SizedBox(height: 20),
                     XBInputField(
                       controller: _passwordController,
-                      labelText: appLocalizations.xboardPassword,
-                      hintText: appLocalizations.xboardPassword,
+                      labelText: xboardL10n.xboardPassword,
+                      hintText: xboardL10n.xboardPassword,
                       prefixIcon: AppGlyphs.lock,
                       obscureText: !_isPasswordVisible,
                       suffixIcon: IconButton(
@@ -323,7 +324,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return appLocalizations.xboardPassword;
+                          return xboardL10n.xboardPassword;
                         }
                         return null;
                       },
@@ -351,7 +352,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             });
                           },
                           child: Text(
-                            appLocalizations.xboardRememberPassword,
+                            xboardL10n.xboardRememberPassword,
                             style: textTheme.bodyMedium,
                           ),
                         ),
@@ -372,7 +373,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Text(appLocalizations.xboardLogin),
+                            : Text(xboardL10n.xboardLogin),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -381,11 +382,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       children: [
                         TextButton(
                           onPressed: _navigateToForgotPassword,
-                          child: Text(appLocalizations.xboardForgotPassword),
+                          child: Text(xboardL10n.xboardForgotPassword),
                         ),
                         TextButton(
                           onPressed: _navigateToRegister,
-                          child: Text(appLocalizations.xboardRegister),
+                          child: Text(xboardL10n.xboardRegister),
                         ),
                       ],
                     ),

@@ -1,8 +1,8 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/subscription_status_service.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/common/common.dart';
 
 class SubscriptionStatusDialog extends StatelessWidget {
   final SubscriptionStatusResult statusResult;
@@ -115,13 +115,13 @@ class SubscriptionStatusDialog extends StatelessWidget {
   String _getTitle(BuildContext context) {
     switch (statusResult.type) {
       case SubscriptionStatusType.noSubscription:
-        return AppLocalizations.of(context).xboardNoAvailablePlan;
+        return xboardL10n.xboardNoAvailablePlan;
       case SubscriptionStatusType.expired:
-        return AppLocalizations.of(context).xboardSubscriptionHasExpired;
+        return xboardL10n.xboardSubscriptionHasExpired;
       case SubscriptionStatusType.exhausted:
-        return AppLocalizations.of(context).xboardTrafficUsedUp;
+        return xboardL10n.xboardTrafficUsedUp;
       default:
-        return AppLocalizations.of(context).xboardSubscriptionStatus;
+        return xboardL10n.xboardSubscriptionStatus;
     }
   }
 
@@ -142,7 +142,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).xboardAfterPurchasingPlan,
+            xboardL10n.xboardAfterPurchasingPlan,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.primary,
@@ -152,29 +152,29 @@ class SubscriptionStatusDialog extends StatelessWidget {
           _buildFeatureItem(
             context,
             AppGlyphs.speed,
-            AppLocalizations.of(context).xboardHighSpeedNetwork,
-            AppLocalizations.of(context).xboardEnjoyFastNetworkExperience,
+            xboardL10n.xboardHighSpeedNetwork,
+            xboardL10n.xboardEnjoyFastNetworkExperience,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
             AppGlyphs.shieldCheck,
-            AppLocalizations.of(context).xboardSecureEncryption,
-            AppLocalizations.of(context).xboardProtectNetworkPrivacy,
+            xboardL10n.xboardSecureEncryption,
+            xboardL10n.xboardProtectNetworkPrivacy,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
             AppGlyphs.globe,
-            AppLocalizations.of(context).xboardGlobalNodes,
-            AppLocalizations.of(context).xboardConnectGlobalQualityNodes,
+            xboardL10n.xboardGlobalNodes,
+            xboardL10n.xboardConnectGlobalQualityNodes,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
             AppGlyphs.supportAgent,
-            AppLocalizations.of(context).xboardProfessionalSupport,
-            AppLocalizations.of(context).xboard24HourCustomerService,
+            xboardL10n.xboardProfessionalSupport,
+            xboardL10n.xboard24HourCustomerService,
           ),
         ],
       ),
@@ -240,7 +240,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
               onRefresh?.call();
             },
             child: Text(
-              AppLocalizations.of(context).xboardRefreshStatus,
+              xboardL10n.xboardRefreshStatus,
               style: TextStyle(
                 color: Theme.of(
                   context,
@@ -258,7 +258,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
         child: TextButton(
           onPressed: () => Navigator.of(context).pop('later'),
           child: Text(
-            AppLocalizations.of(context).xboardHandleLater,
+            xboardL10n.xboardHandleLater,
             style: TextStyle(
               color: Theme.of(
                 context,
@@ -304,13 +304,13 @@ class SubscriptionStatusDialog extends StatelessWidget {
   String _getPrimaryButtonText(BuildContext context) {
     switch (statusResult.type) {
       case SubscriptionStatusType.noSubscription:
-        return AppLocalizations.of(context).xboardPurchasePlan;
+        return xboardL10n.xboardPurchasePlan;
       case SubscriptionStatusType.expired:
-        return AppLocalizations.of(context).xboardRenewPlan;
+        return xboardL10n.xboardRenewPlan;
       case SubscriptionStatusType.exhausted:
-        return AppLocalizations.of(context).xboardPurchaseTraffic;
+        return xboardL10n.xboardPurchaseTraffic;
       default:
-        return AppLocalizations.of(context).xboardConfirmAction;
+        return xboardL10n.xboardConfirmAction;
     }
   }
 }

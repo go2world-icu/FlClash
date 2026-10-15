@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/stat_item_widget.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class InviteStatsCard extends ConsumerWidget {
   const InviteStatsCard({super.key});
@@ -19,7 +19,7 @@ class InviteStatsCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              appLocalizations.inviteStats,
+              xboardL10n.inviteStats,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -30,21 +30,21 @@ class InviteStatsCard extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.totalInvites,
+                      title: xboardL10n.totalInvites,
                       value: '${inviteState.totalInvites}',
                       icon: AppGlyphs.people,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.commissionRate,
+                      title: xboardL10n.commissionRate,
                       value: '${inviteState.commissionRate}%',
                       icon: AppGlyphs.percent,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.totalCommission,
+                      title: xboardL10n.totalCommission,
                       value: inviteState.formattedCommission,
                       icon: AppGlyphs.coin,
                     ),

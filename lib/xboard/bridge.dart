@@ -11,6 +11,9 @@ import 'features/ios_shell/ios_shell.dart';
 /// iOS 专用外壳（仅 iOS 使用，接管整个 App 界面）
 export 'features/ios_shell/ios_shell.dart';
 
+/// 面板自有字符串表（原本放在上游 arb 里，是每次合并最大的冲突源）
+export 'l10n/xboard_strings.dart';
+
 /// xboard 导航入口 — "我的"页面
 ///
 /// 已登录 → xboard 首页（套餐/订阅信息）

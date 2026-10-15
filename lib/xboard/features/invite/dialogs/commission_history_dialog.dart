@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class CommissionHistoryDialog extends ConsumerStatefulWidget {
   const CommissionHistoryDialog({super.key});
@@ -47,12 +48,12 @@ class _CommissionHistoryDialogState
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(appLocalizations.commissionHistory),
+          Text(xboardL10n.commissionHistory),
           IconButton(
             onPressed: () =>
                 ref.read(inviteProvider.notifier).refreshCommissionHistory(),
             icon: const GlyphIcon(AppGlyphs.refresh),
-            tooltip: appLocalizations.refresh,
+            tooltip: xboardL10n.refresh,
           ),
         ],
       ),
@@ -67,13 +68,13 @@ class _CommissionHistoryDialogState
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    appLocalizations.totalRecords(
+                    xboardL10n.totalRecords(
                       inviteState.commissionHistory.length,
                     ),
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   Text(
-                    appLocalizations.pageNumber(inviteState.currentHistoryPage),
+                    xboardL10n.pageNumber(inviteState.currentHistoryPage),
                     style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
@@ -93,7 +94,7 @@ class _CommissionHistoryDialogState
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            appLocalizations.noCommissionRecord,
+                            xboardL10n.noCommissionRecord,
                             style: const TextStyle(color: Colors.grey),
                           ),
                         ],
@@ -129,7 +130,7 @@ class _CommissionHistoryDialogState
                                       icon: const GlyphIcon(
                                         AppGlyphs.caretDown,
                                       ),
-                                      label: Text(appLocalizations.loadMore),
+                                      label: Text(xboardL10n.loadMore),
                                     ),
                             ),
                           );
@@ -177,7 +178,7 @@ class _CommissionHistoryDialogState
                   ),
                 ),
                 Text(
-                  appLocalizations.orderNumber(commission.tradeNo),
+                  xboardL10n.orderNumber(commission.tradeNo),
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],

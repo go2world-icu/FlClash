@@ -1,4 +1,3 @@
-import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/xboard/features/auth/pages/login_page.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
@@ -8,6 +7,7 @@ import 'package:fl_clash/xboard/features/ios_shell/ios_invite_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_splash_screen.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// iOS 专用 XBoard 外壳 —— 接管整个 App 界面。
@@ -51,8 +51,7 @@ class _XBoardIosShellState extends ConsumerState<XBoardIosShell> {
       return const LoginPage();
     }
 
-    final appLocalizations = AppLocalizations.of(context);
-    final titles = [appLocalizations.xboardHome, appLocalizations.invite];
+    final titles = [xboardL10n.xboardHome, xboardL10n.invite];
 
     return Scaffold(
       appBar: AppBar(
@@ -77,12 +76,12 @@ class _XBoardIosShellState extends ConsumerState<XBoardIosShell> {
           NavigationDestination(
             icon: const GlyphIcon(AppGlyphs.home, size: 22),
             selectedIcon: const GlyphIcon(AppGlyphs.home, size: 22),
-            label: appLocalizations.xboardHome,
+            label: xboardL10n.xboardHome,
           ),
           NavigationDestination(
             icon: const GlyphIcon(AppGlyphs.people, size: 22),
             selectedIcon: const GlyphIcon(AppGlyphs.people, size: 22),
-            label: appLocalizations.invite,
+            label: xboardL10n.invite,
           ),
         ],
       ),

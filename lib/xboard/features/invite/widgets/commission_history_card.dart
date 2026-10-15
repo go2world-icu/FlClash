@@ -6,6 +6,7 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/withdraw_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/commission_history_dialog.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class CommissionHistoryCard extends ConsumerWidget {
   const CommissionHistoryCard({super.key});
@@ -24,14 +25,14 @@ class CommissionHistoryCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  appLocalizations.commissionHistory,
+                  xboardL10n.commissionHistory,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 if (inviteState.totalCommission > 0)
                   TextButton.icon(
                     onPressed: () => _showWithdrawDialog(context),
                     icon: const GlyphIcon(AppGlyphs.creditCard),
-                    label: Text(appLocalizations.withdraw),
+                    label: Text(xboardL10n.withdraw),
                   ),
               ],
             ),
@@ -49,7 +50,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      appLocalizations.noCommissionRecord,
+                      xboardL10n.noCommissionRecord,
                       style: TextStyle(
                         color: Theme.of(
                           context,
@@ -72,7 +73,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                   TextButton.icon(
                     onPressed: () => _showCommissionHistoryDialog(context),
                     icon: const GlyphIcon(AppGlyphs.history),
-                    label: Text(appLocalizations.viewHistory),
+                    label: Text(xboardL10n.viewHistory),
                   ),
                   if (inviteState.commissionHistory.length >= 5)
                     TextButton.icon(
@@ -89,7 +90,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                       label: Text(
                         inviteState.isLoadingHistory
                             ? appLocalizations.loading
-                            : appLocalizations.loadMore,
+                            : xboardL10n.loadMore,
                       ),
                     ),
                 ],
@@ -129,7 +130,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  appLocalizations.orderNumber(commission.tradeNo),
+                  xboardL10n.orderNumber(commission.tradeNo),
                   style: TextStyle(
                     fontSize: 12,
                     color: theme.colorScheme.onSurface.withOpacity(0.6),

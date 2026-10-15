@@ -6,6 +6,9 @@ library;
 // ========== Core 核心基础层 ==========
 export 'core/core.dart';
 
+// ========== 本地化 ==========
+export 'l10n/xboard_strings.dart';
+
 // ========== Infrastructure 基础设施层 ==========
 export 'infrastructure/infrastructure.dart';
 

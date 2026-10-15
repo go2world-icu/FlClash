@@ -1,11 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/stat_item_widget.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/transfer_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/withdraw_dialog.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class WalletDetailsCard extends ConsumerWidget {
   const WalletDetailsCard({super.key});
@@ -24,7 +24,7 @@ class WalletDetailsCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  appLocalizations.walletDetails,
+                  xboardL10n.walletDetails,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Row(
@@ -39,7 +39,7 @@ class WalletDetailsCard extends ConsumerWidget {
                     TextButton.icon(
                       onPressed: () => _showTransferDialog(context),
                       icon: const GlyphIcon(AppGlyphs.swapHoriz),
-                      label: Text(appLocalizations.transfer),
+                      label: Text(xboardL10n.transfer),
                     ),
                   ],
                 ),
@@ -53,21 +53,21 @@ class WalletDetailsCard extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.availableCommission,
+                      title: xboardL10n.availableCommission,
                       value: inviteState.formattedAvailableCommission,
                       icon: AppGlyphs.wallet,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.pendingCommission,
+                      title: xboardL10n.pendingCommission,
                       value: inviteState.formattedPendingCommission,
                       icon: AppGlyphs.hourglass,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
-                      title: appLocalizations.walletBalance,
+                      title: xboardL10n.walletBalance,
                       value: inviteState.formattedWalletBalance,
                       icon: AppGlyphs.bank,
                     ),

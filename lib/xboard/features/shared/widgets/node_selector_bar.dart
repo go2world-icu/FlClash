@@ -1,4 +1,3 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -8,7 +7,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/latency/services/auto_latency_service.dart';
 import 'package:fl_clash/xboard/features/latency/widgets/latency_indicator.dart';
-import 'package:fl_clash/l10n/l10n.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/common/common.dart';
 
 class NodeSelectorBar extends ConsumerStatefulWidget {
   const NodeSelectorBar({super.key});
@@ -202,7 +202,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
                   shape: AppShape.sm,
                 ),
                 child: Text(
-                  AppLocalizations.of(context).xboardSwitch,
+                  xboardL10n.xboardSwitch,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

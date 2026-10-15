@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class InviteRulesCard extends ConsumerWidget {
   const InviteRulesCard({super.key});
@@ -25,7 +25,7 @@ class InviteRulesCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  appLocalizations.inviteRules,
+                  xboardL10n.inviteRules,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -34,11 +34,11 @@ class InviteRulesCard extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '• ${appLocalizations.inviteRegisterReward}\n'
-              '• ${appLocalizations.friendInviteReward}\n'
-              '• ${appLocalizations.currentCommissionRate(inviteState.commissionRate.toString())}\n'
-              '• ${appLocalizations.commissionSettled}\n'
-              '• ${appLocalizations.withdrawalAvailable}',
+              '• ${xboardL10n.inviteRegisterReward}\n'
+              '• ${xboardL10n.friendInviteReward}\n'
+              '• ${xboardL10n.currentCommissionRate(inviteState.commissionRate.toString())}\n'
+              '• ${xboardL10n.commissionSettled}\n'
+              '• ${xboardL10n.withdrawalAvailable}',
               style: const TextStyle(fontSize: 14, height: 1.5),
             ),
           ],

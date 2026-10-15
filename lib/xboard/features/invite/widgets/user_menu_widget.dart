@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/theme_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 
 class UserMenuWidget extends ConsumerWidget {
   const UserMenuWidget({super.key});
@@ -12,7 +12,7 @@ class UserMenuWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
       icon: const GlyphIcon(AppGlyphs.person),
-      tooltip: appLocalizations.userCenter,
+      tooltip: xboardL10n.userCenter,
       onSelected: (value) {
         if (value == 'theme') {
           _showThemeDialog(context);
@@ -27,7 +27,7 @@ class UserMenuWidget extends ConsumerWidget {
             children: [
               const GlyphIcon(AppGlyphs.themeAuto),
               const SizedBox(width: 8),
-              Text(appLocalizations.switchTheme),
+              Text(xboardL10n.switchTheme),
             ],
           ),
         ),
@@ -39,7 +39,7 @@ class UserMenuWidget extends ConsumerWidget {
               const GlyphIcon(AppGlyphs.logout, color: Colors.red),
               const SizedBox(width: 8),
               Text(
-                appLocalizations.logout,
+                xboardL10n.logout,
                 style: const TextStyle(color: Colors.red),
               ),
             ],
