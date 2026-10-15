@@ -94,6 +94,13 @@ jobs:
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
+          # 搜索列表显式写上，并在 import 之后再解锁一次：codesign 读私钥 ACL 时若
+          # 判定需要授权，会弹一个 CI 上没人能点的窗口，然后永远等下去
+          # （sample 里就是卡在 CSSM_GetKeyAcl）。macOS 26 的 runner 上这一步不
+          # 保险，所以把顺序补全、构建前再确认一次。
+          security list-keychains -d user -s build.keychain
+          security unlock-keychain -p temp build.keychain
+
           # 安装仓库中的 Provisioning Profiles（无需 secrets），按每个 profile 内嵌的 UUID 命名。
           # 两处都装：MobileDevice 给 codesign/export，UserData 给 Xcode 的 GatherProvisioningInputs。
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
@@ -199,6 +206,11 @@ jobs:
             pkill -x xcodebuild || true
           ) &
           WATCHDOG=$!
+
+          # 签名前最后确认一次：解锁 + 搜索列表 + 默认钥匙串，并检查身份确实在场。
+          security unlock-keychain -p temp build.keychain
+          security default-keychain -s build.keychain
+          security find-identity -v -p codesigning build.keychain | tail -5
 
           # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
           dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v
