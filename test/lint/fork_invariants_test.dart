@@ -37,26 +37,27 @@ String? _goBuildTag(String path) {
 
 void main() {
   group('iOS: the app only reaches the Rust bridge on desktop', () {
-    test('main.dart guards RustLib.init() and resolves the xboard config', () {
-      final source = _read('lib/main.dart');
-
+    test('main.dart starts the panel and the desktop-only Rust bridge', () {
       expect(
-        source,
-        contains('resolveXboardConfig()'),
-        reason: 'the xboard config must be resolved before bootstrap',
+        _read('lib/main.dart'),
+        contains('await xboardStartup();'),
+        reason:
+            'upstream calls RustLib.init() unconditionally because it has no '
+            'iOS. A merge that takes their line drops the config probe and the '
+            'desktop guard together, and iOS then fails at startup.',
       );
 
-      final guarded = RegExp(
-        r'if\s*\(\s*system\.isDesktop\s*\)\s*\{\s*await\s+RustLib\.init\(\)',
-        multiLine: true,
-      );
+      final startup = _read('lib/xboard/startup.dart');
+      expect(startup, contains('resolveXboardConfig()'));
       expect(
-        guarded.hasMatch(source),
+        RegExp(
+          r'if\s*\(\s*system\.isDesktop\s*\)\s*\{\s*await\s+RustLib\.init\(\)',
+          multiLine: true,
+        ).hasMatch(startup),
         isTrue,
         reason:
-            'upstream calls RustLib.init() unconditionally because it has '
-            'no iOS; the fork must keep the isDesktop guard, or iOS fails at '
-            'startup.',
+            'rust_api has no iOS build, so the bridge must stay behind the '
+            'isDesktop guard',
       );
     });
 

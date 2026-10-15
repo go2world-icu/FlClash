@@ -3,10 +3,9 @@ import 'dart:io';
 
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/pages/error.dart';
-import 'package:fl_clash/xboard/config_check.dart';
+import 'package:fl_clash/xboard/startup.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rust_api/rust_api.dart';
 
 import 'application.dart';
 import 'bootstrap.dart';
@@ -29,13 +28,7 @@ void main(List<String> args) {
         });
       };
       try {
-        await resolveXboardConfig();
-        // The Rust bridge is desktop-only: iOS has no rust_api build (its
-        // rquickjs-sys dependency ships no iOS bindings) and nothing there
-        // reaches it. The guard came from the fork and was lost in the merge.
-        if (system.isDesktop) {
-          await RustLib.init();
-        }
+        await xboardStartup();
         final version = await system.init();
         final container = await bootstrap.init(version);
         HttpOverrides.global = FlClashHttpOverrides(container);

@@ -34,6 +34,31 @@ Resolve them by kind, not file by file — most of the 77 fall into the first th
 The last row is the important one. Do not try to preserve upstream's structure and the fork's edit hunk by hunk; take
 upstream, then re-add the fork's lines. That is the direction the refactors in the next section push towards.
 
+## Where the fork attaches (the anchors)
+
+The fork's code lives in fork-owned files; upstream files only name it. One line that calls into a fork file survives a
+merge far better than twenty lines of branch, and when it does conflict the resolution is obvious. Keep it that way: when
+an upstream file needs fork behaviour, put the behaviour in the owner column and leave the anchor behind.
+
+| Upstream file | Anchor | Owner |
+|---|---|---|
+| `lib/main.dart` | `await xboardStartup();` | `lib/xboard/startup.dart` |
+| `lib/bootstrap.dart` | `XBoardNavigationPort(navigation)` | `lib/xboard/navigation_port.dart` |
+| `lib/application.dart` | `mobileManagerStack(state)`, `preloadXBoard(ref)`, `buildXBoardHome()` | `lib/manager/ios_manager.dart`, `lib/xboard/bridge.dart` |
+| `lib/common/path.dart` | `initDataDir(dataDir, supportDirectory)` | `lib/common/data_dir.dart` |
+| `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
+| `lib/providers/state/navigation.dart` | the `iosCoreOff` filter | *(still inline — small and self-contained)* |
+| `core/common.go` | `loadConfigForPlatform`, `recreateTunOnReload` | `core/config_{ios,default}.go` |
+| `core/tun/tun.go` | `applyPlatformTunOptions(&options)` | `core/tun/options_{ios,android}.go` |
+| `core/hub.go` | — | zero diff; `handleSuspend` lives in `core/handle_suspend.go` |
+
+Files that are back to upstream byte-for-byte and must stay there: `lib/common/app_ports.dart`, `lib/views/navigation.dart`,
+`lib/providers/state.dart`. Adding a fork parameter to `NavigationPort` is what pulled all three into a merge at once.
+
+Accepted residuals — small, additive, self-contained, and not worth a seam: `lib/core/lib.dart` (`markConnected()` and
+`isMobile`), `lib/common/tray.dart`, `lib/views/proxies/{list,tab}.dart` (the iOS empty-state label), `lib/plugins/app.dart`,
+`lib/views/tools.dart`.
+
 ## iOS: the port that has to be redone every merge
 
 Upstream has no iOS at all — no `ios/`, no iOS build tags in `core/`, no iOS in the build tooling. The whole layer is
