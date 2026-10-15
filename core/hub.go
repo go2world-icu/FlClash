@@ -673,18 +673,6 @@ func handleSideLoadExternalProvider(providerName string, data []byte) *MethodErr
 	return nil
 }
 
-// handleSuspend parks or resumes the tunnel. iOS drives it from the packet
-// tunnel provider's sleep()/wake(): the NE process is frozen along with the
-// device, so the tunnel has to drop its connections rather than hold them open.
-func handleSuspend(suspended bool) bool {
-	if suspended {
-		tunnel.OnSuspend()
-	} else {
-		tunnel.OnRunning()
-	}
-	return true
-}
-
 func handleStartLog() {
 	logMu.Lock()
 	if logCancel != nil {
