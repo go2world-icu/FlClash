@@ -144,8 +144,18 @@ class Service {
         'invokeMethod',
         json.encode({'method': 'getCoreState'}),
       );
-      if (response is! String) return null;
-      final data = json.decode(response);
+      // The channel answers in bytes; plain strings are still accepted so a
+      // provider that has not been rebuilt yet does not read as "not booted".
+      final String? text;
+      if (response is String) {
+        text = response;
+      } else if (response is Uint8List) {
+        text = utf8.decode(response);
+      } else {
+        text = null;
+      }
+      if (text == null) return null;
+      final data = json.decode(text);
       if (data is! Map || !data.containsKey('coreBooted')) return null;
       return IosCoreState(
         booted: data['coreBooted'] == true,
