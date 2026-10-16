@@ -56,17 +56,27 @@ export IOS_CERTIFICATE_PASSWORD=...
 - **archive 必须真签名**（不能 `CODE_SIGNING_ALLOWED=NO`）：entitlements（VPN 的 `networkextension`）在 codesign 阶段嵌入；跳过签名 → export 重新签名也不补 → 上传被 App Store 以 "Missing Entitlement" 拒。
 - **`IOS_CERTIFICATE` p12 里有 4 把证书**（Apple Development ×2、Apple Distribution 指纹 `6186B637E95AF2B1D39B5F532413833B991D69CB`、旧 iPhone Distribution `EAB7C37A...`）。只有 **Apple Distribution** 与描述文件匹配。
 - **sigh 在有多把证书时会建错（旧 iPhone Distribution）profile**：regen workflow 导入 p12 后先把其余证书从 keychain 删掉再让 sigh 重建。
-- **钥匙串必须完全非交互，否则 codesign 永久挂起**。2026-10-15 在 `macos-latest`（已滚到 macOS 26.6.2 / Xcode 26.3，上次成功还是 15.x）踩到：`codesign` 卡在 `CSSM_GetKeyAcl`——读私钥 ACL 时判定需要授权，会弹一个 CI 上没人能点的窗口。症状极具迷惑性：**日志停在 `Running Xcode build...` 之后一片空白**（flutter 把 xcodebuild 输出全缓冲住），一直等到 `timeout-minutes`，唯一线索是清理阶段的 `Terminate orphan process: (codesign)`。配方本身没错，缺的是顺序：
+- **有些 runner 的钥匙串授权是坏的，而且坏一整天（整个 job）**。这是 2026-10-16 查清的，之前的记录把它写成「间歇性」，那是误读。
+
+  现象：`codesign` 卡在读私钥 ACL（`sample` 的栈永远停在 `SecCodeSigner::sign → … → CSSM_GetKeyAcl`），没人能点那个授权框，于是永久挂起。**同一台机器上，`canary` 一上来就挂，之后每一次签名都挂**——所以「同一个 job 里重试」毫无意义，只会把二十分钟一轮的失败重复三遍（实测三次尝试各烧满上限）。
+
+  证据链：同一个 runner 镜像（`macos-26-arm64` / `20260907.0351.1`）、同一个 Xcode 26.3，成功与失败都出现过——**所以不是 Xcode 升级、不是镜像滚动、也不是应用代码**；成功/失败是**好机器与坏机器的区别**。
+
+  **`canary` 就是体检**：构建前用同一个身份签一个 1 字节文件，**限时 20 秒**。它挂了就说明这台机器不可用，立刻退出（约 40 秒），重新派发去换一台——**别在这里重试**。这是目前唯一正确的应对。
+
+  仍要保证的钥匙串状态（都对，但不足以治好坏机器）：
 
   ```bash
-  security list-keychains -d user -s build.keychain   # 进搜索列表
-  security import cert.p12 -k build.keychain -P "$PW" -T /usr/bin/codesign
-  security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$PW" build.keychain
-  security unlock-keychain -p "$PW" build.keychain    # import/partition 之后再解锁一次
+  security list-keychains -d user -s build.keychain      # 进搜索列表
+  security import cert.p12 -k build.keychain -P "$PW" -A # -A：任何程序可用，不留按应用的 ACL
+  security unlock-keychain -p "$PW" build.keychain       # import 之后再解锁一次
+  security set-keychain-settings -lut 21600 build.keychain  # 默认 5 分钟不用就上锁
   ```
 
-  构建前再 `unlock-keychain` + `default-keychain` 一次，并 `find-identity -v -p codesigning build.keychain` 打出来——**签名那一刻身份是否可见，日志里要能直接看到**。
-- **签名步骤的看门狗不要删**：`Build & Export IPA` 里那个后台子进程，12 分钟未完成就 `sample` 卡住的 `codesign`/`xcodebuild`、打印钥匙串与身份列表，然后 `pkill`。没有它，一次挂死要烧掉 60 分钟且什么都学不到；有它 12 分钟就拿到调用栈。
+  构建前再 `unlock-keychain` + `default-keychain`，并 `find-identity -v -p codesigning build.keychain` 打出来。
+- **看门狗盯的是「卡住的 codesign」本身，不是「这一步跑了多久」**。按整步超时写是错的：canary 挂死、被杀之后构建才刚开始，那时看门狗已经用掉了。判据是**同一个 pid 跨过一个采样周期还在**——正常签名不到一秒，跨周期就是死。
+
+  **别用 `ps -o etimes`**：macOS 的 BSD ps 没有这个字段，取值为空 → 跳过分支永远命中 → 看门狗静默失效，job 一路挂到 60 分钟。这个 bug 在开发机（GNU ps）上测不出来。同理别在 runner 上用 `local`：那里是 bash 3.2。
 
 ## 描述文件（提交在仓库）
 
