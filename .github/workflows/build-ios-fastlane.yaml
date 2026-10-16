@@ -194,35 +194,85 @@ jobs:
           # codesign 卡死时 flutter 会把 xcodebuild 的输出全缓冲住，日志里一个字都没有，
           # job 只能干等到 60 分钟超时——什么都学不到。看门狗到点抓栈、打钥匙串状态，
           # 然后杀掉构建，让这一步快速失败并留下可诊断的信息。
-          (
-            sleep 720
-            echo "=== 构建超过 12 分钟，判定为挂死，开始取证 ==="
-            for name in codesign xcodebuild; do
-              for p in $(pgrep -x "$name" || true); do
-                echo "--- $name pid=$p ---"
-                ps -o pid,etime,stat,command -p "$p" || true
-                sample "$p" 2 -mayDie 2>&1 | sed -n '1,60p' || true
+          #
+          # 这个挂死是间歇性的（同一镜像、同一 Xcode、同一配方，成功与挂死都出现过），
+          # 所以它留下 $HUNG 标记，让下面重跑一次而不是直接认输。
+          HUNG=/tmp/codesign-hung
+          rm -f "$HUNG"
+
+          start_watchdog() {
+            (
+              sleep 720
+              echo "=== 构建超过 12 分钟，判定为挂死，开始取证 ==="
+              for name in codesign xcodebuild; do
+                for p in $(pgrep -x "$name" || true); do
+                  echo "--- $name pid=$p ---"
+                  ps -o pid,etime,stat,command -p "$p" || true
+                  sample "$p" 2 -mayDie 2>&1 | sed -n '1,60p' || true
+                done
               done
-            done
-            echo "--- 钥匙串 ---"
-            security list-keychains || true
-            security default-keychain || true
-            security find-identity -v -p codesigning || true
-            echo "=== 杀掉挂死的构建 ==="
-            pkill -x codesign || true
-            pkill -x xcodebuild || true
-          ) &
-          WATCHDOG=$!
+              echo "--- 钥匙串 ---"
+              security list-keychains || true
+              security default-keychain || true
+              security find-identity -v -p codesigning || true
+              touch "$HUNG"
+              echo "=== 杀掉挂死的构建 ==="
+              pkill -x codesign || true
+              pkill -x xcodebuild || true
+            ) &
+            WATCHDOG=$!
+          }
+
+          # canary：用构建要用的那个身份签一个 1 字节文件，在构建之前。
+          #
+          # 它把两种可能一刀切开：canary 自己就挂 → 纯钥匙串/环境问题，和 app、
+          # Flutter 版本、合并都无关；canary 过了而构建挂 → 问题在 Xcode 要签的
+          # 东西上（带 entitlements 的 .appex 之类）。挂在谁身上，看门狗打出来的
+          # codesign 命令行就能认出来：canary 是 /tmp/codesign-canary。
+          sign_canary() {
+            printf canary > /tmp/codesign-canary
+            local identity
+            identity=$(security find-identity -v -p codesigning build.keychain \
+              | grep -m1 'Apple Distribution' | awk '{print $2}')
+            if [ -z "$identity" ]; then
+              echo "ERROR: build.keychain 里没有 Apple Distribution 身份" >&2
+              exit 1
+            fi
+            echo "[canary] codesign --force --sign $identity /tmp/codesign-canary"
+            # 和构建用同样的 --timestamp：App Store 要求安全时间戳，那条网络路径
+            # 也是挂死的候选原因之一，canary 不该把它绕过去。
+            codesign --force --sign "$identity" --timestamp /tmp/codesign-canary
+            codesign -dv /tmp/codesign-canary 2>&1 | head -3
+            echo "[canary] ok"
+          }
+
+          attempt() {
+            sign_canary
+            # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
+            dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v
+          }
 
           # 签名前最后确认一次：解锁 + 搜索列表 + 默认钥匙串，并检查身份确实在场。
           security unlock-keychain -p temp build.keychain
           security default-keychain -s build.keychain
           security find-identity -v -p codesigning build.keychain | tail -5
 
-          # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
-          dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v
+          start_watchdog
+          attempt
           BUILD_RC=$?
           kill "$WATCHDOG" 2>/dev/null || true
+
+          # 已知的间歇性挂死：重跑一次。挂死是幂等的，重跑没有副作用，而且日志里
+          # 明确记着第一次挂了——不会把问题掩盖过去。
+          if [ "$BUILD_RC" -ne 0 ] && [ -f "$HUNG" ]; then
+            echo "=== 第一次构建挂在 codesign，重跑一次 ==="
+            rm -f "$HUNG"
+            start_watchdog
+            attempt
+            BUILD_RC=$?
+            kill "$WATCHDOG" 2>/dev/null || true
+          fi
+
           [ "$BUILD_RC" -eq 0 ] || exit "$BUILD_RC"
 
           # 重命名 IPA（flutter build ipa 输出到 build/ios/ipa/）
