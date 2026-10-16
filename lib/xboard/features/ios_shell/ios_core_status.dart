@@ -83,9 +83,10 @@ class _StatusLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final state = isUp ? xboardL10n.ready : xboardL10n.notReady;
+    // The label never changes and never moves: the dot is the whole state, so
+    // the row keeps its width when something goes down.
     return Tooltip(
-      message: '$label: $state',
+      message: '$label: ${isUp ? xboardL10n.ready : xboardL10n.notReady}',
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -99,10 +100,9 @@ class _StatusLine extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            isUp ? label : '$label $state',
+            label,
             style: context.textTheme.labelSmall?.copyWith(
-              color: isUp ? colorScheme.onSurfaceVariant : colorScheme.error,
-              fontWeight: isUp ? null : FontWeight.w600,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],
