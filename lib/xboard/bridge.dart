@@ -6,7 +6,6 @@ import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/xboard.dart';
 
-import 'features/ios_shell/ios_core_status.dart';
 import 'features/ios_shell/ios_shell.dart';
 
 /// iOS 专用外壳（仅 iOS 使用，接管整个 App 界面）
@@ -44,8 +43,6 @@ Widget buildXBoardHome() {
     connectionControl: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IosCoreStatus(),
-        SizedBox(height: 12),
         Card(margin: EdgeInsets.zero, child: NodeSelectorBar()),
         SizedBox(height: 12),
         XBoardConnectButton(),

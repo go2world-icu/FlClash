@@ -7,14 +7,18 @@ import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// How far the shell's startup got, in two lines because it has two halves.
+/// Where the shell's startup got to, for the navigation bar's actions.
 ///
 /// The tunnel and the Core inside it are separate: the switch flips the tunnel
 /// immediately, while the Core only answers once the packet tunnel provider has
-/// booted it. A screen that shows only the first says "connected" while the
-/// node list stays empty, which is the failure this is meant to make visible —
-/// so the Core line is probed through [iosCoreReachableProvider] rather than
-/// read off `CoreStatus`, which cannot tell them apart on iOS.
+/// booted it. A screen that shows only the first says "connected" while the node
+/// list stays empty, which is the failure this is meant to make visible — so the
+/// Core line is probed through [iosCoreReachableProvider] rather than read off
+/// `CoreStatus`, which cannot tell the two apart on iOS.
+///
+/// The state word only appears when something is down: at rest this is two
+/// dots, and the sentence behind them lives in the tooltip, which keeps it from
+/// growing wide enough to crowd the title in any locale.
 class IosCoreStatus extends ConsumerStatefulWidget {
   const IosCoreStatus({super.key});
 
@@ -38,13 +42,11 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
 
   void _scheduleRetry({required bool tunnelUp, required bool coreReady}) {
     if (coreReady || !tunnelUp) {
-      _wasReady = coreReady;
       _retry?.cancel();
       _retry = null;
       return;
     }
-    if (_retry != null) return;
-    _retry = Timer.periodic(_retryInterval, (_) {
+    _retry ??= Timer.periodic(_retryInterval, (_) {
       if (!mounted) return;
       ref.invalidate(iosCoreReachableProvider);
     });
@@ -61,21 +63,13 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
     }
     _scheduleRetry(tunnelUp: tunnelUp, coreReady: coreReady);
 
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: _StatusLine(label: xboardL10n.iosTunnel, isUp: tunnelUp),
-            ),
-            Expanded(
-              child: _StatusLine(label: xboardL10n.iosCore, isUp: coreReady),
-            ),
-          ],
-        ),
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _StatusLine(label: xboardL10n.iosTunnel, isUp: tunnelUp),
+        const SizedBox(width: 12),
+        _StatusLine(label: xboardL10n.iosCore, isUp: coreReady),
+      ],
     );
   }
 }
@@ -89,30 +83,30 @@ class _StatusLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: isUp ? colorScheme.success : colorScheme.error,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            '$label ${isUp ? xboardL10n.ready : xboardL10n.notReady}',
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.labelMedium?.copyWith(
-              color: isUp
-                  ? colorScheme.onSurface
-                  : colorScheme.onSurfaceVariant,
+    final state = isUp ? xboardL10n.ready : xboardL10n.notReady;
+    return Tooltip(
+      message: '$label: $state',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: isUp ? colorScheme.success : colorScheme.error,
+              shape: BoxShape.circle,
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 6),
+          Text(
+            isUp ? label : '$label $state',
+            style: context.textTheme.labelSmall?.copyWith(
+              color: isUp ? colorScheme.onSurfaceVariant : colorScheme.error,
+              fontWeight: isUp ? null : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:fl_clash/xboard/features/auth/pages/login_page.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/user_menu_widget.dart';
+import 'package:fl_clash/xboard/features/ios_shell/ios_core_status.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_home_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_invite_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_splash_screen.dart';
@@ -57,7 +58,12 @@ class _XBoardIosShellState extends ConsumerState<XBoardIosShell> {
       appBar: AppBar(
         title: Text(titles[_selectedIndex]),
         automaticallyImplyLeading: false,
-        actions: const [UserMenuWidget(), SizedBox(width: 4)],
+        actions: const [
+          IosCoreStatus(),
+          SizedBox(width: 4),
+          UserMenuWidget(),
+          SizedBox(width: 4),
+        ],
       ),
       body: IndexedStack(
         index: _selectedIndex,
