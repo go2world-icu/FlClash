@@ -91,17 +91,17 @@ jobs:
           #
           # 用 -A（any application may use the key）而不是 -T /usr/bin/codesign：
           # codesign 卡死那几次，栈都停在 CSSM_GetKeyAcl —— 也就是 ACL 在问「这个
-          # 进程能不能用这把私钥」，而 CI 上没人能点那个授权框。-T 只授权那一个二进制，
-          # 可发起签名的其实是 SWBBuildService 拉起来的 codesign；分区列表按理覆盖得到，
-          # 但实测仍会间歇性挂住（同一配方两次成功、两次挂死）。runner 是一次性的，
+          # 进程能不能用这把私钥」，而 CI 上没人能点那个授权框。runner 是一次性的，
           # 放宽到 -A 的代价可以接受。
           echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
           security import cert.p12 -k build.keychain \
             -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -A
-          # 刻意不再 set-key-partition-list：-A 已经把 ACL 放开成「任何程序都能用」，
-          # 分区列表只会往上再加一层限制。签名实际由 SWBBuildService 拉起的 codesign
-          # 发起，那个名单里没有它；canary（同身份、同钥匙串、同 --timestamp，直接由
-          # shell 发起）每次都能过、而构建里的签名会挂，差别正落在这个「谁在发起」上。
+          # 分区列表留着：曾经以「SWBBuildService 不在名单里」为由删掉过，但那条推理
+          # 后来被 canary 证伪（canary 由 shell 发起、签 1 字节文件，照样会挂），而删掉
+          # 之后的每一次运行都挂了。既然带着它能跑通，就先回到那一套，别在样本这么小的
+          # 情况下去掉一个已知能工作的环节。
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
           # 搜索列表显式写上，并在 import 之后再解锁一次：codesign 读私钥 ACL 时若
           # 判定需要授权，会弹一个 CI 上没人能点的窗口，然后永远等下去
