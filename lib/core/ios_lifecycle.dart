@@ -21,15 +21,15 @@ Future<bool> shouldDeferApply(Ref ref, {required bool isBoot}) async {
   return !await coreController.isInit;
 }
 
-/// Whether the core inside the packet tunnel answers at all.
+/// What the packet tunnel provider says about the core it booted.
 ///
-/// The shell's status line needs the two halves apart: the tunnel being up says
-/// nothing about the core, and `CoreStatus` cannot stand in for it either — on
-/// iOS `CoreLib.start()` completes its own gate, so it reports connected even
-/// with nothing listening on the other side.
-final iosCoreReachableProvider = FutureProvider<bool>((ref) async {
-  if (!ref.watch(isStartProvider)) return false;
-  return coreController.isInit;
+/// This replaces asking the core: `isInit` comes back empty both when the core
+/// never booted and when the call to it never returns, so a red dot built on it
+/// cannot say which — and the two point at completely different problems. The
+/// extension knows, because it ran `quickSetup` and handed over the descriptor.
+final iosCoreBootProvider = FutureProvider<IosCoreState?>((ref) async {
+  if (!ref.watch(isStartProvider)) return null;
+  return service?.coreState();
 });
 
 /// Whether the app can reach the packet tunnel provider at all.

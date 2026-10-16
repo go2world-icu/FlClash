@@ -49,7 +49,7 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
     _retry ??= Timer.periodic(_retryInterval, (_) {
       if (!mounted) return;
       ref.invalidate(iosCoreChannelProvider);
-      ref.invalidate(iosCoreReachableProvider);
+      ref.invalidate(iosCoreBootProvider);
     });
   }
 
@@ -57,13 +57,14 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
   Widget build(BuildContext context) {
     final tunnelUp = ref.watch(isStartProvider);
     final channelUp = ref.watch(iosCoreChannelProvider).value ?? false;
-    final coreReady = ref.watch(iosCoreReachableProvider).value ?? false;
-    if (coreReady != _wasReady) {
-      _wasReady = coreReady;
+    final core = ref.watch(iosCoreBootProvider).value;
+    final coreBooted = core?.booted ?? false;
+    if (coreBooted != _wasReady) {
+      _wasReady = coreBooted;
       _retry?.cancel();
       _retry = null;
     }
-    _scheduleRetry(tunnelUp: tunnelUp, allUp: channelUp && coreReady);
+    _scheduleRetry(tunnelUp: tunnelUp, allUp: channelUp && coreBooted);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -72,17 +73,30 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
         const SizedBox(width: 10),
         _StatusLine(label: xboardL10n.iosChannel, isUp: channelUp),
         const SizedBox(width: 10),
-        _StatusLine(label: xboardL10n.iosCore, isUp: coreReady),
+        _StatusLine(
+          label: xboardL10n.iosCore,
+          isUp: coreBooted,
+          // The extension's own account of what it did, which is what makes a
+          // red dot actionable: boot failure and a silent call look the same
+          // from here otherwise.
+          detail: core == null
+              ? null
+              : 'booted=${core.booted} tun=${core.tunStarted}'
+                    '${core.error.isEmpty ? '' : ' error=${core.error}'}',
+        ),
       ],
     );
   }
 }
 
 class _StatusLine extends StatelessWidget {
-  const _StatusLine({required this.label, required this.isUp});
+  const _StatusLine({required this.label, required this.isUp, this.detail});
 
   final String label;
   final bool isUp;
+
+  /// Extra facts for the tooltip, when the dot alone cannot say enough.
+  final String? detail;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +104,9 @@ class _StatusLine extends StatelessWidget {
     // The label never changes and never moves: the dot is the whole state, so
     // the row keeps its width when something goes down.
     return Tooltip(
-      message: '$label: ${isUp ? xboardL10n.ready : xboardL10n.notReady}',
+      message:
+          '$label: ${isUp ? xboardL10n.ready : xboardL10n.notReady}'
+          '${detail == null ? '' : '\n$detail'}',
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

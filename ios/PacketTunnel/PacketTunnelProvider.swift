@@ -16,6 +16,14 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     private static let dns6 = "fdfe:dcba:9876::2"
     private static let netAny = "0.0.0.0"
 
+    /// What this extension knows about the core by itself, so it can be told
+    /// without calling into it. A call into the core that never comes back
+    /// looks exactly like a core that never booted, and the app cannot tell
+    /// those apart by asking the core.
+    private static var coreBooted = false
+    private static var coreBootError = ""
+    private static var tunStarted = false
+
     private var memoryPressureSource: DispatchSourceMemoryPressure?
 
     override func startTunnel(options: [String: NSObject]?) async throws {
@@ -78,10 +86,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         tunnelLog.notice("quickSetup done, available memory: \(Self.availableMemoryMB()) MB")
         guard message.isEmpty else {
             tunnelLog.error("quickSetup failed: \(message, privacy: .public)")
+            Self.coreBootError = message
             throw NSError(
                 domain: (Bundle.main.bundleIdentifier ?? "flclash.packet-tunnel"), code: 1,
                 userInfo: [NSLocalizedDescriptionKey: message])
         }
+        Self.coreBooted = true
 
         // 2. Network settings (mirrors the android VpnService.Builder).
         tunnelLog.notice("setting up network settings…")
@@ -153,6 +163,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                         "The Core rejected the tun file descriptor"
                 ])
         }
+        Self.tunStarted = true
         ClashCore.forceGC()
         observeMemoryPressure()
         tunnelLog.notice(
@@ -205,6 +216,14 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             return try? JSONSerialization.data(withJSONObject: response)
         case "ping":
             return Data("{}".utf8)
+        case "getCoreState":
+            // Deliberately local: see coreBooted above.
+            let state: [String: Any] = [
+                "coreBooted": Self.coreBooted,
+                "tunStarted": Self.tunStarted,
+                "error": Self.coreBootError,
+            ]
+            return try? JSONSerialization.data(withJSONObject: state)
         default:
             break
         }

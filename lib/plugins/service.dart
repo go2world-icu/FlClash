@@ -132,6 +132,31 @@ class Service {
     }
   }
 
+  /// What the packet tunnel provider knows about the core by itself, answered
+  /// locally rather than by calling into the core.
+  ///
+  /// `getIsInit` cannot tell "the core never booted" from "the call into it
+  /// never came back" — both arrive as no answer. The extension can, because it
+  /// is the one that booted the core.
+  Future<IosCoreState?> coreState() async {
+    try {
+      final response = await methodChannel.invokeMethod<Object?>(
+        'invokeMethod',
+        json.encode({'method': 'getCoreState'}),
+      );
+      if (response is! String) return null;
+      final data = json.decode(response);
+      if (data is! Map || !data.containsKey('coreBooted')) return null;
+      return IosCoreState(
+        booted: data['coreBooted'] == true,
+        tunStarted: data['tunStarted'] == true,
+        error: (data['error'] as String?) ?? '',
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _dispatch(String label, void Function(ServiceListener) deliver) {
     for (final listener in List.of(_listeners)) {
       try {
@@ -208,3 +233,16 @@ class Service {
 }
 
 Service? get service => system.isMobile ? Service() : null;
+
+/// The packet tunnel provider's own view of the core. See [Service.coreState].
+class IosCoreState {
+  const IosCoreState({
+    required this.booted,
+    required this.tunStarted,
+    required this.error,
+  });
+
+  final bool booted;
+  final bool tunStarted;
+  final String error;
+}
