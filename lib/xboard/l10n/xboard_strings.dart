@@ -70,6 +70,10 @@ class XBoardStrings {
       'inviteRules': 'Invite Rules',
       'inviteStats': 'Invite Stats',
       'ipcidr': 'Ipcidr',
+      'iosCore': 'Core',
+      'iosTunnel': 'Tunnel',
+      'notReady': 'Not ready',
+      'ready': 'Ready',
       'just': 'Just',
       'loadMore': 'Load More',
       'loggedOutSuccess': 'Logged out successfully',
@@ -289,6 +293,10 @@ class XBoardStrings {
       'inviteRules': '招待ルール',
       'inviteStats': '招待統計',
       'ipcidr': 'IPCIDR',
+      'iosCore': 'コア',
+      'iosTunnel': 'トンネル',
+      'notReady': '未準備',
+      'ready': '準備完了',
       'just': 'たった今',
       'loadMore': 'もっと読み込む',
       'loggedOutSuccess': 'ログアウトしました',
@@ -501,6 +509,10 @@ class XBoardStrings {
       'inviteRules': 'Правила приглашения',
       'inviteStats': 'Статистика приглашений',
       'ipcidr': 'IPCIDR',
+      'iosCore': 'Ядро',
+      'iosTunnel': 'Туннель',
+      'notReady': 'Не готово',
+      'ready': 'Готово',
       'just': 'Только что',
       'loadMore': 'Загрузить ещё',
       'loggedOutSuccess': 'Вы вышли из системы',
@@ -723,6 +735,10 @@ class XBoardStrings {
       'inviteRules': '邀请规则',
       'inviteStats': '邀请统计',
       'ipcidr': 'IP/掩码',
+      'iosCore': '内核',
+      'iosTunnel': '隧道',
+      'notReady': '未就绪',
+      'ready': '就绪',
       'just': '刚刚',
       'loadMore': '加载更多',
       'loggedOutSuccess': '已成功登出',
@@ -1121,6 +1137,10 @@ class XBoardStrings {
   String get xboardUsedTraffic => _s('xboardUsedTraffic');
   String get xboardValidityPeriod => _s('xboardValidityPeriod');
   String get years => _s('years');
+  String get iosCore => _s('iosCore');
+  String get iosTunnel => _s('iosTunnel');
+  String get notReady => _s('notReady');
+  String get ready => _s('ready');
 }
 
 /// The panel's strings for the locale the app currently has loaded.

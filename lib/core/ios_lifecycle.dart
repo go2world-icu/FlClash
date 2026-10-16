@@ -19,3 +19,14 @@ Future<bool> shouldDeferApply(Ref ref, {required bool isBoot}) async {
   if (!ref.read(isStartProvider)) return true;
   return !await coreController.isInit;
 }
+
+/// Whether the core inside the packet tunnel answers at all.
+///
+/// The shell's status line needs the two halves apart: the tunnel being up says
+/// nothing about the core, and `CoreStatus` cannot stand in for it either — on
+/// iOS `CoreLib.start()` completes its own gate, so it reports connected even
+/// with nothing listening on the other side.
+final iosCoreReachableProvider = FutureProvider<bool>((ref) async {
+  if (!ref.watch(isStartProvider)) return false;
+  return coreController.isInit;
+});

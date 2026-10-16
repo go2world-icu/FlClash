@@ -136,9 +136,23 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let dns = vpn.dnsHijacking
             ? Self.netAny
             : (vpn.ipv6 ? "\(Self.dns),\(Self.dns6)" : Self.dns)
-        ClashCore.startTun(
-            fd: fd, stack: vpn.stack, address: address, dns: dns,
-            options: vpn.tunOptions)
+        // A Core that refuses the descriptor leaves the tunnel up with nothing
+        // reading it: the switch stays on, no node list ever arrives, and the
+        // only symptom is a screen that looks connected. Fail the start instead,
+        // which is what Android's VpnService does with the same call.
+        guard
+            ClashCore.startTun(
+                fd: fd, stack: vpn.stack, address: address, dns: dns,
+                options: vpn.tunOptions)
+        else {
+            throw NSError(
+                domain: (Bundle.main.bundleIdentifier ?? "flclash.packet-tunnel"),
+                code: 3,
+                userInfo: [
+                    NSLocalizedDescriptionKey:
+                        "The Core rejected the tun file descriptor"
+                ])
+        }
         ClashCore.forceGC()
         observeMemoryPressure()
         tunnelLog.notice(
