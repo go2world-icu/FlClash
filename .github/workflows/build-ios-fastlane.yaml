@@ -98,8 +98,10 @@ jobs:
           echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
           security import cert.p12 -k build.keychain \
             -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -A
-          security set-key-partition-list \
-            -S apple-tool:,apple:,codesign: -s -k temp build.keychain
+          # 刻意不再 set-key-partition-list：-A 已经把 ACL 放开成「任何程序都能用」，
+          # 分区列表只会往上再加一层限制。签名实际由 SWBBuildService 拉起的 codesign
+          # 发起，那个名单里没有它；canary（同身份、同钥匙串、同 --timestamp，直接由
+          # shell 发起）每次都能过、而构建里的签名会挂，差别正落在这个「谁在发起」上。
 
           # 搜索列表显式写上，并在 import 之后再解锁一次：codesign 读私钥 ACL 时若
           # 判定需要授权，会弹一个 CI 上没人能点的窗口，然后永远等下去
@@ -257,9 +259,11 @@ jobs:
           security default-keychain -s build.keychain
           security find-identity -v -p codesigning build.keychain | tail -5
 
+          # run: 是 `bash -e`：attempt 失败会直接终止脚本，所以必须显式吞掉返回值，
+          # 否则下面的重试根本没机会执行。
+          BUILD_RC=0
           start_watchdog
-          attempt
-          BUILD_RC=$?
+          attempt || BUILD_RC=$?
           kill "$WATCHDOG" 2>/dev/null || true
 
           # 已知的间歇性挂死：重跑一次。挂死是幂等的，重跑没有副作用，而且日志里
@@ -268,8 +272,7 @@ jobs:
             echo "=== 第一次构建挂在 codesign，重跑一次 ==="
             rm -f "$HUNG"
             start_watchdog
-            attempt
-            BUILD_RC=$?
+            attempt || BUILD_RC=$?
             kill "$WATCHDOG" 2>/dev/null || true
           fi
 
