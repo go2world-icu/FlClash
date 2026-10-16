@@ -40,14 +40,15 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
     super.dispose();
   }
 
-  void _scheduleRetry({required bool tunnelUp, required bool coreReady}) {
-    if (coreReady || !tunnelUp) {
+  void _scheduleRetry({required bool tunnelUp, required bool allUp}) {
+    if (allUp || !tunnelUp) {
       _retry?.cancel();
       _retry = null;
       return;
     }
     _retry ??= Timer.periodic(_retryInterval, (_) {
       if (!mounted) return;
+      ref.invalidate(iosCoreChannelProvider);
       ref.invalidate(iosCoreReachableProvider);
     });
   }
@@ -55,19 +56,22 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
   @override
   Widget build(BuildContext context) {
     final tunnelUp = ref.watch(isStartProvider);
+    final channelUp = ref.watch(iosCoreChannelProvider).value ?? false;
     final coreReady = ref.watch(iosCoreReachableProvider).value ?? false;
     if (coreReady != _wasReady) {
       _wasReady = coreReady;
       _retry?.cancel();
       _retry = null;
     }
-    _scheduleRetry(tunnelUp: tunnelUp, coreReady: coreReady);
+    _scheduleRetry(tunnelUp: tunnelUp, allUp: channelUp && coreReady);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         _StatusLine(label: xboardL10n.iosTunnel, isUp: tunnelUp),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
+        _StatusLine(label: xboardL10n.iosChannel, isUp: channelUp),
+        const SizedBox(width: 10),
         _StatusLine(label: xboardL10n.iosCore, isUp: coreReady),
       ],
     );

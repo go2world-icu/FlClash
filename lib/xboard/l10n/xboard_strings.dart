@@ -70,6 +70,7 @@ class XBoardStrings {
       'inviteRules': 'Invite Rules',
       'inviteStats': 'Invite Stats',
       'ipcidr': 'Ipcidr',
+      'iosChannel': 'Link',
       'iosCore': 'Core',
       'iosTunnel': 'Tunnel',
       'notReady': 'Not ready',
@@ -293,6 +294,7 @@ class XBoardStrings {
       'inviteRules': '招待ルール',
       'inviteStats': '招待統計',
       'ipcidr': 'IPCIDR',
+      'iosChannel': '接続',
       'iosCore': 'コア',
       'iosTunnel': 'トンネル',
       'notReady': '未準備',
@@ -509,6 +511,7 @@ class XBoardStrings {
       'inviteRules': 'Правила приглашения',
       'inviteStats': 'Статистика приглашений',
       'ipcidr': 'IPCIDR',
+      'iosChannel': 'Канал',
       'iosCore': 'Ядро',
       'iosTunnel': 'Туннель',
       'notReady': 'Не готово',
@@ -735,6 +738,7 @@ class XBoardStrings {
       'inviteRules': '邀请规则',
       'inviteStats': '邀请统计',
       'ipcidr': 'IP/掩码',
+      'iosChannel': '通道',
       'iosCore': '内核',
       'iosTunnel': '隧道',
       'notReady': '未就绪',
@@ -1141,6 +1145,7 @@ class XBoardStrings {
   String get iosTunnel => _s('iosTunnel');
   String get notReady => _s('notReady');
   String get ready => _s('ready');
+  String get iosChannel => _s('iosChannel');
 }
 
 /// The panel's strings for the locale the app currently has loaded.

@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,4 +30,15 @@ Future<bool> shouldDeferApply(Ref ref, {required bool isBoot}) async {
 final iosCoreReachableProvider = FutureProvider<bool>((ref) async {
   if (!ref.watch(isStartProvider)) return false;
   return coreController.isInit;
+});
+
+/// Whether the app can reach the packet tunnel provider at all.
+///
+/// Every core call goes through the provider, so a dead channel and a dead core
+/// both read as "the core answered nothing". `ping` is answered by the provider
+/// itself, so this tells them apart — which is the whole reason the shell shows
+/// it beside the other two.
+final iosCoreChannelProvider = FutureProvider<bool>((ref) async {
+  if (!system.isIOS) return false;
+  return await service?.ping() ?? false;
 });

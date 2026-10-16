@@ -116,6 +116,22 @@ class Service {
     return CoreMethodResponse.fromJson(dataJson as Map<String, dynamic>);
   }
 
+  /// Not a core method: the packet tunnel provider answers `ping` itself,
+  /// without reaching the Go core. That is the point — it separates "the app
+  /// can reach the NE" from "the core inside it answers", which otherwise both
+  /// look like a failed call.
+  Future<bool> ping() async {
+    try {
+      final response = await methodChannel.invokeMethod<Object?>(
+        'invokeMethod',
+        json.encode({'method': 'ping'}),
+      );
+      return response != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   void _dispatch(String label, void Function(ServiceListener) deliver) {
     for (final listener in List.of(_listeners)) {
       try {
