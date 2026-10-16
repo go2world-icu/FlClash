@@ -195,38 +195,51 @@ jobs:
 
           # 这个 codesign 挂死是间歇性的、而且和「谁在发起签名」无关：同一个镜像、
           # 同一个 Xcode、同一个配方，同一个 canary 命令一次通过一次挂死。所以要盯的
-          # 不是「这一步跑了多久」，而是**卡住的那个 codesign 本身**——正常签名不到
-          # 一秒，任何一个活过 3 分钟的 codesign 就是死了。
+          # 不是「这一步跑了多久」，而是**卡住的那个 codesign 本身**。
           #
-          # 早先按「整步 12 分钟」写是错的：canary 挂死、被杀之后构建才刚开始，那时
-          # 看门狗已经用掉了，构建就一路挂到 60 分钟超时。
+          # 判据刻意不用 `ps -o etimes`：macOS 的 BSD ps 没有那个字段，取值为空，
+          # 于是「跳过」分支永远命中，看门狗静默失效，job 一路挂到 60 分钟超时——
+          # 而 GNU ps（本地开发机）上是测不出来的。改成看**同一个 pid 跨过采样周期
+          # 是否还在**：正常签名不到一秒，跨过一个周期还在就是死。
+          #
+          # 也不好用 `local`：runner 上是 bash 3.2。
           #
           # 杀掉之后留 $HUNG 标记，让下面重试。
           HUNG=/tmp/codesign-hung
-          STUCK_AFTER=180
+          WATCHDOG_INTERVAL=20
+          ATTEMPT_BUDGET=1200
 
           start_watchdog() {
             (
+              prev_codesign=""
+              waited=0
               while true; do
-                sleep 30
-                for p in $(pgrep -x codesign || true); do
-                  local et
-                  et=$(ps -o etimes= -p "$p" 2>/dev/null | tr -d ' ')
-                  [ -n "$et" ] || continue
-                  [ "$et" -gt "$STUCK_AFTER" ] || continue
-                  echo "=== codesign pid=$p 已存活 ${et}s（阈值 ${STUCK_AFTER}s），判定挂死 ==="
-                  ps -o pid,etime,stat,command -p "$p" || true
-                  sample "$p" 2 -mayDie 2>&1 | sed -n '1,60p' || true
+                sleep $WATCHDOG_INTERVAL
+                waited=$((waited + WATCHDOG_INTERVAL))
+                cur_codesign=$(pgrep -x codesign | sort | tr '\n' ' ')
+                if [ -n "$cur_codesign" ] && [ "$cur_codesign" = "$prev_codesign" ]; then
+                  echo "=== codesign（pid $cur_codesign）跨过 ${WATCHDOG_INTERVAL}s 仍在，判定挂死 ==="
+                  ps -o pid,etime,stat,command -p $cur_codesign || true
+                  sample $cur_codesign 2 -mayDie 2>&1 | sed -n '1,60p' || true
                   echo "--- 钥匙串 ---"
                   security list-keychains || true
                   security default-keychain || true
                   security find-identity -v -p codesigning || true
                   touch "$HUNG"
-                  echo "=== 杀掉它 ==="
-                  # 不退出：xcodebuild 可能换个 pid 重试 codesign，继续盯着，让每一次
-                  # 卡住都在 3 分钟内被清掉，直到 xcodebuild 自己放弃。
-                  kill -9 "$p" 2>/dev/null || true
-                done
+                  echo "=== 杀掉它（不退出：xcodebuild 可能换 pid 重试）==="
+                  pkill -9 -x codesign || true
+                  prev_codesign=""
+                  continue
+                fi
+                prev_codesign="$cur_codesign"
+                # 兜底：本次尝试的总上限，覆盖不是 codesign 的卡法。
+                if [ "$waited" -ge "$ATTEMPT_BUDGET" ]; then
+                  echo "=== 本次尝试已 ${waited}s，兜底杀掉 ==="
+                  touch "$HUNG"
+                  pkill -x xcodebuild || true
+                  pkill -x codesign || true
+                  exit 0
+                fi
               done
             ) &
             WATCHDOG=$!
