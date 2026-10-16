@@ -44,10 +44,10 @@ export IOS_CERTIFICATE_PASSWORD=...
 
 1. 环境：Go / Flutter / Xcode / Ruby + bundler。
 2. `flutter precache --ios`、`pod install`。
-3. **Setup Code Signing**：建 `build.keychain`、导入 `IOS_CERTIFICATE` p12、把仓库里两个描述文件按**内嵌 UUID** 装到两处：
+3. **Setup Code Signing**：建 `build.keychain` 并放进搜索列表、导入 `IOS_CERTIFICATE` p12、`set-key-partition-list`、再 `unlock-keychain`；把仓库里两个描述文件按**内嵌 UUID** 装到两处：
    - `~/Library/MobileDevice/Provisioning Profiles/`（codesign/export 用）
    - `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`（archive 的 GatherProvisioningInputs 用）
-4. **Build & Export**：写 `ExportOptions.plist`（manual 签名 + profile UUID）→ `dart setup.dart ios ...` → 产出 `dist/ToWorld-ios-arm64.ipa`。
+4. **Build & Export**：写 `ExportOptions.plist`（manual 签名 + profile UUID）→ 再解锁一次钥匙串并打印 `find-identity` → `dart setup.dart ios ...` → 产出 `dist/ToWorld-ios-arm64.ipa`。**这一步带看门狗**，见下。
 5. **fastlane 上传**：`bundle exec fastlane deploy_testflight`（只上传，不做构建）。
 
 ## 关键非显然约束
@@ -56,6 +56,17 @@ export IOS_CERTIFICATE_PASSWORD=...
 - **archive 必须真签名**（不能 `CODE_SIGNING_ALLOWED=NO`）：entitlements（VPN 的 `networkextension`）在 codesign 阶段嵌入；跳过签名 → export 重新签名也不补 → 上传被 App Store 以 "Missing Entitlement" 拒。
 - **`IOS_CERTIFICATE` p12 里有 4 把证书**（Apple Development ×2、Apple Distribution 指纹 `6186B637E95AF2B1D39B5F532413833B991D69CB`、旧 iPhone Distribution `EAB7C37A...`）。只有 **Apple Distribution** 与描述文件匹配。
 - **sigh 在有多把证书时会建错（旧 iPhone Distribution）profile**：regen workflow 导入 p12 后先把其余证书从 keychain 删掉再让 sigh 重建。
+- **钥匙串必须完全非交互，否则 codesign 永久挂起**。2026-10-15 在 `macos-latest`（已滚到 macOS 26.6.2 / Xcode 26.3，上次成功还是 15.x）踩到：`codesign` 卡在 `CSSM_GetKeyAcl`——读私钥 ACL 时判定需要授权，会弹一个 CI 上没人能点的窗口。症状极具迷惑性：**日志停在 `Running Xcode build...` 之后一片空白**（flutter 把 xcodebuild 输出全缓冲住），一直等到 `timeout-minutes`，唯一线索是清理阶段的 `Terminate orphan process: (codesign)`。配方本身没错，缺的是顺序：
+
+  ```bash
+  security list-keychains -d user -s build.keychain   # 进搜索列表
+  security import cert.p12 -k build.keychain -P "$PW" -T /usr/bin/codesign
+  security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$PW" build.keychain
+  security unlock-keychain -p "$PW" build.keychain    # import/partition 之后再解锁一次
+  ```
+
+  构建前再 `unlock-keychain` + `default-keychain` 一次，并 `find-identity -v -p codesigning build.keychain` 打出来——**签名那一刻身份是否可见，日志里要能直接看到**。
+- **签名步骤的看门狗不要删**：`Build & Export IPA` 里那个后台子进程，12 分钟未完成就 `sample` 卡住的 `codesign`/`xcodebuild`、打印钥匙串与身份列表，然后 `pkill`。没有它，一次挂死要烧掉 60 分钟且什么都学不到；有它 12 分钟就拿到调用栈。
 
 ## 描述文件（提交在仓库）
 
