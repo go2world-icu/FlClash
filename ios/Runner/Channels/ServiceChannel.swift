@@ -18,6 +18,13 @@ class ServiceChannel: NSObject {
     static let providerBundleIdentifier =
         (Bundle.main.bundleIdentifier ?? "") + ".PacketTunnel"
 
+    /// What Settings → VPN shows for this configuration. Read from the app's
+    /// own Info.plist so the entry cannot drift from the app name the way a
+    /// second literal would.
+    static let displayName =
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
+        ?? "ToWorld"
+
     private let channel: FlutterMethodChannel
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
@@ -92,6 +99,7 @@ class ServiceChannel: NSObject {
                 ($0.protocolConfiguration as? NETunnelProviderProtocol)?
                     .providerBundleIdentifier == Self.providerBundleIdentifier
             }) {
+                self.renameIfNeeded(existing)
                 self.attach(existing)
                 result("")
                 return
@@ -99,9 +107,9 @@ class ServiceChannel: NSObject {
             let manager = NETunnelProviderManager()
             let proto = NETunnelProviderProtocol()
             proto.providerBundleIdentifier = Self.providerBundleIdentifier
-            proto.serverAddress = "FlClash"
+            proto.serverAddress = Self.displayName
             manager.protocolConfiguration = proto
-            manager.localizedDescription = "FlClash"
+            manager.localizedDescription = Self.displayName
             manager.isEnabled = true
             manager.saveToPreferences { error in
                 if let error {
@@ -113,6 +121,26 @@ class ServiceChannel: NSObject {
                     self.attach(manager)
                     result("")
                 }
+            }
+        }
+    }
+
+    /// iOS persists the name with the configuration and reads it back from
+    /// there, so an install that predates a rename keeps showing the old one in
+    /// Settings until the profile is deleted. Rewrite it once instead — the
+    /// in-memory manager carries the new values either way, so attach does not
+    /// wait on the save.
+    private func renameIfNeeded(_ manager: NETunnelProviderManager) {
+        guard manager.localizedDescription != Self.displayName else { return }
+        manager.localizedDescription = Self.displayName
+        let proto = manager.protocolConfiguration as? NETunnelProviderProtocol
+        proto?.serverAddress = Self.displayName
+        manager.saveToPreferences { error in
+            if let error {
+                os_log(
+                    "VPN rename failed: %{public}@",
+                    error.localizedDescription
+                )
             }
         }
     }

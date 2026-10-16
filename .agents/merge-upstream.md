@@ -140,6 +140,7 @@ files that upstream also edits:
 | `macos/Runner.xcodeproj/project.pbxproj` | Runner target `PRODUCT_NAME` (**not** RunnerTests), the `.app` product reference, `CFBundleDisplayName` |
 | `macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme` | `BuildableName` |
 | `macos/Runner/Info.plist` | location permission string |
+| `ios/Runner/Channels/ServiceChannel.swift` | the name Settings → VPN shows; read from `Bundle.main`'s `CFBundleDisplayName`, not written twice, and `renameIfNeeded` rewrites a configuration saved before a rename — iOS persists it with the profile, so it would otherwise keep the old name for the life of the install |
 | `lib/common/protocol.dart` | Linux desktop-entry `Name=` |
 | `tool/generate_status_icons.dart` | macOS status art sources |
 | `.github/homebrew_cask_template.rb` | **leave pointing at upstream's repo** — it downloads real FlClash, not this fork |
