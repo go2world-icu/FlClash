@@ -87,10 +87,17 @@ jobs:
           security default-keychain -s build.keychain
           security unlock-keychain -p temp build.keychain
 
-          # 导入 iPhone Distribution 证书
+          # 导入 iPhone Distribution 证书。
+          #
+          # 用 -A（any application may use the key）而不是 -T /usr/bin/codesign：
+          # codesign 卡死那几次，栈都停在 CSSM_GetKeyAcl —— 也就是 ACL 在问「这个
+          # 进程能不能用这把私钥」，而 CI 上没人能点那个授权框。-T 只授权那一个二进制，
+          # 可发起签名的其实是 SWBBuildService 拉起来的 codesign；分区列表按理覆盖得到，
+          # 但实测仍会间歇性挂住（同一配方两次成功、两次挂死）。runner 是一次性的，
+          # 放宽到 -A 的代价可以接受。
           echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
           security import cert.p12 -k build.keychain \
-            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -A
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
