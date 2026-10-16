@@ -193,34 +193,41 @@ jobs:
             BN="--build-number=${{ github.event.inputs.build_number }}"
           fi
 
-          # codesign 卡死时 flutter 会把 xcodebuild 的输出全缓冲住，日志里一个字都没有，
-          # job 只能干等到 60 分钟超时——什么都学不到。看门狗到点抓栈、打钥匙串状态，
-          # 然后杀掉构建，让这一步快速失败并留下可诊断的信息。
+          # 这个 codesign 挂死是间歇性的、而且和「谁在发起签名」无关：同一个镜像、
+          # 同一个 Xcode、同一个配方，同一个 canary 命令一次通过一次挂死。所以要盯的
+          # 不是「这一步跑了多久」，而是**卡住的那个 codesign 本身**——正常签名不到
+          # 一秒，任何一个活过 3 分钟的 codesign 就是死了。
           #
-          # 这个挂死是间歇性的（同一镜像、同一 Xcode、同一配方，成功与挂死都出现过），
-          # 所以它留下 $HUNG 标记，让下面重跑一次而不是直接认输。
+          # 早先按「整步 12 分钟」写是错的：canary 挂死、被杀之后构建才刚开始，那时
+          # 看门狗已经用掉了，构建就一路挂到 60 分钟超时。
+          #
+          # 杀掉之后留 $HUNG 标记，让下面重试。
           HUNG=/tmp/codesign-hung
-          rm -f "$HUNG"
+          STUCK_AFTER=180
 
           start_watchdog() {
             (
-              sleep 720
-              echo "=== 构建超过 12 分钟，判定为挂死，开始取证 ==="
-              for name in codesign xcodebuild; do
-                for p in $(pgrep -x "$name" || true); do
-                  echo "--- $name pid=$p ---"
+              while true; do
+                sleep 30
+                for p in $(pgrep -x codesign || true); do
+                  local et
+                  et=$(ps -o etimes= -p "$p" 2>/dev/null | tr -d ' ')
+                  [ -n "$et" ] || continue
+                  [ "$et" -gt "$STUCK_AFTER" ] || continue
+                  echo "=== codesign pid=$p 已存活 ${et}s（阈值 ${STUCK_AFTER}s），判定挂死 ==="
                   ps -o pid,etime,stat,command -p "$p" || true
                   sample "$p" 2 -mayDie 2>&1 | sed -n '1,60p' || true
+                  echo "--- 钥匙串 ---"
+                  security list-keychains || true
+                  security default-keychain || true
+                  security find-identity -v -p codesigning || true
+                  touch "$HUNG"
+                  echo "=== 杀掉它 ==="
+                  # 不退出：xcodebuild 可能换个 pid 重试 codesign，继续盯着，让每一次
+                  # 卡住都在 3 分钟内被清掉，直到 xcodebuild 自己放弃。
+                  kill -9 "$p" 2>/dev/null || true
                 done
               done
-              echo "--- 钥匙串 ---"
-              security list-keychains || true
-              security default-keychain || true
-              security find-identity -v -p codesigning || true
-              touch "$HUNG"
-              echo "=== 杀掉挂死的构建 ==="
-              pkill -x codesign || true
-              pkill -x xcodebuild || true
             ) &
             WATCHDOG=$!
           }
@@ -259,22 +266,30 @@ jobs:
           security default-keychain -s build.keychain
           security find-identity -v -p codesigning build.keychain | tail -5
 
-          # run: 是 `bash -e`：attempt 失败会直接终止脚本，所以必须显式吞掉返回值，
-          # 否则下面的重试根本没机会执行。
-          BUILD_RC=0
-          start_watchdog
-          attempt || BUILD_RC=$?
-          kill "$WATCHDOG" 2>/dev/null || true
-
-          # 已知的间歇性挂死：重跑一次。挂死是幂等的，重跑没有副作用，而且日志里
-          # 明确记着第一次挂了——不会把问题掩盖过去。
-          if [ "$BUILD_RC" -ne 0 ] && [ -f "$HUNG" ]; then
-            echo "=== 第一次构建挂在 codesign，重跑一次 ==="
+          # 挂死是幂等的，重跑没有副作用，而且每次尝试失败的日志都留着——不会把问题
+          # 掩盖过去。三次是因为单次通过率大约一半，三次之后仍失败就该看日志了。
+          #
+          # 注意 run: 是 `bash -e`：attempt 失败会直接终止脚本，所以要显式 `|| BUILD_RC=$?`
+          # 把返回值吞下来，否则重试根本没机会执行。
+          ATTEMPTS=3
+          BUILD_RC=1
+          for n in $(seq 1 "$ATTEMPTS"); do
             rm -f "$HUNG"
+            # 每次都要清零：成功时 `||` 短路，不清零就会留着上一次的失败值。
+            BUILD_RC=0
             start_watchdog
             attempt || BUILD_RC=$?
             kill "$WATCHDOG" 2>/dev/null || true
-          fi
+            if [ "$BUILD_RC" -eq 0 ]; then
+              echo "=== 第 $n 次尝试成功 ==="
+              break
+            fi
+            if [ -f "$HUNG" ]; then
+              echo "=== 第 $n 次尝试撞上 codesign 挂死，重试 ==="
+            else
+              echo "=== 第 $n 次尝试失败（不是挂死，是真的构建错误），重试 ==="
+            fi
+          done
 
           [ "$BUILD_RC" -eq 0 ] || exit "$BUILD_RC"
 
