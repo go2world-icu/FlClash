@@ -109,6 +109,8 @@ jobs:
           # 保险，所以把顺序补全、构建前再确认一次。
           security list-keychains -d user -s build.keychain
           security unlock-keychain -p temp build.keychain
+          # 钥匙串默认 300 秒不使用就自动上锁，上锁后取私钥必然走授权那条路。
+          security set-keychain-settings -lut 21600 build.keychain
 
           # 安装仓库中的 Provisioning Profiles（无需 secrets），按每个 profile 内嵌的 UUID 命名。
           # 两处都装：MobileDevice 给 codesign/export，UserData 给 Xcode 的 GatherProvisioningInputs。
@@ -245,33 +247,50 @@ jobs:
             WATCHDOG=$!
           }
 
-          # canary：用构建要用的那个身份签一个 1 字节文件，在构建之前。
+          # canary：用构建要用的那个身份签一个 1 字节文件，在构建之前，并且**限时**。
           #
-          # 它把两种可能一刀切开：canary 自己就挂 → 纯钥匙串/环境问题，和 app、
-          # Flutter 版本、合并都无关；canary 过了而构建挂 → 问题在 Xcode 要签的
-          # 东西上（带 entitlements 的 .appex 之类）。挂在谁身上，看门狗打出来的
-          # codesign 命令行就能认出来：canary 是 /tmp/codesign-canary。
-          sign_canary() {
+          # 它现在是这台 runner 的体检：钥匙串授权坏掉的机器上，canary 一上来就挂，
+          # 而且接下来每一次签名都会挂——在同一个 job 里重试是没有意义的，只会把
+          # 二十分钟一轮的失败重复三遍。所以这里 20 秒不返回就判定这台机器不可用，
+          # 立刻退出，让重新派发去换一台（约 40 秒的成本，而不是三十分钟）。
+          #
+          # 不限时的版本也证明过：它和挂住的构建打出来的栈完全一样，都在
+          # CSSM_GetKeyAcl —— 也就是说和「谁在发起签名」「签什么」都无关。
+          verify_keychain() {
             printf canary > /tmp/codesign-canary
-            local identity
             identity=$(security find-identity -v -p codesigning build.keychain \
               | grep -m1 'Apple Distribution' | awk '{print $2}')
             if [ -z "$identity" ]; then
               echo "ERROR: build.keychain 里没有 Apple Distribution 身份" >&2
               exit 1
             fi
-            echo "[canary] codesign --force --sign $identity /tmp/codesign-canary"
+            echo "[canary] codesign --force --sign $identity --timestamp /tmp/codesign-canary"
             # 和构建用同样的 --timestamp：App Store 要求安全时间戳，那条网络路径
             # 也是挂死的候选原因之一，canary 不该把它绕过去。
-            codesign --force --sign "$identity" --timestamp /tmp/codesign-canary
+            codesign --force --sign "$identity" --timestamp /tmp/codesign-canary &
+            CANARY_PID=$!
+            waited=0
+            while kill -0 "$CANARY_PID" 2>/dev/null; do
+              sleep 2
+              waited=$((waited + 2))
+              if [ "$waited" -ge 20 ]; then
+                echo "=== canary 20 秒未返回：这台 runner 的钥匙串授权不可用 ==="
+                ps -o pid,etime,stat,command -p "$CANARY_PID" || true
+                sample "$CANARY_PID" 2 -mayDie 2>&1 | sed -n '1,50p' || true
+                security list-keychains || true
+                security default-keychain || true
+                security find-identity -v -p codesigning || true
+                kill -9 "$CANARY_PID" 2>/dev/null || true
+                echo "=== 这不是构建问题，重试同一台机器没有意义：重新派发本 workflow 即可 ==="
+                exit 1
+              fi
+            done
+            wait "$CANARY_PID" || {
+              echo "ERROR: canary 签名失败" >&2
+              exit 1
+            }
             codesign -dv /tmp/codesign-canary 2>&1 | head -3
             echo "[canary] ok"
-          }
-
-          attempt() {
-            sign_canary
-            # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
-            dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v
           }
 
           # 签名前最后确认一次：解锁 + 搜索列表 + 默认钥匙串，并检查身份确实在场。
@@ -279,30 +298,18 @@ jobs:
           security default-keychain -s build.keychain
           security find-identity -v -p codesigning build.keychain | tail -5
 
-          # 挂死是幂等的，重跑没有副作用，而且每次尝试失败的日志都留着——不会把问题
-          # 掩盖过去。三次是因为单次通过率大约一半，三次之后仍失败就该看日志了。
+          verify_keychain
+
+          # canary 通过之后，挂死就只剩「构建里的某一次签名」这种可能了。看门狗
+          # （见上）负责把它抓出来；这里只要把这一步跑完。
           #
-          # 注意 run: 是 `bash -e`：attempt 失败会直接终止脚本，所以要显式 `|| BUILD_RC=$?`
-          # 把返回值吞下来，否则重试根本没机会执行。
-          ATTEMPTS=3
-          BUILD_RC=1
-          for n in $(seq 1 "$ATTEMPTS"); do
-            rm -f "$HUNG"
-            # 每次都要清零：成功时 `||` 短路，不清零就会留着上一次的失败值。
-            BUILD_RC=0
-            start_watchdog
-            attempt || BUILD_RC=$?
-            kill "$WATCHDOG" 2>/dev/null || true
-            if [ "$BUILD_RC" -eq 0 ]; then
-              echo "=== 第 $n 次尝试成功 ==="
-              break
-            fi
-            if [ -f "$HUNG" ]; then
-              echo "=== 第 $n 次尝试撞上 codesign 挂死，重试 ==="
-            else
-              echo "=== 第 $n 次尝试失败（不是挂死，是真的构建错误），重试 ==="
-            fi
-          done
+          # 注意 run: 是 `bash -e`：命令失败会直接终止脚本，所以要显式 `|| BUILD_RC=$?`
+          # 把返回值吞下来。
+          BUILD_RC=0
+          start_watchdog
+          # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
+          dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v || BUILD_RC=$?
+          kill "$WATCHDOG" 2>/dev/null || true
 
           [ "$BUILD_RC" -eq 0 ] || exit "$BUILD_RC"
 
