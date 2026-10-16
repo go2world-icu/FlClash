@@ -41,6 +41,12 @@ class AppChannel: NSObject {
             }
         case "getPackages", "getChinaPackageNames":
             result("[]")
+        // iOS cannot enumerate other apps, so there is no permission to hold or
+        // to ask for. Answering "granted" keeps the shared access-control view
+        // from offering a grant it could never deliver, and `getPackages`
+        // answers empty either way.
+        case "isInstalledAppsPermissionGranted", "requestInstalledAppsPermission":
+            result(true)
         case "getPackageIcon":
             result(nil)
         case "openFile":
