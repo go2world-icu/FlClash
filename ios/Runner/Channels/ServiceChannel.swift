@@ -218,7 +218,13 @@ class ServiceChannel: NSObject {
                         result(nil)
                         return
                     }
-                    result(text)
+                    // The Dart side reads this channel as bytes — `invokeMethod<Uint8List>`,
+                    // which is what the android plugin hands back. A Swift String makes
+                    // that cast throw `type 'String' is not a subtype of type
+                    // 'Uint8List?'`, so every call that reaches the core fails: no
+                    // proxies, no events, while `ping` and `getCoreState` — answered by
+                    // this extension without going near the core — keep working.
+                    result(FlutterStandardTypedData(bytes: Data(text.utf8)))
                 }
             }
         } catch {
