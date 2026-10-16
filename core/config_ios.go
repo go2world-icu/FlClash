@@ -4,19 +4,25 @@ package core
 
 import (
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/metacubex/mihomo/config"
+	"github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
 )
 
-// geodataRuleRE matches geodata rule lines — both inline format
-// ("- GEOIP,CN,DIRECT") and quoted ("- 'GEOIP,CN,DIRECT'").
-// Only strip GEOSITE/IP-ASN (large domain/ASN databases).
-// Keep GEOIP — geoip.dat is smaller and may fit in the 50MB budget.
-var geodataRuleRE = regexp.MustCompile(`(?im)^\s*- ?'?(GEOSITE|SRC-GEOIP|IP-ASN|SRC-IP-ASN),.*`)
+// Rule lines that read a geodata database — both the inline format
+// ("- GEOSITE,cn,DIRECT") and the quoted one ("- 'GEOSITE,cn,DIRECT'").
+//
+// These are only stripped when the database they need is missing; see
+// parseConfigPathFiltered. The two families are separate because they read
+// different files.
+var geoSiteRuleRE = regexp.MustCompile(`(?im)^\s*- ?'?GEOSITE,.*`)
+
+var ipGeodataRuleRE = regexp.MustCompile(`(?im)^\s*- ?'?(SRC-GEOIP|IP-ASN|SRC-IP-ASN),.*`)
 
 // dnsGeodataKeyRE matches block-style DNS geodata keys (geosite only —
 // geoip is kept to support GEOIP rules).
@@ -49,17 +55,46 @@ func parseConfigPathFiltered(path string) (*config.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	ruleHits := len(geodataRuleRE.FindAll(b, -1))
-	log.Infoln("[iOS filter] rule matches: %d", ruleHits)
-	filtered := geodataRuleRE.ReplaceAll(b, []byte("# iOS: geodata rule filtered"))
+	// The databases are bundled and written into the home directory — the App
+	// Group, shared with the packet tunnel — by CoreController.initGeo, which
+	// runs at app startup, long before a tunnel ever applies a config. So the
+	// usual case is that they are all here and nothing is stripped.
+	//
+	// The stripping stays for the case where that write failed: a rule whose
+	// database is missing sends mihomo off to download it, and a download that
+	// fails fails the whole config — which reaches the user as a tunnel that
+	// reports connected and then serves nothing.
+	filtered := b
+	if geodataMissing(geoSiteFileName) {
+		log.Warnln("[iOS filter] %s missing; dropping GEOSITE rules and DNS geosite keys", geoSiteFileName)
+		filtered = geoSiteRuleRE.ReplaceAll(filtered, []byte("# iOS: geosite rule dropped (database missing)"))
+		// Block-style DNS geodata keys (FlClash serializes DNS in block format)…
+		filtered = filterBlockDNSGeodata(filtered)
+		// …and the inline flow-style ones from the original subscription format.
+		filtered = dnsGeodataInlineRE.ReplaceAll(filtered, nil)
+	}
+	if geodataMissing(geoIpFileName) && geodataMissing(asnFileName) {
+		log.Warnln("[iOS filter] %s and %s missing; dropping IP-ASN / SRC-GEOIP rules", geoIpFileName, asnFileName)
+		filtered = ipGeodataRuleRE.ReplaceAll(filtered, []byte("# iOS: ip geodata rule dropped (database missing)"))
+	}
 
-	// Strip block-style DNS geodata keys (FlClash serializes DNS in block format).
-	filtered = filterBlockDNSGeodata(filtered)
-	// Also strip inline flow-style DNS geodata keys (original subscription format).
-	filtered = dnsGeodataInlineRE.ReplaceAll(filtered, nil)
-
-	log.Infoln("[iOS filter] config: %d→%d bytes", len(b), len(filtered))
+	if len(filtered) != len(b) {
+		log.Infoln("[iOS filter] config: %d→%d bytes", len(b), len(filtered))
+	}
 	return executor.ParseWithBytes(filtered)
+}
+
+// The names CoreController.initGeo writes into the home directory
+// (lib/common/constant.dart). mihomo finds them case-insensitively.
+const (
+	geoSiteFileName = "GEOSITE.dat"
+	geoIpFileName   = "GEOIP.dat"
+	asnFileName     = "ASN.mmdb"
+)
+
+func geodataMissing(name string) bool {
+	_, err := os.Stat(filepath.Join(constant.Path.HomeDir(), name))
+	return err != nil
 }
 
 // filterBlockDNSGeodata removes geosite/geoip-code/geoip key-value pairs
