@@ -15,6 +15,8 @@ Read these only when the task touches their area:
 
 - [.agents/release-ios.md](.agents/release-ios.md): iOS TestFlight publishing, signing, provisioning profiles, and the
   iOS CI workflows.
+- [.agents/ios-app.md](.agents/ios-app.md): the iOS app layer — the service channel's byte contract, the navigation-bar
+  status dots, how the core's config differs from desktop, and the Android-only app-channel methods.
 - [.agents/app-store-release.md](.agents/app-store-release.md): TestFlight testing/review, App Store release flow,
   review-notes/privacy templates, IAP & account considerations.
 - [.agents/architecture.md](.agents/architecture.md): core integration, providers, database, managers, build system, and
