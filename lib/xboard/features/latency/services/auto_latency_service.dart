@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -14,14 +13,12 @@ class AutoLatencyService {
   static final AutoLatencyService _instance = AutoLatencyService._internal();
   factory AutoLatencyService() => _instance;
   AutoLatencyService._internal();
-  Timer? _periodicTimer;
   String? _lastTestedProxy;
   DateTime? _lastTestTime;
   bool _isServiceActive = false;
   WidgetRef? _ref;
   final Map<String, DateTime> _proxyTestCache = {};
   static const int _cacheMinutes = 8;
-  static const int _periodicIntervalMinutes = 20;
 
   // 操作协调器已废弃
   // final OperationCoordinator _coordinator = OperationCoordinator();
@@ -33,7 +30,6 @@ class AutoLatencyService {
     _ref = ref;
     if (!_isServiceActive) {
       _isServiceActive = true;
-      _startPeriodicTesting();
       _logger.info('自动延迟测试服务已启动');
     } else {
       _logger.debug('自动延迟测试服务已激活，更新ref引用');
@@ -41,35 +37,16 @@ class AutoLatencyService {
   }
 
   void dispose() {
-    _periodicTimer?.cancel();
-    _periodicTimer = null;
     _nodeChangeTimer?.cancel();
     _nodeChangeTimer = null;
+    _connectTestTimer?.cancel();
+    _connectTestTimer = null;
+    _connectGroupTestTimer?.cancel();
+    _connectGroupTestTimer = null;
     _isServiceActive = false;
     _ref = null;
     _proxyTestCache.clear();
     _logger.info('自动延迟测试服务已停止');
-  }
-
-  void _cleanExpiredCache() {
-    final now = DateTime.now();
-    final expiredEntries = <String>[];
-
-    _proxyTestCache.removeWhere((proxyName, lastTestTime) {
-      final isExpired =
-          now.difference(lastTestTime).inMinutes >= _cacheMinutes * 2;
-      if (isExpired) {
-        expiredEntries.add(proxyName);
-      }
-      return isExpired;
-    });
-
-    if (expiredEntries.isNotEmpty) {
-      _logger.debug(
-        'AutoLatencyService',
-        '清理过期缓存: ${expiredEntries.join(', ')}',
-      );
-    }
   }
 
   bool _ensureServiceActive() {
@@ -212,13 +189,17 @@ class AutoLatencyService {
   }
 
   Timer? _nodeChangeTimer;
+  Timer? _connectTestTimer;
+  Timer? _connectGroupTestTimer;
 
   void onNodeChanged() {
     _logger.info('检测到节点切换，将自动测试新节点');
 
-    // 使用防抖机制，避免快速切换时的重复测试
-    // _coordinator已废弃，延迟后直接执行
-    Future.delayed(const Duration(seconds: 2), () {
+    // 防抖：快速切换时只测最后一次。定时器留句柄，dispose() 才能取消 ——
+    // 原来的 Future.delayed 是匿名的，服务停掉后仍会跑完。
+    _nodeChangeTimer?.cancel();
+    _nodeChangeTimer = Timer(const Duration(seconds: 2), () {
+      _nodeChangeTimer = null;
       _performNodeChangeTest();
     });
   }
@@ -252,56 +233,24 @@ class AutoLatencyService {
   void onConnectionStatusChanged(bool isConnected) {
     if (isConnected) {
       _logger.info('代理连接成功，将自动测试当前节点');
-      Timer(const Duration(milliseconds: 1500), () {
-        if (_ensureServiceActive() && _isRefValid()) {
-          testCurrentNode(forceTest: true);
-          Timer(const Duration(seconds: 2), () {
-            if (_ensureServiceActive() && _isRefValid()) {
-              testCurrentGroupNodes(maxNodes: 3);
-            }
-          });
+      // 同样是可取消的定时器：断开后再重连不该叠出第二、第三轮。
+      _connectTestTimer?.cancel();
+      _connectGroupTestTimer?.cancel();
+      _connectTestTimer = Timer(const Duration(milliseconds: 1500), () {
+        _connectTestTimer = null;
+        if (!_ensureServiceActive() || !_isRefValid()) {
+          return;
         }
+        testCurrentNode(forceTest: true);
+        _connectGroupTestTimer = Timer(const Duration(seconds: 2), () {
+          _connectGroupTestTimer = null;
+          if (_ensureServiceActive() && _isRefValid()) {
+            testCurrentGroupNodes(maxNodes: 3);
+          }
+        });
       });
     } else {
       _logger.info('代理连接断开');
-    }
-  }
-
-  void _startPeriodicTesting() {
-    _periodicTimer?.cancel();
-    _periodicTimer = Timer.periodic(
-      const Duration(minutes: _periodicIntervalMinutes),
-      (_) {
-        _performPeriodicTest();
-      },
-    );
-  }
-
-  Future<void> _performPeriodicTest() async {
-    if (!_ensureServiceActive()) {
-      _logger.warning('服务状态检查失败，跳过定期测试');
-      return;
-    }
-
-    try {
-      _logger.info('执行定期延迟测试');
-      _cleanExpiredCache();
-
-      await testCurrentNode();
-
-      final randomDelay = Random().nextInt(30) + 10;
-      Timer(Duration(seconds: randomDelay), () {
-        if (_ensureServiceActive()) {
-          testCurrentGroupNodes(maxNodes: 3);
-        }
-      });
-    } catch (e) {
-      _logger.error('定期测试执行失败', e);
-      if (e.toString().contains('disposed') ||
-          e.toString().contains('invalid')) {
-        _logger.warning('检测到状态异常，重置服务状态');
-        _ref = null;
-      }
     }
   }
 

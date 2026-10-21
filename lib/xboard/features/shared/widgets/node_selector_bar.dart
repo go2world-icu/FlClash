@@ -44,13 +44,9 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
     final mode = ref.watch(
       patchClashConfigProvider.select((state) => state.mode),
     );
-    ref.listen(runTimeProvider, (previous, next) {
-      final wasConnected = previous != null;
-      final isConnected = next != null;
-      if (wasConnected != isConnected) {
-        autoLatencyService.onConnectionStatusChanged(isConnected);
-      }
-    });
+    // 连上后不自动重测：一次连接会触发两轮（1.5s 测当前节点，再 2s 测组内 3 个），
+    // 而内核的 url-test/fallback/load-balance 组本就会按自己的 interval 做健康检查
+    // 并选路，这里只是再测一遍给延迟气泡用。
     ref.listen(selectedMapProvider, (previous, next) {
       if (previous != null && next != previous) {
         Future.delayed(const Duration(milliseconds: 300), () {
