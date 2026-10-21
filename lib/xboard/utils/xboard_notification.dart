@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/state.dart';
 
 /// XBoard 通知工具类
@@ -14,7 +14,7 @@ class XBoardNotification {
     final context = globalState.navigatorKey.currentContext;
     if (context != null && context.mounted) {
       ScaffoldMessenger.of(context).clearSnackBars();
-      context.showSnackBar('❌ $message');
+      _showSnackBar(context, '❌ $message');
     }
   }
 
@@ -51,7 +51,7 @@ class XBoardNotification {
     final context = globalState.navigatorKey.currentContext;
     if (context != null && context.mounted) {
       ScaffoldMessenger.of(context).clearSnackBars();
-      context.showSnackBar(message);
+      _showSnackBar(context, message);
     }
   }
 
@@ -62,6 +62,19 @@ class XBoardNotification {
       cancelable: true,
     );
     return result == true;
+  }
+
+  /// Upstream v0.9.1 retired its `showSnackBar` context extension; the panel's
+  /// window is its only caller, so the bar it drew lives here now.
+  static void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(milliseconds: 1500),
+        margin: _getSnackBarMargin(context),
+      ),
+    );
   }
 
   /// 获取 SnackBar 的 margin（适配屏幕宽度）

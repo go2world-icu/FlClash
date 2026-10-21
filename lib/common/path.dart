@@ -8,11 +8,10 @@ import 'package:path_provider/path_provider.dart';
 
 class AppPath {
   static AppPath? _instance;
-  Completer<Directory> dataDir = Completer();
-  late final Future<Directory?> _downloadDir = downloadDirectory();
-  Completer<Directory> tempDir = Completer();
+  late ResolveOnce<Directory> _dataDir;
+  late ResolveOnce<Directory?> _downloadDir;
+  late ResolveOnce<Directory> _tempDir;
   Completer<Directory> cacheDir = Completer();
-  late String appDirPath;
 
   @visibleForTesting
   static Future<Directory> Function() supportDirectory =
@@ -31,15 +30,28 @@ class AppPath {
       getDownloadsDirectory;
 
   AppPath._internal() {
-    appDirPath = join(dirname(Platform.resolvedExecutable));
-    initDataDir(dataDir, supportDirectory);
-    temporaryDirectory().then((value) {
-      tempDir.complete(value);
-    });
-    cacheDirectory().then((value) {
-      cacheDir.complete(value);
-    });
+    _bind();
   }
+
+  @visibleForTesting
+  Future<void> rebind() async {
+    cacheDir = Completer();
+    _bind();
+    await Future.wait([_dataDir.value, _downloadDir.value, _tempDir.value]);
+  }
+
+  void _bind() {
+    _dataDir = ResolveOnce(dataDirForPlatform);
+    _downloadDir = ResolveOnce(downloadDirectory);
+    _tempDir = ResolveOnce(temporaryDirectory);
+    cacheDirectory().then(cacheDir.complete);
+  }
+
+  /// The one seam: upstream resolves the home directory to the support
+  /// directory, the fork keeps its data in an app-name subdirectory (and, on
+  /// iOS, in the App Group container the tunnel shares).
+  static Future<Directory> dataDirForPlatform() =>
+      forkDataDir(supportDirectory);
 
   factory AppPath() {
     _instance ??= AppPath._internal();
@@ -64,12 +76,12 @@ class AppPath {
   }
 
   Future<String> get downloadDirPath async {
-    final directory = await _downloadDir;
+    final directory = await _downloadDir.value;
     return directory?.path ?? await homeDirPath;
   }
 
   Future<String> get homeDirPath async {
-    final directory = await dataDir.future;
+    final directory = await _dataDir.value;
     return directory.path;
   }
 
@@ -79,7 +91,7 @@ class AppPath {
   }
 
   Future<String> get tempFilePath async {
-    final mTempDir = await tempDir.future;
+    final mTempDir = await _tempDir.value;
     return join(mTempDir.path, 'temp$uniqueId');
   }
 
@@ -94,12 +106,12 @@ class AppPath {
   }
 
   Future<String> get sharedPreferencesPath async {
-    final directory = await dataDir.future;
+    final directory = await _dataDir.value;
     return join(directory.path, 'shared_preferences.json');
   }
 
   Future<String> get profilesPath async {
-    final directory = await dataDir.future;
+    final directory = await _dataDir.value;
     return join(directory.path, profilesDirectoryName);
   }
 
@@ -154,7 +166,7 @@ class AppPath {
   }
 
   Future<String> get tempPath async {
-    final directory = await tempDir.future;
+    final directory = await _tempDir.value;
     return directory.path;
   }
 }

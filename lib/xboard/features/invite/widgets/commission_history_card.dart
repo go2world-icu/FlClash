@@ -2,12 +2,13 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/withdraw_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/commission_history_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 class CommissionHistoryCard extends ConsumerWidget {
   const CommissionHistoryCard({super.key});
@@ -43,7 +44,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                 child: Column(
                   children: [
                     GlyphIcon(
-                      AppGlyphs.history,
+                      XBoardGlyphs.history,
                       size: 48,
                       color: Theme.of(
                         context,
@@ -73,7 +74,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                 children: [
                   TextButton.icon(
                     onPressed: () => _showCommissionHistoryDialog(context),
-                    icon: const GlyphIcon(AppGlyphs.history),
+                    icon: const GlyphIcon(XBoardGlyphs.history),
                     label: Text(xboardL10n.viewHistory),
                   ),
                   if (inviteState.commissionHistory.length >= 5)

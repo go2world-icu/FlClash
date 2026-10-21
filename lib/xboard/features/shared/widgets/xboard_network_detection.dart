@@ -1,10 +1,12 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/common/service_probe.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/outbound_ip.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 /// 网络检测（出口 IP 与归属地），供 iOS 外壳首页使用。
 ///
@@ -67,13 +69,13 @@ class _XBoardNetworkDetectionState
       child: Row(
         children: [
           GlyphIcon(
-            AppGlyphs.networkCheck,
+            XBoardGlyphs.networkCheck,
             color: theme.colorScheme.primary,
             size: 18,
           ),
           const SizedBox(width: 6),
           Text(
-            appLocalizations.networkDetection,
+            xboardL10n.networkDetection,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),

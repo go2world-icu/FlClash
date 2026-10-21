@@ -20,6 +20,14 @@ class _TestClashProviders extends ClashProviders {
   Stream<List<ClashProvider>> build() => Stream.value(initial);
 }
 
+/// Reads a Go source file with its line endings normalized to LF.
+///
+/// The patterns below anchor on `\n`, and on Windows the submodule's working
+/// tree is checked out with CRLF (`core.autocrlf=true`), which would leave a
+/// `\r` between every line and silently match nothing.
+String readGoSource(String path) =>
+    File(path).readAsStringSync().replaceAll('\r\n', '\n');
+
 class _TestCustomProxies extends CustomProxies {
   final Stream<List<CustomProxy>> proxies;
 
@@ -484,15 +492,34 @@ void main() {
       expect(loop('Work', const {'Work': 'Away', 'Away': 'Home'}), isEmpty);
     });
 
-    test('include-all reaches a proxy only once a group declares it', () {
+    test('include-all-proxies takes in only the proxies a group declares', () {
       const all = ProxyGroup(
         id: 6,
         name: 'All',
         type: GroupType.Selector,
-        includeAll: true,
+        includeAllProxies: true,
+      );
+      const exit = ProxyGroup(
+        id: 7,
+        name: 'Exit',
+        type: GroupType.Selector,
+        proxies: ['Work'],
       );
       expect(dialerLoop('All', [all], proxy: 'Home'), isEmpty);
       expect(dialerLoop('All', [all, landing], proxy: 'Home'), {'All'});
+      expect(
+        dialerLoop('Relay', [all, landing, relay], proxy: 'Home'),
+        isEmpty,
+      );
+      expect(
+        dialerLoop(
+          'Exit',
+          [exit, all, landing],
+          proxy: 'Home',
+          dialers: const {'Work': 'All'},
+        ),
+        {'Exit', 'Work', 'All'},
+      );
     });
 
     test('what a filter picks is left to the core', () {
@@ -500,7 +527,7 @@ void main() {
         id: 6,
         name: 'All',
         type: GroupType.Selector,
-        includeAll: true,
+        includeAllProxies: true,
       );
       for (final group in [
         all.copyWith(filter: '(?i)hk'),
@@ -621,6 +648,35 @@ void main() {
         ],
       );
     });
+
+    test('include-all-proxies declares no app proxy of its own and drops a '
+        'dialer it loops back through', () {
+      const unnamed = CustomProxy(
+        id: 12,
+        definition: {'name': 'Unnamed', 'type': 'ss'},
+      );
+      const all = ProxyGroup(
+        id: 6,
+        name: 'All',
+        type: GroupType.Selector,
+        includeAllProxies: true,
+      );
+      expect(
+        appProxiesPayload(
+          [home, unnamed],
+          dialers: {9: 'All', 12: 'Relay'},
+          groups: const [all, landing],
+        ),
+        [home.definition],
+      );
+      expect(
+        const CustomProfileData(
+          proxyGroups: [all, landing],
+          proxies: {'Home', 'Unnamed'},
+        ).namedProxies,
+        {'Home'},
+      );
+    });
   });
 
   group('issues', () {
@@ -645,6 +701,28 @@ void main() {
       ]);
       expect(
         proxyGroupIssues(group.copyWith(includeAllProxies: true), profileData),
+        isEmpty,
+      );
+      final providers = group.copyWith(includeAllProviders: true);
+      final subscribed = profileData.copyWith(proxyProviders: const {'Sub'});
+      expect(proxyGroupIssues(providers, subscribed), [
+        const CustomIssue.noProxySource(),
+      ]);
+      expect(
+        proxyGroupIssues(
+          providers,
+          subscribed.copyWith(
+            proxyGroups: [
+              ...subscribed.proxyGroups,
+              const ProxyGroup(
+                id: 4,
+                name: 'D',
+                type: GroupType.Selector,
+                use: ['Sub'],
+              ),
+            ],
+          ),
+        ),
         isEmpty,
       );
     });
@@ -683,26 +761,31 @@ void main() {
       );
     });
 
-    test('empty-fallback takes only a built-in', () {
+    test('empty-fallback takes a built-in or a proxy a group names', () {
       const group = ProxyGroup(
         id: 3,
         name: 'C',
         type: GroupType.Selector,
         proxies: ['Node'],
       );
-      for (final name in ['COMPATIBLE', 'PASS']) {
+      final data = profileData.copyWith(
+        proxyGroups: [
+          ...profileData.proxyGroups,
+          group.copyWith(id: 4, name: 'D', proxies: ['Home']),
+        ],
+        proxies: const {'Home', 'Spare'},
+      );
+      for (final name in ['COMPATIBLE', 'PASS', 'Home']) {
         expect(
-          proxyGroupIssues(group.copyWith(emptyFallback: name), profileData),
+          proxyGroupIssues(group.copyWith(emptyFallback: name), data),
           isEmpty,
           reason: name,
         );
       }
-      for (final name in ['A', 'Node', 'Gone']) {
-        expect(
-          proxyGroupIssues(group.copyWith(emptyFallback: name), profileData),
-          [CustomIssue.invalidEmptyFallback(name)],
-          reason: name,
-        );
+      for (final name in ['A', 'Node', 'Gone', 'Spare']) {
+        expect(proxyGroupIssues(group.copyWith(emptyFallback: name), data), [
+          CustomIssue.invalidEmptyFallback(name),
+        ], reason: name);
       }
     });
 
@@ -809,7 +892,7 @@ void main() {
   });
 
   test('customProxyTypes lists every type the core parses', () {
-    final source = File('core/Clash.Meta/adapter/parser.go').readAsStringSync();
+    final source = readGoSource('core/Clash.Meta/adapter/parser.go');
     expect(customProxyTypes, [
       for (final match in RegExp(
         r'^\tcase "([^"]+)":',
@@ -829,7 +912,7 @@ void main() {
           for (final match in RegExp(
             r'^type (\w+) struct \{\n([\s\S]*?)\n\}',
             multiLine: true,
-          ).allMatches(file.readAsStringSync()))
+          ).allMatches(readGoSource(file.path)))
             match.group(1)!: match.group(2)!,
     };
     final keyPattern = RegExp(r'proxy:"([^",]+)(,omitempty)?"');
@@ -842,7 +925,7 @@ void main() {
       for (final match in RegExp(
         r'^\tcase "([^"]+)":\n\t\t\w+ := &outbound\.(\w+)\{',
         multiLine: true,
-      ).allMatches(File('$root/parser.go').readAsStringSync()))
+      ).allMatches(readGoSource('$root/parser.go')))
         match.group(1)!: [
           structs[match.group(2)]!,
           for (final embedded in embeddedPattern.allMatches(
@@ -975,7 +1058,7 @@ void main() {
             'core/Clash.Meta/$directory',
           ).listSync(recursive: true).whereType<File>())
             if (file.path.endsWith('.go') && !file.path.endsWith('_test.go'))
-              file.readAsStringSync().toLowerCase(),
+              readGoSource(file.path).toLowerCase(),
       ].join('\n');
       // These fields take their values from modules outside the submodule.
       const elsewhere = {

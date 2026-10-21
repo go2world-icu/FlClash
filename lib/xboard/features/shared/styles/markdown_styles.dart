@@ -1,6 +1,6 @@
-import 'package:fl_clash/common/common.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 /// Markdown样式配置
 /// 用于统一管理应用内Markdown内容的显示样式

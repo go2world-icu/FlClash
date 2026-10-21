@@ -1,5 +1,4 @@
-import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,6 +8,7 @@ import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/features/remote_task/services/device_info_service.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 /// 日志上报行（内嵌在滚动内容中）
 ///

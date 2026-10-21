@@ -1,9 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class ThemeDialog extends ConsumerWidget {
   const ThemeDialog({super.key});
@@ -22,7 +23,7 @@ class ThemeDialog extends ConsumerWidget {
           RadioListTile<ThemeMode>(
             title: Row(
               children: [
-                const GlyphIcon(AppGlyphs.themeAuto),
+                const GlyphIcon(XBoardGlyphs.themeAuto),
                 const SizedBox(width: 8),
                 Text(appLocalizations.auto),
               ],
@@ -60,7 +61,7 @@ class ThemeDialog extends ConsumerWidget {
           RadioListTile<ThemeMode>(
             title: Row(
               children: [
-                const GlyphIcon(AppGlyphs.moon),
+                const GlyphIcon(XBoardGlyphs.moon),
                 const SizedBox(width: 8),
                 Text(appLocalizations.dark),
               ],

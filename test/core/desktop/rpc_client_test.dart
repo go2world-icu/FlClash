@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_clash/core/desktop/rpc_client.dart';
 import 'package:fl_clash/core/event.dart';
 import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/core/spill.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart';
 
+import '../../helpers/app_paths.dart';
 import 'fakes.dart';
 
 Future<Map<String, Object?>> _sentRequest(
@@ -17,6 +21,34 @@ Future<Map<String, Object?>> _sentRequest(
 }
 
 void main() {
+  test('reads a response the Core spilled to a file', () async {
+    final root = Directory.systemTemp.createTempSync('rpc_spill');
+    addTearDown(() => root.deleteSync(recursive: true));
+    // Home is an `<appName>` subdirectory of the support dir the fork hands out.
+    final home = await useAppPaths(root);
+    final transport = FakeDesktopCoreTransport.connected();
+    final client = CoreRpcClient(transport);
+    final invocation = client.invoke<Map<String, dynamic>>(
+      method: CoreMethod.getConfig,
+    );
+    final request = await _sentRequest(transport);
+    final file = File(join(home.path, coreSpillDirectoryName, '1.json'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        jsonEncode({
+          'id': request['id'],
+          'result': {'mode': 'rule'},
+        }),
+      );
+
+    transport.addJson({'id': request['id'], 'result': null, 'file': file.path});
+
+    expect(await invocation, {'mode': 'rule'});
+    expect(file.existsSync(), isFalse);
+    await client.close();
+    await transport.close();
+  });
+
   test('correlates a response and ignores a late duplicate', () async {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);

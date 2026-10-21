@@ -15,5 +15,12 @@ func loadConfigForPlatform(path string) (*config.Config, error) {
 	return loadConfig(path)
 }
 
+// loadConfigForPlatformLimits is the second half of the same seam: iOS only
+// parses a config once it has checked the geodata databases its rules need,
+// which takes the bytes rather than the parsed config.
+func loadConfigForPlatformLimits(cfg *config.Config) *config.Config {
+	return cfg
+}
+
 // Upstream skips the TUN listener on Android; every other target recreates it.
 const recreateTunOnReload = !features.Android

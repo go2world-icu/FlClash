@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:fl_clash/icons/glyph.dart';
+import 'package:fl_clash/ui/icons/glyph.dart';
 
 /// The glyphs the panel draws itself.
 ///
@@ -347,5 +347,74 @@ abstract final class XBoardGlyphs {
     GlyphBox(7.4, 12.2, 11, 20.8, 1.2, role: GlyphRole.line),
     GlyphBox(12.2, 9.2, 15.8, 20.8, 1.2, role: GlyphRole.line),
     GlyphBox(17, 6.2, 20.6, 20.8, 1.2, role: GlyphRole.line),
+  ]);
+
+  // Upstream v0.9.1 redrew its glyph set and dropped these five, which the
+  // panel's invite and network cards still draw. They are upstream's own
+  // former shapes, kept here so those cards do not change.
+  static const history = Glyph([
+    GlyphArc(12, 12, 9, math.pi * 1.25, math.pi * 1.65, role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(5.6, 5.6),
+      GlyphVertex(4.1, 7.1),
+    ], role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(4.1, 3.5),
+      GlyphVertex(4.1, 7.1, 0.4),
+      GlyphVertex(7.7, 7.1),
+    ], role: GlyphRole.line),
+    GlyphCircle(12.4, 12.4, 4.6),
+    GlyphPolyline([
+      GlyphVertex(12.4, 10.2),
+      GlyphVertex(12.4, 12.4, 0.4),
+      GlyphVertex(14, 13.4),
+    ], role: GlyphRole.detail),
+  ]);
+
+  static const save = Glyph([
+    GlyphPolyline([
+      GlyphVertex(4.5, 4.5, 2.2),
+      GlyphVertex(15.5, 4.5, 1),
+      GlyphVertex(19.5, 8.5, 1),
+      GlyphVertex(19.5, 19.5, 2.2),
+      GlyphVertex(4.5, 19.5, 2.2),
+    ], closed: true),
+    GlyphPolyline([
+      GlyphVertex(8, 4.5),
+      GlyphVertex(8, 8.8, 1),
+      GlyphVertex(13.3, 8.8, 1),
+      GlyphVertex(13.3, 4.5),
+    ], role: GlyphRole.detail),
+    GlyphPolyline([
+      GlyphVertex(7.6, 19.5),
+      GlyphVertex(7.6, 13.8, 1.3),
+      GlyphVertex(16.4, 13.8, 1.3),
+      GlyphVertex(16.4, 19.5),
+    ], role: GlyphRole.detail),
+  ]);
+
+  static const moon = Glyph([
+    GlyphPath(
+      'M9.4 3.59A8.8 8.8 0 1 0 20.41 14.6A0.8 0.8 0 0 0 19.32 13.63A6.8 6.8 0 0 1 10.37 4.68A0.8 0.8 0 0 0 9.4 3.59Z',
+    ),
+  ]);
+
+  static const themeAuto = Glyph([
+    GlyphCircle(12, 12, 8.8),
+    GlyphPath(
+      'M12 3.2A8.8 8.8 0 0 0 12 20.8Z',
+      role: GlyphRole.detail,
+      solid: true,
+    ),
+  ]);
+
+  static const networkCheck = Glyph([
+    GlyphPath('M3.32 8.56 A13.5 13.5 0 0 1 20.68 8.56', role: GlyphRole.line),
+    GlyphPath('M6.54 12.39 A8.5 8.5 0 0 1 17.46 12.39', role: GlyphRole.line),
+    GlyphPolyline([
+      GlyphVertex(8.6, 16.8),
+      GlyphVertex(11, 19.2, 0.5),
+      GlyphVertex(15.2, 15),
+    ], role: GlyphRole.line),
   ]);
 }

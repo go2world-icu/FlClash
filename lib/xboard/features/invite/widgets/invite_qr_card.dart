@@ -1,12 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/qr_code_widget.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class InviteQrCard extends ConsumerWidget {
   const InviteQrCard({super.key});
@@ -48,7 +49,7 @@ class InviteQrCard extends ConsumerWidget {
                 children: [
                   ElevatedButton.icon(
                     onPressed: () => _saveQrCode(context, inviteUrl),
-                    icon: const GlyphIcon(AppGlyphs.save),
+                    icon: const GlyphIcon(XBoardGlyphs.save),
                     label: Text(xboardL10n.saveQr),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(

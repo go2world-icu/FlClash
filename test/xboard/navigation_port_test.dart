@@ -1,5 +1,5 @@
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/app_glyphs.dart';
+import 'package:fl_clash/ui/icons/app_glyphs.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/features/dashboard/dashboard.dart';
@@ -35,32 +35,29 @@ void main() {
     ]);
   });
 
-  testWidgets(
-    'the dashboard is the panel\'s page, kept out of the page cache',
-    (tester) async {
-      late BuildContext context;
-      await tester.pumpWidget(
-        Builder(
-          builder: (childContext) {
-            context = childContext;
-            return const SizedBox();
-          },
-        ),
-      );
+  testWidgets('the dashboard is the panel\'s page', (tester) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      Builder(
+        builder: (childContext) {
+          context = childContext;
+          return const SizedBox();
+        },
+      ),
+    );
 
-      final dashboard = _item(port.getItems(), PageLabel.dashboard);
-      expect(dashboard.keep, isFalse);
-      expect(dashboard.glyph, AppGlyphs.dashboard);
-      final built = dashboard.builder(context);
-      expect(built, isA<XBoardDashboardView>());
-      expect(
-        built.key,
-        const GlobalObjectKey(PageLabel.dashboard),
-        reason:
-            'home.dart resolves the page by its label key for back handling',
-      );
-    },
-  );
+    final dashboard = _item(port.getItems(), PageLabel.dashboard);
+    // Upstream v0.9.1 dropped `NavigationItem.keep`: every page is kept now,
+    // by the `KeepScope` `_NavigationPage` wraps around the builder.
+    expect(dashboard.glyph, AppGlyphs.dashboard);
+    final built = dashboard.builder(context);
+    expect(built, isA<XBoardDashboardView>());
+    expect(
+      built.key,
+      const GlobalObjectKey(PageLabel.dashboard),
+      reason: 'home.dart resolves the page by its label key for back handling',
+    );
+  });
 
   test('the proxies tab follows upstream\'s hasProxies gate', () {
     expect(_item(port.getItems(hasProxies: true), PageLabel.proxies).modes, [
@@ -124,7 +121,6 @@ void main() {
     test('the account tab is last, drawn with the account glyph', () {
       final account = _item(port.getItems(), PageLabel.xboard);
       expect(account.glyph, AppGlyphs.account);
-      expect(account.keep, isTrue);
       // The default modes, so it survives the iOS core-off filter in
       // lib/providers/state/navigation.dart.
       expect(account.modes, [

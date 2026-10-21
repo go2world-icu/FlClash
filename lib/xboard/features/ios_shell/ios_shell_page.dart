@@ -7,7 +7,7 @@ import 'package:fl_clash/xboard/features/ios_shell/ios_home_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_invite_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_splash_screen.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

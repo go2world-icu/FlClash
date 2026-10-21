@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'desktop/model.dart';
 import 'interface.dart';
 import 'method.dart';
+import 'spill.dart';
 
 class CoreLib extends CoreHandlerInterface {
   static CoreLib? _instance;
@@ -127,22 +128,22 @@ class CoreLib extends CoreHandlerInterface {
     return _stop(allowClosed: true);
   }
 
+  // The service opens and closes the Core's listeners itself and reports a run
+  // that ends, so once it takes the command the Core's own answer is moot.
+  //
+  // iOS: the Swift ServiceChannel.start() no-ops unless the tunnel is
+  // disconnected, so asking it to start a live session never tears it down.
   @override
   Future<bool> startListener() async {
-    // Pre-merge behavior: always kick the tunnel and report success. The
-    // Swift ServiceChannel.start() itself guards against re-starting a
-    // live/pending session (status != .disconnected → no-op), so calling
-    // start() here again is safe and never tears down a connected tunnel.
-    final listenerStarted = await super.startListener();
-    final serviceStarted = await _service?.start() ?? false;
-    return listenerStarted && serviceStarted;
+    await super.startListener();
+    return await _service?.start() ?? false;
   }
 
   @override
   Future<bool> stopListener() async {
     final serviceStopped = await _service?.stop() ?? false;
-    final listenerStopped = await super.stopListener();
-    return serviceStopped && listenerStopped;
+    await super.stopListener();
+    return serviceStopped;
   }
 
   @override
@@ -151,10 +152,14 @@ class CoreLib extends CoreHandlerInterface {
     Object? arguments,
     Duration? timeout,
   }) {
-    return _invokeMethod<T>(
-      method: method,
-      arguments: arguments,
-    ).withTimeout(timeout: timeout, onTimeout: () => null);
+    final call = _invokeMethod<T>(method: method, arguments: arguments);
+    return call.withTimeout(
+      timeout: timeout,
+      onTimeout: () {
+        unawaited(call.then(discardSpilledFile, onError: (_) {}));
+        return null;
+      },
+    );
   }
 
   Future<T?> _invokeMethod<T>({

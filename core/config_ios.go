@@ -38,6 +38,11 @@ var dnsGeodataInlineRE = regexp.MustCompile(`(geosite)\s*:\s*\[?[^\],}\s]*\]?,?\
 // the tunnel is up (IosManager.onServiceStatus → applyProfile), so a fresh
 // install must still boot — on the default config, until the real profile is
 // applied once the tunnel reports connected.
+//
+// Upstream v0.9.1's applyConfig calls loadSetupConfig instead (upstream's own
+// seam for SetupParams.Base), so this entry point is unused until the direct
+// path is wanted again; the filtering itself now rides on
+// loadConfigForPlatformLimits below, which every load path runs through.
 func loadConfigForPlatform(path string) (*config.Config, error) {
 	cfg, err := parseConfigPathFiltered(path)
 	if os.IsNotExist(err) {
@@ -49,6 +54,27 @@ func loadConfigForPlatform(path string) (*config.Config, error) {
 // The packet tunnel provider owns the TUN device, so a listener reload must
 // not recreate one — that would fight the NE for the interface.
 const recreateTunOnReload = false
+
+// loadConfigForPlatformLimits applies the geodata filter to the config mihomo
+// just parsed.
+//
+// The filter has to see the bytes before they are parsed, so it re-reads the
+// file. $HomeDir/config.yaml is always that file: loadConfig parses it
+// directly, and loadConfigWithBase writes the merged profile there before it
+// parses. Upstream calls this hook from withPlatformLimits, which every load
+// path runs through.
+func loadConfigForPlatformLimits(cfg *config.Config) *config.Config {
+	path := filepath.Join(constant.Path.HomeDir(), "config.yaml")
+	if _, err := os.Stat(path); err != nil {
+		return cfg
+	}
+	filtered, err := parseConfigPathFiltered(path)
+	if err != nil {
+		log.Warnln("[iOS filter] keeping the config as loaded: %v", err)
+		return cfg
+	}
+	return filtered
+}
 
 func parseConfigPathFiltered(path string) (*config.Config, error) {
 	b, err := os.ReadFile(path)

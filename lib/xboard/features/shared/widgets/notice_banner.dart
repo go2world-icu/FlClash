@@ -1,6 +1,5 @@
-import 'package:fl_clash/common/common.dart';
 import 'dart:async';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +9,7 @@ import 'package:fl_clash/xboard/features/notice/notice.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import '../styles/markdown_styles.dart';
 import '../styles/html_styles.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 /// 通知内容渲染类型
 enum NoticeRenderType {

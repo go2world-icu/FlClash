@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:fl_clash/icons/glyph.dart';
-import 'package:fl_clash/icons/glyph_painter.dart';
+import 'package:fl_clash/ui/icons/glyph.dart';
+import 'package:fl_clash/ui/icons/glyph_painter.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

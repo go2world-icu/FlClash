@@ -1,11 +1,13 @@
 import 'package:fl_clash/enum/enum.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/ui/metrics.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 /// 上游移除了旧的 `utils.getTimeDifference`（`Utils` 单例已删除），
 /// 这里用上游保留的顶层 [getDateStringLast2] 复现原有格式化行为。
@@ -117,7 +119,9 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
                   .computeTextSize(
                     Text(
                       _formatTimeDifference(DateTime.now()),
-                      style: context.textTheme.titleMedium?.toSoftBold,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   )
                   .width +
@@ -142,8 +146,10 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
               text,
               maxLines: 1,
               overflow: TextOverflow.visible,
-              style: Theme.of(context).textTheme.titleMedium?.toSoftBold
-                  .copyWith(color: isDark ? Colors.black : Colors.white),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.black : Colors.white,
+              ),
             );
           },
         ),

@@ -2,7 +2,7 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
@@ -93,7 +93,7 @@ class _CommissionHistoryDialogState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const GlyphIcon(
-                            AppGlyphs.history,
+                            XBoardGlyphs.history,
                             size: 48,
                             color: Colors.grey,
                           ),

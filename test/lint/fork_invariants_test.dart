@@ -148,7 +148,11 @@ void main() {
 
     test('config.go names the hook instead of branching on GOOS', () {
       final source = _read('core/config.go');
-      expect(source, contains('loadConfigForPlatform('));
+      // Upstream v0.9.1 loads every config through `withPlatformLimits`, so
+      // that is where the fork hangs the iOS geodata filter now. The
+      // path-based `loadConfigForPlatform` is still declared on both sides
+      // (the test above) for the direct path.
+      expect(source, contains('loadConfigForPlatformLimits('));
       expect(source, isNot(contains('runtime.GOOS == "ios"')));
     });
 
@@ -196,7 +200,7 @@ void main() {
 
     test('the fork\'s glyphs stay out of AppGlyphs', () {
       expect(
-        _read('lib/icons/app_glyphs.dart'),
+        _read('lib/ui/icons/app_glyphs.dart'),
         isNot(contains('static const email')),
         reason:
             'the panel\'s 26 glyphs live in lib/xboard/icons/xboard_glyphs.dart; '
@@ -221,6 +225,20 @@ void main() {
             'the chip is the panel\'s widget, so it is exported from '
             'lib/xboard/features/dashboard/dashboard.dart instead',
       );
+      // The copy is only worth its weight while it keeps the seam: upstream
+      // v0.9.1 moved the start toggle into the current-outbound card, and the
+      // panel puts it back in the corner. A merge that re-copies the page over
+      // this file drops the seam without failing anything else.
+      final page = _read(
+        'lib/xboard/features/dashboard/xboard_dashboard_view.dart',
+      );
+      expect(
+        page,
+        contains('_XBoardDashboardAction'),
+        reason: 'the panel action',
+      );
+      expect(page, contains('NodeSelectorChip'));
+      expect(page, contains('StartButton'));
     });
 
     test('application.dart names the panel seams, not its internals', () {

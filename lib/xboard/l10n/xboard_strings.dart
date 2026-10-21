@@ -88,6 +88,7 @@ class XBoardStrings {
       'myInviteQr': 'My Invite QR',
       'nameserver': 'Nameserver',
       'nameserverPolicy': 'Nameserver policy',
+      'networkDetection': 'Network detection',
       'newPassword': 'New Password',
       'noCommissionRecord': 'No commission records',
       'noInvitationData': 'No invitation data',
@@ -311,6 +312,7 @@ class XBoardStrings {
       'myInviteQr': 'マイ招待QR',
       'nameserver': 'ネームサーバー',
       'nameserverPolicy': 'ネームサーバーポリシー',
+      'networkDetection': 'ネットワーク検出',
       'newPassword': '新しいパスワード',
       'noCommissionRecord': '報酬記録がありません',
       'noInvitationData': '招待データがありません',
@@ -528,6 +530,7 @@ class XBoardStrings {
       'myInviteQr': 'Мой QR-код приглашения',
       'nameserver': 'Сервер имен',
       'nameserverPolicy': 'Политика сервера имен',
+      'networkDetection': 'Проверка сети',
       'newPassword': 'Новый пароль',
       'noCommissionRecord': 'Нет записей о комиссиях',
       'noInvitationData': 'Нет данных о приглашениях',
@@ -753,6 +756,7 @@ class XBoardStrings {
       'myInviteQr': '我的邀请二维码',
       'nameserver': '域名服务器',
       'nameserverPolicy': '域名服务器策略',
+      'networkDetection': '网络检测',
       'newPassword': '新密码',
       'noCommissionRecord': '暂无佣金记录',
       'noInvitationData': '暂无邀请数据',
@@ -971,6 +975,7 @@ class XBoardStrings {
   String get myInviteQr => _s('myInviteQr');
   String get nameserver => _s('nameserver');
   String get nameserverPolicy => _s('nameserverPolicy');
+  String get networkDetection => _s('networkDetection');
   String get newPassword => _s('newPassword');
   String get noCommissionRecord => _s('noCommissionRecord');
   String get noInvitationData => _s('noInvitationData');

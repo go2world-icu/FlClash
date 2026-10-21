@@ -1,4 +1,4 @@
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import '../services/subscription_status_service.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 class SubscriptionUsageCard extends ConsumerWidget {
   final DomainSubscription? subscriptionInfo;

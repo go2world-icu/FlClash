@@ -1,100 +1,134 @@
+import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/views/dashboard/widget_metrics.dart';
-import 'package:fl_clash/views/dashboard/widgets/start_button.dart';
-import 'package:fl_clash/widgets/super_grid.dart';
+import 'package:fl_clash/views/dashboard/edit.dart';
+import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/xboard/features/dashboard/dashboard.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../helpers/test_app.dart';
+import '../../../helpers/test_profiles.dart';
 
-/// The panel's dashboard is a copy of upstream's page shell, so these are the
-/// checks that keep the copy honest: the same band breakpoints, the same edit
-/// toggle, and the panel's own floating action button.
+const _phoneSize = Size(412, 915);
+
+/// The panel's dashboard is a copy of upstream's page, so these are the checks
+/// that keep the copy honest: the same density breakpoints, the same edit
+/// toggle, and the panel's own action over the corner. The body itself is
+/// covered by `test/views/dashboard/layout_test.dart`, which pumps upstream's
+/// page — if the copy drifts, the shared cards are what break first.
 void main() {
-  ProviderContainer makeContainer({bool hasProfile = false}) {
-    final container = ProviderContainer(
+  late ProviderContainer container;
+
+  setUp(() {
+    container = ProviderContainer(
       overrides: [
+        profilesProvider.overrideWith(TestProfiles.new),
         dashboardStateProvider.overrideWithValue(
-          const DashboardState(dashboardWidgets: []),
+          // The phone lays out the saved widgets in the order they were
+          // arranged, so it needs the shipped list; the desktop windows ignore
+          // it and lay the page out themselves.
+          const DashboardState(dashboardWidgets: defaultDashboardWidgets),
         ),
-        suspendProvider.overrideWithValue(false),
-        if (hasProfile)
-          profilesProvider.overrideWithValue([
-            const Profile(id: 1, autoUpdateDuration: Duration.zero),
-          ]),
       ],
     );
-    addTearDown(container.dispose);
     globalState.container = container;
-    return container;
-  }
+  });
 
-  Future<ProviderContainer> pumpView(
-    WidgetTester tester, {
-    Size size = const Size(511, 1000),
-    bool hasProfile = false,
+  tearDown(() => container.dispose());
+
+  Future<void> pumpDashboard(
+    WidgetTester tester,
+    Size size, {
+    SupportPlatform platform = SupportPlatform.MacOS,
+    bool withProfile = false,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-
-    final container = makeContainer(hasProfile: hasProfile);
+    container.read(viewSizeProvider.notifier).value = size;
+    if (withProfile) {
+      container
+          .read(profilesProvider.notifier)
+          .put(const Profile(id: 1, autoUpdateDuration: Duration.zero));
+    }
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const TestApp(child: XBoardDashboardView()),
+        child: TestApp(child: XBoardDashboardView(platform: platform)),
       ),
     );
     await tester.pump();
-    return container;
   }
 
-  testWidgets('the grid follows upstream\'s band breakpoints', (tester) async {
-    await pumpView(tester);
+  Future<void> teardown(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 5));
+  }
 
-    final grid = find.byType(SuperGrid);
-    expect(tester.widget<SuperGrid>(grid).crossAxisCount, 8);
-
-    tester.view.physicalSize = const Size(512, 1000);
-    await tester.pump();
-    expect(tester.widget<SuperGrid>(grid).crossAxisCount, 12);
-
-    tester.view.physicalSize = const Size(1600, 1000);
-    await tester.pump();
-    expect(tester.widget<SuperGrid>(grid).crossAxisCount, 16);
-    expect(tester.getSize(grid).width, 1120);
-    expect(tester.takeException(), null);
-  });
-
-  testWidgets('the edit toggle flips the grid and saves on exit', (
+  testWidgets('a four column window lays out the cards upstream\'s way', (
     tester,
   ) async {
-    await pumpView(tester);
+    await pumpDashboard(tester, const Size(1220, 824));
 
-    final grid = find.byType(SuperGrid);
-    expect(tester.widget<SuperGrid>(grid).editing, isFalse);
+    expect(find.byType(CurrentOutboundCard), findsOneWidget);
+    expect(find.byType(ConnectionsTableCard), findsOneWidget);
+    expect(tester.getSize(find.byType(CurrentOutboundCard)).height, 208);
+    expect(tester.takeException(), isNull);
 
-    await tester.tap(find.byKey(const ValueKey('edit-icon')));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.byKey(const ValueKey('save-icon')), findsOneWidget);
-    expect(tester.widget<SuperGrid>(grid).editing, isTrue);
-
-    // The switch is a fade/rotation/scale transition; let it finish before
-    // tapping what it revealed.
-    await tester.pump(const Duration(seconds: 2));
-    await tester.tap(find.byKey(const ValueKey('save-icon')));
-    await tester.pump(const Duration(seconds: 2));
-    expect(find.byKey(const ValueKey('edit-icon')), findsOneWidget);
-    expect(tester.widget<SuperGrid>(grid).editing, isFalse);
+    await teardown(tester);
   });
 
-  testWidgets('the floating button waits for a profile', (tester) async {
-    await pumpView(tester);
+  testWidgets('a short window keeps the layout with compact rows', (
+    tester,
+  ) async {
+    await pumpDashboard(tester, const Size(1220, 720));
+
+    expect(tester.getSize(find.byType(CurrentOutboundCard)).height, 176);
+    expect(tester.takeException(), isNull);
+
+    await teardown(tester);
+  });
+
+  testWidgets('a phone shows the saved cards edge to edge', (tester) async {
+    await pumpDashboard(
+      tester,
+      const Size(400, 900),
+      platform: SupportPlatform.Android,
+    );
+
+    final card = tester.getRect(find.byType(CurrentOutboundCard));
+    expect(card.left, 16);
+    expect(card.right, 400 - 16);
+    expect(find.byType(ConnectionsTableCard), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await teardown(tester);
+  });
+
+  testWidgets('the edit toggle opens the editor, which Done closes', (
+    tester,
+  ) async {
+    await pumpDashboard(tester, const Size(400, 900));
+    expect(find.byType(DashboardEditor), findsNothing);
+
+    await tester.tap(find.byTooltip('Edit dashboard'));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(DashboardEditor), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Done'));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.byType(DashboardEditor), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await teardown(tester);
+  });
+
+  testWidgets('the panel action waits for a profile', (tester) async {
+    await pumpDashboard(tester, _phoneSize);
     expect(find.byType(StartButton), findsNothing);
     expect(find.byType(NodeSelectorChip), findsNothing);
   });
@@ -102,18 +136,39 @@ void main() {
   testWidgets('a profile brings the node selector and the start button', (
     tester,
   ) async {
-    await pumpView(tester, hasProfile: true);
+    await pumpDashboard(tester, _phoneSize, withProfile: true);
 
     expect(find.byType(StartButton), findsOneWidget);
     // With no core running there are no groups, so the chip renders nothing —
     // but it is still the widget the panel mounts beside the start button.
     expect(find.byType(NodeSelectorChip), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await teardown(tester);
   });
 
-  testWidgets('the grid is handed a unit height for its width', (tester) async {
-    await pumpView(tester, size: const Size(360, 1000));
+  testWidgets('the panel action leaves the page alone while editing', (
+    tester,
+  ) async {
+    await pumpDashboard(tester, _phoneSize, withProfile: true);
 
-    final metrics = find.byType(DashboardWidgetMetrics);
-    expect(tester.widget<DashboardWidgetMetrics>(metrics).unitHeight, 80);
+    await tester.tap(find.byTooltip('Edit dashboard'));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(StartButton), findsNothing);
+
+    await teardown(tester);
+  });
+
+  testWidgets('the action sits over the bottom corner, clear of the dock', (
+    tester,
+  ) async {
+    await pumpDashboard(tester, _phoneSize, withProfile: true);
+
+    final button = tester.getRect(find.byType(StartButton));
+    expect(button.bottom, lessThanOrEqualTo(_phoneSize.height));
+    expect(button.right, lessThanOrEqualTo(_phoneSize.width));
+    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
+
+    await teardown(tester);
   });
 }

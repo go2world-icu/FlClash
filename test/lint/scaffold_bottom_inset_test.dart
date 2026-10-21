@@ -73,10 +73,10 @@ void main() {
           entity.path.contains('/generated/')) {
         continue;
       }
-      // p.relative returns backslashes on Windows, and _allowed is written
-      // with forward slashes, so normalise before comparing.
+      // p.relative returns backslashes on Windows, and the comparison below
+      // is written with forward slashes, so normalise before comparing.
       final path = p.posix.joinAll(p.split(p.relative(entity.path)));
-      if (path == 'lib/widgets/scaffold.dart') {
+      if (path == 'lib/ui/scaffold.dart') {
         continue;
       }
       final lines = entity.readAsLinesSync();

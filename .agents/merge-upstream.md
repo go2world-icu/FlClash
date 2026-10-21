@@ -70,20 +70,29 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `lib/main.dart` | `await xboardStartup();` | `lib/xboard/startup.dart` |
 | `lib/bootstrap.dart` | `navigationPort = const XBoardNavigationPort();` | `lib/xboard/navigation_port.dart` |
 | `lib/application.dart` | `mobileManagerStack(state)`, `preloadXBoard(ref)`, `buildXBoardHome()` | `lib/manager/ios_manager.dart`, `lib/xboard/bridge.dart` |
-| `lib/common/path.dart` | `initDataDir(dataDir, supportDirectory)` | `lib/common/data_dir.dart` |
+| `lib/common/path.dart` | `forkDataDir(supportDirectory)` | `lib/common/data_dir.dart` |
 | `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
 | `lib/providers/state/navigation.dart` | the `iosCoreOff` filter | *(still inline — small and self-contained)* |
-| `core/common.go` | `loadConfigForPlatform`, `recreateTunOnReload` | `core/config_{ios,default}.go` |
+| `core/config.go` | `loadConfigForPlatformLimits(cfg)` | `core/config_{ios,default}.go` |
+| `core/lifecycle.go` | `recreateTunOnReload` | `core/config_{ios,default}.go` |
 | `core/tun/tun.go` | `applyPlatformTunOptions(&options)` | `core/tun/options_{ios,android}.go` |
 | `core/hub.go` | — | zero diff; `handleSuspend` lives in `core/handle_suspend.go` |
 
 Files that are back to upstream byte-for-byte and must stay there: `lib/common/app_ports.dart`, `lib/views/navigation.dart`,
-`lib/providers/state.dart`, `lib/icons/app_glyphs.dart`, `test/icons/glyph_painter_test.dart`,
+`lib/providers/state.dart`, `lib/ui/icons/app_glyphs.dart`, `test/icons/glyph_painter_test.dart`,
 `lib/views/dashboard/dashboard.dart`, `lib/views/dashboard/widgets/widgets.dart`. Adding a fork parameter to
 `NavigationPort` is what pulled the first three into a merge at once; adding fork glyphs to `AppGlyphs`, a
 `NodeSelectorChip` to the dashboard's floating button, or a fork export to the dashboard widgets barrel is what pulled
 the last four in. All of it now lives in `lib/xboard/` (`icons/xboard_glyphs.dart`, `features/dashboard/`), and the
 invariants test fails if any of it creeps back.
+
+The dashboard is the one upstream page the fork copies rather than wraps
+(`lib/xboard/features/dashboard/xboard_dashboard_view.dart` is upstream's `dashboard.dart` with a `_XBoardDashboardAction`
+overlay in the corner). When upstream rewrites that page — v0.9.1 moved the start toggle out of the floating button and
+into the current-outbound card, and replaced the `SuperGrid` layout with `DashboardDensity` — re-copy the file and re-apply
+only the overlay; everything else it imports (`views/dashboard/{layout,style,edit,widget_registry}.dart`, the cards) is
+upstream's and is shared, not copied. Copying `DashboardDensityScope` or `DashboardWidgetMetrics` would give the cards a
+second inherited type and make them silently fall back to the mobile metrics.
 
 Accepted residuals — small, additive, self-contained, and not worth a seam: `lib/core/lib.dart` (`markConnected()` and
 `isMobile`), `lib/common/tray.dart`, `lib/views/proxies/{list,tab}.dart` (the iOS empty-state label), `lib/plugins/app.dart`,

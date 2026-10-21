@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/ios_lifecycle.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/color.dart';
+import 'package:fl_clash/ui/context.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,7 +122,7 @@ class _StatusLine extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: context.textTheme.labelSmall?.copyWith(
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),

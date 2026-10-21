@@ -1,5 +1,5 @@
 ﻿import 'dart:async';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,8 +20,8 @@ import 'package:fl_clash/xboard/features/invite/widgets/commission_history_card.
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
-import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
+import 'package:fl_clash/ui/shape.dart';
 
 class XBoardHomePage extends ConsumerStatefulWidget {
   const XBoardHomePage({super.key});
