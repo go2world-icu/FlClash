@@ -92,7 +92,6 @@ class XBoardStrings {
       'noCommissionRecord': 'No commission records',
       'noInvitationData': 'No invitation data',
       'noProxy': 'No proxy',
-      'onlineSupport': 'Support',
       'orderAmount': 'Order amount: {amount}',
       'orderNumber': 'Order: {orderNo}',
       'pageNumber': 'Page {page}',
@@ -316,7 +315,6 @@ class XBoardStrings {
       'noCommissionRecord': '報酬記録がありません',
       'noInvitationData': '招待データがありません',
       'noProxy': 'プロキシなし',
-      'onlineSupport': 'オンラインサポート',
       'orderAmount': '注文金額: {amount}',
       'orderNumber': '注文番号: {orderNo}',
       'pageNumber': 'ページ {page}',
@@ -534,7 +532,6 @@ class XBoardStrings {
       'noCommissionRecord': 'Нет записей о комиссиях',
       'noInvitationData': 'Нет данных о приглашениях',
       'noProxy': 'Нет прокси',
-      'onlineSupport': 'Онлайн поддержка',
       'orderAmount': 'Сумма заказа: {amount}',
       'orderNumber': 'Заказ: {orderNo}',
       'pageNumber': 'Страница {page}',
@@ -760,7 +757,6 @@ class XBoardStrings {
       'noCommissionRecord': '暂无佣金记录',
       'noInvitationData': '暂无邀请数据',
       'noProxy': '暂无代理',
-      'onlineSupport': '在线客服',
       'orderAmount': '订单金额: {amount}',
       'orderNumber': '订单: {orderNo}',
       'pageNumber': '第 {page} 页',
@@ -979,7 +975,6 @@ class XBoardStrings {
   String get noCommissionRecord => _s('noCommissionRecord');
   String get noInvitationData => _s('noInvitationData');
   String get noProxy => _s('noProxy');
-  String get onlineSupport => _s('onlineSupport');
   String orderAmount(Object amount) =>
       _s('orderAmount').replaceAll('{amount}', '$amount');
   String orderNumber(Object orderNo) =>

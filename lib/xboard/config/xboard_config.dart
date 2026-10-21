@@ -16,8 +16,6 @@ export 'core/config_settings.dart'
 // 数据模型（外部需要访问配置数据）
 export 'models/config_entry.dart';
 export 'models/proxy_info.dart';
-export 'models/websocket_info.dart';
-export 'models/update_info.dart';
 // 注意：SubscriptionInfo与SDK中的同名，这里只导出SubscriptionUrlInfo
 export 'models/subscription_info.dart' show SubscriptionUrlInfo;
 
@@ -41,8 +39,6 @@ import 'core/config_settings.dart';
 import 'internal/xboard_config_accessor.dart';
 import 'models/config_entry.dart';
 import 'models/proxy_info.dart';
-import 'models/websocket_info.dart';
-import 'models/update_info.dart';
 import 'models/subscription_info.dart';
 import '../infrastructure/infrastructure.dart';
 import 'utils/config_file_loader.dart';
@@ -65,12 +61,6 @@ class _XBoardConfigProvider implements ConfigProviderInterface {
 
   @override
   String? getProxyUrl() => accessor.getFirstProxyUrl();
-
-  @override
-  String? getWebSocketUrl() => accessor.getFirstWebSocketUrl();
-
-  @override
-  String? getUpdateUrl() => accessor.getFirstUpdateUrl();
 
   @override
   String? getReportLogUrl() => accessor.getFirstReportLogUrl();
@@ -121,10 +111,6 @@ class _XBoardConfigProvider implements ConfigProviderInterface {
   @override
   List<String> getAllProxyUrls() =>
       accessor.getProxyConfigList().map((e) => e.url).toList();
-
-  @override
-  List<String> getAllWebSocketUrls() =>
-      accessor.getWebSocketConfigList().map((e) => e.url).toList();
 
   @override
   Future<void> refresh() async {
@@ -319,12 +305,6 @@ class XBoardConfig {
   /// 获取第一个代理URL
   static String? get proxyUrl => _instance?.getFirstProxyUrl();
 
-  /// 获取第一个WebSocket URL
-  static String? get wsUrl => _instance?.getFirstWebSocketUrl();
-
-  /// 获取第一个更新URL
-  static String? get updateUrl => _instance?.getFirstUpdateUrl();
-
   /// 获取第一个报告日志URL
   static String? get reportLogUrl => _instance?.getFirstReportLogUrl();
 
@@ -335,14 +315,6 @@ class XBoardConfig {
   /// 获取代理配置列表
   static List<ProxyInfo> get proxyList =>
       _instance?.getProxyConfigList() ?? const [];
-
-  /// 获取WebSocket配置列表
-  static List<WebSocketInfo> get webSocketList =>
-      _instance?.getWebSocketConfigList() ?? const [];
-
-  /// 获取更新配置列表
-  static List<UpdateInfo> get updateList =>
-      _instance?.getUpdateConfigList() ?? const [];
 
   /// 获取订阅配置信息
   static SubscriptionInfo? get subscriptionInfo =>
@@ -417,13 +389,6 @@ class XBoardConfig {
 
   /// 获取所有代理URL列表
   static List<String> get allProxyUrls => proxyList.map((e) => e.url).toList();
-
-  /// 获取所有WebSocket URL列表
-  static List<String> get allWsUrls => webSocketList.map((e) => e.url).toList();
-
-  /// 获取所有更新URL列表
-  static List<String> get allUpdateUrls =>
-      updateList.map((e) => e.url).toList();
 
   /// 获取所有订阅URL列表
   static List<String> get allSubscriptionUrls =>

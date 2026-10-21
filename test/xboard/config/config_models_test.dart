@@ -1,11 +1,8 @@
 import 'package:fl_clash/xboard/config/models/config_entry.dart';
-import 'package:fl_clash/xboard/config/models/online_support_info.dart';
 import 'package:fl_clash/xboard/config/models/panel_configuration.dart';
 import 'package:fl_clash/xboard/config/models/parsed_configuration.dart';
 import 'package:fl_clash/xboard/config/models/proxy_info.dart';
 import 'package:fl_clash/xboard/config/models/subscription_info.dart';
-import 'package:fl_clash/xboard/config/models/update_info.dart';
-import 'package:fl_clash/xboard/config/models/websocket_info.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -105,148 +102,6 @@ void main() {
         'description': 'd',
         'protocol': 'http',
       });
-    });
-  });
-
-  group('WebSocketInfo', () {
-    test('fromJson defaults supportsPing to true', () {
-      final ws = WebSocketInfo.fromJson(const {'url': 'wss://a'});
-      expect(ws.supportsPing, isTrue);
-      expect(ws.timeout, isNull);
-    });
-
-    test('parses headers, timeout and derived getters', () {
-      final ws = WebSocketInfo.fromJson(const {
-        'url': 'wss://a/b',
-        'headers': {'X': '1'},
-        'timeout': 1500,
-        'region': 'US',
-        'supportsPing': false,
-      });
-      expect(ws.headers, {'X': '1'});
-      expect(ws.timeout, const Duration(milliseconds: 1500));
-      expect(ws.isSecure, isTrue);
-      expect(ws.protocol, 'wss');
-      expect(ws.toJson()['timeout'], 1500);
-      expect(ws.toJson()['supportsPing'], isFalse);
-      expect(ws.toString(), contains('protocol: wss'));
-    });
-
-    test('reports insecure protocol for ws url', () {
-      final ws = WebSocketInfo.fromJson(const {'url': 'ws://a'});
-      expect(ws.isSecure, isFalse);
-      expect(ws.protocol, 'ws');
-    });
-  });
-
-  group('UpdateInfo', () {
-    test('formats file sizes across units', () {
-      expect(
-        const UpdateInfo(url: 'u', description: 'd').fileSizeFormatted,
-        'Unknown',
-      );
-      expect(
-        const UpdateInfo(
-          url: 'u',
-          description: 'd',
-          fileSize: 512,
-        ).fileSizeFormatted,
-        '512.0 B',
-      );
-      expect(
-        const UpdateInfo(
-          url: 'u',
-          description: 'd',
-          fileSize: 2048,
-        ).fileSizeFormatted,
-        '2.0 KB',
-      );
-      expect(
-        const UpdateInfo(
-          url: 'u',
-          description: 'd',
-          fileSize: 3 * 1024 * 1024,
-        ).fileSizeFormatted,
-        '3.0 MB',
-      );
-    });
-
-    test('isSecure depends on https scheme', () {
-      expect(
-        const UpdateInfo(url: 'https://u', description: 'd').isSecure,
-        isTrue,
-      );
-      expect(
-        const UpdateInfo(url: 'http://u', description: 'd').isSecure,
-        isFalse,
-      );
-    });
-
-    test('fromJson and toJson preserve optional fields', () {
-      final update = UpdateInfo.fromJson(const {
-        'url': 'https://u',
-        'description': 'd',
-        'version': '1.2.3',
-        'checksum': 'abc',
-        'region': 'CN',
-        'fileSize': 10,
-      });
-      expect(update.version, '1.2.3');
-      expect(update.toJson(), {
-        'url': 'https://u',
-        'description': 'd',
-        'version': '1.2.3',
-        'checksum': 'abc',
-        'region': 'CN',
-        'fileSize': 10,
-      });
-    });
-  });
-
-  group('OnlineSupportInfo', () {
-    test('validate succeeds for valid http/ws urls', () {
-      const info = OnlineSupportInfo(
-        url: 'u',
-        description: 'd',
-        apiBaseUrl: 'https://api.example.com',
-        wsBaseUrl: 'wss://ws.example.com',
-      );
-      expect(info.validate(), isTrue);
-      expect(info.getValidationErrors(), isEmpty);
-      expect(info.toJson()['apiBaseUrl'], 'https://api.example.com');
-    });
-
-    test('reports each empty or malformed url', () {
-      const info = OnlineSupportInfo(
-        url: 'u',
-        description: 'd',
-        apiBaseUrl: '',
-        wsBaseUrl: 'http://not-ws',
-      );
-      expect(info.validate(), isFalse);
-      final errors = info.getValidationErrors();
-      expect(errors, contains('API base URL cannot be empty'));
-      expect(
-        errors,
-        contains(
-          'WebSocket base URL must use ws or wss protocol: http://not-ws',
-        ),
-      );
-    });
-
-    test('reports http scheme violations explicitly', () {
-      const info = OnlineSupportInfo(
-        url: 'u',
-        description: 'd',
-        apiBaseUrl: 'ftp://api.example.com',
-        wsBaseUrl: 'ws://ws.example.com',
-      );
-      expect(
-        info.getValidationErrors(),
-        contains(
-          'API base URL must use http or https protocol: ftp://api.example.com',
-        ),
-      );
     });
   });
 
@@ -501,20 +356,14 @@ void main() {
       'proxy': [
         {'url': 'http://proxy', 'description': 'd', 'protocol': 'http'},
       ],
+      // 已下线的段落：解析时应当直接忽略，而不是报错。
       'ws': [
         {'url': 'wss://ws', 'description': 'd'},
       ],
       'update': [
         {'url': 'https://u', 'description': 'd', 'version': '1.0'},
       ],
-      'onlineSupport': [
-        {
-          'url': 'u',
-          'description': 'd',
-          'apiBaseUrl': 'https://api',
-          'wsBaseUrl': 'wss://ws2',
-        },
-      ],
+      'onlineSupport': 'whatever',
       'report_log': [
         {'url': 'https://log', 'description': 'd'},
       ],
@@ -541,9 +390,6 @@ void main() {
       final config = ParsedConfiguration.fromJson(json, 'Flclash');
       expect(config.panelType, 'xboard');
       expect(config.proxies.length, 1);
-      expect(config.webSockets.length, 1);
-      expect(config.updates.length, 1);
-      expect(config.onlineSupport.length, 1);
       expect(config.reportLog.length, 1);
       expect(config.subscription!.urls.length, 1);
       expect(config.metadata.version, '2.0.0');
@@ -553,11 +399,7 @@ void main() {
       final config = ParsedConfiguration.fromJson(json, 'Flclash');
       expect(config.firstPanelUrl, 'https://panel.com');
       expect(config.firstProxyUrl, 'http://proxy');
-      expect(config.firstWsUrl, 'wss://ws');
-      expect(config.firstUpdateUrl, 'https://u');
       expect(config.firstReportLogUrl, 'https://log');
-      expect(config.firstOnlineSupportApiUrl, 'https://api');
-      expect(config.firstOnlineSupportWsUrl, 'wss://ws2');
       expect(config.firstSubscriptionUrl, 'https://sub');
       expect(config.firstEncryptSubscriptionUrl, 'https://sub');
       expect(
@@ -577,21 +419,21 @@ void main() {
       final config = ParsedConfiguration.fromJson(const {
         'panelType': 'v2board',
       }, 'Flclash');
-      expect(config.firstWsUrl, isNull);
       expect(config.firstProxyUrl, isNull);
-      expect(config.firstUpdateUrl, isNull);
       expect(config.firstReportLogUrl, isNull);
-      expect(config.firstOnlineSupportApiUrl, isNull);
       expect(config.firstSubscriptionUrl, isNull);
       expect(config.subscription, isNull);
       expect(config.buildSubscriptionUrl('t'), isNull);
     });
 
-    test('toJson serializes sections', () {
+    test('toJson serializes sections and drops retired ones', () {
       final config = ParsedConfiguration.fromJson(json, 'Flclash');
       final out = config.toJson();
       expect((out['proxy'] as List).length, 1);
       expect((out['subscription'] as Map)['urls'], isA<List>());
+      expect(out.containsKey('ws'), isFalse);
+      expect(out.containsKey('update'), isFalse);
+      expect(out.containsKey('onlineSupport'), isFalse);
       expect(config.toString(), contains('proxies: 1'));
     });
   });

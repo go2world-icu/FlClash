@@ -56,6 +56,10 @@ class ConfigValidator {
     final errors = <ValidationError>[];
 
     // 检查基本结构 - 至少要有一个主要字段
+    //
+    // `ws` / `update` / `onlineSupport` 已不再实现，但仍算可识别的段落：
+    // 线上配置如果还在下发它们，这里放行（解析时直接忽略），
+    // 而不是因为「没有可识别字段」把整份配置判死。
     if (!json.containsKey('panels') &&
         !json.containsKey('proxy') &&
         !json.containsKey('ws') &&
@@ -78,16 +82,9 @@ class ConfigValidator {
       errors.addAll(_validatePanelStructure(json['panels']));
     }
 
-    // 验证其他服务字段
-    for (final key in ['proxy', 'ws', 'update']) {
-      if (json.containsKey(key)) {
-        errors.addAll(_validateServiceList(json[key], key));
-      }
-    }
-
-    // 验证在线客服配置
-    if (json.containsKey('onlineSupport')) {
-      errors.addAll(_validateOnlineSupportList(json['onlineSupport']));
+    // 验证代理列表（ws/update 已移除，不再校验）
+    if (json.containsKey('proxy')) {
+      errors.addAll(_validateServiceList(json['proxy'], 'proxy'));
     }
 
     // 验证订阅配置 - 暂时跳过，使用基本验证
@@ -248,134 +245,6 @@ class ConfigValidator {
 
     return errors;
   }
-
-  /// 验证在线客服配置列表
-  List<ValidationError> _validateOnlineSupportList(dynamic onlineSupportList) {
-    final errors = <ValidationError>[];
-
-    if (onlineSupportList is! List) {
-      errors.add(
-        ValidationError(
-          field: 'onlineSupport',
-          message: 'onlineSupport must be an array',
-          type: ValidationErrorType.invalidType,
-        ),
-      );
-      return errors;
-    }
-
-    final list = onlineSupportList;
-    for (int i = 0; i < list.length; i++) {
-      final item = list[i];
-      if (item is! Map<String, dynamic>) {
-        errors.add(
-          ValidationError(
-            field: 'onlineSupport[$i]',
-            message: 'Online support item must be an object',
-            type: ValidationErrorType.invalidType,
-          ),
-        );
-        continue;
-      }
-
-      final itemMap = item;
-
-      // 验证必填字段
-      if (!itemMap.containsKey('url') || itemMap['url'] is! String) {
-        errors.add(
-          ValidationError(
-            field: 'onlineSupport[$i].url',
-            message: 'Online support item must have a valid url field',
-            type: ValidationErrorType.missingField,
-          ),
-        );
-      }
-
-      if (!itemMap.containsKey('description') ||
-          itemMap['description'] is! String) {
-        errors.add(
-          ValidationError(
-            field: 'onlineSupport[$i].description',
-            message: 'Online support item must have a valid description field',
-            type: ValidationErrorType.missingField,
-          ),
-        );
-      }
-
-      if (!itemMap.containsKey('apiBaseUrl') ||
-          itemMap['apiBaseUrl'] is! String) {
-        errors.add(
-          ValidationError(
-            field: 'onlineSupport[$i].apiBaseUrl',
-            message: 'Online support item must have a valid apiBaseUrl field',
-            type: ValidationErrorType.missingField,
-          ),
-        );
-      }
-
-      if (!itemMap.containsKey('wsBaseUrl') ||
-          itemMap['wsBaseUrl'] is! String) {
-        errors.add(
-          ValidationError(
-            field: 'onlineSupport[$i].wsBaseUrl',
-            message: 'Online support item must have a valid wsBaseUrl field',
-            type: ValidationErrorType.missingField,
-          ),
-        );
-      }
-
-      // 验证URL格式
-      if (itemMap.containsKey('apiBaseUrl') &&
-          itemMap['apiBaseUrl'] is String) {
-        final apiUrl = itemMap['apiBaseUrl'] as String;
-        if (!_isValidHttpUrl(apiUrl)) {
-          errors.add(
-            ValidationError(
-              field: 'onlineSupport[$i].apiBaseUrl',
-              message: 'apiBaseUrl must be a valid HTTP/HTTPS URL',
-              type: ValidationErrorType.invalidFormat,
-            ),
-          );
-        }
-      }
-
-      if (itemMap.containsKey('wsBaseUrl') && itemMap['wsBaseUrl'] is String) {
-        final wsUrl = itemMap['wsBaseUrl'] as String;
-        if (!_isValidWebSocketUrl(wsUrl)) {
-          errors.add(
-            ValidationError(
-              field: 'onlineSupport[$i].wsBaseUrl',
-              message: 'wsBaseUrl must be a valid WebSocket URL',
-              type: ValidationErrorType.invalidFormat,
-            ),
-          );
-        }
-      }
-    }
-
-    return errors;
-  }
-
-  /// 检查是否为有效的HTTP URL
-  bool _isValidHttpUrl(String url) {
-    try {
-      final uri = Uri.parse(url);
-      return (uri.scheme == 'http' || uri.scheme == 'https') &&
-          uri.host.isNotEmpty;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// 检查是否为有效的WebSocket URL
-  bool _isValidWebSocketUrl(String url) {
-    try {
-      final uri = Uri.parse(url);
-      return (uri.scheme == 'ws' || uri.scheme == 'wss') && uri.host.isNotEmpty;
-    } catch (e) {
-      return false;
-    }
-  }
 }
 
 /// 配置解析器
@@ -460,14 +329,8 @@ class ConfigurationParser {
           },
         };
 
-        // 复制其他可能存在的字段
-        for (final key in [
-          'proxy',
-          'ws',
-          'update',
-          'onlineSupport',
-          'subscription',
-        ]) {
+        // 复制其他可能存在的字段（ws/update/onlineSupport 已移除，不再透传）
+        for (final key in ['proxy', 'subscription']) {
           if (remoteResult.containsKey(key)) {
             convertedConfig[key] = remoteResult[key];
           }
@@ -507,13 +370,11 @@ class ConfigurationParser {
         merged['panels'] = existingPanels;
       }
 
-      // 合并其他列表字段
-      for (final key in ['proxy', 'ws', 'update', 'onlineSupport']) {
-        if (config.containsKey(key)) {
-          final existingList = (merged[key] as List?) ?? [];
-          final newList = config[key] as List;
-          merged[key] = [...existingList, ...newList];
-        }
+      // 合并代理列表
+      if (config.containsKey('proxy')) {
+        final existingList = (merged['proxy'] as List?) ?? [];
+        final newList = config['proxy'] as List;
+        merged['proxy'] = [...existingList, ...newList];
       }
 
       // 合并订阅配置

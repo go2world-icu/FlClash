@@ -30,12 +30,6 @@ abstract interface class ConfigProviderInterface {
   /// 获取第一个代理 URL
   String? getProxyUrl();
 
-  /// 获取第一个 WebSocket URL
-  String? getWebSocketUrl();
-
-  /// 获取第一个更新 URL
-  String? getUpdateUrl();
-
   /// 获取第一个日志上报 URL
   String? getReportLogUrl();
 
@@ -63,9 +57,6 @@ abstract interface class ConfigProviderInterface {
 
   /// 获取所有代理 URL 列表
   List<String> getAllProxyUrls();
-
-  /// 获取所有 WebSocket URL 列表
-  List<String> getAllWebSocketUrls();
 
   // ===== 配置管理 =====
 

@@ -4,7 +4,6 @@ import 'service_locator.dart';
 import 'config_settings.dart';
 import '../parsers/configuration_parser.dart';
 import '../internal/xboard_config_accessor.dart';
-import '../services/online_support_service.dart';
 import '../../core/core.dart';
 
 // 初始化文件级日志器
@@ -152,21 +151,6 @@ class ModuleInitializer {
         appWebsite: config.website,
         logSettings: config.log,
       );
-    });
-
-    // 注册在线客服服务
-    ServiceLocator.registerLazySingleton<OnlineSupportService>(() {
-      try {
-        final accessor = ServiceLocator.get<XBoardConfigAccessor>();
-        final configs = accessor.getOnlineSupportConfigs();
-        return OnlineSupportService(configs);
-      } catch (e) {
-        _logger.warning(
-          'Failed to initialize OnlineSupportService, using empty config',
-          e,
-        );
-        return OnlineSupportService([]);
-      }
     });
 
     _logger.debug('Services registered successfully');

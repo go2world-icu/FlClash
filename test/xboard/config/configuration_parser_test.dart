@@ -90,25 +90,40 @@ void main() {
     });
 
     test('rejects a non-list service list', () {
-      final errors = validator.getValidationErrors(const {'ws': 'nope'});
-      expect(errors.single.field, 'ws');
+      final errors = validator.getValidationErrors(const {'proxy': 'nope'});
+      expect(errors.single.field, 'proxy');
       expect(errors.single.type, ValidationErrorType.invalidType);
     });
 
     test('flags service items that are not objects', () {
       final errors = validator.getValidationErrors(const {
-        'update': ['nope'],
+        'proxy': ['nope'],
       });
-      expect(errors.single.field, 'update[0]');
+      expect(errors.single.field, 'proxy[0]');
     });
 
     test('requires description on a service item', () {
       final errors = validator.getValidationErrors(const {
-        'ws': [
-          {'url': 'wss://a'},
+        'proxy': [
+          {'url': 'http://p', 'protocol': 'http'},
         ],
       });
-      expect(errors.map((e) => e.field), contains('ws[0].description'));
+      expect(errors.map((e) => e.field), contains('proxy[0].description'));
+    });
+
+    // ws/update/onlineSupport 已下线，但线上配置可能还在下发；
+    // 只带这些段落的配置应当继续被接受（内容忽略），而不是整份判死。
+    test('tolerates retired sections', () {
+      expect(
+        validator.validateConfiguration(const {
+          'ws': [
+            {'url': 'wss://a', 'description': 'd'},
+          ],
+          'update': 'not-even-a-list',
+          'onlineSupport': {'shape': 'anything'},
+        }),
+        isTrue,
+      );
     });
 
     test('rejects a subscription that is not an object', () {
@@ -117,48 +132,6 @@ void main() {
       });
       expect(errors.single.field, 'subscription');
       expect(errors.single.type, ValidationErrorType.invalidType);
-    });
-
-    test('rejects a non-list onlineSupport', () {
-      final errors = validator.getValidationErrors(const {'onlineSupport': {}});
-      expect(errors.single.field, 'onlineSupport');
-    });
-
-    test('validates online support items thoroughly', () {
-      final errors = validator.getValidationErrors(const {
-        'onlineSupport': [
-          {
-            'url': 'u',
-            'description': 'd',
-            'apiBaseUrl': 'not-a-url',
-            'wsBaseUrl': 'https://not-ws',
-          },
-        ],
-      });
-      final fields = errors.map((e) => e.field).toList();
-      expect(fields, contains('onlineSupport[0].apiBaseUrl'));
-      expect(fields, contains('onlineSupport[0].wsBaseUrl'));
-    });
-
-    test('accepts a fully valid online support entry', () {
-      final errors = validator.getValidationErrors(const {
-        'onlineSupport': [
-          {
-            'url': 'u',
-            'description': 'd',
-            'apiBaseUrl': 'https://api.example.com',
-            'wsBaseUrl': 'wss://ws.example.com',
-          },
-        ],
-      });
-      expect(errors, isEmpty);
-    });
-
-    test('flags non-object online support items', () {
-      final errors = validator.getValidationErrors(const {
-        'onlineSupport': ['nope'],
-      });
-      expect(errors.single.field, 'onlineSupport[0]');
     });
   });
 

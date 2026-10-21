@@ -2,18 +2,12 @@ import 'dart:async';
 import '../models/parsed_configuration.dart';
 import '../models/config_entry.dart';
 import '../models/proxy_info.dart';
-import '../models/websocket_info.dart';
-import '../models/update_info.dart';
-import '../models/online_support_info.dart';
 import '../models/subscription_info.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import '../../core/core.dart';
 import '../parsers/configuration_parser.dart';
 import '../services/panel_service.dart';
 import '../services/proxy_service.dart';
-import '../services/websocket_service.dart';
-import '../services/update_service.dart';
-import '../services/online_support_service.dart';
 import '../core/config_settings.dart';
 
 // 初始化文件级日志器
@@ -45,9 +39,6 @@ class XBoardConfigAccessor {
   // 服务实例
   PanelService? _panelService;
   ProxyService? _proxyService;
-  WebSocketService? _webSocketService;
-  UpdateService? _updateService;
-  OnlineSupportService? _onlineSupportService;
 
   // 事件流
   final StreamController<ParsedConfiguration> _configStreamController =
@@ -261,21 +252,6 @@ class XBoardConfigAccessor {
     return _proxyService?.getAllProxies() ?? [];
   }
 
-  /// 获取WebSocket配置列表
-  List<WebSocketInfo> getWebSocketConfigList() {
-    return _webSocketService?.getAllWebSockets() ?? [];
-  }
-
-  /// 获取更新配置列表
-  List<UpdateInfo> getUpdateConfigList() {
-    return _updateService?.getAllUpdateSources() ?? [];
-  }
-
-  /// 获取在线客服配置列表
-  List<OnlineSupportInfo> getOnlineSupportConfigs() {
-    return _onlineSupportService?.getAllConfigs() ?? [];
-  }
-
   /// 获取订阅配置信息
   SubscriptionInfo? getSubscriptionInfo() {
     return _currentConfig?.subscription;
@@ -315,29 +291,9 @@ class XBoardConfigAccessor {
     return _proxyService?.getFirstProxyUrl();
   }
 
-  /// 获取第一个WebSocket URL
-  String? getFirstWebSocketUrl() {
-    return _webSocketService?.getFirstWebSocketUrl();
-  }
-
-  /// 获取第一个更新URL
-  String? getFirstUpdateUrl() {
-    return _updateService?.getFirstUpdateUrl();
-  }
-
   /// 获取第一个日志上报 URL
   String? getFirstReportLogUrl() {
     return _currentConfig?.firstReportLogUrl;
-  }
-
-  /// 获取第一个在线客服API URL
-  String? getFirstOnlineSupportApiUrl() {
-    return _onlineSupportService?.getApiBaseUrl();
-  }
-
-  /// 获取第一个在线客服WebSocket URL
-  String? getFirstOnlineSupportWsUrl() {
-    return _onlineSupportService?.getWebSocketBaseUrl();
   }
 
   /// 获取第一个订阅URL
@@ -363,22 +319,12 @@ class XBoardConfigAccessor {
   /// 获取配置统计信息
   Map<String, dynamic> getConfigStats() {
     if (_currentConfig == null) {
-      return {
-        'panels': 0,
-        'proxies': 0,
-        'webSockets': 0,
-        'updates': 0,
-        'onlineSupport': 0,
-        'subscriptionUrls': 0,
-      };
+      return {'panels': 0, 'proxies': 0, 'subscriptionUrls': 0};
     }
 
     return {
       'panels': _currentConfig!.panels.getAll().length,
       'proxies': _currentConfig!.proxies.length,
-      'webSockets': _currentConfig!.webSockets.length,
-      'updates': _currentConfig!.updates.length,
-      'onlineSupport': _currentConfig!.onlineSupport.length,
       'subscriptionUrls': _currentConfig!.subscription?.urls.length ?? 0,
       'subscriptionEncryptUrls':
           _currentConfig!.subscription?.encryptUrls.length ?? 0,
@@ -393,9 +339,6 @@ class XBoardConfigAccessor {
     return {
       'panel': _panelService?.getPanelStats() ?? {},
       'proxy': _proxyService?.getProxyStats() ?? {},
-      'webSocket': _webSocketService?.getWebSocketStats() ?? {},
-      'update': _updateService?.getUpdateStats() ?? {},
-      'onlineSupport': _onlineSupportService?.getConfigStats() ?? {},
     };
   }
 
@@ -414,11 +357,6 @@ class XBoardConfigAccessor {
       // 创建服务实例
       _panelService = PanelService(_currentConfig!.panels);
       _proxyService = ProxyService(_currentConfig!.proxies);
-      _webSocketService = WebSocketService(_currentConfig!.webSockets);
-      _updateService = UpdateService(_currentConfig!.updates);
-      _onlineSupportService = OnlineSupportService(
-        _currentConfig!.onlineSupport,
-      );
 
       await _updateState(ConfigAccessorState.ready);
 

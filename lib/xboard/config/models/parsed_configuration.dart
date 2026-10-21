@@ -1,9 +1,6 @@
 import 'config_entry.dart';
 import 'panel_configuration.dart';
 import 'proxy_info.dart';
-import 'websocket_info.dart';
-import 'update_info.dart';
-import 'online_support_info.dart';
 import 'subscription_info.dart';
 
 /// 解析后的配置数据
@@ -13,9 +10,6 @@ class ParsedConfiguration {
   final String panelType; // 面板类型：xboard 或 v2board
   final PanelConfiguration panels;
   final List<ProxyInfo> proxies;
-  final List<WebSocketInfo> webSockets;
-  final List<UpdateInfo> updates;
-  final List<OnlineSupportInfo> onlineSupport;
   final List<ConfigEntry> reportLog;
   final SubscriptionInfo? subscription;
   final DateTime parsedAt;
@@ -26,9 +20,6 @@ class ParsedConfiguration {
     required this.panelType,
     required this.panels,
     required this.proxies,
-    required this.webSockets,
-    required this.updates,
-    required this.onlineSupport,
     required this.reportLog,
     this.subscription,
     required this.parsedAt,
@@ -49,9 +40,6 @@ class ParsedConfiguration {
 
     final panelsData = json['panels'] as Map<String, dynamic>? ?? {};
     final proxyList = json['proxy'] as List<dynamic>? ?? [];
-    final wsList = json['ws'] as List<dynamic>? ?? [];
-    final updateList = json['update'] as List<dynamic>? ?? [];
-    final onlineSupportList = json['onlineSupport'] as List<dynamic>? ?? [];
     final reportLogList = json['report_log'] as List<dynamic>? ?? [];
     final subscriptionData = json['subscription'] as Map<String, dynamic>?;
 
@@ -60,17 +48,6 @@ class ParsedConfiguration {
       panels: PanelConfiguration.fromJson(panelsData, currentProvider),
       proxies: proxyList
           .map((item) => ProxyInfo.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      webSockets: wsList
-          .map((item) => WebSocketInfo.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      updates: updateList
-          .map((item) => UpdateInfo.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      onlineSupport: onlineSupportList
-          .map(
-            (item) => OnlineSupportInfo.fromJson(item as Map<String, dynamic>),
-          )
           .toList(),
       reportLog: reportLogList
           .map((item) => ConfigEntry.fromJson(item as Map<String, dynamic>))
@@ -86,11 +63,6 @@ class ParsedConfiguration {
     );
   }
 
-  /// 获取第一个可用的WebSocket URL
-  String? get firstWsUrl {
-    return webSockets.isNotEmpty ? webSockets.first.url : null;
-  }
-
   /// 获取第一个可用的代理URL
   String? get firstProxyUrl {
     return proxies.isNotEmpty ? proxies.first.url : null;
@@ -101,24 +73,9 @@ class ParsedConfiguration {
     return panels.firstUrl;
   }
 
-  /// 获取第一个可用的更新URL
-  String? get firstUpdateUrl {
-    return updates.isNotEmpty ? updates.first.url : null;
-  }
-
   /// 获取第一个可用的日志上报 URL
   String? get firstReportLogUrl {
     return reportLog.isNotEmpty ? reportLog.first.url : null;
-  }
-
-  /// 获取第一个可用的在线客服API URL
-  String? get firstOnlineSupportApiUrl {
-    return onlineSupport.isNotEmpty ? onlineSupport.first.apiBaseUrl : null;
-  }
-
-  /// 获取第一个可用的在线客服WebSocket URL
-  String? get firstOnlineSupportWsUrl {
-    return onlineSupport.isNotEmpty ? onlineSupport.first.wsBaseUrl : null;
   }
 
   /// 获取第一个可用的订阅URL
@@ -144,9 +101,6 @@ class ParsedConfiguration {
     return {
       'panels': panels.toJson(),
       'proxy': proxies.map((e) => e.toJson()).toList(),
-      'ws': webSockets.map((e) => e.toJson()).toList(),
-      'update': updates.map((e) => e.toJson()).toList(),
-      'onlineSupport': onlineSupport.map((e) => e.toJson()).toList(),
       'report_log': reportLog.map((e) => e.toJson()).toList(),
       if (subscription != null) 'subscription': subscription!.toJson(),
       'parsedAt': parsedAt.toIso8601String(),
@@ -158,8 +112,6 @@ class ParsedConfiguration {
   @override
   String toString() {
     return 'ParsedConfiguration(panels: $panels, proxies: ${proxies.length}, '
-        'ws: ${webSockets.length}, updates: ${updates.length}, '
-        'onlineSupport: ${onlineSupport.length}, '
         'subscription: ${subscription != null ? subscription!.urls.length : 0})';
   }
 }
