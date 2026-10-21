@@ -21,7 +21,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// dots, and the sentence behind them lives in the tooltip, which keeps it from
 /// growing wide enough to crowd the title in any locale.
 class IosCoreStatus extends ConsumerStatefulWidget {
-  const IosCoreStatus({super.key});
+  const IosCoreStatus({super.key, this.compact = false});
+
+  /// Dots only, no labels.
+  ///
+  /// The dots used to sit in a bar of their own, where three labels fit. They
+  /// live in the dashboard's bar now, beside a title and the page's own
+  /// actions, and three labelled lines overflow a phone's — the tooltip keeps
+  /// the sentence that the label used to carry.
+  final bool compact;
 
   @override
   ConsumerState<IosCoreStatus> createState() => _IosCoreStatusState();
@@ -67,16 +75,26 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
     }
     _scheduleRetry(tunnelUp: tunnelUp, allUp: channelUp && coreBooted);
 
+    final compact = widget.compact;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _StatusLine(label: xboardL10n.iosTunnel, isUp: tunnelUp),
-        const SizedBox(width: 10),
-        _StatusLine(label: xboardL10n.iosChannel, isUp: channelUp),
-        const SizedBox(width: 10),
+        _StatusLine(
+          label: xboardL10n.iosTunnel,
+          isUp: tunnelUp,
+          compact: compact,
+        ),
+        SizedBox(width: compact ? 8 : 10),
+        _StatusLine(
+          label: xboardL10n.iosChannel,
+          isUp: channelUp,
+          compact: compact,
+        ),
+        SizedBox(width: compact ? 8 : 10),
         _StatusLine(
           label: xboardL10n.iosCore,
           isUp: coreBooted,
+          compact: compact,
           // The extension's own account of what it did, which is what makes a
           // red dot actionable: boot failure and a silent call look the same
           // from here otherwise.
@@ -91,10 +109,18 @@ class _IosCoreStatusState extends ConsumerState<IosCoreStatus> {
 }
 
 class _StatusLine extends StatelessWidget {
-  const _StatusLine({required this.label, required this.isUp, this.detail});
+  const _StatusLine({
+    required this.label,
+    required this.isUp,
+    this.compact = false,
+    this.detail,
+  });
 
   final String label;
   final bool isUp;
+
+  /// The dot alone; [label] goes into the tooltip instead of beside it.
+  final bool compact;
 
   /// Extra facts for the tooltip, when the dot alone cannot say enough.
   final String? detail;
@@ -119,13 +145,15 @@ class _StatusLine extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+          if (!compact) ...[
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

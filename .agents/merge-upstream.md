@@ -70,7 +70,7 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `lib/main.dart` | `await xboardStartup();` | `lib/xboard/startup.dart` |
 | `lib/bootstrap.dart` | `navigationPort = const XBoardNavigationPort();` | `lib/xboard/navigation_port.dart` |
 | `lib/application.dart` | `mobileManagerStack(state)`, `preloadXBoard(ref)`, `buildXBoardHome()` | `lib/manager/ios_manager.dart`, `lib/xboard/bridge.dart` |
-| `lib/application.dart` | `buildXBoardHome()` returns the panel's `XBoardShellHome` off iOS — so the shell itself (the start button at the dock's end) is the fork's | `lib/xboard/home_shell.dart` |
+| `lib/application.dart` | `buildXBoardHome()` returns the panel's `XBoardShellHome` on every platform — so the shell itself (the start button at the dock's end) is the fork's | `lib/xboard/home_shell.dart` |
 | `lib/common/path.dart` | `forkDataDir(supportDirectory)` | `lib/common/data_dir.dart` |
 | `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
 | `lib/providers/state/navigation.dart` | the `iosCoreOff` filter | *(still inline — small and self-contained)* |
@@ -94,6 +94,11 @@ The last two are how the start button got its place back. Upstream v0.9.1 delete
 `Expanded(NavigationDock) + _DockedStartButton` on a phone, and `buildXBoardHome()` serves it. That keeps both upstream
 files byte-for-byte; a merge that re-copies `home.dart` over the copy drops the row and the invariants test says so.
 
+iOS opens on that same shell now, so `buildXBoardHome()` has no platform branch at all. The old iOS shell
+(`lib/xboard/features/ios_shell/`, a subscription feed with two tabs and a connect button) is **parked, not deleted**:
+`bridge.dart` keeps its export and its branch commented out, and the startup dots it carried in its bar moved to the
+dashboard's. Un-comment both to bring it back.
+
 The dashboard is the one upstream page the fork copies rather than wraps
 (`lib/xboard/features/dashboard/xboard_dashboard_view.dart` is upstream's `dashboard.dart` with a `_XBoardDashboardAction`
 overlay in the corner). When upstream rewrites that page — v0.9.1 moved the start toggle out of the floating button and
@@ -101,6 +106,11 @@ into the current-outbound card, and replaced the `SuperGrid` layout with `Dashbo
 only the overlay; everything else it imports (`views/dashboard/{layout,style,edit,widget_registry}.dart`, the cards) is
 upstream's and is shared, not copied. Copying `DashboardDensityScope` or `DashboardWidgetMetrics` would give the cards a
 second inherited type and make them silently fall back to the mobile metrics.
+
+That copy is also where iOS drops two cards (`serviceStatus`, `intranetIp`: the service probe runs HTTP out of the core
+and there is no inbound listener to name). It is a render-time filter in `lib/xboard/`, not an edit to upstream's
+`DashboardWidget.platforms` — the phones that already have the cards saved would otherwise keep drawing them. The same
+overlay spot holds `IosCoreStatus` in its bar, which is where the startup dots went when the iOS shell was parked.
 
 Accepted residuals — small, additive, self-contained, and not worth a seam: `lib/core/lib.dart` (`markConnected()` and
 `isMobile`), `lib/common/tray.dart`, `lib/views/proxies/{list,tab}.dart` (the iOS empty-state label), `lib/plugins/app.dart`,

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import 'package:fl_clash/enum/enum.dart';
+
 /// This fork adds a panel module (`lib/xboard/`) and iOS support on top of
 /// upstream, which has neither. Both are wired into upstream-owned files, so a
 /// merge that takes upstream's side wholesale silently drops the wiring — it
@@ -305,6 +307,78 @@ void main() {
               'it here is what made this file a 38-line conflict',
         );
       }
+    });
+
+    test('iOS drops the two cards the tunnel has no use for', () {
+      // Filtered in the fork's dashboard rather than in `DashboardWidget`'s
+      // `platforms`: the enum is upstream's, and the phone's saved list must be
+      // filtered at render or a phone that already has them keeps drawing them.
+      final dashboard = _read(
+        'lib/xboard/features/dashboard/xboard_dashboard_view.dart',
+      );
+      for (final card in const ['serviceStatus', 'intranetIp']) {
+        expect(
+          dashboard,
+          contains('DashboardWidget.$card'),
+          reason: '$card is one of the two the panel hides on iOS',
+        );
+      }
+      expect(dashboard, contains('_iosHiddenWidgets'));
+      // Upstream's filter lets iOS have them, which is why the fork needs one.
+      expect(
+        DashboardWidget.serviceStatus.platforms,
+        contains(SupportPlatform.IOS),
+        reason:
+            'if upstream ever excludes them on iOS, drop the fork\'s filter '
+            'rather than hiding the same card twice',
+      );
+    });
+
+    test('one shell serves every platform', () {
+      // iOS used to open on its own shell (`features/ios_shell/`), which is
+      // parked, not deleted: the files are still there for when it comes back.
+      final bridge = _read('lib/xboard/bridge.dart');
+      final live = bridge
+          .split('\n')
+          .where((line) => !line.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(live, contains('XBoardShellHome()'));
+      expect(
+        live,
+        isNot(contains('XBoardIosShell')),
+        reason:
+            'iOS opens on the same shell as Android now; the iOS shell is '
+            'reached only through the commented-out branch beside it',
+      );
+      expect(
+        live,
+        isNot(contains('ios_shell')),
+        reason: 'its barrel export is parked with it',
+      );
+      for (final path in const [
+        'lib/xboard/features/ios_shell/ios_shell_page.dart',
+        'lib/xboard/features/ios_shell/ios_home_tab.dart',
+      ]) {
+        expect(
+          File(path).existsSync(),
+          isTrue,
+          reason:
+              '$path is parked, not gone — deleting it throws away the iOS '
+              'shell the fork may put back',
+        );
+      }
+      // The startup dots moved out of that shell's bar into the dashboard's,
+      // which is the only place they can be seen now.
+      final dashboard = _read(
+        'lib/xboard/features/dashboard/xboard_dashboard_view.dart',
+      );
+      expect(
+        dashboard,
+        contains('IosCoreStatus'),
+        reason:
+            'with one shell the tunnel/channel/core dots have no other home; '
+            'losing them is losing the only view of startup the panel has',
+      );
     });
   });
 

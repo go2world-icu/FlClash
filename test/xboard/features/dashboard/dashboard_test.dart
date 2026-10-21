@@ -5,6 +5,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/edit.dart';
 import 'package:fl_clash/views/dashboard/widgets/widgets.dart';
 import 'package:fl_clash/xboard/features/dashboard/dashboard.dart';
+import 'package:fl_clash/xboard/features/ios_shell/ios_core_status.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -107,6 +108,74 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
+  });
+
+  group('iOS opens on the same page, with two cards fewer', () {
+    testWidgets('a phone leaves out the service and intranet cards', (
+      tester,
+    ) async {
+      await pumpDashboard(tester, _phoneSize, platform: SupportPlatform.IOS);
+
+      // `defaultDashboardWidgets` saves both on every platform, so this is the
+      // filter doing the work, not the list.
+      expect(find.byType(ServiceStatusCard), findsNothing);
+      expect(find.byType(IntranetIpCard), findsNothing);
+      expect(find.byType(CurrentOutboundCard), findsOneWidget);
+      // The startup dots came over from the iOS shell's bar.
+      expect(find.byType(IosCoreStatus), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await teardown(tester);
+    });
+
+    testWidgets('the same two cards stay on Android', (tester) async {
+      await pumpDashboard(
+        tester,
+        _phoneSize,
+        platform: SupportPlatform.Android,
+      );
+
+      expect(find.byType(ServiceStatusCard), findsOneWidget);
+      expect(find.byType(IntranetIpCard), findsOneWidget);
+
+      await teardown(tester);
+    });
+
+    testWidgets('a two column window hands the dropped card\'s half over', (
+      tester,
+    ) async {
+      const size = Size(700, 900);
+      await pumpDashboard(tester, size, platform: SupportPlatform.IOS);
+
+      expect(find.byType(ServiceStatusCard), findsNothing);
+      expect(find.byType(IntranetIpCard), findsNothing);
+      // What is left of each pair takes the whole row rather than half of it.
+      expect(
+        tester.getSize(find.byType(ProfilesCard)).width,
+        tester.getSize(find.byType(MemoryInfo)).width,
+      );
+      expect(tester.takeException(), isNull);
+
+      await teardown(tester);
+    });
+
+    testWidgets('a four column window keeps upstream\'s rows minus the two', (
+      tester,
+    ) async {
+      await pumpDashboard(
+        tester,
+        const Size(1220, 824),
+        platform: SupportPlatform.IOS,
+      );
+
+      expect(find.byType(ServiceStatusCard), findsNothing);
+      expect(find.byType(IntranetIpCard), findsNothing);
+      expect(find.byType(ProfilesCard), findsOneWidget);
+      expect(find.byType(MemoryInfo), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await teardown(tester);
+    });
   });
 
   testWidgets('the edit toggle opens the editor, which Done closes', (
