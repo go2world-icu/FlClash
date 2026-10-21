@@ -7,6 +7,7 @@ import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/withdraw_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/commission_history_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class CommissionHistoryCard extends ConsumerWidget {
   const CommissionHistoryCard({super.key});
@@ -31,7 +32,7 @@ class CommissionHistoryCard extends ConsumerWidget {
                 if (inviteState.totalCommission > 0)
                   TextButton.icon(
                     onPressed: () => _showWithdrawDialog(context),
-                    icon: const GlyphIcon(AppGlyphs.creditCard),
+                    icon: const GlyphIcon(XBoardGlyphs.creditCard),
                     label: Text(xboardL10n.withdraw),
                   ),
               ],
@@ -116,7 +117,11 @@ class CommissionHistoryCard extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          GlyphIcon(AppGlyphs.coin, color: theme.colorScheme.primary, size: 20),
+          GlyphIcon(
+            XBoardGlyphs.coin,
+            color: theme.colorScheme.primary,
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

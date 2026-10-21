@@ -7,6 +7,7 @@ import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/features/remote_task/services/device_info_service.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// 日志上报行（内嵌在滚动内容中）
@@ -55,7 +56,7 @@ class _LogUploadRowState extends State<LogUploadRow> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!_hasUploaded)
-                  GlyphIcon(AppGlyphs.bug, size: 14, color: _disabledColor),
+                  GlyphIcon(XBoardGlyphs.bug, size: 14, color: _disabledColor),
                 if (!_hasUploaded) const SizedBox(width: 4),
                 Text(
                   _isUploading ? '上传中...' : (_hasUploaded ? '已上报' : '日志上报'),

@@ -1,79 +1,105 @@
-import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/icons/app_glyphs.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/xboard/config_check.dart';
+import 'package:fl_clash/xboard/features/dashboard/dashboard.dart';
 import 'package:fl_clash/xboard/navigation_port.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Mirrors the shape of upstream's `Navigation`: dashboard, proxies (whose
-/// modes upstream keys off `hasProxies`), profiles, tools.
-class _UpstreamishPort implements NavigationPort {
-  const _UpstreamishPort();
-
-  @override
-  List<NavigationItem> getItems({
-    bool openLogs = false,
-    bool hasProxies = false,
-  }) {
-    return [
-      const NavigationItem(
-        glyph: AppGlyphs.dashboard,
-        label: PageLabel.dashboard,
-        builder: _unbuilt,
-      ),
-      NavigationItem(
-        glyph: AppGlyphs.proxies,
-        label: PageLabel.proxies,
-        builder: _unbuilt,
-        modes: hasProxies
-            ? const [NavigationItemMode.mobile, NavigationItemMode.desktop]
-            : const [],
-      ),
-      const NavigationItem(
-        glyph: AppGlyphs.profiles,
-        label: PageLabel.profiles,
-        builder: _unbuilt,
-      ),
-      const NavigationItem(
-        glyph: AppGlyphs.tools,
-        label: PageLabel.tools,
-        builder: _unbuilt,
-      ),
-    ];
-  }
-}
-
-Widget _unbuilt(BuildContext context) => const SizedBox.shrink();
-
 List<PageLabel> _labels(List<NavigationItem> items) =>
     items.map((item) => item.label).toList();
+
+NavigationItem _item(List<NavigationItem> items, PageLabel label) =>
+    items.firstWhere((item) => item.label == label);
 
 void main() {
   // rootBundle, for the asset probe in resolveXboardConfig below.
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const port = XBoardNavigationPort(_UpstreamishPort());
+  const port = XBoardNavigationPort();
 
-  test('with no panel config it keeps upstream\'s item set', () {
+  test('without a panel config it matches upstream\'s item set', () {
     expect(hasXboardConfig, isFalse, reason: 'resolveXboardConfig has not run');
-    final items = port.getItems(openLogs: false, hasProxies: true);
+    final items = port.getItems(openLogs: true, hasProxies: true);
     expect(_labels(items), [
       PageLabel.dashboard,
       PageLabel.proxies,
       PageLabel.profiles,
+      PageLabel.requests,
+      PageLabel.connections,
+      PageLabel.dns,
+      PageLabel.resources,
+      PageLabel.logs,
       PageLabel.tools,
     ]);
   });
 
-  test('the proxies tab loses its modes either way', () {
-    for (final hasProxies in [false, true]) {
-      final proxies = port
-          .getItems(openLogs: false, hasProxies: hasProxies)
-          .firstWhere((item) => item.label == PageLabel.proxies);
-      expect(proxies.modes, isEmpty);
-    }
+  testWidgets(
+    'the dashboard is the panel\'s page, kept out of the page cache',
+    (tester) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        Builder(
+          builder: (childContext) {
+            context = childContext;
+            return const SizedBox();
+          },
+        ),
+      );
+
+      final dashboard = _item(port.getItems(), PageLabel.dashboard);
+      expect(dashboard.keep, isFalse);
+      expect(dashboard.glyph, AppGlyphs.dashboard);
+      final built = dashboard.builder(context);
+      expect(built, isA<XBoardDashboardView>());
+      expect(
+        built.key,
+        const GlobalObjectKey(PageLabel.dashboard),
+        reason:
+            'home.dart resolves the page by its label key for back handling',
+      );
+    },
+  );
+
+  test('the proxies tab follows upstream\'s hasProxies gate', () {
+    expect(_item(port.getItems(hasProxies: true), PageLabel.proxies).modes, [
+      NavigationItemMode.mobile,
+      NavigationItemMode.desktop,
+    ]);
+    expect(
+      _item(port.getItems(hasProxies: false), PageLabel.proxies).modes,
+      [],
+    );
+  });
+
+  test('the logs tab follows the setting', () {
+    expect(_item(port.getItems(openLogs: true), PageLabel.logs).modes, [
+      NavigationItemMode.desktop,
+      NavigationItemMode.more,
+    ]);
+    expect(_item(port.getItems(openLogs: false), PageLabel.logs).modes, []);
+  });
+
+  test('the secondary tabs keep their upstream modes', () {
+    final items = port.getItems();
+    expect(_item(items, PageLabel.requests).modes, [
+      NavigationItemMode.moreFull,
+    ]);
+    expect(_item(items, PageLabel.connections).modes, [
+      NavigationItemMode.desktop,
+      NavigationItemMode.moreFull,
+    ]);
+    expect(_item(items, PageLabel.dns).modes, [NavigationItemMode.moreFull]);
+    expect(_item(items, PageLabel.resources).modes, [NavigationItemMode.more]);
+    expect(_item(items, PageLabel.tools).modes, [
+      NavigationItemMode.desktop,
+      NavigationItemMode.mobile,
+    ]);
+    expect(_item(items, PageLabel.profiles).modes, [
+      NavigationItemMode.mobile,
+      NavigationItemMode.desktop,
+    ]);
   });
 
   group('with a panel config', () {
@@ -81,22 +107,30 @@ void main() {
 
     test('the profiles tab gives way to the account tab', () {
       expect(hasXboardConfig, isTrue);
-      final items = port.getItems(openLogs: false, hasProxies: true);
+      final items = port.getItems(openLogs: true, hasProxies: true);
       expect(_labels(items), [
         PageLabel.dashboard,
         PageLabel.proxies,
+        PageLabel.requests,
+        PageLabel.connections,
+        PageLabel.dns,
+        PageLabel.resources,
+        PageLabel.logs,
         PageLabel.tools,
         PageLabel.xboard,
       ]);
-      expect(items.last.glyph, AppGlyphs.account);
     });
 
-    test('the account tab keeps the route and toolbar defaults', () {
-      final account = port
-          .getItems(openLogs: false, hasProxies: false)
-          .firstWhere((item) => item.label == PageLabel.xboard);
+    test('the account tab is last, drawn with the account glyph', () {
+      final account = _item(port.getItems(), PageLabel.xboard);
+      expect(account.glyph, AppGlyphs.account);
       expect(account.keep, isTrue);
-      expect(account.modes, contains(NavigationItemMode.mobile));
+      // The default modes, so it survives the iOS core-off filter in
+      // lib/providers/state/navigation.dart.
+      expect(account.modes, [
+        NavigationItemMode.mobile,
+        NavigationItemMode.desktop,
+      ]);
     });
   });
 }

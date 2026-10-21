@@ -3,7 +3,7 @@ import 'package:fl_clash/xboard/features/invite/widgets/qr_code_widget.dart';
 import 'package:fl_clash/xboard/features/shared/widgets/language_selector.dart';
 import 'package:fl_clash/xboard/features/shared/widgets/xb_container.dart';
 import 'package:fl_clash/xboard/features/shared/widgets/xb_input_field.dart';
-import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -54,7 +54,7 @@ void main() {
             controller: controller,
             labelText: 'Email',
             hintText: 'you@example.com',
-            prefixIcon: AppGlyphs.email,
+            prefixIcon: XBoardGlyphs.email,
           ),
         ),
       );

@@ -1,5 +1,6 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:material_ui/material_ui.dart';
 
 class LatencyIndicator extends StatelessWidget {
@@ -198,11 +199,11 @@ class LatencyQuality {
   }
 
   static Glyph getQualityIcon(int delay) {
-    if (delay < 0) return AppGlyphs.signalNone;
-    if (delay <= excellent) return AppGlyphs.signalFull;
-    if (delay <= good) return AppGlyphs.signalFull;
-    if (delay <= fair) return AppGlyphs.signalFull;
-    if (delay <= poor) return AppGlyphs.signalWeak;
-    return AppGlyphs.signalNone;
+    if (delay < 0) return XBoardGlyphs.signalNone;
+    if (delay <= excellent) return XBoardGlyphs.signalFull;
+    if (delay <= good) return XBoardGlyphs.signalFull;
+    if (delay <= fair) return XBoardGlyphs.signalFull;
+    if (delay <= poor) return XBoardGlyphs.signalWeak;
+    return XBoardGlyphs.signalNone;
   }
 }

@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../services/subscription_status_service.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class SubscriptionStatusDialog extends StatelessWidget {
   final SubscriptionStatusResult statusResult;
@@ -84,7 +85,7 @@ class SubscriptionStatusDialog extends StatelessWidget {
     switch (statusResult.type) {
       case SubscriptionStatusType.noSubscription:
         iconColor = Colors.blue.shade600;
-        iconData = AppGlyphs.giftCard;
+        iconData = XBoardGlyphs.giftCard;
         backgroundColor = Colors.blue.withValues(alpha: 0.1);
         break;
       case SubscriptionStatusType.expired:
@@ -158,21 +159,21 @@ class SubscriptionStatusDialog extends StatelessWidget {
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
-            AppGlyphs.shieldCheck,
+            XBoardGlyphs.shieldCheck,
             xboardL10n.xboardSecureEncryption,
             xboardL10n.xboardProtectNetworkPrivacy,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
-            AppGlyphs.globe,
+            XBoardGlyphs.globe,
             xboardL10n.xboardGlobalNodes,
             xboardL10n.xboardConnectGlobalQualityNodes,
           ),
           const SizedBox(height: 8),
           _buildFeatureItem(
             context,
-            AppGlyphs.supportAgent,
+            XBoardGlyphs.supportAgent,
             xboardL10n.xboardProfessionalSupport,
             xboardL10n.xboard24HourCustomerService,
           ),

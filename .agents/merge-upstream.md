@@ -68,7 +68,7 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | Upstream file | Anchor | Owner |
 |---|---|---|
 | `lib/main.dart` | `await xboardStartup();` | `lib/xboard/startup.dart` |
-| `lib/bootstrap.dart` | `XBoardNavigationPort(navigation)` | `lib/xboard/navigation_port.dart` |
+| `lib/bootstrap.dart` | `navigationPort = const XBoardNavigationPort();` | `lib/xboard/navigation_port.dart` |
 | `lib/application.dart` | `mobileManagerStack(state)`, `preloadXBoard(ref)`, `buildXBoardHome()` | `lib/manager/ios_manager.dart`, `lib/xboard/bridge.dart` |
 | `lib/common/path.dart` | `initDataDir(dataDir, supportDirectory)` | `lib/common/data_dir.dart` |
 | `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
@@ -78,7 +78,12 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `core/hub.go` | — | zero diff; `handleSuspend` lives in `core/handle_suspend.go` |
 
 Files that are back to upstream byte-for-byte and must stay there: `lib/common/app_ports.dart`, `lib/views/navigation.dart`,
-`lib/providers/state.dart`. Adding a fork parameter to `NavigationPort` is what pulled all three into a merge at once.
+`lib/providers/state.dart`, `lib/icons/app_glyphs.dart`, `test/icons/glyph_painter_test.dart`,
+`lib/views/dashboard/dashboard.dart`, `lib/views/dashboard/widgets/widgets.dart`. Adding a fork parameter to
+`NavigationPort` is what pulled the first three into a merge at once; adding fork glyphs to `AppGlyphs`, a
+`NodeSelectorChip` to the dashboard's floating button, or a fork export to the dashboard widgets barrel is what pulled
+the last four in. All of it now lives in `lib/xboard/` (`icons/xboard_glyphs.dart`, `features/dashboard/`), and the
+invariants test fails if any of it creeps back.
 
 Accepted residuals — small, additive, self-contained, and not worth a seam: `lib/core/lib.dart` (`markConnected()` and
 `isMobile`), `lib/common/tray.dart`, `lib/views/proxies/{list,tab}.dart` (the iOS empty-state label), `lib/plugins/app.dart`,

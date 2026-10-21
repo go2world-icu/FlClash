@@ -4,6 +4,7 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/theme_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class UserMenuWidget extends ConsumerWidget {
   const UserMenuWidget({super.key});
@@ -11,7 +12,7 @@ class UserMenuWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
-      icon: const GlyphIcon(AppGlyphs.person),
+      icon: const GlyphIcon(XBoardGlyphs.person),
       tooltip: xboardL10n.userCenter,
       onSelected: (value) {
         if (value == 'theme') {
@@ -36,7 +37,7 @@ class UserMenuWidget extends ConsumerWidget {
           value: 'logout',
           child: Row(
             children: [
-              const GlyphIcon(AppGlyphs.logout, color: Colors.red),
+              const GlyphIcon(XBoardGlyphs.logout, color: Colors.red),
               const SizedBox(width: 8),
               Text(
                 xboardL10n.logout,

@@ -9,6 +9,7 @@ import 'package:fl_clash/xboard/features/latency/services/auto_latency_service.d
 import 'package:fl_clash/xboard/features/latency/widgets/latency_indicator.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class NodeSelectorBar extends ConsumerStatefulWidget {
   const NodeSelectorBar({super.key});
@@ -157,7 +158,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
                   shape: AppShape.sm,
                 ),
                 child: GlyphIcon(
-                  AppGlyphs.router,
+                  XBoardGlyphs.router,
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                   size: 18,
                 ),

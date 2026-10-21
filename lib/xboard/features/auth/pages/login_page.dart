@@ -11,6 +11,7 @@ import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -290,7 +291,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       controller: _emailController,
                       labelText: xboardL10n.xboardEmail,
                       hintText: xboardL10n.xboardEmail,
-                      prefixIcon: AppGlyphs.email,
+                      prefixIcon: XBoardGlyphs.email,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {

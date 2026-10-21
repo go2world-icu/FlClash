@@ -5,6 +5,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class WithdrawDialog extends ConsumerStatefulWidget {
   const WithdrawDialog({super.key});
@@ -57,7 +58,7 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
                     child: CircularProgressIndicator(key: ValueKey('loading')),
                   )
                 : const GlyphIcon(
-                    AppGlyphs.wallet,
+                    XBoardGlyphs.wallet,
                     size: 48,
                     color: Colors.blue,
                     key: ValueKey('wallet'),
@@ -101,7 +102,7 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
               decoration: InputDecoration(
                 labelText: '提现方式',
                 border: const OutlineInputBorder(),
-                prefixIcon: const GlyphIcon(AppGlyphs.creditCard),
+                prefixIcon: const GlyphIcon(XBoardGlyphs.creditCard),
               ),
               items: _withdrawMethods.map((String method) {
                 return DropdownMenuItem<String>(
@@ -123,7 +124,7 @@ class _WithdrawDialogState extends ConsumerState<WithdrawDialog> {
                 labelText: '提现账号',
                 hintText: '请输入您的账号',
                 border: const OutlineInputBorder(),
-                prefixIcon: const GlyphIcon(AppGlyphs.accountBox),
+                prefixIcon: const GlyphIcon(XBoardGlyphs.accountBox),
               ),
             ),
             const SizedBox(height: 12),

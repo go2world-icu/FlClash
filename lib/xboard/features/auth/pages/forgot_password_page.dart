@@ -7,6 +7,7 @@ import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -140,7 +141,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           controller: _emailController,
           labelText: xboardL10n.emailAddress,
           hintText: xboardL10n.pleaseEnterEmail,
-          prefixIcon: AppGlyphs.email,
+          prefixIcon: XBoardGlyphs.email,
           keyboardType: TextInputType.emailAddress,
           enabled: !_isLoading,
           validator: (value) {
@@ -198,7 +199,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           controller: _codeController,
           labelText: xboardL10n.verificationCode,
           hintText: xboardL10n.pleaseEnterVerificationCode,
-          prefixIcon: AppGlyphs.shieldCheck,
+          prefixIcon: XBoardGlyphs.shieldCheck,
           keyboardType: TextInputType.number,
           enabled: !_isLoading,
           validator: (value) {

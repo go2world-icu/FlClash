@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_clash/xboard/features/notice/notice.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import '../styles/markdown_styles.dart';
 import '../styles/html_styles.dart';
 
@@ -132,7 +133,7 @@ class _NoticeBannerState extends ConsumerState<NoticeBanner>
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: GlyphIcon(
-              AppGlyphs.megaphone,
+              XBoardGlyphs.megaphone,
               size: 18,
               color: Theme.of(context).colorScheme.primary,
             ),

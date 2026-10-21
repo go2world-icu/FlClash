@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart' show ConfigModel;
 
 class RegisterPage extends ConsumerStatefulWidget {
@@ -273,7 +274,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           controller: _emailController,
                           labelText: xboardL10n.emailAddress,
                           hintText: xboardL10n.pleaseEnterYourEmailAddress,
-                          prefixIcon: AppGlyphs.email,
+                          prefixIcon: XBoardGlyphs.email,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -360,7 +361,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                 labelText: xboardL10n.emailVerificationCode,
                                 hintText:
                                     xboardL10n.pleaseEnterEmailVerificationCode,
-                                prefixIcon: AppGlyphs.shieldCheck,
+                                prefixIcon: XBoardGlyphs.shieldCheck,
                                 keyboardType: TextInputType.number,
                                 suffixIcon: _isSendingEmailCode
                                     ? const SizedBox(
@@ -397,7 +398,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               ? '${xboardL10n.xboardInviteCode} *'
                               : xboardL10n.inviteCodeOptional,
                           hintText: xboardL10n.pleaseEnterInviteCode,
-                          prefixIcon: AppGlyphs.giftCard,
+                          prefixIcon: XBoardGlyphs.giftCard,
                           enabled: true,
                         ),
                         const SizedBox(height: 32),

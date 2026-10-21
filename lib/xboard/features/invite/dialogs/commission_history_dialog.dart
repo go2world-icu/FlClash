@@ -6,6 +6,7 @@ import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class CommissionHistoryDialog extends ConsumerStatefulWidget {
   const CommissionHistoryDialog({super.key});
@@ -168,7 +169,7 @@ class _CommissionHistoryDialogState
       ),
       child: Row(
         children: [
-          GlyphIcon(AppGlyphs.coin, color: Colors.green[600], size: 20),
+          GlyphIcon(XBoardGlyphs.coin, color: Colors.green[600], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

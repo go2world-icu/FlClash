@@ -9,6 +9,7 @@ import 'package:fl_clash/xboard/config/xboard_config.dart';
 import '../services/subscription_status_service.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class SubscriptionUsageCard extends ConsumerWidget {
   final DomainSubscription? subscriptionInfo;
@@ -57,7 +58,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
       child: Column(
         children: [
           GlyphIcon(
-            AppGlyphs.cloudOff,
+            XBoardGlyphs.cloudOff,
             size: 40,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
@@ -91,7 +92,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
     String statusDetail;
     switch (statusResult.type) {
       case SubscriptionStatusType.noSubscription:
-        statusIcon = AppGlyphs.giftCard;
+        statusIcon = XBoardGlyphs.giftCard;
         statusColor = Colors.blue.shade600;
         statusText = xboardL10n.xboardNoAvailableSubscription;
         statusDetail = xboardL10n.xboardPurchaseSubscriptionToUse;
@@ -218,7 +219,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
               child: Row(
                 children: [
                   GlyphIcon(
-                    AppGlyphs.calendar,
+                    XBoardGlyphs.calendar,
                     size: 14,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -249,7 +250,7 @@ class SubscriptionUsageCard extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   icon: const GlyphIcon(
-                    AppGlyphs.shoppingBag,
+                    XBoardGlyphs.shoppingBag,
                     size: 18,
                     fill: 1,
                   ),

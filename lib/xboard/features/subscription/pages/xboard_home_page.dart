@@ -21,6 +21,7 @@ import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class XBoardHomePage extends ConsumerStatefulWidget {
   const XBoardHomePage({super.key});
@@ -224,7 +225,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () => _showLogoutDialog(),
-        icon: const GlyphIcon(AppGlyphs.logout, color: Colors.red),
+        icon: const GlyphIcon(XBoardGlyphs.logout, color: Colors.red),
         label: Text(
           xboardL10n.logout,
           style: const TextStyle(color: Colors.red),

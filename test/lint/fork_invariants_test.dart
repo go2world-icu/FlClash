@@ -187,11 +187,40 @@ void main() {
         _read('lib/common/app_ports.dart'),
         isNot(contains('hasXboard')),
         reason:
-            'the panel shape is applied by XBoardNavigationPort, a decorator '
-            'in lib/xboard/; adding a parameter here would drag both this '
-            'interface and lib/views/navigation.dart into every merge',
+            'the panel builds the whole item list itself in '
+            'XBoardNavigationPort; adding a parameter here would drag both '
+            'this interface and lib/views/navigation.dart into every merge',
       );
       expect(_read('lib/views/navigation.dart'), isNot(contains('hasXboard')));
+    });
+
+    test('the fork\'s glyphs stay out of AppGlyphs', () {
+      expect(
+        _read('lib/icons/app_glyphs.dart'),
+        isNot(contains('static const email')),
+        reason:
+            'the panel\'s 26 glyphs live in lib/xboard/icons/xboard_glyphs.dart; '
+            'a merge that brings the block back conflicts on every upstream '
+            'glyph added around it',
+      );
+    });
+
+    test('the dashboard\'s floating button stays upstream\'s', () {
+      expect(
+        _read('lib/views/dashboard/dashboard.dart'),
+        isNot(contains('NodeSelectorChip')),
+        reason:
+            'the panel draws its own dashboard in '
+            'lib/xboard/features/dashboard/; putting the chip back in '
+            'upstream\'s page restores the conflict it was moved out of',
+      );
+      expect(
+        _read('lib/views/dashboard/widgets/widgets.dart'),
+        isNot(contains('node_selector_chip')),
+        reason:
+            'the chip is the panel\'s widget, so it is exported from '
+            'lib/xboard/features/dashboard/dashboard.dart instead',
+      );
     });
 
     test('application.dart names the panel seams, not its internals', () {

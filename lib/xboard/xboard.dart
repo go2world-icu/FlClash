@@ -31,6 +31,7 @@ export 'services/services.dart';
 
 // ========== Features 功能模块 ==========
 export 'features/auth/auth.dart';
+export 'features/dashboard/dashboard.dart';
 export 'features/subscription/subscription.dart';
 export 'features/invite/invite.dart';
 export 'features/profile/profile.dart';

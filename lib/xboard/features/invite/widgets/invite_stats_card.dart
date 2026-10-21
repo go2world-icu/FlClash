@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/stat_item_widget.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class InviteStatsCard extends ConsumerWidget {
   const InviteStatsCard({super.key});
@@ -32,21 +32,21 @@ class InviteStatsCard extends ConsumerWidget {
                     child: StatItemWidget(
                       title: xboardL10n.totalInvites,
                       value: '${inviteState.totalInvites}',
-                      icon: AppGlyphs.people,
+                      icon: XBoardGlyphs.people,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
                       title: xboardL10n.commissionRate,
                       value: '${inviteState.commissionRate}%',
-                      icon: AppGlyphs.percent,
+                      icon: XBoardGlyphs.percent,
                     ),
                   ),
                   Expanded(
                     child: StatItemWidget(
                       title: xboardL10n.totalCommission,
                       value: inviteState.formattedCommission,
-                      icon: AppGlyphs.coin,
+                      icon: XBoardGlyphs.coin,
                     ),
                   ),
                 ],

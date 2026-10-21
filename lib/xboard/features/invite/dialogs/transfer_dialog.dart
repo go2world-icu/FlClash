@@ -5,6 +5,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
 class TransferDialog extends ConsumerStatefulWidget {
   const TransferDialog({super.key});
@@ -50,7 +51,7 @@ class _TransferDialogState extends ConsumerState<TransferDialog> {
                     child: CircularProgressIndicator(key: ValueKey('loading')),
                   )
                 : const GlyphIcon(
-                    AppGlyphs.wallet,
+                    XBoardGlyphs.wallet,
                     size: 48,
                     color: Colors.blue,
                     key: ValueKey('wallet'),

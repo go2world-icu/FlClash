@@ -10,7 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widget_metrics.dart';
 import 'widget_registry.dart';
 import 'widgets/core_status_button.dart';
-import 'widgets/node_selector_chip.dart';
 import 'widgets/start_button.dart';
 
 typedef _IsEditWidgetBuilder = Widget Function(bool isEdit);
@@ -175,19 +174,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       (isEdit) => CommonScaffold(
         title: context.appLocalizations.dashboard,
         actions: _buildActions(isEdit),
-        floatingActionButton: hasProfile
-            ? const Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    NodeSelectorChip(),
-                    SizedBox(width: 6),
-                    StartButton(),
-                  ],
-                ),
-              )
-            : null,
+        floatingActionButton: hasProfile ? const StartButton() : null,
         body: Builder(
           builder: (context) {
             final padding = const EdgeInsets.all(16).copyWith(
