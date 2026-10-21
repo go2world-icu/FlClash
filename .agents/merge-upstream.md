@@ -70,6 +70,7 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `lib/main.dart` | `await xboardStartup();` | `lib/xboard/startup.dart` |
 | `lib/bootstrap.dart` | `navigationPort = const XBoardNavigationPort();` | `lib/xboard/navigation_port.dart` |
 | `lib/application.dart` | `mobileManagerStack(state)`, `preloadXBoard(ref)`, `buildXBoardHome()` | `lib/manager/ios_manager.dart`, `lib/xboard/bridge.dart` |
+| `lib/application.dart` | `buildXBoardHome()` returns the panel's `XBoardShellHome` off iOS — so the shell itself (the start button at the dock's end) is the fork's | `lib/xboard/home_shell.dart` |
 | `lib/common/path.dart` | `forkDataDir(supportDirectory)` | `lib/common/data_dir.dart` |
 | `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
 | `lib/providers/state/navigation.dart` | the `iosCoreOff` filter | *(still inline — small and self-contained)* |
@@ -80,11 +81,18 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 
 Files that are back to upstream byte-for-byte and must stay there: `lib/common/app_ports.dart`, `lib/views/navigation.dart`,
 `lib/providers/state.dart`, `lib/ui/icons/app_glyphs.dart`, `test/icons/glyph_painter_test.dart`,
-`lib/views/dashboard/dashboard.dart`, `lib/views/dashboard/widgets/widgets.dart`. Adding a fork parameter to
+`lib/views/dashboard/dashboard.dart`, `lib/views/dashboard/widgets/widgets.dart`, `lib/pages/home.dart`,
+`lib/ui/navigation_dock.dart`. Adding a fork parameter to
 `NavigationPort` is what pulled the first three into a merge at once; adding fork glyphs to `AppGlyphs`, a
 `NodeSelectorChip` to the dashboard's floating button, or a fork export to the dashboard widgets barrel is what pulled
-the last four in. All of it now lives in `lib/xboard/` (`icons/xboard_glyphs.dart`, `features/dashboard/`), and the
+the last five in. All of it now lives in `lib/xboard/` (`icons/xboard_glyphs.dart`, `features/dashboard/`), and the
 invariants test fails if any of it creeps back.
+
+The last two are how the start button got its place back. Upstream v0.9.1 deleted `NavigationDock`'s trailing slot
+(`trailing`, `_DockTrailing`, `_SlotMaterialize`) with the Liquid Glass rewrite, and the fork restores the layout in
+`lib/xboard/home_shell.dart` instead of in the dock: `XBoardShellHome` is a copy of `lib/pages/home.dart` whose dock row is
+`Expanded(NavigationDock) + _DockedStartButton` on a phone, and `buildXBoardHome()` serves it. That keeps both upstream
+files byte-for-byte; a merge that re-copies `home.dart` over the copy drops the row and the invariants test says so.
 
 The dashboard is the one upstream page the fork copies rather than wraps
 (`lib/xboard/features/dashboard/xboard_dashboard_view.dart` is upstream's `dashboard.dart` with a `_XBoardDashboardAction`

@@ -16,7 +16,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'widgets/node_selector_chip.dart';
 import 'widgets/start_button.dart';
 
 // Narrower columns leave the service grid's cells too tight for a status, so
@@ -117,7 +116,8 @@ class _XBoardDashboardViewState extends ConsumerState<XBoardDashboardView> {
                         ),
                 ),
                 // Fork seam: upstream keeps the start toggle in the outbound
-                // card; the panel lifts it and its node picker to the corner.
+                // card; the panel lifts it to the corner, or hands it to the
+                // dock's row on a phone (see `lib/xboard/home_shell.dart`).
                 if (!editing)
                   PositionedDirectional(
                     end: layout.isDesktop ? 24 : 16,
@@ -135,8 +135,10 @@ class _XBoardDashboardViewState extends ConsumerState<XBoardDashboardView> {
   }
 }
 
-/// The panel's page-level action: the node the tunnel is using, beside the
-/// start button. Both hide themselves until a profile exists.
+/// The panel's page-level action: the start button, until a profile exists.
+///
+/// On a phone with the floating dock the shell lays it out beside the bar, so
+/// the page draws nothing there rather than a second copy above the corner.
 class _XBoardDashboardAction extends ConsumerWidget {
   const _XBoardDashboardAction();
 
@@ -148,10 +150,22 @@ class _XBoardDashboardAction extends ConsumerWidget {
     if (!hasProfile) {
       return const SizedBox.shrink();
     }
-    return const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [NodeSelectorChip(), SizedBox(width: 6), StartButton()],
-    );
+    final inDock =
+        ref.watch(isMobileViewProvider) &&
+        ref.watch(
+          appSettingProvider.select((state) => state.floatingNavigationBar),
+        );
+    if (inDock) {
+      return const SizedBox.shrink();
+    }
+    // The node picker is parked; its chip still lives in
+    // `widgets/node_selector_chip.dart` for whenever it comes back — uncomment
+    // it and the import above together.
+    // return const Row(
+    //   mainAxisSize: MainAxisSize.min,
+    //   children: [NodeSelectorChip(), SizedBox(width: 6), StartButton()],
+    // );
+    return const StartButton();
   }
 }
 

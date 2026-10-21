@@ -128,20 +128,33 @@ void main() {
   });
 
   testWidgets('the panel action waits for a profile', (tester) async {
-    await pumpDashboard(tester, _phoneSize);
+    await pumpDashboard(tester, const Size(1220, 824));
     expect(find.byType(StartButton), findsNothing);
     expect(find.byType(NodeSelectorChip), findsNothing);
+
+    await teardown(tester);
   });
 
-  testWidgets('a profile brings the node selector and the start button', (
+  testWidgets('a profile brings the start button to the corner', (
+    tester,
+  ) async {
+    await pumpDashboard(tester, const Size(1220, 824), withProfile: true);
+
+    expect(find.byType(StartButton), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await teardown(tester);
+  });
+
+  testWidgets('a phone leaves the button to the dock, chip parked', (
     tester,
   ) async {
     await pumpDashboard(tester, _phoneSize, withProfile: true);
 
-    expect(find.byType(StartButton), findsOneWidget);
-    // With no core running there are no groups, so the chip renders nothing —
-    // but it is still the widget the panel mounts beside the start button.
-    expect(find.byType(NodeSelectorChip), findsOneWidget);
+    // The page has no dock of its own, and on a phone the shell lays the
+    // button out beside one, so the corner draws nothing here.
+    expect(find.byType(StartButton), findsNothing);
+    expect(find.byType(NodeSelectorChip), findsNothing);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -150,6 +163,7 @@ void main() {
   testWidgets('the panel action leaves the page alone while editing', (
     tester,
   ) async {
+    // The editor is the phone's affordance, where the dock seats the button.
     await pumpDashboard(tester, _phoneSize, withProfile: true);
 
     await tester.tap(find.byTooltip('Edit dashboard'));
@@ -159,15 +173,15 @@ void main() {
     await teardown(tester);
   });
 
-  testWidgets('the action sits over the bottom corner, clear of the dock', (
-    tester,
-  ) async {
-    await pumpDashboard(tester, _phoneSize, withProfile: true);
+  testWidgets('the action sits over the bottom corner', (tester) async {
+    const size = Size(1220, 824);
+    await pumpDashboard(tester, size, withProfile: true);
 
     final button = tester.getRect(find.byType(StartButton));
-    expect(button.bottom, lessThanOrEqualTo(_phoneSize.height));
-    expect(button.right, lessThanOrEqualTo(_phoneSize.width));
-    expect(find.byTooltip('Edit dashboard'), findsOneWidget);
+    expect(button.bottom, lessThanOrEqualTo(size.height));
+    expect(button.right, lessThanOrEqualTo(size.width));
+    expect(button.right, size.width - 24);
+    expect(button.bottom, size.height - 24);
 
     await teardown(tester);
   });

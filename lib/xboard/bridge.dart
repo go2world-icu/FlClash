@@ -1,12 +1,15 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/pages/pages.dart';
 import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/xboard.dart';
 
 import 'features/ios_shell/ios_shell.dart';
+import 'home_shell.dart';
+
+/// The panel's home, upstream's page with the start button at the dock's end.
+export 'home_shell.dart';
 
 /// iOS 专用外壳（仅 iOS 使用，接管整个 App 界面）
 export 'features/ios_shell/ios_shell.dart';
@@ -31,13 +34,14 @@ class XBoardPage extends ConsumerWidget {
   }
 }
 
-/// The shell's home: the panel's iOS form, or upstream's page everywhere else.
+/// The shell's home: the panel's iOS form, or the panel's copy of upstream's
+/// page (which seats the start button at the end of the floating dock).
 ///
 /// `lib/application.dart` only names this, so what the panel adds to the shell
 /// can change without adding fork diff to an upstream file.
 Widget buildXBoardHome() {
   if (!system.isIOS || !hasXboardConfig) {
-    return const HomePage();
+    return const XBoardShellHome();
   }
   return const XBoardIosShell(
     connectionControl: Column(

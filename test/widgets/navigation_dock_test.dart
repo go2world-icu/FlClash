@@ -4,12 +4,14 @@ import 'dart:typed_data';
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/pages/home.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:fl_clash/xboard/config_check.dart';
+import 'package:fl_clash/xboard/features/dashboard/widgets/start_button.dart';
+import 'package:fl_clash/xboard/home_shell.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,7 +89,10 @@ Future<ProviderContainer> _pumpHome(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: const TestApp(includeNavigatorKey: false, child: HomePage()),
+      child: const TestApp(
+        includeNavigatorKey: false,
+        child: XBoardShellHome(),
+      ),
     ),
   );
   if (settle) {
@@ -118,18 +123,33 @@ Rect _painted(WidgetTester tester, RenderObject box, Rect resting) {
 }
 
 void main() {
+  // The docked button is the panel's, and the shell only seats it while the
+  // panel is configured.
+  setUpAll(resolveXboardConfig);
+
   setUp(() {
     navigationPort = navigation;
     addTearDown(() => navigationPort = null);
   });
 
-  testWidgets('the dock stays centred alone on every page, the dashboard '
-      'included', (tester) async {
+  testWidgets('the start button holds the end of the dock on the dashboard', (
+    tester,
+  ) async {
     final container = await _pumpHome(tester);
 
     final bar = tester.getRect(find.byType(FloatingNavigationBar));
-    expect(find.byType(FloatingActionButton), findsNothing);
-    expect(bar.center.dx, _mobileSize.width / 2);
+    final button = tester.getRect(find.byType(StartButton));
+    expect(find.byType(StartButton), findsOneWidget);
+    expect(button.width, button.height);
+    expect(
+      button.height,
+      NavigationDock.heightOf(tester.element(find.byType(NavigationDock))),
+    );
+    expect(button.center.dy, bar.center.dy);
+    // The button holds the dock's own side margin, a gap clear of the bar — an
+    // exact 8 once the bar fills its half of the row, as four tabs do.
+    expect(_mobileSize.width - button.right, 21);
+    expect(button.left, greaterThanOrEqualTo(bar.right + 8));
 
     await tester.drag(
       find.byType(FloatingNavigationBar),
@@ -138,10 +158,62 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(container.read(currentPageLabelProvider), PageLabel.tools);
+    expect(find.byType(StartButton), findsNothing);
     final alone = tester.getRect(find.byType(FloatingNavigationBar));
     expect(alone.center.dx, _mobileSize.width / 2);
     expect(alone.width, lessThan(_mobileSize.width - 40));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('without the floating dock the page keeps its own button', (
+    tester,
+  ) async {
+    tester.view.physicalSize = _mobileSize;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final container = ProviderContainer(
+      overrides: [
+        profilesProvider.overrideWithValue([
+          const Profile(id: 1, autoUpdateDuration: Duration.zero),
+        ]),
+        suspendProvider.overrideWithValue(false),
+        navigationItemsStateProvider.overrideWithValue(
+          NavigationItemsState(
+            value: [
+              NavigationItem(
+                glyph: AppGlyphs.dashboard,
+                label: PageLabel.dashboard,
+                builder: (_) => _page('dashboard'),
+              ),
+              NavigationItem(
+                glyph: AppGlyphs.tools,
+                label: PageLabel.tools,
+                builder: (_) => _page('tools'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    globalState.container = container;
+    container.read(viewSizeProvider.notifier).value = _mobileSize;
+    container
+        .read(appSettingProvider.notifier)
+        .update((state) => state.copyWith(floatingNavigationBar: false));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(
+          includeNavigatorKey: false,
+          child: XBoardShellHome(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FloatingNavigationBar), findsNothing);
+    expect(find.byType(NavigationBar), findsOneWidget);
   });
 
   testWidgets('a tap that just misses the bar still reaches it', (
@@ -193,7 +265,7 @@ void main() {
     final page = tester.renderObject<RenderRepaintBoundary>(
       find
           .ancestor(
-            of: find.byType(HomePage),
+            of: find.byType(XBoardShellHome),
             matching: find.byType(RepaintBoundary),
           )
           .first,

@@ -237,9 +237,54 @@ void main() {
         contains('_XBoardDashboardAction'),
         reason: 'the panel action',
       );
-      expect(page, contains('NodeSelectorChip'));
       expect(page, contains('StartButton'));
+      // The node picker is parked, so only the comment may name it — a merge
+      // that uncomments it puts the chip back, which is not what this file
+      // should be doing on its own.
+      final live = page
+          .split('\n')
+          .where((line) => !line.trimLeft().startsWith('//'))
+          .join('\n');
+      expect(
+        live,
+        isNot(contains('NodeSelectorChip')),
+        reason:
+            'the node picker is parked; see widgets/node_selector_chip.dart',
+      );
     });
+
+    test(
+      'the start button sits at the dock\'s end from a fork-owned shell',
+      () {
+        // The dock's trailing slot is upstream's own code, deleted in v0.9.1.
+        // The fork does not put it back: `lib/pages/home.dart` and
+        // `lib/ui/navigation_dock.dart` stay byte-for-byte upstream's, and the
+        // panel lays the two out in its own copy of the shell.
+        for (final path in const [
+          'lib/pages/home.dart',
+          'lib/ui/navigation_dock.dart',
+        ]) {
+          final source = _read(path);
+          expect(
+            source,
+            isNot(contains('trailing')),
+            reason:
+                '$path is upstream\'s; the dock\'s trailing slot lives in '
+                'lib/xboard/home_shell.dart',
+          );
+          expect(source, isNot(contains('StartButton')));
+          expect(source, isNot(contains('xboard')));
+        }
+        final shell = _read('lib/xboard/home_shell.dart');
+        expect(shell, contains('class XBoardShellHome'));
+        expect(shell, contains('StartButton'));
+        expect(
+          _read('lib/xboard/bridge.dart'),
+          contains('XBoardShellHome()'),
+          reason: 'buildXBoardHome is the anchor lib/application.dart names',
+        );
+      },
+    );
 
     test('application.dart names the panel seams, not its internals', () {
       final source = _read('lib/application.dart');
