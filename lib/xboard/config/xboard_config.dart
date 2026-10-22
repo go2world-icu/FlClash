@@ -95,8 +95,7 @@ class _XBoardConfigProvider implements ConfigProviderInterface {
       proxyUrls: proxyUrls,
     );
 
-    // 竞速失败直接返回 null，不回退
-    if (racingResult == null) return null;
+    if (racingResult == null) return panelUrls.first;
 
     // 保存竞速结果中的代理配置（供 SDK 使用）
     XBoardConfig._lastRacingResult = racingResult;
@@ -233,7 +232,7 @@ class XBoardConfig {
   /// 并发竞速获取最快的面板URL
   ///
   /// 对当前所有可用的面板URL进行并发测试，返回响应最快的URL
-  /// 如果所有URL都失败，则返回null
+  /// 如果所有URL都失败，则返回第一个配置URL
   /// 注意：返回的URL会强制转换为HTTPS格式，以适配SDK的私有证书配置
   static Future<String?> getFastestPanelUrl() async {
     // 如果已经有正在进行的竞速，直接返回该结果（请求合并）
@@ -266,7 +265,8 @@ class XBoardConfig {
       }
     }
 
-    return _raceSelectFastest();
+    final fastestUrl = await _raceSelectFastest();
+    return fastestUrl ?? panelUrls.first;
   }
 
   /// 执行完整竞速并持久化结果。
