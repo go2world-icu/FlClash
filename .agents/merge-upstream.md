@@ -74,7 +74,7 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `lib/common/path.dart` | `forkDataDir(supportDirectory)` | `lib/common/data_dir.dart` |
 | `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
 | `lib/providers/state/navigation.dart` | the `iosCoreOff` filter | *(still inline — small and self-contained)* |
-| `core/config.go` | `loadConfigForPlatformLimits(cfg)` | `core/config_{ios,default}.go` |
+| `core/config.go` | `loadConfigForPlatform(path)`, `loadConfigForPlatformLimits(cfg)` | `core/config_{ios,default}.go` |
 | `core/lifecycle.go` | `recreateTunOnReload` | `core/config_{ios,default}.go` |
 | `core/tun/tun.go` | `applyPlatformTunOptions(&options)` | `core/tun/options_{ios,android}.go` |
 | `core/hub.go` | — | zero diff; `handleSuspend` lives in `core/handle_suspend.go` |

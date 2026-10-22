@@ -32,17 +32,10 @@ var dnsGeodataKeyRE = regexp.MustCompile(`(?im)^(\s+)(geosite)(:.*)?$`)
 // geoip-code are preserved so GEOIP rules can work.
 var dnsGeodataInlineRE = regexp.MustCompile(`(geosite)\s*:\s*\[?[^\],}\s]*\]?,?\s*`)
 
-// loadConfigForPlatform is how common.go reaches the profile config.
-//
 // A missing file is not an error here: the app only writes config.yaml after
 // the tunnel is up (IosManager.onServiceStatus → applyProfile), so a fresh
 // install must still boot — on the default config, until the real profile is
 // applied once the tunnel reports connected.
-//
-// Upstream v0.9.1's applyConfig calls loadSetupConfig instead (upstream's own
-// seam for SetupParams.Base), so this entry point is unused until the direct
-// path is wanted again; the filtering itself now rides on
-// loadConfigForPlatformLimits below, which every load path runs through.
 func loadConfigForPlatform(path string) (*config.Config, error) {
 	cfg, err := parseConfigPathFiltered(path)
 	if os.IsNotExist(err) {

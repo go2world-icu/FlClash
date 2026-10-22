@@ -117,7 +117,7 @@ func loadSetupConfig(params *SetupParams) (*config.Config, error) {
 	if params.Base != nil {
 		return loadConfigWithBase(params.Base, path)
 	}
-	return loadConfig(path)
+	return loadConfigForPlatform(path)
 }
 
 func applyConfig(params *SetupParams) error {

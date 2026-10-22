@@ -190,12 +190,21 @@ void main() {
 
     test('config.go names the hook instead of branching on GOOS', () {
       final source = _read('core/config.go');
-      // Upstream v0.9.1 loads every config through `withPlatformLimits`, so
-      // that is where the fork hangs the iOS geodata filter now. The
-      // path-based `loadConfigForPlatform` is still declared on both sides
-      // (the test above) for the direct path.
       expect(source, contains('loadConfigForPlatformLimits('));
       expect(source, isNot(contains('runtime.GOOS == "ios"')));
+    });
+
+    test('setup without a base uses the platform config loader', () {
+      final source = _read('core/config.go');
+      final loader = RegExp(
+        r'func loadSetupConfig\([^\n]+\{([\s\S]*?)\n\}',
+      ).firstMatch(source)?.group(1);
+      expect(loader, isNotNull);
+      expect(
+        loader,
+        contains('return loadConfigForPlatform(path)'),
+        reason: 'iOS must bootstrap before the app writes config.yaml',
+      );
     });
 
     test('lifecycle.go names the hook too', () {

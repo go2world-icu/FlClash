@@ -36,6 +36,9 @@ Read these only when the task touches their area:
 
 ## Highest Priority Rules
 
+- Keep iOS and `lib/xboard/` behavior in fork-owned modules and leave only minimal integration hooks in upstream-owned
+  files. Reuse existing platform seams and adapters before adding new ones, and preserve upstream structure to reduce
+  merge conflicts. See [.agents/merge-upstream.md](.agents/merge-upstream.md) for the owners and integration points.
 - When the user explicitly requests a scoped, low-risk change, inspect the relevant context and implement it directly.
   Do not require brainstorming, design documents, implementation plans, multiple-option proposals, or repeated confirmation.
   Ask only when material ambiguity, destructive impact, additional authority, or scope expansion could change the result.
