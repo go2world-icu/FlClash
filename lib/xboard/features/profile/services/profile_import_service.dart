@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -12,6 +11,7 @@ import 'package:fl_clash/xboard/features/subscription/services/subscription_down
 import 'package:fl_clash/xboard/features/subscription/utils/utils.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/config/utils/config_file_loader.dart';
+import 'package:fl_clash/xboard/utils/xboard_core_validation.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('profile_import_service.dart');
@@ -264,11 +264,12 @@ class XBoardProfileImportService {
       _logger.debug('💾 开始保存解密的配置内容到Profile...');
       final profile = Profile.normal(url: url);
 
-      // 使用 saveFile 写入并校验配置内容
+      // 使用 saveFile 写入并校验配置内容（iOS 上隧道没开时先存、连接时再由
+      // core 权威校验，见 xboard_core_validation.dart）
       final bytes = utf8.encode(result.content!);
       final profileWithContent = await profile.saveFile(
         bytes,
-        validate: (path, key) => coreController.validateProfile(path, key),
+        validate: xboardValidateProfile,
       );
       _logger.info('✅ 配置内容已成功保存并通过ClashMeta核心验证');
 

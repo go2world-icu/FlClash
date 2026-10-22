@@ -71,6 +71,26 @@ iOS 现在和安卓共用同一个外壳和仪表盘，这三颗点挂在**仪�
 | 系统 DNS 补丁 | `handleUpdateDns` 空实现 | 系统 DNS 由 `NEDNSSettings` 管 |
 | 隧道休眠 | `Suspend`（NE 的 sleep/wake 调用） | NE 随设备冻结 |
 
+## 面板导入订阅：隧道没开时不能问 core 要校验
+
+面板（`lib/xboard/`）在**存配置之前**要 core 校验一遍。iOS 上 core 只活在 PacketTunnel 里，
+隧道没开时 `ServiceChannel` 直接回 `nil`；上游 v0.9.1 起这个 `nil` 被抛成
+`CoreMethodException('Core did not answer validateConfig')`，于是「登录后自动导入订阅」「手动加订阅」
+全部失败。`login()` 不 await 这次导入、catch 里只写日志，用户看到的是**「无可用套餐」**——
+离成因很远。（v0.8.96 看似正常，是因为当时 `nil` 被 `?? ''` 读成「配置没问题」，校验根本没做。）
+
+修法在 `lib/xboard/utils/xboard_core_validation.dart`，只碰面板自己的调用点：
+
+- 先用 `ping` + `getCoreState`（**扩展自答，不经过 core**）探 core 可达性；
+- 可达 → 照旧交给 core；
+- 不可达 → 跳过 core 校验、**先把配置存下来**，用本地结构校验兜底（YAML 映射、有
+  `proxies` 或 `proxy-providers`），把权威校验推迟到隧道起来时——连接时 `applyProfile`
+  仍会把同一份配置交给 core，起不来会以 core 的错误呈现。
+- 带 age 密钥时一律走 core：解密只有 core 做得了。
+
+上游自己的加订阅路径（`lib/providers/actions/profiles.dart` 等）仍在直接调
+`validateProfile`，iOS 上隧道没开时照样报这个错；那是上游行为，fork 不动。
+
 ## App 通道的 Android-only 方法
 
 `ios/Runner/Channels/AppChannel.swift` 对 Android 独有的概念返回**无害默认值**，让共享 Dart 代码继续工作。新增

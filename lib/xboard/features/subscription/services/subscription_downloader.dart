@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/core/core.dart';
+import 'package:fl_clash/xboard/utils/xboard_core_validation.dart';
 
 import 'package:socks5_proxy/socks_client.dart';
 
@@ -93,11 +93,9 @@ class SubscriptionDownloader {
         }
       }
 
-      // 验证配置
-      _logger.info('验证订阅配置...');
-      final validationMessage = await coreController.validateConfigWithData(
-        result.content,
-      );
+      // 验证配置。iOS 上隧道没开时 core 不可达，这一跳会先存下来、等连接时
+      // 再由 core 权威校验；详见 lib/xboard/utils/xboard_core_validation.dart。
+      final validationMessage = await xboardValidateConfigData(result.content);
       if (validationMessage.isNotEmpty) {
         throw Exception('配置验证失败: $validationMessage');
       }
@@ -110,7 +108,7 @@ class SubscriptionDownloader {
       final bytes = utf8.encode(result.content);
       final savedProfile = await profile.saveFile(
         bytes,
-        validate: (path, key) => coreController.validateProfile(path, key),
+        validate: xboardValidateProfile,
       );
 
       // 更新订阅信息
