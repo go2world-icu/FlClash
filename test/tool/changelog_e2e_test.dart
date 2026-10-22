@@ -207,4 +207,15 @@ void main() {
 
     expect(warnings.single, contains('not a conventional commit'));
   });
+
+  test('reads non-ASCII conventional commit subjects as UTF-8', () {
+    commit('fix(xboard): 修复登录初始化');
+
+    final groups = build(
+      pending: const PendingVersion(version: '1.2.0', date: '2026-02-03'),
+    ).changelog.versions.first.groups;
+
+    expect(groups.single.type, ChangelogType.fix);
+    expect(groups.single.entries.single.text, '修复登录初始化');
+  });
 }

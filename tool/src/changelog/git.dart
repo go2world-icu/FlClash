@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'models.dart';
@@ -124,6 +125,7 @@ class Git {
     final range = from == null ? to : '$from..$to';
     final output = _run([
       'log',
+      '--encoding=UTF-8',
       '--no-merges',
       '--format=%H$_fieldSeparator%s$_fieldSeparator%b$_recordSeparator',
       range,
@@ -148,6 +150,8 @@ class Git {
       'git',
       arguments,
       workingDirectory: workingDirectory,
+      stdoutEncoding: utf8,
+      stderrEncoding: utf8,
     );
     if (result.exitCode != 0) {
       throw GitException('git ${arguments.join(' ')} failed: ${result.stderr}');

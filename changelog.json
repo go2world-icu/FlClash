@@ -126,7 +126,7 @@
             {
               "id": "4f4e926",
               "scope": "icons",
-              "text": "鎵嬬粯 26 涓瓧褰㈠苟璁?xboard 鍋滅敤 Material 鍥炬爣"
+              "text": "手绘 26 个字形并让 xboard 停用 Material 图标"
             },
             {
               "id": "491fae1",
@@ -341,21 +341,51 @@
             {
               "id": "31ffce8",
               "scope": "ci",
-              "text": "Upload job 鐨?checkout 琛ヤ笂瀛愭ā鍧椾笌 token"
+              "text": "Upload job 的 checkout 补上子模块与 token"
+            },
+            {
+              "id": "4b23849",
+              "scope": "ios",
+              "text": "恢复 RustLib 的桌面守卫，并让 rust_api 在 iOS 上跳过构建"
             },
             {
               "id": "b6a17ff",
               "scope": "ios",
-              "text": "Rust_api 鐨?rust-toolchain.toml 琛ヤ笂 iOS 鐩爣"
+              "text": "Rust_api 的 rust-toolchain.toml 补上 iOS 目标"
+            },
+            {
+              "id": "be9cd9b",
+              "scope": "ios",
+              "text": "Bride.c 补上 ios 构建标签；清理误入库的 core 二进制"
             },
             {
               "id": "e588029",
               "scope": "ios",
-              "text": "鎭㈠鏄惧紡鐨?iOS core 鏋勫缓锛屽苟鍏虫帀 matrix fail-fast"
+              "text": "恢复显式的 iOS core 构建，并关掉 matrix fail-fast"
+            },
+            {
+              "id": "43e7c20",
+              "scope": "ci",
+              "text": "恢复 fork 对 Push to telegram 步骤的注释"
+            },
+            {
+              "id": "7d55ac9",
+              "scope": "lint",
+              "text": "修 Go 格式与 dead_file_test 的两处问题"
+            },
+            {
+              "id": "920463c",
+              "scope": "tray",
+              "text": "统一托盘图标路径的分隔符，修 Windows 上两个测试"
+            },
+            {
+              "id": "754b7c0",
+              "scope": "ci",
+              "text": "修 checkout 认证、插件测试与新增测试的格式"
             },
             {
               "id": "1d2250c",
-              "text": "鎭㈠ fork 鐨勬墭鐩樺浘鏍囦笌 ToWorld 鍝佺墝"
+              "text": "恢复 fork 的托盘图标与 ToWorld 品牌"
             },
             {
               "id": "1677024",
