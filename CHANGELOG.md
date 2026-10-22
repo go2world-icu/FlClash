@@ -1,13 +1,17 @@
 # Changelog
 
-## v0.9.1 (2026-10-17)
+## v0.9.1 (2026-10-22)
 
 **Breaking Changes**
 
 - **network** Desktop TUN keys follow the profile unless picked; changed values carry over (cb08088)
+- **views** DNS and NTP override toggles are removed; picked keys apply to every profile (491fae1)
+- **database** Custom overwrites are removed; rebuild them as custom profiles (1677024)
 
 **Features**
 
+- **xboard** One shell for every platform, iOS included (3e198e9)
+- **xboard** Park the node picker and seat the start button at the dock's end (f44dcac)
 - **l10n** French, Spanish and Korean translations (f43755c)
 - **android** No more Firebase analytics or crash reporting (bc72bba)
 - **network** Per-key desktop TUN settings; system proxy and tray fixes (cb08088)
@@ -18,42 +22,16 @@
 - **views** Sortable tables for connections, requests and DNS (da6fb0a)
 - **ui** Optional two-tier Liquid Glass and slide-to-pick menus (7c9627f)
 - **ui** iOS-style surfaces, alerts and sheets; clearer TV focus (9bd2286)
-
-**Bug Fixes**
-
-- **ui** Fix pasting and Chinese input in text fields (5607f70)
-- **core** Large profiles no longer crash; downloads trust core CAs (5984c16)
-
-**Performance**
-
-- **android** Smoother Android UI while the proxy is busy (2201c19)
-
-## v0.9.0 (2026-10-14)
-
-**Breaking Changes**
-
-- **views** DNS and NTP override toggles are removed; picked keys apply to every profile (491fae1)
-- **database** Custom overwrites are removed; rebuild them as custom profiles (1677024)
-
-**Features**
-
+- **ios** Let the extension say whether it booted the core (e23ad12)
+- **ios** A third signal, so a dead channel stops looking like a dead core (78ce407)
+- **ios** Put the startup status in the shell's navigation bar (827dd67)
+- **icons** 26 hand-drawn glyphs for the xboard interface (4f4e926)
 - **views** Per-key DNS, NTP, sniffer and TUN settings (491fae1)
 - **profiles** Custom profiles (3abda78)
 - **ui** Stacked sheets, context menus and a sort mode (8c43053)
 - **providers** DNS, Hosts and ports apply without a restart (532ebf0)
 - **android** Launcher shortcuts and one-step on-demand access (d3fa225)
 - **core** Share link import and mrs rule sets (2fa2f7f)
-
-**Bug Fixes**
-
-- **database** Unreadable settings no longer block startup or restores (1677024)
-- **desktop** Windows and Linux desktop fixes (94a25f4)
-- **core,helper** The elevated Core only answers its owner (d780cb8)
-
-## v0.8.99 (2026-10-03)
-
-**Features**
-
 - **editor** Editor word wrap and snippets (e131675)
 - **dashboard** More dashboard cards (e62afb7)
 - **views** Hide timed-out nodes and search every list (8378c70)
@@ -63,32 +41,65 @@
 - **config** DNS query log and per-key DNS/NTP overrides (a390a42)
 - **core** Proxied service checks and outbound IP risk (8068e68)
 - **platform** Tray hotkeys, node delays and a delay test (1e97716)
-
-**Bug Fixes**
-
-- **core** A changed resource link is now used by the next sync and by auto update (ff23f30)
-- **core** DNS lookups no longer fail on networks that report no DNS servers (e55f6d1)
-- **proxies** Smaller icons in icon-only group headers (786a6ab)
-- **core,android** Push notifications reconnect in Doze (1e9955d)
-- **backup,database** Restores never apply halfway (bee8f24)
-
-## v0.8.98 (2026-09-14)
-
-**Bug Fixes**
-
-- **resources** Refresh the geo file size and time after an update finishes (c5bf5bd)
-- **core** Keep the core running while Windows sleeps with the app suspended (60f371a)
-
-## v0.8.97 (2026-09-10)
-
-**Features**
-
 - **ui** Rework the app UI and refresh the localization (26cfbaf)
 - **app** Rework the app layer and window handling, and add proxy authentication (aaf934c)
 - **desktop** Rework the desktop runners, packaging, and native build (c0fcbc0)
 - **android** Rework the Android VPN service and lifecycle handling (ae29f38)
 - **plugins** Rework the desktop plugins and add the Helper service and Rust bridge (adf715f)
 - **core** Rework the core IPC and process lifecycle (c6eaa0a)
+
+**Bug Fixes**
+
+- **ios** Fix iOS tunnel startup before the first subscription config is applied (d216255)
+- **xboard** Save a subscription before asking the core to validate it (40bbdca)
+- **ios** Answer the core channel upstream split off (82be26c)
+- **xboard** Clear the floating dock under the panel's own page (c24deb1)
+- **ui** Fix pasting and Chinese input in text fields (5607f70)
+- **core** Large profiles no longer crash; downloads trust core CAs (5984c16)
+- **ios** Stop dropping GEOSITE rules when their database is there (9e27740)
+- **ios** Implement the two app-channel probes the shared UI calls (6b35ce7)
+- **ios** Read the extension's answer in either shape (3857a41)
+- **ios** The service channel answered in the wrong type (86adfb2)
+- **ci** The watchdog was reading a ps field macOS does not have (e2e7fd5)
+- **ci** Watch the stuck codesign itself, and retry up to three times (a8a5dbc)
+- **ci** The retry never ran, and drop the partition list the canary indicted (75044c5)
+- **ios** Stop losing the Core silently, and show where startup got to (a1e0c08)
+- **ios** Name the VPN entry after the app, not "FlClash" (6fccec1)
+- **ios** The gomobile framework is static, so it is not embedded (66a5365)
+- **ci** Follow build.yaml in the fork-owned iOS workflows (97f85f2)
+- **ios** Conform to the generated protocol, not its class (d9198eb)
+- **ios** Declare files, not the .framework directory, as outputs (3516b25)
+- **ios** Put gobind on PATH for gomobile (cd76476)
+- **ios** Gomobile writes the xcframework itself (1ed76ee)
+- **ci** Include submodules and authentication when preparing release uploads (31ffce8)
+- **ios** Keep Rust initialization on desktop and skip unsupported iOS Rust builds (4b23849)
+- **ios** Declare iOS targets for the Rust build toolchain (b6a17ff)
+- **ios** Include iOS bridge sources and remove tracked Core binaries (be9cd9b)
+- **ios** Restore the explicit iOS Core build and continue other platform builds after a failure (e588029)
+- **ci** Keep the fork Telegram upload integration disabled (43e7c20)
+- **lint** Fix Go formatting and dead-file checks (7d55ac9)
+- **tray** Use consistent tray icon paths on Windows (920463c)
+- **ci** Fix CI checkout authentication, plugin tests and test formatting (754b7c0)
+- Restore ToWorld branding and tray icons (1d2250c)
+- **database** Unreadable settings no longer block startup or restores (1677024)
+- **desktop** Windows and Linux desktop fixes (94a25f4)
+- **core,helper** The elevated Core only answers its owner (d780cb8)
+- **core** A changed resource link is now used by the next sync and by auto update (ff23f30)
+- **core** DNS lookups no longer fail on networks that report no DNS servers (e55f6d1)
+- **proxies** Smaller icons in icon-only group headers (786a6ab)
+- **core,android** Push notifications reconnect in Doze (1e9955d)
+- **backup,database** Restores never apply halfway (bee8f24)
+- **resources** Refresh the geo file size and time after an update finishes (c5bf5bd)
+- **core** Keep the core running while Windows sleeps with the app suspended (60f371a)
+
+**Performance**
+
+- **xboard** Stop the panel's own speed tests from running the link ragged (ae84afa)
+- **android** Smoother Android UI while the proxy is busy (2201c19)
+
+**Reverts**
+
+- **ci** Keep the partition list the working recipe had (531790d)
 
 <!-- changelog:frozen -->
 <!-- Entries below predate the structured pipeline. Their wording is kept as written; only the heading and list style were normalized. -->
