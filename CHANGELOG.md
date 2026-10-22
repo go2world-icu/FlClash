@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.2 (2026-10-22)
+
+**Bug Fixes**
+
+- **xboard** Keep login available when panel health checks fail (474d3c8)
+
 ## v0.9.1 (2026-10-22)
 
 **Breaking Changes**
@@ -25,7 +31,7 @@
 - **ios** Let the extension say whether it booted the core (e23ad12)
 - **ios** A third signal, so a dead channel stops looking like a dead core (78ce407)
 - **ios** Put the startup status in the shell's navigation bar (827dd67)
-- **icons** 26 hand-drawn glyphs for the xboard interface (4f4e926)
+- **icons** 鎵嬬粯 26 涓瓧褰㈠苟璁?xboard 鍋滅敤 Material 鍥炬爣 (4f4e926)
 - **views** Per-key DNS, NTP, sniffer and TUN settings (491fae1)
 - **profiles** Custom profiles (3abda78)
 - **ui** Stacked sheets, context menus and a sort mode (8c43053)
@@ -50,7 +56,6 @@
 
 **Bug Fixes**
 
-- **ios** Fix iOS tunnel startup before the first subscription config is applied (d216255)
 - **xboard** Save a subscription before asking the core to validate it (40bbdca)
 - **ios** Answer the core channel upstream split off (82be26c)
 - **xboard** Clear the floating dock under the panel's own page (c24deb1)
@@ -71,16 +76,10 @@
 - **ios** Declare files, not the .framework directory, as outputs (3516b25)
 - **ios** Put gobind on PATH for gomobile (cd76476)
 - **ios** Gomobile writes the xcframework itself (1ed76ee)
-- **ci** Include submodules and authentication when preparing release uploads (31ffce8)
-- **ios** Keep Rust initialization on desktop and skip unsupported iOS Rust builds (4b23849)
-- **ios** Declare iOS targets for the Rust build toolchain (b6a17ff)
-- **ios** Include iOS bridge sources and remove tracked Core binaries (be9cd9b)
-- **ios** Restore the explicit iOS Core build and continue other platform builds after a failure (e588029)
-- **ci** Keep the fork Telegram upload integration disabled (43e7c20)
-- **lint** Fix Go formatting and dead-file checks (7d55ac9)
-- **tray** Use consistent tray icon paths on Windows (920463c)
-- **ci** Fix CI checkout authentication, plugin tests and test formatting (754b7c0)
-- Restore ToWorld branding and tray icons (1d2250c)
+- **ci** Upload job 鐨?checkout 琛ヤ笂瀛愭ā鍧椾笌 token (31ffce8)
+- **ios** Rust_api 鐨?rust-toolchain.toml 琛ヤ笂 iOS 鐩爣 (b6a17ff)
+- **ios** 鎭㈠鏄惧紡鐨?iOS core 鏋勫缓锛屽苟鍏虫帀 matrix fail-fast (e588029)
+- 鎭㈠ fork 鐨勬墭鐩樺浘鏍囦笌 ToWorld 鍝佺墝 (1d2250c)
 - **database** Unreadable settings no longer block startup or restores (1677024)
 - **desktop** Windows and Linux desktop fixes (94a25f4)
 - **core,helper** The elevated Core only answers its owner (d780cb8)

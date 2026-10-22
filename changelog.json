@@ -2,6 +2,24 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.2",
+      "tag": "v0.9.2",
+      "date": "2026-10-22",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "474d3c8",
+              "scope": "xboard",
+              "text": "Keep login available when panel health checks fail"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.1",
       "tag": "v0.9.1",
       "date": "2026-10-22",
@@ -108,7 +126,7 @@
             {
               "id": "4f4e926",
               "scope": "icons",
-              "text": "26 hand-drawn glyphs for the xboard interface"
+              "text": "鎵嬬粯 26 涓瓧褰㈠苟璁?xboard 鍋滅敤 Material 鍥炬爣"
             },
             {
               "id": "491fae1",
@@ -221,11 +239,6 @@
           "type": "fix",
           "entries": [
             {
-              "id": "d216255",
-              "scope": "ios",
-              "text": "Fix iOS tunnel startup before the first subscription config is applied"
-            },
-            {
               "id": "40bbdca",
               "scope": "xboard",
               "text": "Save a subscription before asking the core to validate it"
@@ -328,51 +341,21 @@
             {
               "id": "31ffce8",
               "scope": "ci",
-              "text": "Include submodules and authentication when preparing release uploads"
-            },
-            {
-              "id": "4b23849",
-              "scope": "ios",
-              "text": "Keep Rust initialization on desktop and skip unsupported iOS Rust builds"
+              "text": "Upload job 鐨?checkout 琛ヤ笂瀛愭ā鍧椾笌 token"
             },
             {
               "id": "b6a17ff",
               "scope": "ios",
-              "text": "Declare iOS targets for the Rust build toolchain"
-            },
-            {
-              "id": "be9cd9b",
-              "scope": "ios",
-              "text": "Include iOS bridge sources and remove tracked Core binaries"
+              "text": "Rust_api 鐨?rust-toolchain.toml 琛ヤ笂 iOS 鐩爣"
             },
             {
               "id": "e588029",
               "scope": "ios",
-              "text": "Restore the explicit iOS Core build and continue other platform builds after a failure"
-            },
-            {
-              "id": "43e7c20",
-              "scope": "ci",
-              "text": "Keep the fork Telegram upload integration disabled"
-            },
-            {
-              "id": "7d55ac9",
-              "scope": "lint",
-              "text": "Fix Go formatting and dead-file checks"
-            },
-            {
-              "id": "920463c",
-              "scope": "tray",
-              "text": "Use consistent tray icon paths on Windows"
-            },
-            {
-              "id": "754b7c0",
-              "scope": "ci",
-              "text": "Fix CI checkout authentication, plugin tests and test formatting"
+              "text": "鎭㈠鏄惧紡鐨?iOS core 鏋勫缓锛屽苟鍏虫帀 matrix fail-fast"
             },
             {
               "id": "1d2250c",
-              "text": "Restore ToWorld branding and tray icons"
+              "text": "鎭㈠ fork 鐨勬墭鐩樺浘鏍囦笌 ToWorld 鍝佺墝"
             },
             {
               "id": "1677024",
