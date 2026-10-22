@@ -5,7 +5,7 @@
 
 ## 服务通道必须回字节，不能回 String
 
-`lib/plugins/service.dart` 按字节读 `com.follow.clash/service` 的回复——和 Android 插件一致：
+`lib/plugins/service.dart` 按字节读 `com.follow.clash/**core**` 的回复——和 Android 插件一致：
 
 ```dart
 await methodChannel.invokeMethod<Uint8List>('invokeMethod', json.encode(call));
@@ -20,6 +20,20 @@ await methodChannel.invokeMethod<Uint8List>('invokeMethod', json.encode(call));
 
 要确认这类跨语言类型问题，别猜机制——写一个一次性 widget test，用 `setMockMethodCallHandler` 让通道回一个
 String，再看 `invokeMethod<Uint8List>` 的反应，一分钟拿到铁证。
+
+## core 有自己的通道：`com.follow.clash/core`
+
+上游 `2201c199`（v0.9.1）把 core 调用从 `service` 通道拆到 `core` 通道，Kotlin 侧在 `ServicePlugin` 里注册。
+iOS 侧原来只注册了 `.../service`，于是**每次进 core 的调用都抛 `MissingPluginException(No implementation found
+for method invokeMethod on channel com.follow.clash/core)`**——加订阅、拉节点列表、`getIsInit` 全灭。而 `ping`
+（NE 自答）和 `getCoreState`（NE 自答）继续正常，三颗点里「通道」「内核」看起来都没事，只有「隧道」之外的诊断点
+跟着撒谎，症状再次离成因很远。
+
+`ServiceChannel` 现在在同一个 object 上挂了两个 `FlutterMethodChannel`（`name` 与 `coreName`）；Dart 侧走哪个由
+`Service._coreChannel` 决定，iOS 两个都得答。改动只在 `ios/Runner/Channels/ServiceChannel.swift`——Swift 文件
+上游不存在，合并永远不会冲突，但反过来也没有任何东西提醒你上游又加了通道：
+`test/lint/fork_invariants_test.dart` 的 "the channels the shared Dart code opens" 会拿 Dart 侧打开的通道名
+去 Swift 侧找对应注册，找不到就红。
 
 ## 导航栏那三颗点（`lib/xboard/features/ios_shell/ios_core_status.dart`）
 

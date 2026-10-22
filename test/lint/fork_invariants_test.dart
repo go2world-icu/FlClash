@@ -124,6 +124,46 @@ void main() {
     });
   });
 
+  group('iOS: the channels the shared Dart code opens', () {
+    // Upstream split core calls onto their own channel in 2201c199 and named
+    // the Android half there. The iOS half lives only in this fork, so a merge
+    // that re-copies it — or a new channel upstream adds — is invisible until
+    // a phone throws `MissingPluginException` on subscribe.
+    const channels = {
+      'lib/plugins/service.dart': [
+        r"'$packageName/core'",
+        r"'$packageName/service'",
+      ],
+      'lib/plugins/app.dart': [r"'$packageName/app'"],
+    };
+
+    for (final MapEntry(key: path, value: names) in channels.entries) {
+      test('$path has a handler for every channel it opens', () {
+        final source = _read(path);
+        final swift =
+            _read('ios/Runner/Channels/ServiceChannel.swift') +
+            _read('ios/Runner/Channels/AppChannel.swift');
+        for (final name in names) {
+          expect(
+            source,
+            contains(name),
+            reason: '$path no longer opens $name; update this list',
+          );
+          final literal = name
+              .replaceAll(r"'$packageName/", 'com.follow.clash/')
+              .replaceAll("'", '');
+          expect(
+            swift,
+            contains('"$literal"'),
+            reason:
+                'nothing on the Swift side answers `$literal`, so every call '
+                'on it throws MissingPluginException',
+          );
+        }
+      });
+    }
+  });
+
   group('platform differences live behind a build-tag pair', () {
     // CI compiles the Android side; nothing compiles the iOS side before a
     // release tag, so these are otherwise unguarded.

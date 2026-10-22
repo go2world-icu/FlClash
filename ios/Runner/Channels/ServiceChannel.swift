@@ -13,8 +13,16 @@ import os.log
 /// - `syncState`/`saveState` persist SharedState JSON into the App Group
 /// - inbound `event` delivers core events (pumped from the NE ring buffer),
 ///   `crash` reports fatal errors, `status` reports NEVPNStatus transitions
+///
+/// It serves two channels. Upstream split the core calls onto their own
+/// `com.follow.clash/core` channel (on a background queue) so the android UI
+/// does not stall behind them; iOS has to answer on both names or every core
+/// call throws `MissingPluginException` — `proxies`, `getIsInit`, the event
+/// pump — while `ping` and `getCoreState` keep working, which is what makes
+/// that failure hard to place.
 class ServiceChannel: NSObject {
     static let name = "com.follow.clash/service"
+    static let coreName = "com.follow.clash/core"
     static let providerBundleIdentifier =
         (Bundle.main.bundleIdentifier ?? "") + ".PacketTunnel"
 
@@ -26,6 +34,7 @@ class ServiceChannel: NSObject {
         ?? "ToWorld"
 
     private let channel: FlutterMethodChannel
+    private let coreChannel: FlutterMethodChannel
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
     private var eventTimer: Timer?
@@ -38,9 +47,27 @@ class ServiceChannel: NSObject {
 
     init(messenger: FlutterBinaryMessenger) {
         channel = FlutterMethodChannel(name: Self.name, binaryMessenger: messenger)
+        coreChannel = FlutterMethodChannel(
+            name: Self.coreName,
+            binaryMessenger: messenger
+        )
         super.init()
         channel.setMethodCallHandler { [weak self] call, result in
             self?.handle(call, result: result)
+        }
+        // Core calls arrive here now; the android side drains them off the
+        // main thread, which iOS cannot do for `sendProviderMessage` anyway.
+        coreChannel.setMethodCallHandler { [weak self] call, result in
+            guard let self else {
+                result(FlutterMethodNotImplemented)
+                return
+            }
+            switch call.method {
+            case "invokeMethod":
+                self.invokeMethod(call.arguments as? String, result: result)
+            default:
+                result(FlutterMethodNotImplemented)
+            }
         }
     }
 
