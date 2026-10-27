@@ -122,7 +122,7 @@ void main() {
 
     test('does not persist the password when remember is off', () async {
       await service.saveCredentials('a@b.com', 'pw', false);
-      expect(await service.getSavedPassword(), '');
+      expect(await service.getSavedPassword(), isNull);
       expect(await service.getRememberPassword(), isFalse);
     });
 
