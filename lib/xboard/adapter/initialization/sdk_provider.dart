@@ -66,7 +66,14 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
     // 4. 加载HTTP配置
     _logger.info('[XBoardSdkProvider] 加载HTTP配置...');
     if (proxyUrl == null || proxyUrl.isEmpty) {
-      await XBoardTransport.ensureDirectRoute(Uri.parse(fastestUrl));
+      // 面板直连只是让面板绕开隧道，隧道没就绪时失败无妨（面板照常可走代理）。
+      // 绝不能让它挡住下面的 initialize：SDK 的初始化本身是纯本地的，
+      // 一旦这里抛异常，_isInitialized 就永远是 false，之后每个 sdk.xxx
+      // getter 都会抛「XBoardSDK is not initialized」。
+      final direct = await XBoardTransport.ensureDirectRoute(
+        Uri.parse(fastestUrl),
+      );
+      _logger.info('[XBoardSdkProvider] 面板直连路由: ${direct ? '已启用' : '未启用'}');
     }
     final httpConfig = await XBoardTransport.config(proxyUrl: proxyUrl);
     _logger.info('[XBoardSdkProvider] HTTP配置加载完成');
