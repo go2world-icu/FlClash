@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:board_sdk/flutter_xboard_sdk.dart';
+import 'package:fl_clash/common/context.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/features/remote_task/services/device_info_service.dart';
@@ -140,12 +141,6 @@ class _LogUploadRowState extends State<LogUploadRow> {
   /// 显示 SnackBar 提示
   void _showSnackBar(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.showNotifier(msg);
   }
 }
