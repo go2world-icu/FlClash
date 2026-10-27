@@ -273,7 +273,9 @@ class XBoardConfig {
     }
 
     final fastestUrl = await _raceSelectFastest();
-    return fastestUrl;
+    // 所有域名竞速都失败时，回退到第一个配置URL —— 与 provider 的 getFastestPanelUrl
+    // 及本方法的文档注释保持一致，避免弱网/被墙环境下直接硬失败成「无法获取可用域名」。
+    return fastestUrl ?? panelUrls.first;
   }
 
   /// 执行完整竞速并持久化结果。
