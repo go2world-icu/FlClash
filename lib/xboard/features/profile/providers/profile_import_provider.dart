@@ -7,14 +7,17 @@ import 'package:fl_clash/xboard/core/core.dart';
 final _logger = FileLogger('profile_import_provider.dart');
 
 class ProfileImportNotifier extends Notifier<ImportState> {
+  int _generation = 0;
   @override
   ImportState build() => const ImportState();
 
   Future<bool> importSubscription(
     String url, {
     bool forceRefresh = false,
+    String? ownerEmail,
   }) async {
-    _logger.info('开始导入订阅: $url, forceRefresh: $forceRefresh');
+    _logger.info('开始导入订阅, forceRefresh: $forceRefresh');
+    final generation = ++_generation;
 
     state = state.copyWith(
       status: ImportStatus.downloading,
@@ -30,7 +33,9 @@ class ProfileImportNotifier extends Notifier<ImportState> {
 
       final result = await importService.importSubscription(
         url,
+        ownerEmail: ownerEmail,
         onProgress: (status, progress, message) {
+          if (generation != _generation) return;
           state = state.copyWith(
             status: status,
             progress: progress,
@@ -38,6 +43,8 @@ class ProfileImportNotifier extends Notifier<ImportState> {
           );
         },
       );
+
+      if (generation != _generation) return false;
 
       state = state.copyWith(
         status: result.isSuccess ? ImportStatus.success : ImportStatus.failed,
@@ -50,6 +57,7 @@ class ProfileImportNotifier extends Notifier<ImportState> {
 
       return result.isSuccess;
     } catch (e) {
+      if (generation != _generation) return false;
       state = state.copyWith(
         status: ImportStatus.failed,
         isImporting: false,
@@ -71,6 +79,8 @@ class ProfileImportNotifier extends Notifier<ImportState> {
   }
 
   void cancelImport() {
+    _generation++;
+    ref.read(xboardProfileImportServiceProvider).cancel();
     if (state.isImporting) {
       state = state.copyWith(
         status: ImportStatus.idle,
@@ -82,6 +92,7 @@ class ProfileImportNotifier extends Notifier<ImportState> {
   }
 
   void clearState() {
+    cancelImport();
     state = const ImportState();
     _logger.info('请求清除导入状态');
   }

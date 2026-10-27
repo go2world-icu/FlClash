@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/config/utils/config_file_loader.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
@@ -8,6 +9,9 @@ import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/infrastructure/infrastructure.dart';
 import 'package:fl_clash/xboard/infrastructure/http/user_agent_config.dart';
+import 'package:fl_clash/xboard/infrastructure/http/board_transport.dart';
+import 'package:fl_clash/xboard/features/subscription/services/subscription_downloader.dart';
+import 'package:fl_clash/xboard/utils/xboard_core_validation.dart';
 import 'concurrent_subscription_service.dart';
 
 // 初始化文件级日志器
@@ -18,7 +22,6 @@ final _logger = FileLogger('encrypted_subscription_service.dart');
 /// 负责从XBoard加密端点获取订阅数据并解密
 class EncryptedSubscriptionService {
   static const Duration requestTimeout = Duration(seconds: 30);
-  static const int maxRetries = 3;
 
   /// 从登录数据中获取加密订阅（推荐方法）
   ///
@@ -29,6 +32,7 @@ class EncryptedSubscriptionService {
   static Future<SubscriptionResult> getEncryptedSubscriptionFromLogin({
     bool preferEncrypt = true,
     bool enableRace = true,
+    SubscriptionCancellation? cancellation,
   }) async {
     try {
       _logger.info('从登录数据获取加密订阅');
@@ -42,22 +46,18 @@ class EncryptedSubscriptionService {
         return SubscriptionResult.failure('订阅URL为空');
       }
 
-      _logger.info('获取到订阅URL: $subscribeUrl');
-
       // 2. 从订阅URL中提取订阅token（不是Auth Token！）
       final token = _extractTokenFromSubscriptionUrl(subscribeUrl);
 
       if (token == null || token.isEmpty) {
-        return SubscriptionResult.failure('无法从订阅URL中提取token: $subscribeUrl');
+        return SubscriptionResult.failure('无法从订阅URL中提取token');
       }
 
-      _logger.info('从订阅URL提取到订阅token: ${token.substring(0, 8)}...');
-
-      // 3. 使用订阅token获取加密订阅
-      return await getEncryptedSubscription(
+      return await getSubscriptionSmart(
         token,
         preferEncrypt: preferEncrypt,
         enableRace: enableRace,
+        cancellation: cancellation,
       );
     } catch (e) {
       _logger.error('从登录数据获取订阅失败', e);
@@ -107,195 +107,184 @@ class EncryptedSubscriptionService {
     String token, {
     bool preferEncrypt = true,
     bool enableRace = true,
+    SubscriptionCancellation? cancellation,
   }) async {
-    try {
-      _logger.info(
-        '开始获取加密订阅，token: ${token.substring(0, 8)}..., 竞速模式: $enableRace',
-      );
-
-      // 1. 获取订阅配置
-      final subscriptionInfo = XBoardConfig.subscriptionInfo;
-      if (subscriptionInfo == null) {
-        return SubscriptionResult.failure('未找到订阅配置信息');
-      }
-
-      // 2. 构建订阅URL（使用竞速或单一URL）
-      String? subscriptionUrl;
-
-      if (enableRace && (subscriptionInfo.urls.length > 1)) {
-        _logger.info(
-          '[订阅竞速] 检测到 ${subscriptionInfo.urls.length} 个订阅源，启动竞速选择...',
-        );
-        subscriptionUrl = await XBoardConfig.getFastestSubscriptionUrl(
-          token,
-          preferEncrypt: preferEncrypt,
-        );
-        _logger.info('[订阅竞速] 🏆 竞速完成，最快URL: $subscriptionUrl');
-      } else {
-        subscriptionUrl = subscriptionInfo.buildSubscriptionUrl(
-          token,
-          forceEncrypt: preferEncrypt,
-        );
-        _logger.debug('[订阅服务] 使用默认URL（无需竞速）: $subscriptionUrl');
-      }
-
-      if (subscriptionUrl == null) {
-        return SubscriptionResult.failure('无法构建订阅URL');
-      }
-
-      _logger.debug('[订阅服务] 最终使用URL: $subscriptionUrl');
-
-      // 3. 获取加密数据
-      final encryptedData = await _fetchEncryptedData(subscriptionUrl);
-      if (!encryptedData.success) {
-        return SubscriptionResult.failure(encryptedData.error!);
-      }
-
-      _logger.debug('[订阅服务] 获取到加密数据，长度: ${encryptedData.data!.length}');
-
-      // 4. 解密数据
-      _logger.info('[订阅服务] 🔐 开始解密获取到的加密数据...');
-      final decryptKey = await ConfigFileLoaderHelper.getDecryptKey();
-      final decryptResult = XBoardDecryptHelper.smartDecrypt(
-        encryptedData.data!,
-        configuredKey: decryptKey,
-        tryFallback: true, // 允许尝试备用密钥
-      );
-      if (!decryptResult.success) {
-        _logger.error('[订阅服务] 💥 解密失败: ${decryptResult.message}');
-        return SubscriptionResult.failure('解密失败: ${decryptResult.message}');
-      }
-
-      _logger.info(
-        '[订阅服务] 🎉 解密成功！使用密钥: ${decryptResult.keyUsed?.substring(0, 8)}..., 解密内容长度: ${decryptResult.content.length}',
-      );
-
-      // 记录解密内容的基本统计信息
-      final lines = decryptResult.content.split('\n');
-      final nonEmptyLines = lines
-          .where((line) => line.trim().isNotEmpty)
-          .length;
-      _logger.debug('[订阅服务] 解密内容统计: 总行数 ${lines.length}, 非空行数 $nonEmptyLines');
-
-      return SubscriptionResult.success(
-        content: decryptResult.content,
-        encryptionUsed: true,
-        keyUsed: decryptResult.keyUsed,
-        originalUrl: subscriptionUrl,
-        subscriptionUserInfo: encryptedData.subscriptionUserInfo,
-      );
-    } catch (e) {
-      _logger.error('处理过程异常', e);
-      return SubscriptionResult.failure('获取加密订阅异常: $e');
-    }
+    return _raceSubscription(
+      token,
+      encrypt: true,
+      enableRace: enableRace,
+      cancellation: cancellation,
+    );
   }
 
   /// 获取加密数据（支持重试）
   ///
   /// [url] 订阅URL
   /// 返回加密的数据内容和订阅信息
-  static Future<DataResult> _fetchEncryptedData(String url) async {
-    _logger.info('[数据获取] 开始获取加密数据，最大重试次数: $maxRetries');
-
-    for (int attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        _logger.debug('[数据获取] 第 $attempt/$maxRetries 次请求: $url');
-
-        final client = HttpClient();
-        client.connectionTimeout = requestTimeout;
-
-        final uri = Uri.parse(url);
-        final request = await client.getUrl(uri);
-
-        // 设置请求头（服务端需要FlClash标识配合密钥获取Clash配置格式）
-        final userAgent = await UserAgentConfig.get(
-          UserAgentScenario.subscription,
-        );
-        request.headers.set(HttpHeaders.userAgentHeader, userAgent);
-        request.headers.set(HttpHeaders.acceptHeader, '*/*');
-
-        final response = await request.close().timeout(requestTimeout);
-
-        _logger.debug('[数据获取] HTTP状态码: ${response.statusCode}');
-
-        if (response.statusCode == 200) {
-          final responseBody = await response.transform(utf8.decoder).join();
-          final subscriptionUserInfo = response.headers.value(
-            'subscription-userinfo',
-          );
-          client.close();
-
-          _logger.debug('[数据获取] ✅ 响应成功，数据长度: ${responseBody.length}');
-          if (subscriptionUserInfo != null) {
-            _logger.debug('[数据获取] 📊 获取到订阅信息: $subscriptionUserInfo');
-          }
-
-          // 尝试解析JSON响应
-          try {
-            final jsonData = jsonDecode(responseBody);
-            if (jsonData is Map<String, dynamic> &&
-                jsonData.containsKey('data')) {
-              _logger.debug('[数据获取] 📄 检测到JSON格式响应，提取data字段');
-              final dataContent = jsonData['data'] as String;
-              _logger.debug('[数据获取] 🔐 提取到加密数据长度: ${dataContent.length}');
-              return DataResult.success(
-                dataContent,
-                subscriptionUserInfo: subscriptionUserInfo,
+  static Future<DataResult> _fetchEncryptedData(
+    String url, {
+    String? proxyUrl,
+    SubscriptionCancellation? cancellation,
+  }) async {
+    final uri = Uri.parse(url);
+    final client = await XBoardTransport.create(uri, proxyUrl: proxyUrl);
+    cancellation?.attach(client);
+    client.connectionTimeout = requestTimeout;
+    try {
+      final request = await client.getUrl(uri).timeout(requestTimeout);
+      request.followRedirects = false;
+      request.headers.set(
+        HttpHeaders.userAgentHeader,
+        await UserAgentConfig.get(UserAgentScenario.subscription),
+      );
+      final response = await request.close().timeout(requestTimeout);
+      if (response.statusCode != HttpStatus.ok) {
+        return DataResult.failure('HTTP ${response.statusCode}');
+      }
+      final bytes = BytesBuilder(copy: false);
+      await response
+          .forEach((chunk) {
+            if (cancellation?.isCancelled == true ||
+                bytes.length + chunk.length > 8 * 1024 * 1024) {
+              throw const HttpException(
+                'Subscription download cancelled or too large',
               );
             }
-          } catch (e) {
-            _logger.debug('[数据获取] 📄 非JSON格式响应，直接返回原始内容');
-            // 如果不是JSON，直接返回响应体
-          }
-
-          _logger.debug('[数据获取] 🔐 返回原始响应内容作为加密数据');
+            bytes.add(chunk);
+          })
+          .timeout(requestTimeout);
+      final body = utf8.decode(bytes.takeBytes());
+      final info = response.headers.value('subscription-userinfo');
+      try {
+        final data = jsonDecode(body);
+        if (data is Map<String, dynamic> && data['data'] is String) {
           return DataResult.success(
-            responseBody,
-            subscriptionUserInfo: subscriptionUserInfo,
+            data['data'] as String,
+            subscriptionUserInfo: info,
           );
-        } else {
-          client.close();
+        }
+      } on FormatException {
+        // The endpoint may return the encrypted payload directly.
+      }
+      return DataResult.success(body, subscriptionUserInfo: info);
+    } catch (error) {
+      return DataResult.failure(error.toString());
+    } finally {
+      cancellation?.detach(client);
+      client.close(force: true);
+    }
+  }
 
-          if (attempt < maxRetries) {
-            _logger.warning(
-              '[数据获取] ⚠️ 请求失败，状态码: ${response.statusCode}，${attempt * 2}秒后进行第${attempt + 1}次重试...',
-            );
-            await Future.delayed(Duration(seconds: attempt * 2));
-            continue;
-          } else {
-            _logger.error(
-              '[数据获取] 💥 请求最终失败，状态码: ${response.statusCode}，已达到最大重试次数',
-            );
-            return DataResult.failure('HTTP请求失败: ${response.statusCode}');
+  static Future<SubscriptionResult> _raceSubscription(
+    String token, {
+    required bool encrypt,
+    required bool enableRace,
+    SubscriptionCancellation? cancellation,
+  }) async {
+    final settings = XBoardConfig.subscriptionInfo;
+    if (settings == null || settings.urls.isEmpty) {
+      return SubscriptionResult.failure('未找到订阅配置信息');
+    }
+    final urls = [
+      for (final source in settings.urls)
+        if (!encrypt || source.supportEncrypt)
+          source.buildSubscriptionUrl(token, preferEncrypt: encrypt),
+    ];
+    if (urls.isEmpty) return SubscriptionResult.failure('没有可用的订阅端点');
+    final routes = <(String, String?)>[
+      for (final url in enableRace ? urls : urls.take(1))
+        for (final proxy
+            in enableRace
+                ? <String?>[null, ...XBoardConfig.allProxyUrls]
+                : <String?>[null])
+          (url, proxy),
+    ];
+    final active = SubscriptionCancellation();
+    if (cancellation != null) {
+      if (cancellation.isCancelled) active.cancel();
+      unawaited(cancellation.whenCancelled.then((_) => active.cancel()));
+    }
+    final selected = Completer<SubscriptionResult>();
+    final decryptKey = encrypt
+        ? await ConfigFileLoaderHelper.getDecryptKey()
+        : null;
+    var next = 0;
+    var finished = 0;
+    String? firstError;
+
+    Future<void> worker() async {
+      while (!selected.isCompleted &&
+          !active.isCancelled &&
+          next < routes.length) {
+        final (url, proxy) = routes[next++];
+        try {
+          final downloaded = await _fetchEncryptedData(
+            url,
+            proxyUrl: proxy,
+            cancellation: active,
+          );
+          if (!downloaded.success) {
+            throw StateError(downloaded.error ?? '订阅下载失败');
           }
-        }
-      } on TimeoutException {
-        if (attempt < maxRetries) {
-          _logger.warning(
-            '[数据获取] ⏰ 请求超时，${attempt * 2}秒后进行第${attempt + 1}次重试...',
-          );
-          await Future.delayed(Duration(seconds: attempt * 2));
-          continue;
-        } else {
-          _logger.error('[数据获取] 💥 请求最终超时，已达到最大重试次数');
-          return DataResult.failure('请求超时');
-        }
-      } catch (e) {
-        if (attempt < maxRetries) {
-          _logger.warning(
-            '[数据获取] ⚠️ 请求异常: $e，${attempt * 2}秒后进行第${attempt + 1}次重试...',
-          );
-          await Future.delayed(Duration(seconds: attempt * 2));
-          continue;
-        } else {
-          _logger.error('[数据获取] 💥 请求最终异常: $e，已达到最大重试次数');
-          return DataResult.failure('请求异常: $e');
+          final String content;
+          final String? keyUsed;
+          if (encrypt) {
+            final decrypted = XBoardDecryptHelper.smartDecrypt(
+              downloaded.data!,
+              configuredKey: decryptKey!,
+              tryFallback: true,
+            );
+            if (!decrypted.success) throw const FormatException('解密失败');
+            content = decrypted.content;
+            keyUsed = decrypted.keyUsed;
+          } else {
+            content = downloaded.data!;
+            keyUsed = null;
+          }
+          final localError = xboardValidateConfigContent(content);
+          if (localError.isNotEmpty) throw FormatException(localError);
+          final coreError = await xboardValidateConfigData(content);
+          if (coreError.isNotEmpty) throw FormatException(coreError);
+          if (!selected.isCompleted && !active.isCancelled) {
+            selected.complete(
+              SubscriptionResult.success(
+                content: content,
+                encryptionUsed: encrypt,
+                keyUsed: keyUsed,
+                originalUrl: url,
+                subscriptionUserInfo: downloaded.subscriptionUserInfo,
+              ),
+            );
+            active.cancel();
+          }
+        } catch (error) {
+          firstError ??= error.toString();
+        } finally {
+          finished++;
+          if (finished == routes.length && !selected.isCompleted) {
+            selected.complete(
+              SubscriptionResult.failure(firstError ?? '订阅源不可用'),
+            );
+          }
         }
       }
     }
 
-    _logger.error('[数据获取] 💥 所有重试都失败了，已尝试 $maxRetries 次');
-    return DataResult.failure('所有重试都失败了');
+    final workers = [for (var i = 0; i < 3 && i < routes.length; i++) worker()];
+    try {
+      return await Future.any<SubscriptionResult>([
+        selected.future,
+        active.whenCancelled.then(
+          (_) => SubscriptionResult.failure('Subscription import cancelled'),
+        ),
+      ]).timeout(
+        const Duration(seconds: 35),
+        onTimeout: () => SubscriptionResult.failure('订阅竞速超时'),
+      );
+    } finally {
+      active.cancel();
+      unawaited(Future.wait(workers));
+    }
   }
 
   /// 回退到普通订阅获取
@@ -306,50 +295,14 @@ class EncryptedSubscriptionService {
   static Future<SubscriptionResult> fallbackToNormalSubscription(
     String token, {
     bool enableRace = true,
+    SubscriptionCancellation? cancellation,
   }) async {
-    try {
-      _logger.info('回退到普通订阅模式');
-
-      final subscriptionInfo = XBoardConfig.subscriptionInfo;
-      if (subscriptionInfo == null) {
-        return SubscriptionResult.failure('未找到订阅配置信息');
-      }
-
-      // 尝试获取普通端点（使用竞速或单一URL）
-      String? normalUrl;
-
-      if (enableRace && (subscriptionInfo.urls.length > 1)) {
-        _logger.info('[普通订阅竞速] 启动竞速选择普通端点...');
-        normalUrl = await XBoardConfig.getFastestSubscriptionUrl(
-          token,
-          preferEncrypt: false,
-        );
-      } else {
-        normalUrl = subscriptionInfo.buildSubscriptionUrl(
-          token,
-          forceEncrypt: false,
-        );
-      }
-
-      if (normalUrl == null) {
-        return SubscriptionResult.failure('无法构建普通订阅URL');
-      }
-
-      final result = await _fetchEncryptedData(normalUrl);
-      if (!result.success) {
-        return SubscriptionResult.failure(result.error!);
-      }
-
-      return SubscriptionResult.success(
-        content: result.data!,
-        encryptionUsed: false,
-        keyUsed: null,
-        originalUrl: normalUrl,
-        subscriptionUserInfo: result.subscriptionUserInfo,
-      );
-    } catch (e) {
-      return SubscriptionResult.failure('普通订阅获取失败: $e');
-    }
+    return _raceSubscription(
+      token,
+      encrypt: false,
+      enableRace: enableRace,
+      cancellation: cancellation,
+    );
   }
 
   /// 获取订阅（智能选择加密或普通）
@@ -363,6 +316,7 @@ class EncryptedSubscriptionService {
     String? token, {
     bool preferEncrypt = true,
     bool enableRace = true,
+    SubscriptionCancellation? cancellation,
   }) async {
     try {
       // 如果没有提供token，优先从登录数据获取
@@ -371,6 +325,7 @@ class EncryptedSubscriptionService {
         return await getEncryptedSubscriptionFromLogin(
           preferEncrypt: preferEncrypt,
           enableRace: enableRace,
+          cancellation: cancellation,
         );
       }
 
@@ -381,6 +336,7 @@ class EncryptedSubscriptionService {
           token,
           preferEncrypt: true,
           enableRace: enableRace,
+          cancellation: cancellation,
         );
         if (encryptedResult.success) {
           return encryptedResult;
@@ -392,12 +348,14 @@ class EncryptedSubscriptionService {
         return await fallbackToNormalSubscription(
           token,
           enableRace: enableRace,
+          cancellation: cancellation,
         );
       } else {
         // 直接使用普通订阅
         return await fallbackToNormalSubscription(
           token,
           enableRace: enableRace,
+          cancellation: cancellation,
         );
       }
     } catch (e) {
@@ -457,9 +415,7 @@ class EncryptedSubscriptionService {
     bool enableRace = true,
   }) async {
     try {
-      _logger.info(
-        '[竞速增强] 获取加密订阅，token: ${token.substring(0, 8)}..., 竞速模式: $enableRace',
-      );
+      _logger.info('[竞速增强] 获取加密订阅，竞速模式: $enableRace');
 
       // 如果未启用竞速模式，回退到原始方法
       if (!enableRace) {

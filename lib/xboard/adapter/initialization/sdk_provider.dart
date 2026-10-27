@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
-import 'package:fl_clash/xboard/infrastructure/http/user_agent_config.dart';
+import 'package:fl_clash/xboard/infrastructure/http/board_transport.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 
 part 'generated/sdk_provider.g.dart';
@@ -65,7 +65,7 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
 
     // 4. 加载HTTP配置
     _logger.info('[XBoardSdkProvider] 加载HTTP配置...');
-    final httpConfig = await _loadHttpConfig();
+    final httpConfig = await XBoardTransport.config(proxyUrl: proxyUrl);
     _logger.info('[XBoardSdkProvider] HTTP配置加载完成');
 
     // 5. 初始化SDK
@@ -75,7 +75,13 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
       panelType: panelType,
       proxyUrl: proxyUrl,
       httpConfig: httpConfig,
-      enableLogging: true,
+      routeResolver: () async {
+        final route = await XBoardConfig.recoverPanelRoute();
+        return route == null
+            ? null
+            : ApiRoute(route.domain, route.useProxy ? route.proxyUrl : null);
+      },
+      enableLogging: false,
       logOutput: (line) => XBoardLogger.info('[SDK] $line'),
     );
 
@@ -84,39 +90,5 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
   } catch (e, stackTrace) {
     _logger.error('[XBoardSdkProvider] SDK初始化失败', e, stackTrace);
     rethrow;
-  }
-}
-
-/// 加载HTTP配置
-///
-/// 从配置文件读取：
-/// - User-Agent
-/// - 混淆前缀
-/// - 证书配置
-Future<HttpConfig> _loadHttpConfig() async {
-  try {
-    // 从配置文件获取加密 UA（用于 API 请求和 Caddy 认证）
-    final userAgent = await UserAgentConfig.get(UserAgentScenario.apiEncrypted);
-
-    // 从配置文件获取混淆前缀
-    final obfuscationPrefix =
-        await ConfigFileLoaderHelper.getObfuscationPrefix();
-
-    // 从配置文件获取证书配置
-    final certConfig = await ConfigFileLoaderHelper.getCertificateConfig();
-    final certPath = certConfig['path'] as String?;
-    final certEnabled = certConfig['enabled'] as bool? ?? true;
-
-    // 构建 HttpConfig
-    return HttpConfig(
-      userAgent: userAgent,
-      obfuscationPrefix: obfuscationPrefix,
-      enableAutoDeobfuscation: obfuscationPrefix != null,
-      certificatePath: certEnabled ? certPath : null,
-      enableCertificatePinning: certEnabled && certPath != null,
-    );
-  } catch (e) {
-    _logger.error('[XBoardSdkProvider] 加载HTTP配置失败，使用默认配置', e);
-    return HttpConfig.defaultConfig();
   }
 }

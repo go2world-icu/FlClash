@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:path/path.dart';
@@ -21,7 +22,10 @@ class RacingResultCache {
   }
 
   /// 读取上次竞速结果；无缓存 / 解析失败返回 null。
-  static Future<DomainRacingResult?> load() async {
+  static Future<DomainRacingResult?> load({
+    required List<String> panelUrls,
+    required List<String> proxyUrls,
+  }) async {
     try {
       final file = await _file();
       if (!await file.exists()) return null;
@@ -29,10 +33,34 @@ class RacingResultCache {
       final json = jsonDecode(content) as Map<String, dynamic>;
       final domain = json['domain'] as String?;
       if (domain == null || domain.isEmpty) return null;
+      final saved = DateTime.tryParse(json['savedAt'] as String? ?? '');
+      if (saved == null ||
+          DateTime.now().difference(saved) > const Duration(hours: 12)) {
+        return null;
+      }
+      final eligible = panelUrls.any((url) {
+        final parsed = Uri.tryParse(url);
+        return parsed != null &&
+            parsed.host.isNotEmpty &&
+            parsed.replace(scheme: 'https').origin == domain;
+      });
+      if (!eligible) return null;
+      final useProxy = json['useProxy'] == true;
+      String? proxy;
+      if (useProxy) {
+        final hash = json['proxyHash'] as String?;
+        for (final configured in proxyUrls) {
+          if (sha256.convert(utf8.encode(configured)).toString() == hash) {
+            proxy = configured;
+            break;
+          }
+        }
+        if (proxy == null) return null;
+      }
       return DomainRacingResult(
         domain: domain,
-        useProxy: json['useProxy'] == true,
-        proxyUrl: json['proxyUrl'] as String?,
+        useProxy: useProxy,
+        proxyUrl: proxy,
         responseTime: (json['responseTime'] as num?)?.toInt() ?? 0,
       );
     } catch (e) {
@@ -42,15 +70,24 @@ class RacingResultCache {
   }
 
   /// 保存竞速结果。写入失败静默忽略。
-  static Future<void> save(DomainRacingResult result) async {
+  static Future<void> save(
+    DomainRacingResult result, {
+    required List<String> proxyUrls,
+  }) async {
     try {
+      if (result.useProxy && !proxyUrls.contains(result.proxyUrl)) return;
       final file = await _file();
+      await file.parent.create(recursive: true);
       await file.writeAsString(
         jsonEncode({
           'domain': result.domain,
           'useProxy': result.useProxy,
-          'proxyUrl': result.proxyUrl,
+          if (result.useProxy)
+            'proxyHash': sha256
+                .convert(utf8.encode(result.proxyUrl!))
+                .toString(),
           'responseTime': result.responseTime,
+          'savedAt': DateTime.now().toUtc().toIso8601String(),
         }),
       );
     } catch (e) {

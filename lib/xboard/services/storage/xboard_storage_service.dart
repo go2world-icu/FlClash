@@ -4,6 +4,8 @@
 library;
 
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:crypto/crypto.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/infrastructure/infrastructure.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
@@ -13,8 +15,14 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 /// 负责存储和读取XBoard相关数据，如用户信息、订阅信息等
 class XBoardStorageService {
   final StorageInterface _storage;
+  final FlutterSecureStorage _secureStorage;
 
-  XBoardStorageService(this._storage);
+  XBoardStorageService(this._storage, {FlutterSecureStorage? secureStorage})
+    : _secureStorage =
+          secureStorage ??
+          const FlutterSecureStorage(
+            mOptions: MacOsOptions(usesDataProtectionKeychain: false),
+          );
 
   // 存储键定义
   static const String _userEmailKey = 'xboard_user_email';
@@ -27,6 +35,31 @@ class XBoardStorageService {
   static const String _savedEmailKey = 'xboard_saved_email';
   static const String _savedPasswordKey = 'xboard_saved_password';
   static const String _rememberPasswordKey = 'xboard_remember_password';
+
+  String _ownedProfilesKey(String email) =>
+      'xboard_owned_profiles_${sha256.convert(utf8.encode(email.trim().toLowerCase()))}';
+
+  Future<List<int>> getOwnedProfileIds(String email) async {
+    final value = (await _storage.getString(
+      _ownedProfilesKey(email),
+    )).dataOrNull;
+    if (value == null) return [];
+    try {
+      return (jsonDecode(value) as List).whereType<int>().toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> setOwnedProfileIds(String email, List<int> ids) async {
+    final result = await _storage.setString(
+      _ownedProfilesKey(email),
+      jsonEncode(ids),
+    );
+    if (result.dataOrNull != true) {
+      throw StateError('Unable to save XBoard profile ownership');
+    }
+  }
 
   Future<Result<bool>> saveUserEmail(String email) async {
     return await _storage.setString(_userEmailKey, email);
@@ -157,24 +190,42 @@ class XBoardStorageService {
     String password,
     bool rememberPassword,
   ) async {
-    final results = await Future.wait([
-      _storage.setString(_savedEmailKey, email),
-      _storage.setString(_savedPasswordKey, rememberPassword ? password : ''),
-      _storage.setBool(_rememberPasswordKey, rememberPassword),
-    ]);
-
-    final allSuccess = results.every((r) => r.dataOrNull == true);
-    return Result.success(allSuccess);
+    try {
+      if (rememberPassword) {
+        await _secureStorage.write(key: _savedPasswordKey, value: password);
+      } else {
+        await _secureStorage.delete(key: _savedPasswordKey);
+      }
+      await _storage.remove(_savedPasswordKey);
+      final emailResult = await _storage.setString(_savedEmailKey, email);
+      final rememberResult = await _storage.setBool(
+        _rememberPasswordKey,
+        rememberPassword,
+      );
+      return Result.success(
+        emailResult.dataOrNull == true && rememberResult.dataOrNull == true,
+      );
+    } catch (error, stackTrace) {
+      return Result.failure(
+        XBoardStorageException(
+          message: '安全保存登录凭据失败',
+          operation: 'write',
+          key: _savedPasswordKey,
+          originalError: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
   }
 
   Future<Result<Map<String, dynamic>>> getSavedCredentials() async {
     final emailResult = await _storage.getString(_savedEmailKey);
-    final passwordResult = await _storage.getString(_savedPasswordKey);
+    final password = await getSavedPassword();
     final rememberResult = await _storage.getBool(_rememberPasswordKey);
 
     return Result.success({
       'email': emailResult.dataOrNull,
-      'password': passwordResult.dataOrNull,
+      'password': password,
       'rememberPassword': rememberResult.dataOrNull ?? false,
     });
   }
@@ -186,8 +237,15 @@ class XBoardStorageService {
   }
 
   Future<String?> getSavedPassword() async {
-    final result = await _storage.getString(_savedPasswordKey);
-    return result.dataOrNull;
+    final saved = await _secureStorage.read(key: _savedPasswordKey);
+    final legacy = (await _storage.getString(_savedPasswordKey)).dataOrNull;
+    if (legacy != null && legacy.isNotEmpty) {
+      if (saved == null || saved.isEmpty) {
+        await _secureStorage.write(key: _savedPasswordKey, value: legacy);
+      }
+      await _storage.remove(_savedPasswordKey);
+    }
+    return saved?.isNotEmpty == true ? saved : legacy;
   }
 
   Future<bool> getRememberPassword() async {
@@ -196,6 +254,7 @@ class XBoardStorageService {
   }
 
   Future<Result<bool>> clearSavedCredentials() async {
+    await _secureStorage.delete(key: _savedPasswordKey);
     final results = await Future.wait([
       _storage.remove(_savedEmailKey),
       _storage.remove(_savedPasswordKey),

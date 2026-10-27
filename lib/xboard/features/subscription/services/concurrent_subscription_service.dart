@@ -39,7 +39,7 @@ class ConcurrentSubscriptionService {
         return SubscriptionResult.failure('订阅token无效');
       }
 
-      _logger.info('[竞速订阅] 获取到token: ${token.substring(0, 8)}...');
+      _logger.info('[竞速订阅] 已获取订阅凭据');
 
       // 2. 使用token进行竞速获取
       return await raceGetEncryptedSubscription(
@@ -63,7 +63,7 @@ class ConcurrentSubscriptionService {
     bool preferEncrypt = true,
   }) async {
     try {
-      _logger.info('[竞速订阅] 开始并发竞速获取，token: ${token.substring(0, 8)}...');
+      _logger.info('[竞速订阅] 开始并发竞速获取');
 
       // 1. 获取所有可用的订阅URL信息
       final subscriptionUrlInfos = _getAllSubscriptionUrlInfos();

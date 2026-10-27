@@ -118,32 +118,55 @@ class XBoardConfigAccessor {
     _lastError = null;
 
     try {
-      // 只拉取 redirect/gitee（base app/log 配置已合并到 redirect 响应中）
-      final multiResult = await _remoteManager.fetchAllConfigs(
-        includeBase: false,
-      );
-
-      if (multiResult.hasSuccess && multiResult.firstSuccessfulData != null) {
-        final data = multiResult.firstSuccessfulData!;
-
-        // 从同一响应中提取 app/log 配置（原 base 内容）
-        _extractAppLogFromData(data);
-
-        // 提取并处理主配置
-        final configData = _parser.extractConfigFromRemoteResult(data);
-        if (configData != null) {
-          await _processConfigData(
-            configData,
-            multiResult.firstSuccessfulSource ?? 'remote',
+      final selected = Completer<(Map<String, dynamic>, String)>();
+      var pending = 2;
+      void accept(ConfigResult<Map<String, dynamic>> result) {
+        if (!selected.isCompleted && result.isSuccess && result.data != null) {
+          final data = result.data!;
+          final config = _parser.extractConfigFromRemoteResult(data);
+          if (config != null) {
+            try {
+              final parsed = _parser.parseFromJson(config, _currentProvider);
+              if (parsed.panels.getAll().isNotEmpty) {
+                selected.complete((data, result.source));
+              }
+            } catch (_) {}
+          }
+        }
+        pending--;
+        if (pending == 0 && !selected.isCompleted) {
+          selected.completeError(
+            StateError('No valid remote panel configuration'),
           );
-          return;
         }
       }
 
-      throw Exception('Remote config fetch failed');
+      void failed(Object _) {
+        pending--;
+        if (pending == 0 && !selected.isCompleted) {
+          selected.completeError(
+            StateError('Remote configuration unavailable'),
+          );
+        }
+      }
+
+      unawaited(
+        _remoteManager.getRedirectConfig().then(accept).catchError(failed),
+      );
+      unawaited(
+        _remoteManager.getGiteeConfig().then(accept).catchError(failed),
+      );
+      final (data, source) = await selected.future;
+      final config = _parser.extractConfigFromRemoteResult(data)!;
+      await _processConfigData(config, source);
+      _extractAppLogFromData(data);
     } catch (e) {
       _lastError = 'Configuration refresh failed: $e';
-      await _updateState(ConfigAccessorState.error);
+      await _updateState(
+        _currentConfig == null
+            ? ConfigAccessorState.error
+            : ConfigAccessorState.ready,
+      );
       _logger.error('Configuration refresh failed', e);
     }
   }
@@ -351,7 +374,11 @@ class XBoardConfigAccessor {
   ) async {
     try {
       // 解析配置
-      _currentConfig = _parser.parseFromJson(configData, _currentProvider);
+      final parsed = _parser.parseFromJson(configData, _currentProvider);
+      if (parsed.panels.getAll().isEmpty) {
+        throw StateError('No panel URLs for current provider');
+      }
+      _currentConfig = parsed;
       _lastUpdateTime = DateTime.now();
 
       // 创建服务实例

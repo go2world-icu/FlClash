@@ -159,13 +159,17 @@ class XBoardConfig {
     try {
       final config = settings ?? await ConfigFileLoader.loadFromFile();
 
-      _instance = await ModuleInitializer.createConfigAccessor(
+      final accessor = await ModuleInitializer.createConfigAccessor(
         settings: config,
         autoWarmUp: true,
       );
-
-      // 创建配置提供者实例
-      _provider = _XBoardConfigProvider(_instance!);
+      if (!accessor.isReady || accessor.getPanelConfigList().isEmpty) {
+        throw StateError(
+          accessor.lastError ?? 'No usable XBoard panel configuration',
+        );
+      }
+      _instance = accessor;
+      _provider = _XBoardConfigProvider(accessor);
     } finally {
       _initializeFuture = null;
     }
@@ -184,7 +188,7 @@ class XBoardConfig {
   }
 
   /// 检查是否已初始化
-  static bool get isInitialized => _instance != null;
+  static bool get isInitialized => _instance?.isReady == true;
 
   /// 获取最后一次竞速结果
   static DomainRacingResult? get lastRacingResult => _lastRacingResult;
@@ -194,6 +198,8 @@ class XBoardConfig {
     _instance?.dispose();
     _instance = null;
     _provider = null;
+    _lastRacingResult = null;
+    _racingFuture = null;
     ModuleInitializer.reset();
   }
 
@@ -246,7 +252,10 @@ class XBoardConfig {
     // 冷启动快路径：本进程还没跑过竞速，先用持久化的上次竞速结果，
     // 避免每次启动都等一轮网络竞速（每域名 5s 连接 / 8s 响应）。
     if (_lastRacingResult == null) {
-      final cached = await RacingResultCache.load();
+      final cached = await RacingResultCache.load(
+        panelUrls: panelUrls,
+        proxyUrls: allProxyUrls,
+      );
       if (cached != null && cached.domain.isNotEmpty) {
         // 探活：缓存域名还活着才信任它；死了就清掉缓存走正常竞速（回退）。
         if (await DomainRacingService.probeDomain(
@@ -255,8 +264,6 @@ class XBoardConfig {
         )) {
           XBoardLogger.info('[XBoardConfig] 使用缓存域名: ${cached.domain}');
           _lastRacingResult = cached;
-          // 后台异步竞速刷新缓存，跑赢的结果留给下次启动（SDK 基地址不可热切）。
-          unawaited(_raceSelectFastest());
           return cached.domain;
         } else {
           XBoardLogger.info('[XBoardConfig] 缓存域名失效，回退到竞速: ${cached.domain}');
@@ -266,7 +273,7 @@ class XBoardConfig {
     }
 
     final fastestUrl = await _raceSelectFastest();
-    return fastestUrl ?? panelUrls.first;
+    return fastestUrl;
   }
 
   /// 执行完整竞速并持久化结果。
@@ -289,7 +296,7 @@ class XBoardConfig {
                 // 保存竞速结果
                 _lastRacingResult = result;
                 // 持久化，供下次冷启动快路径使用
-                unawaited(RacingResultCache.save(result));
+                unawaited(RacingResultCache.save(result, proxyUrls: proxyUrls));
                 return result.domain;
               }
               return null;
@@ -300,6 +307,17 @@ class XBoardConfig {
             });
 
     return _racingFuture;
+  }
+
+  static Future<DomainRacingResult?> recoverPanelRoute() async {
+    _lastRacingResult = null;
+    await RacingResultCache.clear();
+    var url = await _raceSelectFastest();
+    if (url == null) {
+      await _accessor.refreshConfiguration();
+      url = await _raceSelectFastest();
+    }
+    return url == null ? null : _lastRacingResult;
   }
 
   /// 获取第一个代理URL
@@ -342,9 +360,7 @@ class XBoardConfig {
     );
   }
 
-  /// 并发竞速获取最快的订阅URL
-  ///
-  /// 对所有订阅URL进行并发测试，返回第一个成功（200响应）的URL
+  /// 构建可用的订阅URL；实际订阅竞速由下载服务完成。
   /// [token] 用户订阅token
   /// [preferEncrypt] 是否优先使用加密端点
   ///
@@ -371,17 +387,7 @@ class XBoardConfig {
 
     if (subscriptionUrls.isEmpty) return null;
 
-    // 获取所有代理
-    final proxyUrls = allProxyUrls;
-
-    // 使用竞速服务选择最快的订阅URL
-    final racingResult = await DomainRacingService.raceSelectFastestDomain(
-      subscriptionUrls,
-      forceHttpsResult: false, // 订阅URL保持原始格式
-      proxyUrls: proxyUrls,
-    );
-
-    return racingResult?.domain;
+    return subscriptionUrls.first;
   }
 
   /// 获取所有面板URL列表
@@ -402,7 +408,13 @@ class XBoardConfig {
 
   /// 刷新配置
   static Future<void> refresh() async {
-    await _accessor.refreshConfiguration();
+    if (!isInitialized) {
+      await initialize();
+    } else {
+      await _accessor.refreshConfiguration();
+      _lastRacingResult = null;
+      await RacingResultCache.clear();
+    }
   }
 
   /// 从指定源刷新配置

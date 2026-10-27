@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_user_provider.dart');
@@ -50,6 +52,7 @@ class _UIStateHolder extends Notifier<UIState> {
 
 class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   late final XBoardStorageService _storageService;
+  int _sessionEpoch = 0;
 
   @override
   UserAuthState build() {
@@ -140,17 +143,23 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   }
 
   void _backgroundTokenValidation() {
+    final epoch = _sessionEpoch;
     Future.delayed(const Duration(milliseconds: 1000), () async {
       try {
+        if (epoch != _sessionEpoch || !state.isAuthenticated) return;
         _logger.info('后台验证token有效性...');
         // 使用 getUserInfo 验证 token
         try {
           await ref.read(getUserInfoProvider.future);
+          if (epoch != _sessionEpoch) return;
           _logger.info('Token验证成功，静默更新用户数据');
-          _silentUpdateUserData();
-        } catch (e) {
+          unawaited(_silentUpdateUserData(epoch));
+        } on AuthException catch (e) {
+          if (epoch != _sessionEpoch) return;
           _logger.info('Token验证失败，显示登录过期提示: $e');
-          _onTokenExpired();
+          await _onTokenExpired();
+        } catch (e) {
+          _logger.info('暂时无法验证Token，保留本地会话: $e');
         }
       } catch (e) {
         _logger.info('后台token验证异常: $e');
@@ -158,15 +167,17 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     });
   }
 
-  Future<void> _silentUpdateUserData() async {
+  Future<void> _silentUpdateUserData(int epoch) async {
     try {
       // 获取订阅信息
       final subscriptionModel = await ref.read(getSubscriptionProvider.future);
+      if (epoch != _sessionEpoch) return;
       final subscriptionData = _mapSubscription(subscriptionModel);
 
       // 获取用户信息
       try {
         final userModel = await ref.read(getUserInfoProvider.future);
+        if (epoch != _sessionEpoch) return;
         final userInfoData = _mapUser(userModel);
 
         await _storageService.saveDomainUser(userInfoData);
@@ -176,13 +187,18 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       }
 
       await _storageService.saveDomainSubscription(subscriptionData);
+      if (epoch != _sessionEpoch) return;
       ref.read(subscriptionInfoProvider.notifier).state = subscriptionData;
 
       if (subscriptionData.subscribeUrl.isNotEmpty) {
-        _logger.info('[后台验证] 开始自动导入订阅配置: ${subscriptionData.subscribeUrl}');
-        ref
-            .read(profileImportProvider.notifier)
-            .importSubscription(subscriptionData.subscribeUrl);
+        unawaited(
+          ref
+              .read(profileImportProvider.notifier)
+              .importSubscription(
+                subscriptionData.subscribeUrl,
+                ownerEmail: state.email,
+              ),
+        );
       } else {
         _logger.info('[后台验证] 订阅URL为空，跳过配置导入');
       }
@@ -198,13 +214,12 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   /// 不能只打 errorMessage 标记 —— 那样过期后代理仍在运行，
   /// 且界面会停在一个所有接口都失败的「已登录」页面。
   /// errorMessage 保留给 UI 弹提示用。
-  void _onTokenExpired() {
+  Future<void> _onTokenExpired() async {
     _logger.info('token 已过期，清除认证态并关闭代理');
+    await logout();
     state = state.copyWith(
-      isAuthenticated: false,
       errorMessage: 'TOKEN_EXPIRED', // 特殊标记，UI层检测到后提示用户
     );
-    _stopProxy();
     // 用全局 navigatorKey 提示，页面此刻正在被换掉，不能依赖某个 State 还活着
     XBoardNotification.showError(xboardL10n.xboardTokenExpiredContent);
   }
@@ -229,9 +244,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
 
   Future<void> handleTokenExpired() async {
     _logger.info('处理token过期，清除认证状态');
-    await _stopProxy();
-    await XBoardSDK.instance.logout();
-    state = const UserAuthState(isInitialized: true);
+    await _onTokenExpired();
   }
 
   Future<bool> autoAuth() async {
@@ -239,6 +252,8 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   }
 
   Future<bool> login(String email, String password) async {
+    final epoch = ++_sessionEpoch;
+    ref.read(profileImportProvider.notifier).cancelImport();
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       _logger.info('开始登录: $email');
@@ -247,6 +262,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
         email,
         password,
       );
+      if (epoch != _sessionEpoch) return false;
 
       if (!success) {
         state = state.copyWith(isLoading: false, errorMessage: '登录失败');
@@ -280,10 +296,14 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
 
         // 登录成功后自动导入订阅配置
         if (subscriptionInfo.subscribeUrl.isNotEmpty) {
-          _logger.info('[登录成功] 开始自动导入订阅配置: ${subscriptionInfo.subscribeUrl}');
-          ref
-              .read(profileImportProvider.notifier)
-              .importSubscription(subscriptionInfo.subscribeUrl);
+          unawaited(
+            ref
+                .read(profileImportProvider.notifier)
+                .importSubscription(
+                  subscriptionInfo.subscribeUrl,
+                  ownerEmail: email,
+                ),
+          );
         } else {
           _logger.info('[登录成功] 订阅URL为空，跳过配置导入');
         }
@@ -437,14 +457,17 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       _logger.info('订阅信息已刷新');
 
       if (subscriptionData?.subscribeUrl.isNotEmpty == true) {
-        _logger.info('[支付成功] 开始重新导入订阅配置: ${subscriptionData!.subscribeUrl}');
+        _logger.info('[支付成功] 开始重新导入订阅配置');
         _logger.info('[支付成功] 使用强制刷新模式，跳过重复检测');
-        ref
-            .read(profileImportProvider.notifier)
-            .importSubscription(
-              subscriptionData.subscribeUrl,
-              forceRefresh: true,
-            );
+        unawaited(
+          ref
+              .read(profileImportProvider.notifier)
+              .importSubscription(
+                subscriptionData!.subscribeUrl,
+                forceRefresh: true,
+                ownerEmail: state.email,
+              ),
+        );
       } else {
         _logger.info('[支付成功] 订阅链接为空，跳过重新导入');
       }
@@ -494,14 +517,17 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
 
       // 触发订阅导入流程
       if (subscriptionData?.subscribeUrl.isNotEmpty == true) {
-        _logger.info('[手动刷新] 开始导入订阅配置: ${subscriptionData!.subscribeUrl}');
+        _logger.info('[手动刷新] 开始导入订阅配置');
         _logger.info('[手动刷新] 使用强制刷新模式，跳过重复检测');
-        ref
-            .read(profileImportProvider.notifier)
-            .importSubscription(
-              subscriptionData.subscribeUrl,
-              forceRefresh: true,
-            );
+        unawaited(
+          ref
+              .read(profileImportProvider.notifier)
+              .importSubscription(
+                subscriptionData!.subscribeUrl,
+                forceRefresh: true,
+                ownerEmail: state.email,
+              ),
+        );
       } else {
         _logger.info('[手动刷新] 订阅链接为空，跳过导入');
       }
@@ -533,6 +559,8 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   }
 
   Future<void> logout() async {
+    _sessionEpoch++;
+    ref.read(profileImportProvider.notifier).cancelImport();
     _logger.info('用户登出');
 
     // 先关代理再删配置：隧道还在跑的时候删掉 profile / App Group 配置，
@@ -540,19 +568,25 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     await _stopProxy();
 
     await XBoardSDK.instance.logout();
+    final email = state.email;
     await _storageService.clearAuthData();
+    await _storageService.clearSavedCredentials();
 
     // 清理 xboard 导入的订阅配置 + App Group 残留文件
     try {
-      final profiles = ref.read(profilesProvider);
-      for (final profile in profiles.toList()) {
-        await ref
-            .read(profilesActionProvider.notifier)
-            .deleteProfile(profile.id);
+      final ownedIds = email == null
+          ? <int>[]
+          : await _storageService.getOwnedProfileIds(email);
+      for (final id in ownedIds) {
+        if (!ref.read(profilesProvider).any((profile) => profile.id == id)) {
+          continue;
+        }
+        await ref.read(profilesActionProvider.notifier).deleteProfile(id);
       }
+      if (email != null) await _storageService.setOwnedProfileIds(email, []);
       // iOS: delete config.yaml + shared.json from App Group
       // so the dashboard doesn't show a stale start button after logout.
-      if (system.isIOS) {
+      if (system.isIOS && ref.read(profilesProvider).isEmpty) {
         final configPath = await appPath.configFilePath;
         await File(configPath).safeDelete();
         // 上游移除了 AppPath.sharedFilePath；同语义路径为 homeDir 下的 shared.json。
@@ -564,6 +598,10 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     }
 
     state = const UserAuthState(isInitialized: true);
+    ref.read(userInfoProvider.notifier).state = null;
+    ref.read(subscriptionInfoProvider.notifier).state = null;
+    ref.read(userUIStateProvider.notifier).state = const UIState();
+    ref.invalidate(inviteProvider);
   }
 
   String? get currentAuthToken => null; // Token管理已委托给域名服务

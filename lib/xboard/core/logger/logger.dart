@@ -156,7 +156,26 @@ class _Printer extends pkg.LogPrinter {
     final ts =
         '${now.year}-${_p(now.month)}-${_p(now.day)} '
         '${_p(now.hour)}:${_p(now.minute)}:${_p(now.second)}';
-    return ['$ts [${event.level.name.toUpperCase()}] ${event.message}'];
+    return [
+      '$ts [${event.level.name.toUpperCase()}] ${_redact(event.message.toString())}',
+    ];
+  }
+
+  String _redact(String value) {
+    final urls = RegExp(r'(?:https?|socks5)://[^\s\u0022\u0027<>]+');
+    var result = value.replaceAllMapped(urls, (match) {
+      final uri = Uri.tryParse(match.group(0)!);
+      if (uri == null || uri.host.isEmpty) return '[URL]';
+      return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+    });
+    result = result.replaceAll(
+      RegExp(
+        r'\b(?:token|password|passwd|secret|key)=([^\s&]+)',
+        caseSensitive: false,
+      ),
+      '[redacted]',
+    );
+    return result.replaceAll(RegExp(r'\b[^\s@:]+:[^\s@]+@'), '[credentials]@');
   }
 
   String _p(int n) => n.toString().padLeft(2, '0');

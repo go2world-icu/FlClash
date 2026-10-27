@@ -88,7 +88,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           await storageService.saveCredentials(
             _emailController.text,
             _passwordController.text,
-            true, // 启用记住密码
+            false,
           );
           if (mounted) {
             XBoardNotification.showSuccess(xboardL10n.xboardRegisterSuccess);

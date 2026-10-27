@@ -1,448 +1,161 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
-import 'package:fl_clash/xboard/core/core.dart';
+import 'package:fl_clash/xboard/infrastructure/http/board_transport.dart';
 import 'package:fl_clash/xboard/utils/xboard_core_validation.dart';
 
-import 'package:socks5_proxy/socks_client.dart';
+class SubscriptionCancellation {
+  bool _cancelled = false;
+  final _clients = <HttpClient>{};
+  final _cancelledSignal = Completer<void>();
 
-// 初始化文件级日志器
-final _logger = FileLogger('subscription_downloader.dart');
+  bool get isCancelled => _cancelled;
+  Future<void> get whenCancelled => _cancelledSignal.future;
 
-/// XBoard 订阅下载服务
-///
-/// 并发下载（直连 + 所有代理），第一个成功就获胜
+  void attach(HttpClient client) {
+    _clients.add(client);
+    if (_cancelled) client.close(force: true);
+  }
+
+  void detach(HttpClient client) => _clients.remove(client);
+
+  void cancel() {
+    if (_cancelled) return;
+    _cancelled = true;
+    _cancelledSignal.complete();
+    for (final client in _clients) {
+      client.close(force: true);
+    }
+  }
+}
+
 class SubscriptionDownloader {
-  static const Duration _downloadTimeout = Duration(seconds: 30);
+  static const _timeout = Duration(seconds: 30);
+  static const _maxBytes = 8 * 1024 * 1024;
 
-  /// 下载订阅并返回 Profile（并发竞速）
-  ///
-  /// [url] 订阅URL
-  /// [enableRacing] 是否启用竞速（默认 true，false时只使用直连）
   static Future<Profile> downloadSubscription(
     String url, {
     bool enableRacing = true,
+    SubscriptionCancellation? cancellation,
   }) async {
-    try {
-      _logger.info('开始下载订阅: $url');
+    final uri = Uri.parse(url);
+    if (uri.scheme != 'https') {
+      throw const FormatException('Subscription URL must use HTTPS');
+    }
+    final active = cancellation ?? SubscriptionCancellation();
+    final proxies = enableRacing ? XBoardConfig.allProxyUrls : <String>[];
+    final routes = <String?>[null, ...proxies];
+    final winner = Completer<_Downloaded>();
+    var next = 0;
+    var finished = 0;
+    Object? firstError;
 
-      final _DownloadResult result;
-
-      if (!enableRacing) {
-        // 禁用竞速：直接使用直连下载
-        _logger.info('竞速已禁用，使用直连下载');
-        result = await _downloadWithMethod(
-          url,
-          useProxy: false,
-          cancelToken: _CancelToken(),
-          taskIndex: 0,
-        );
-      } else {
-        // 启用竞速：并发下载，第一个成功就获胜
-        final proxies = XBoardConfig.allProxyUrls;
-        _logger.info('开始并发下载 (${proxies.length + 1}种方式)');
-
-        final cancelTokens = <_CancelToken>[];
-        final tasks = <Future<_DownloadResult>>[];
-
+    Future<void> worker() async {
+      while (!winner.isCompleted &&
+          !active.isCancelled &&
+          next < routes.length) {
+        final proxy = routes[next++];
         try {
-          // 任务0: 直连下载
-          final directToken = _CancelToken();
-          cancelTokens.add(directToken);
-          tasks.add(
-            _downloadWithMethod(
-              url,
-              useProxy: false,
-              cancelToken: directToken,
-              taskIndex: 0,
-            ),
-          );
-
-          // 任务1+: 所有代理下载
-          for (int i = 0; i < proxies.length; i++) {
-            final proxyToken = _CancelToken();
-            cancelTokens.add(proxyToken);
-            tasks.add(
-              _downloadWithMethod(
-                url,
-                useProxy: true,
-                proxyUrl: proxies[i],
-                cancelToken: proxyToken,
-                taskIndex: i + 1,
-              ),
+          final candidate = await _download(uri, proxy, active);
+          if (!winner.isCompleted && !active.isCancelled) {
+            winner.complete(candidate);
+            active.cancel();
+            return;
+          }
+        } catch (error) {
+          firstError ??= error;
+        } finally {
+          finished++;
+          if (finished == routes.length && !winner.isCompleted) {
+            winner.completeError(
+              firstError ?? StateError('No usable subscription'),
             );
           }
-
-          // 等待第一个成功的任务（忽略失败的）
-          result = await _waitForFirstSuccess(tasks);
-
-          // 取消其他所有任务
-          _logger.info('🏆 ${result.connectionType} 获胜！');
-          for (final token in cancelTokens) {
-            token.cancel();
-          }
-        } catch (e) {
-          // 取消所有任务
-          for (final token in cancelTokens) {
-            token.cancel();
-          }
-          rethrow;
         }
       }
+    }
 
-      // 验证配置。iOS 上隧道没开时 core 不可达，这一跳会先存下来、等连接时
-      // 再由 core 权威校验；详见 lib/xboard/utils/xboard_core_validation.dart。
-      final validationMessage = await xboardValidateConfigData(result.content);
-      if (validationMessage.isNotEmpty) {
-        throw Exception('配置验证失败: $validationMessage');
-      }
-      _logger.info('✅ 订阅配置验证通过');
-
-      // 创建并保存 Profile
+    final workers = [for (var i = 0; i < 3 && i < routes.length; i++) worker()];
+    try {
+      final result = await winner.future.timeout(_timeout);
       final profile = Profile.normal(url: url);
-
-      // 使用 saveFile 写入并校验配置内容
-      final bytes = utf8.encode(result.content);
-      final savedProfile = await profile.saveFile(
-        bytes,
+      final saved = await profile.saveFile(
+        utf8.encode(result.content),
         validate: xboardValidateProfile,
       );
-
-      // 更新订阅信息
-      final finalProfile = savedProfile.copyWith(
-        label: result.label ?? savedProfile.id.toString(),
+      return saved.copyWith(
+        label: result.label ?? saved.id.toString(),
         subscriptionInfo: result.subscriptionInfo,
         lastUpdateDate: DateTime.now(),
       );
-
-      _logger.info('✅ 订阅下载成功: ${finalProfile.label}');
-      return finalProfile;
-    } on TimeoutException catch (e) {
-      _logger.error('订阅下载超时', e);
-      throw Exception('下载超时: ${e.message}');
-    } on SocketException catch (e) {
-      _logger.error('网络连接失败', e);
-      throw Exception('网络连接失败: ${e.message}');
-    } on HttpException catch (e) {
-      _logger.error('HTTP请求失败', e);
-      throw Exception('HTTP请求失败: ${e.message}');
-    } catch (e) {
-      _logger.error('订阅下载失败', e);
-      rethrow;
+    } finally {
+      active.cancel();
+      unawaited(Future.wait(workers));
     }
   }
 
-  /// 等待第一个成功的任务（忽略失败的）
-  static Future<_DownloadResult> _waitForFirstSuccess(
-    List<Future<_DownloadResult>> tasks,
+  static Future<_Downloaded> _download(
+    Uri uri,
+    String? proxy,
+    SubscriptionCancellation cancellation,
   ) async {
-    final completer = Completer<_DownloadResult>();
-    int failedCount = 0;
-    final errors = <Object>[];
-
-    for (final task in tasks) {
-      task
-          .then((result) {
-            if (!completer.isCompleted) {
-              completer.complete(result);
-            }
-          })
-          .catchError((e) {
-            failedCount++;
-            errors.add(e);
-
-            // 如果所有任务都失败了，抛出第一个错误
-            if (failedCount == tasks.length && !completer.isCompleted) {
-              _logger.error('所有下载任务都失败了', errors.first);
-              completer.completeError(errors.first);
-            }
-          });
-    }
-
-    return completer.future;
-  }
-
-  /// 使用指定方式下载完整订阅内容
-  static Future<_DownloadResult> _downloadWithMethod(
-    String url, {
-    required bool useProxy,
-    String? proxyUrl,
-    required _CancelToken cancelToken,
-    required int taskIndex,
-  }) async {
-    final connectionType = useProxy ? '代理($proxyUrl)' : '直连';
-    _logger.info('[任务$taskIndex] 开始下载: $connectionType');
-
+    final client = await XBoardTransport.create(uri, proxyUrl: proxy);
+    cancellation.attach(client);
+    client.connectionTimeout = _timeout;
     try {
-      final result = await _downloadWithProxy(
-        url,
-        useProxy: useProxy,
-        proxyUrl: proxyUrl,
-        cancelToken: cancelToken,
-      );
-
-      _logger.info(
-        '[任务$taskIndex] 下载成功: $connectionType，大小: ${result.bytes.length} bytes',
-      );
-
-      return _DownloadResult(
-        content: result.content,
-        connectionType: connectionType,
-        label: result.label,
-        subscriptionInfo: result.subscriptionInfo,
-        bytes: result.bytes,
-      );
-    } catch (e) {
-      if (cancelToken.isCancelled) {
-        _logger.info('[任务$taskIndex] 已取消: $connectionType');
-      } else {
-        _logger.warning('[任务$taskIndex] 下载失败: $connectionType - $e');
+      if (cancellation.isCancelled) {
+        throw const HttpException('Subscription import cancelled');
       }
-      rethrow;
-    }
-  }
-
-  /// 使用代理下载订阅内容
-  static Future<_DownloadRawResult> _downloadWithProxy(
-    String url, {
-    required bool useProxy,
-    String? proxyUrl,
-    required _CancelToken cancelToken,
-  }) async {
-    HttpClient? client;
-
-    try {
-      // 检查是否已取消
-      if (cancelToken.isCancelled) {
-        throw Exception('任务已取消');
-      }
-
-      // 创建 HttpClient
-      client = HttpClient();
-      client.connectionTimeout = _downloadTimeout;
-      client.badCertificateCallback = (cert, host, port) => true;
-
-      // 如果使用代理，配置 SOCKS5 代理
-      if (useProxy && proxyUrl != null) {
-        final proxyConfig = _parseProxyConfig(proxyUrl);
-        final String proxyHost = proxyConfig['host']!;
-        final int proxyPort = int.parse(proxyConfig['port']!);
-
-        // 先用异步 DNS 解析代理主机名
-        final resolvedAddress = await _resolveHost(proxyHost);
-        if (resolvedAddress == null) {
-          throw Exception('代理DNS解析失败: $proxyHost');
-        }
-
-        final proxySettings = ProxySettings(
-          resolvedAddress,
-          proxyPort,
-          username: proxyConfig['username'],
-          password: proxyConfig['password'],
-        );
-
-        SocksTCPClient.assignToHttpClient(client, [proxySettings]);
-      }
-
-      // 发起请求
-      final uri = Uri.parse(url);
-      final request = await client.getUrl(uri);
-
-      // 检查是否已取消
-      if (cancelToken.isCancelled) {
-        client.close(force: true);
-        throw Exception('任务已取消');
-      }
-
-      // 设置请求头（使用主应用的 UA，与 Profile.update() 一致）
+      final request = await client.getUrl(uri).timeout(_timeout);
+      request.followRedirects = false;
       request.headers.set(HttpHeaders.userAgentHeader, globalState.ua);
-
-      // 检查是否已取消
-      if (cancelToken.isCancelled) {
-        client.close(force: true);
-        throw Exception('任务已取消');
-      }
-
-      // 获取响应
-      final response = await request.close().timeout(
-        _downloadTimeout,
-        onTimeout: () {
-          throw TimeoutException('下载超时', _downloadTimeout);
-        },
-      );
-
-      if (response.statusCode < 200 || response.statusCode >= 400) {
+      final response = await request.close().timeout(_timeout);
+      if (response.statusCode != HttpStatus.ok) {
         throw HttpException('HTTP ${response.statusCode}');
       }
-
-      // 检查是否已取消
-      if (cancelToken.isCancelled) {
-        client.close(force: true);
-        throw Exception('任务已取消');
-      }
-
-      // 读取响应内容
-      final bytes = await response.fold<List<int>>(<int>[], (
-        previous,
-        element,
-      ) {
-        if (cancelToken.isCancelled) {
-          throw Exception('任务已取消');
-        }
-        return previous..addAll(element);
-      });
-      final content = utf8.decode(bytes);
-
-      // 解析响应头
+      final builder = BytesBuilder(copy: false);
+      await response
+          .forEach((chunk) {
+            if (cancellation.isCancelled ||
+                builder.length + chunk.length > _maxBytes) {
+              throw const HttpException(
+                'Subscription download cancelled or too large',
+              );
+            }
+            builder.add(chunk);
+          })
+          .timeout(_timeout);
+      final content = utf8.decode(builder.takeBytes());
+      final localError = xboardValidateConfigContent(content);
+      if (localError.isNotEmpty) throw FormatException(localError);
+      final coreError = await xboardValidateConfigData(content);
+      if (coreError.isNotEmpty) throw FormatException(coreError);
       final disposition = response.headers.value('content-disposition');
-      final userinfo = response.headers.value('subscription-userinfo');
-
-      String? label;
-      if (disposition != null) {
-        // 从 content-disposition 提取文件名
-        final match = RegExp(
-          r'filename="?([^";\n]+)"?',
-        ).firstMatch(disposition);
-        if (match != null) {
-          label = match.group(1)?.trim();
-        }
-      }
-
-      final subscriptionInfo = userinfo != null
-          ? SubscriptionInfo.formHString(userinfo)
-          : null;
-
-      return _DownloadRawResult(
-        content: content,
-        label: label,
-        subscriptionInfo: subscriptionInfo,
-        bytes: bytes,
+      final match = disposition == null
+          ? null
+          : RegExp(r'filename="?([^";\n]+)"?').firstMatch(disposition);
+      final userInfo = response.headers.value('subscription-userinfo');
+      return _Downloaded(
+        content,
+        match?.group(1)?.trim(),
+        userInfo == null ? null : SubscriptionInfo.formHString(userInfo),
       );
     } finally {
-      if (cancelToken.isCancelled) {
-        client?.close(force: true);
-      } else {
-        client?.close();
-      }
+      cancellation.detach(client);
+      client.close(force: true);
     }
-  }
-
-  /// 异步解析主机名，返回 InternetAddress
-  static Future<InternetAddress?> _resolveHost(String host) async {
-    try {
-      return InternetAddress(host);
-    } on ArgumentError {
-      try {
-        final addresses = await InternetAddress.lookup(host);
-        if (addresses.isNotEmpty) {
-          return addresses.first;
-        }
-      } catch (_) {}
-      return null;
-    }
-  }
-
-  /// 解析代理配置
-  ///
-  /// 输入格式:
-  /// - `socks5://user:pass@host:port`
-  /// - `socks5://host:port`
-  /// - `http://user:pass@host:port`
-  ///
-  /// 返回: { host, port, username?, password? }
-  static Map<String, String?> _parseProxyConfig(String proxyUrl) {
-    String url = proxyUrl.trim();
-
-    // 去除协议前缀
-    if (url.toLowerCase().startsWith('socks5://')) {
-      url = url.substring(9);
-    } else if (url.toLowerCase().startsWith('http://')) {
-      url = url.substring(7);
-    } else if (url.toLowerCase().startsWith('https://')) {
-      url = url.substring(8);
-    }
-
-    String? username;
-    String? password;
-    String hostPort = url;
-
-    // 解析认证信息 user:pass@host:port
-    if (url.contains('@')) {
-      final atIndex = url.lastIndexOf('@');
-      final authPart = url.substring(0, atIndex);
-      hostPort = url.substring(atIndex + 1);
-
-      if (authPart.contains(':')) {
-        final colonIndex = authPart.indexOf(':');
-        username = authPart.substring(0, colonIndex);
-        password = authPart.substring(colonIndex + 1);
-      }
-    }
-
-    // 解析 host:port
-    final colonIndex = hostPort.lastIndexOf(':');
-    if (colonIndex == -1) {
-      throw FormatException('代理配置格式错误，缺少端口号: $proxyUrl');
-    }
-
-    final host = hostPort.substring(0, colonIndex);
-    final port = hostPort.substring(colonIndex + 1);
-
-    if (host.isEmpty || port.isEmpty) {
-      throw FormatException('代理配置格式错误: $proxyUrl');
-    }
-
-    return {
-      'host': host,
-      'port': port,
-      'username': username,
-      'password': password,
-    };
   }
 }
 
-/// 取消令牌
-class _CancelToken {
-  bool _isCancelled = false;
-
-  bool get isCancelled => _isCancelled;
-
-  void cancel() {
-    _isCancelled = true;
-  }
-}
-
-/// 下载结果（含连接类型）
-class _DownloadResult {
-  final String content;
-  final String connectionType;
-  final String? label;
-  final SubscriptionInfo? subscriptionInfo;
-  final List<int> bytes;
-
-  _DownloadResult({
-    required this.content,
-    required this.connectionType,
-    this.label,
-    this.subscriptionInfo,
-    required this.bytes,
-  });
-}
-
-/// 下载原始结果
-class _DownloadRawResult {
+class _Downloaded {
   final String content;
   final String? label;
   final SubscriptionInfo? subscriptionInfo;
-  final List<int> bytes;
 
-  _DownloadRawResult({
-    required this.content,
-    this.label,
-    this.subscriptionInfo,
-    required this.bytes,
-  });
+  _Downloaded(this.content, this.label, this.subscriptionInfo);
 }

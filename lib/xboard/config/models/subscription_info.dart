@@ -180,14 +180,12 @@ class SubscriptionInfo {
   }
 
   /// 构建订阅URL（优先使用加密）
-  String? buildSubscriptionUrl(String token, {bool forceEncrypt = false}) {
+  String? buildSubscriptionUrl(String token, {bool? forceEncrypt}) {
     if (urls.isEmpty) return null;
 
-    final targetUrl = forceEncrypt || enableEncrypt
-        ? firstEncryptUrl ?? urls.first
-        : urls.first;
-
-    return targetUrl.buildSubscriptionUrl(token, preferEncrypt: enableEncrypt);
+    final encrypt = forceEncrypt ?? enableEncrypt;
+    final targetUrl = encrypt ? firstEncryptUrl ?? urls.first : urls.first;
+    return targetUrl.buildSubscriptionUrl(token, preferEncrypt: encrypt);
   }
 
   /// 转换为JSON
