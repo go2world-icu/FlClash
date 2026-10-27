@@ -17,10 +17,14 @@ void main() {
       expect(find.text('日志上报'), findsOneWidget);
     });
 
-    testWidgets('shows a snackbar when logging is disabled', (tester) async {
-      await pumpXboard(tester, const Scaffold(body: LogUploadRow()));
+    testWidgets('shows a notifier when logging is disabled', (tester) async {
+      await pumpXboard(
+        tester,
+        const Scaffold(body: LogUploadRow()),
+        withStatusManager: true,
+      );
       await tester.tap(find.text('日志上报'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('日志未启用'), findsOneWidget);
     });
   });

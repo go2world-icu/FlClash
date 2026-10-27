@@ -2,16 +2,20 @@ import 'dart:convert';
 
 import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:fl_clash/xboard/services/storage/xboard_storage_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/xboard_support.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('XBoardStorageService', () {
     late FakeStorage fake;
     late XBoardStorageService service;
 
     setUp(() {
+      FlutterSecureStorage.setMockInitialValues({});
       fake = FakeStorage();
       service = XBoardStorageService(fake);
     });
