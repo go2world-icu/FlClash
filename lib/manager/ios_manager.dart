@@ -90,23 +90,10 @@ class _IosContainerState extends ConsumerState<IosManager>
       coreLib!.markConnected();
     }
     final setupAction = ref.read(setupActionProvider.notifier);
-    switch (status) {
-      case 'connected':
-        // debug 临时打印。调试通过后注释
-        _dumpNeStderrLog();
-        if (!setupAction.isStart) {
-          setupAction.updateStatus(true, isInit: true);
-        } else {
-          // App-driven start: the core only became reachable now that the
-          // tunnel is up — earlier RPCs were no-ops. Re-sync config so the
-          // core fires `loaded` and groups/providers populate.
-          setupAction.applyProfileDebounce(force: true, silence: true);
-        }
-      case 'disconnected':
-        if (setupAction.isStart) {
-          setupAction.updateStatus(false);
-        }
+    if (status == 'connected' || status == 'disconnected') {
+      _dumpNeStderrLog();
     }
+    setupAction.reconcileIosStatus(status, runTime);
     super.onServiceStatus(status, runTime);
   }
 

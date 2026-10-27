@@ -1,8 +1,21 @@
+import Darwin
 import Foundation
 
 /// Constants shared between the Runner app and the PacketTunnel extension.
 /// This file is compiled into both targets.
 enum AppGroup {
+    static let xboardDirectAddressesKey = "xboardDirectAddresses"
+    static let vpnRunRequestedKey = "vpnRunRequested"
+
+    static func validIPAddress(_ address: String) -> Bool {
+        var v4 = in_addr()
+        var v6 = in6_addr()
+        return address.withCString {
+            inet_pton(AF_INET, $0, &v4) == 1 ||
+                inet_pton(AF_INET6, $0, &v6) == 1
+        }
+    }
+
     /// App Group identifier, derived from the main app's bundle id following
     /// the `group.<bundle id>` convention. This file is compiled into both the
     /// Runner app and the PacketTunnel extension, so the extension's

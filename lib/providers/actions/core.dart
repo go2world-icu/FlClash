@@ -11,6 +11,10 @@ class CoreAction extends _$CoreAction {
   void build() {}
 
   Future<void> initCore() async {
+    if (system.isIOS) {
+      final state = await service?.coreState();
+      if (state?.booted != true) return;
+    }
     final isInit = await _core.isInit;
 
     final version = ref.read(versionProvider);

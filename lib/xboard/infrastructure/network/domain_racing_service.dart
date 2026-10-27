@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_clash/xboard/core/logger/logger.dart';
 import 'package:fl_clash/xboard/infrastructure/http/board_transport.dart';
+import 'package:fl_clash/xboard/infrastructure/http/user_agent_config.dart';
 
 class DomainRacingService {
   static const _timeout = Duration(seconds: 8);
@@ -125,6 +127,15 @@ class DomainRacingService {
       if (token.isCancelled) throw const HttpException('Cancelled');
       final request = await client.getUrl(uri).timeout(timeout);
       request.followRedirects = false;
+      request.headers.set(
+        HttpHeaders.userAgentHeader,
+        await UserAgentConfig.get(
+          InternetAddress.tryParse(uri.host) == null
+              ? UserAgentScenario.domainRacingTest
+              : UserAgentScenario.apiEncrypted,
+        ),
+      );
+      request.headers.set(HttpHeaders.acceptHeader, '*/*');
       final response = await request.close().timeout(timeout);
       if (token.isCancelled) throw const HttpException('Cancelled');
       if (response.statusCode != HttpStatus.ok) {
@@ -146,6 +157,10 @@ class DomainRacingService {
         proxyUrl: proxyUrl,
       );
     } catch (error) {
+      XBoardLogger.warning(
+        '[DomainRacing] ${proxyUrl == null ? 'direct' : 'proxy'} '
+        '${Uri.tryParse(domain)?.host ?? 'invalid endpoint'} failed: $error',
+      );
       return DomainTestResult.failure(
         domain,
         error.toString(),

@@ -39,6 +39,7 @@ class SetupAction extends _$SetupAction {
   DateTime? _startTime;
   _SetupInputs? _appliedInputs;
   var _pendingForceApply = false;
+  var _iosConnectionPending = false;
 
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
 
@@ -144,7 +145,10 @@ class SetupAction extends _$SetupAction {
   }
 
   Future<void> _updateStartTime() async {
-    _startTime = await service?.getRunTime();
+    final startTime = await service?.getRunTime();
+    if (startTime != null) {
+      _startTime = startTime;
+    }
   }
 
   Future<void> initStatus() async {
@@ -154,6 +158,14 @@ class SetupAction extends _$SetupAction {
     commonPrint.log('init status');
     if (system.isMobile) {
       await _updateStartTime();
+    }
+    if (system.isIOS && _isRunning) {
+      _setLocalRunning(true);
+      ref.read(runningVpnOptionsProvider.notifier).value = await ref.read(
+        vpnOptionsProvider.future,
+      );
+      globalState.needInitStatus = false;
+      return;
     }
     final shouldRun = _isRunning || ref.read(appSettingProvider).autoRun;
     if (shouldRun) {
@@ -176,6 +188,9 @@ class SetupAction extends _$SetupAction {
       previousStartTime: _startTime,
     );
     _latestRunRequest = request;
+    if (system.isIOS) {
+      _iosConnectionPending = running;
+    }
     _setLocalRunning(running);
     if (request.initialize) {
       globalState.needInitStatus = false;
@@ -188,7 +203,46 @@ class SetupAction extends _$SetupAction {
     return setRunning(isStart, initialize: isInit);
   }
 
+  void reconcileIosStatus(String status, int runTime) {
+    if (status == 'connected') {
+      final shouldApply = _iosConnectionPending;
+      _iosConnectionPending = false;
+      if (!_isRunning) {
+        _startTime = runTime > 0
+            ? DateTime.fromMillisecondsSinceEpoch(runTime)
+            : DateTime.now();
+        _setLocalRunning(true);
+      }
+      ref.read(runningVpnOptionsProvider.notifier).value = ref
+          .read(vpnOptionsProvider)
+          .value;
+      if (shouldApply) {
+        applyProfileDebounce(force: true, silence: true);
+      }
+    } else if (status == 'disconnected' || status == 'invalid') {
+      _iosConnectionPending = false;
+      if (_isRunning) {
+        _setLocalRunning(false);
+      }
+      ref.read(runningVpnOptionsProvider.notifier).value = null;
+    }
+  }
+
   Future<bool> _start(_RunRequest request) async {
+    if (system.isIOS && request.initialize) {
+      try {
+        await _startCoreRunning(request);
+        return true;
+      } catch (error) {
+        _iosConnectionPending = false;
+        _rollbackRunning(request);
+        commonPrint.log(
+          'iOS VPN start failed: $error',
+          logLevel: LogLevel.error,
+        );
+        return false;
+      }
+    }
     if (request.initialize) {
       var applied = false;
       try {

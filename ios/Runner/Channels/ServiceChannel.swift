@@ -40,6 +40,10 @@ class ServiceChannel: NSObject {
     private var eventTimer: Timer?
     private var eventSeq = 0
     private var pumpInFlight = false
+    private var runIntentRevision = 0
+    private var onDemandSaveInFlight = false
+    private var onDemandCompletions: [(Bool) -> Void] = []
+    private var enableManagerRequested = false
 
     private var session: NETunnelProviderSession? {
         manager?.connection as? NETunnelProviderSession
@@ -85,8 +89,14 @@ class ServiceChannel: NSObject {
             initManager(result: result)
         case "syncState", "saveState":
             let json = call.arguments as? String ?? "{}"
-            result(persistSharedState(json))
-            applyOnDemandRules()
+            let error = persistSharedState(json)
+            guard error.isEmpty else {
+                result(error)
+                return
+            }
+            applyOnDemandRules { saved in
+                result(saved ? "" : "Failed to save VPN on-demand preferences")
+            }
         case "invokeMethod":
             invokeMethod(call.arguments as? String, result: result)
         case "start":
@@ -97,20 +107,11 @@ class ServiceChannel: NSObject {
             result(runTimeMilliseconds())
         case "shutdown":
             result(true)
+        case "setXboardDirectAddresses":
+            setXboardDirectAddresses(call.arguments as? [String], result: result)
         default:
             result(FlutterMethodNotImplemented)
         }
-    }
-
-    /// If the tunnel is already connected when the app relaunches (e.g. it
-    /// was auto-restarted by NEVPN and outlived the app process), the Go core
-    /// inside it is reachable *immediately* — there is no connecting→connected
-    /// transition to wait for after `init` re-attaches to the existing
-    /// NETunnelProviderManager. Push a synthetic `status` event now so
-    /// CoreLib.markConnected() fires even without a fresh NEVPNStatusDidChange.
-    private func reportStatusIfAlreadyConnected() {
-        guard let session, session.status == .connected else { return }
-        handleStatusChange()
     }
 
     // MARK: - Manager lifecycle
@@ -174,6 +175,14 @@ class ServiceChannel: NSObject {
 
     private func attach(_ manager: NETunnelProviderManager) {
         self.manager = manager
+        let defaults = UserDefaults(suiteName: AppGroup.identifier)
+        if defaults?.object(forKey: AppGroup.vpnRunRequestedKey) == nil,
+           manager.connection.status == .connected ||
+               manager.connection.status == .connecting ||
+               manager.connection.status == .reasserting
+        {
+            defaults?.set(true, forKey: AppGroup.vpnRunRequestedKey)
+        }
         if let observer = statusObserver {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -185,10 +194,6 @@ class ServiceChannel: NSObject {
             self?.handleStatusChange()
         }
         handleStatusChange()
-        // In case the tunnel was already up when the app relaunched, there
-        // will be no *new* .NEVPNStatusDidChange — synthesize the connected
-        // report so the Dart-side connected flag can't stay unset.
-        reportStatusIfAlreadyConnected()
     }
 
     private func handleStatusChange() {
@@ -226,6 +231,60 @@ class ServiceChannel: NSObject {
 
     // MARK: - RPC bridge
 
+    private func setXboardDirectAddresses(
+        _ addresses: [String]?, result: @escaping FlutterResult
+    ) {
+        guard let addresses,
+              !addresses.isEmpty,
+              addresses.allSatisfy(AppGroup.validIPAddress),
+              let defaults = UserDefaults(suiteName: AppGroup.identifier)
+        else {
+            result(false)
+            return
+        }
+        let existing = defaults.stringArray(forKey: AppGroup.xboardDirectAddressesKey) ?? []
+        let combined = Array(Set(existing + addresses)).sorted()
+        guard combined.count <= 64 else {
+            result(false)
+            return
+        }
+        if combined == existing {
+            result(true)
+            return
+        }
+
+        if let session, session.status == .connected || session.status == .reasserting {
+            let payload: [String: Any] = [
+                "method": "setXboardDirectAddresses", "data": combined,
+            ]
+            guard let data = try? JSONSerialization.data(withJSONObject: payload) else {
+                result(false)
+                return
+            }
+            do {
+                try session.sendProviderMessage(data) { response in
+                    DispatchQueue.main.async {
+                        let json = response.flatMap {
+                            try? JSONSerialization.jsonObject(with: $0) as? [String: Any]
+                        }
+                        let applied = json?["ok"] as? Bool == true
+                        if applied {
+                            defaults.set(combined, forKey: AppGroup.xboardDirectAddressesKey)
+                        }
+                        result(applied)
+                    }
+                }
+            } catch {
+                result(false)
+            }
+        } else if session?.status == .connecting {
+            result(false)
+        } else {
+            defaults.set(combined, forKey: AppGroup.xboardDirectAddressesKey)
+            result(true)
+        }
+    }
+
     private func invokeMethod(_ json: String?, result: @escaping FlutterResult) {
         guard let json,
               let session,
@@ -260,8 +319,56 @@ class ServiceChannel: NSObject {
     }
 
     private func start(result: @escaping FlutterResult) {
-        guard let manager else {
+        guard manager != nil,
+              let defaults = UserDefaults(suiteName: AppGroup.identifier)
+        else {
             result(false)
+            return
+        }
+        runIntentRevision += 1
+        let revision = runIntentRevision
+        let previousIntent = defaults.bool(forKey: AppGroup.vpnRunRequestedKey)
+        defaults.set(true, forKey: AppGroup.vpnRunRequestedKey)
+        enableManagerRequested = true
+        applyOnDemandRules { [weak self] saved in
+            guard let self, self.runIntentRevision == revision else {
+                result(false)
+                return
+            }
+            guard saved else {
+                self.finishFailedStart(
+                    previousIntent: previousIntent, defaults: defaults, result: result)
+                return
+            }
+            self.startConfiguredTunnel(revision: revision) { started in
+                guard self.runIntentRevision == revision else {
+                    result(false)
+                    return
+                }
+                if started {
+                    result(true)
+                } else {
+                    self.finishFailedStart(
+                        previousIntent: previousIntent, defaults: defaults,
+                        result: result)
+                }
+            }
+        }
+    }
+
+    private func finishFailedStart(
+        previousIntent: Bool, defaults: UserDefaults,
+        result: @escaping FlutterResult
+    ) {
+        defaults.set(previousIntent, forKey: AppGroup.vpnRunRequestedKey)
+        applyOnDemandRules { _ in result(false) }
+    }
+
+    private func startConfiguredTunnel(
+        revision: Int, completion: @escaping (Bool) -> Void
+    ) {
+        guard let manager else {
+            completion(false)
             return
         }
         // A session that is already connected OR still connecting (relaunch,
@@ -270,37 +377,56 @@ class ServiceChannel: NSObject {
         // or pending session tears it down (connecting → disconnecting →
         // disconnected). Only start when the tunnel is fully idle.
         if let status = session?.status, status != .disconnected, status != .invalid {
-            result(true)
+            completion(true)
             return
         }
-        manager.isEnabled = true
-        manager.saveToPreferences { [weak self] error in
-            guard let self else { return }
-            if let error {
-                self.reportCrash("saveToPreferences: \(error.localizedDescription)")
-                result(false)
-                return
-            }
-            manager.loadFromPreferences { error in
+        manager.loadFromPreferences { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self else {
+                    completion(false)
+                    return
+                }
+                guard self.runIntentRevision == revision else {
+                    completion(false)
+                    return
+                }
                 if let error {
                     self.reportCrash("loadFromPreferences: \(error.localizedDescription)")
-                    result(false)
+                    completion(false)
+                    return
+                }
+                guard let session = self.session else {
+                    completion(false)
+                    return
+                }
+                if session.status != .disconnected && session.status != .invalid {
+                    completion(true)
                     return
                 }
                 do {
-                    try self.session?.startVPNTunnel(options: nil)
-                    result(true)
+                    try session.startVPNTunnel(options: nil)
+                    completion(true)
                 } catch {
                     self.reportCrash("startVPNTunnel: \(error.localizedDescription)")
-                    result(false)
+                    completion(false)
                 }
             }
         }
     }
 
     private func stop(result: @escaping FlutterResult) {
-        session?.stopVPNTunnel()
-        result(true)
+        runIntentRevision += 1
+        let revision = runIntentRevision
+        UserDefaults(suiteName: AppGroup.identifier)?
+            .set(false, forKey: AppGroup.vpnRunRequestedKey)
+        applyOnDemandRules { [weak self] saved in
+            guard let self, self.runIntentRevision == revision else {
+                result(false)
+                return
+            }
+            self.session?.stopVPNTunnel()
+            result(saved)
+        }
     }
 
     /// Epoch milliseconds of the tunnel start (android `getRunTime` semantic:
@@ -316,18 +442,70 @@ class ServiceChannel: NSObject {
 
     // MARK: - On-Demand Rules
 
-    /// Reads the AccessControlProps from the persisted SharedState and applies
-    /// NEOnDemandRules to the VPN manager so the tunnel auto-connects /
-    /// disconnects based on WiFi SSID.
-    private func applyOnDemandRules() {
-        guard let manager else { return }
+    /// Persist the requested run state as system-owned on-demand rules, with
+    /// configured Wi-Fi exclusions taking precedence over the catch-all rule.
+    private func applyOnDemandRules(completion: @escaping (Bool) -> Void) {
+        onDemandCompletions.append(completion)
+        saveOnDemandRulesIfNeeded()
+    }
+
+    private func saveOnDemandRulesIfNeeded() {
+        guard !onDemandSaveInFlight else { return }
+        guard let manager else {
+            finishOnDemandUpdates(saved: false)
+            return
+        }
         let rules = buildOnDemandRules()
+        let currentRules = manager.onDemandRules ?? []
+        let unchanged = (!enableManagerRequested || manager.isEnabled) &&
+            manager.isOnDemandEnabled == !rules.isEmpty &&
+            currentRules.count == rules.count &&
+            zip(currentRules, rules).allSatisfy { pair in
+                ObjectIdentifier(type(of: pair.0)) == ObjectIdentifier(type(of: pair.1)) &&
+                    pair.0.ssidMatch == pair.1.ssidMatch
+            }
+        if unchanged {
+            enableManagerRequested = false
+            finishOnDemandUpdates(saved: true)
+            return
+        }
+        let enablingManager = enableManagerRequested
+        enableManagerRequested = false
+        if enablingManager {
+            manager.isEnabled = true
+        }
         manager.isOnDemandEnabled = !rules.isEmpty
         manager.onDemandRules = rules
-        manager.saveToPreferences { _ in }
+        onDemandSaveInFlight = true
+        manager.saveToPreferences { [weak self] error in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.onDemandSaveInFlight = false
+                if let error {
+                    self.enableManagerRequested = enablingManager
+                    os_log("VPN on-demand update failed: %{public}@", error.localizedDescription)
+                    self.finishOnDemandUpdates(saved: false)
+                    return
+                }
+                self.saveOnDemandRulesIfNeeded()
+            }
+        }
+    }
+
+    private func finishOnDemandUpdates(saved: Bool) {
+        let completions = onDemandCompletions
+        onDemandCompletions.removeAll()
+        for completion in completions {
+            completion(saved)
+        }
     }
 
     private func buildOnDemandRules() -> [NEOnDemandRule] {
+        guard UserDefaults(suiteName: AppGroup.identifier)?
+            .bool(forKey: AppGroup.vpnRunRequestedKey) == true
+        else {
+            return []
+        }
         guard
             let data = try? Data(contentsOf: AppGroup.sharedStateURL),
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -336,7 +514,7 @@ class ServiceChannel: NSObject {
             let enabled = accessControl["enable"] as? Bool,
             enabled
         else {
-            return []
+            return fallbackOnDemandRules()
         }
         let mode = accessControl["mode"] as? String ?? ""
         let acceptList = accessControl["acceptList"] as? [String] ?? []
@@ -366,7 +544,13 @@ class ServiceChannel: NSObject {
         default:
             break
         }
-        return rules
+        return rules.isEmpty ? fallbackOnDemandRules() : rules
+    }
+
+    private func fallbackOnDemandRules() -> [NEOnDemandRule] {
+        UserDefaults(suiteName: AppGroup.identifier)?
+            .bool(forKey: AppGroup.vpnRunRequestedKey) == true
+            ? [NEOnDemandRuleConnect()] : []
     }
 
     // MARK: - SharedState persistence

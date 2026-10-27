@@ -146,6 +146,18 @@ class Service {
     }
   }
 
+  Future<bool> setXboardDirectAddresses(List<String> addresses) async {
+    try {
+      return await methodChannel.invokeMethod<bool>(
+            'setXboardDirectAddresses',
+            addresses,
+          ) ??
+          false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// What the packet tunnel provider knows about the core by itself, answered
   /// locally rather than by calling into the core.
   ///

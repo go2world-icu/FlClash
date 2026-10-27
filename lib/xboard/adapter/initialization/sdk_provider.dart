@@ -65,6 +65,9 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
 
     // 4. 加载HTTP配置
     _logger.info('[XBoardSdkProvider] 加载HTTP配置...');
+    if (proxyUrl == null || proxyUrl.isEmpty) {
+      await XBoardTransport.ensureDirectRoute(Uri.parse(fastestUrl));
+    }
     final httpConfig = await XBoardTransport.config(proxyUrl: proxyUrl);
     _logger.info('[XBoardSdkProvider] HTTP配置加载完成');
 
@@ -77,6 +80,9 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
       httpConfig: httpConfig,
       routeResolver: () async {
         final route = await XBoardConfig.recoverPanelRoute();
+        if (route != null && !route.useProxy) {
+          await XBoardTransport.ensureDirectRoute(Uri.parse(route.domain));
+        }
         return route == null
             ? null
             : ApiRoute(route.domain, route.useProxy ? route.proxyUrl : null);

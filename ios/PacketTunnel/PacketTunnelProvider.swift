@@ -25,6 +25,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     private static var tunStarted = false
 
     private var memoryPressureSource: DispatchSourceMemoryPressure?
+    private var activeNetworkSettings: NEPacketTunnelNetworkSettings?
+    private var xboardDirectAddresses: [String] = []
 
     override func startTunnel(options: [String: NSObject]?) async throws {
         do {
@@ -102,12 +104,17 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let v4 = NEIPv4Settings(
             addresses: [Self.address], subnetMasks: ["255.255.255.252"])
         v4.includedRoutes = Self.ipv4Routes(vpn.routeAddress)
+        xboardDirectAddresses = UserDefaults(suiteName: AppGroup.identifier)?
+            .stringArray(forKey: AppGroup.xboardDirectAddressesKey)?
+            .filter(AppGroup.validIPAddress) ?? []
+        v4.excludedRoutes = Self.xboardIPv4Routes(xboardDirectAddresses)
         settings.ipv4Settings = v4
 
         if vpn.ipv6 {
             let v6 = NEIPv6Settings(
                 addresses: [Self.address6], networkPrefixLengths: [126])
             v6.includedRoutes = [NEIPv6Route.default()]
+            v6.excludedRoutes = Self.xboardIPv6Routes(xboardDirectAddresses)
             settings.ipv6Settings = v6
         }
 
@@ -130,6 +137,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         }
 
         try await setTunnelNetworkSettings(settings)
+        activeNetworkSettings = settings
         tunnelLog.notice("network settings applied")
 
         // 3. Hand the utun fd to the core.
@@ -191,6 +199,8 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func stopTunnel(with reason: NEProviderStopReason) async {
         tunnelLog.notice("stopTunnel: \(String(describing: reason))")
+        fputs("[Swift stopTunnel] \(String(describing: reason))\n", stderr)
+        activeNetworkSettings = nil
         memoryPressureSource?.cancel()
         memoryPressureSource = nil
         ClashCore.stopTun()
@@ -224,6 +234,30 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 "error": Self.coreBootError,
             ]
             return try? JSONSerialization.data(withJSONObject: state)
+        case "setXboardDirectAddresses":
+            guard let addresses = request["data"] as? [String],
+                  !addresses.isEmpty,
+                  addresses.count <= 64,
+                  addresses.allSatisfy(AppGroup.validIPAddress),
+                  let settings = activeNetworkSettings
+            else {
+                return Data("{\"ok\":false}".utf8)
+            }
+            let updated = Array(Set(addresses)).sorted()
+            if updated == xboardDirectAddresses.sorted() {
+                return Data("{\"ok\":true}".utf8)
+            }
+            settings.ipv4Settings?.excludedRoutes = Self.xboardIPv4Routes(updated)
+            settings.ipv6Settings?.excludedRoutes = Self.xboardIPv6Routes(updated)
+            do {
+                try await setTunnelNetworkSettings(settings)
+                xboardDirectAddresses = updated
+                return Data("{\"ok\":true}".utf8)
+            } catch {
+                tunnelLog.error(
+                    "XBoard direct route update failed: \(String(describing: error))")
+                return Data("{\"ok\":false}".utf8)
+            }
         default:
             break
         }
@@ -237,14 +271,6 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             }
         }
         return Data(result.utf8)
-    }
-
-    override func sleep() async {
-        ClashCore.suspend(true)
-    }
-
-    override func wake() {
-        ClashCore.suspend(false)
     }
 
     private func observeMemoryPressure() {
@@ -275,6 +301,19 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             return NEIPv4Route(
                 destinationAddress: String(parts[0]),
                 subnetMask: Self.subnetMask(prefix: prefix))
+        }
+    }
+
+    private static func xboardIPv4Routes(_ addresses: [String]) -> [NEIPv4Route] {
+        addresses.filter { $0.contains(".") }.map {
+            NEIPv4Route(destinationAddress: $0, subnetMask: "255.255.255.255")
+        }
+    }
+
+    private static func xboardIPv6Routes(_ addresses: [String]) -> [NEIPv6Route] {
+        addresses.filter { $0.contains(":") }.map {
+            NEIPv6Route(
+                destinationAddress: $0, networkPrefixLength: NSNumber(value: 128))
         }
     }
 
