@@ -1,6 +1,8 @@
 import Flutter
 import Foundation
 import NetworkExtension
+import Network
+import dnssd
 import os.log
 
 /// NE-backed implementation of the `com.follow.clash/service` channel.
@@ -109,6 +111,16 @@ class ServiceChannel: NSObject {
             result(true)
         case "setXboardDirectAddresses":
             setXboardDirectAddresses(call.arguments as? [String], result: result)
+        case "resolveXboardHost":
+            guard let host = call.arguments as? String,
+                  !host.isEmpty, host.utf8.count <= 253
+            else {
+                result([])
+                return
+            }
+            XBoardPhysicalDNS.resolve(host) { addresses in
+                DispatchQueue.main.async { result(addresses) }
+            }
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -622,5 +634,69 @@ class ServiceChannel: NSObject {
 
     private func reportCrash(_ message: String) {
         channel.invokeMethod("crash", arguments: message)
+    }
+}
+
+private final class XBoardPhysicalDNS {
+    private static let queue = DispatchQueue(label: "xboard.physical-dns")
+    private let monitor = NWPathMonitor()
+    private var queries: [DNSServiceRef] = []
+    private var completion: (([String]) -> Void)?
+    private var started = false
+
+    static func resolve(_ host: String, completion: @escaping ([String]) -> Void) {
+        let lookup = XBoardPhysicalDNS()
+        lookup.completion = completion
+        lookup.monitor.pathUpdateHandler = { path in
+            guard !lookup.started, lookup.completion != nil else { return }
+            lookup.started = true
+            // A scoped query uses the physical interface's DNS, outside the VPN resolver.
+            for interface in path.availableInterfaces where
+                interface.type == .wifi || interface.type == .cellular
+                || interface.type == .wiredEthernet
+            {
+                lookup.start(host, interface: UInt32(interface.index))
+            }
+            if lookup.queries.isEmpty { lookup.finish([]) }
+        }
+        lookup.monitor.start(queue: queue)
+        queue.asyncAfter(deadline: .now() + 3) { lookup.finish([]) }
+    }
+
+    private func start(_ host: String, interface: UInt32) {
+        var query: DNSServiceRef?
+        let error = DNSServiceGetAddrInfo(
+            &query, 0, interface, 0, host,
+            { _, flags, _, error, _, address, _, context in
+                guard error == kDNSServiceErr_NoError,
+                      flags & UInt32(kDNSServiceFlagsAdd) != 0,
+                      let address, let context
+                else { return }
+                var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                guard getnameinfo(
+                    address, socklen_t(address.pointee.sa_len),
+                    &buffer, socklen_t(buffer.count), nil, 0, NI_NUMERICHOST) == 0
+                else { return }
+                let lookup = Unmanaged<XBoardPhysicalDNS>.fromOpaque(context)
+                    .takeUnretainedValue()
+                lookup.finish([String(cString: buffer)])
+            },
+            Unmanaged.passUnretained(self).toOpaque())
+        guard error == kDNSServiceErr_NoError, let query else { return }
+        guard DNSServiceSetDispatchQueue(query, Self.queue) == kDNSServiceErr_NoError else {
+            DNSServiceRefDeallocate(query)
+            return
+        }
+        queries.append(query)
+    }
+
+    private func finish(_ addresses: [String]) {
+        guard let completion else { return }
+        self.completion = nil
+        monitor.pathUpdateHandler = nil
+        monitor.cancel()
+        for query in queries { DNSServiceRefDeallocate(query) }
+        queries.removeAll()
+        completion(addresses)
     }
 }
