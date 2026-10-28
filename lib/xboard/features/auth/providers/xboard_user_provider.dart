@@ -16,6 +16,8 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/xboard/config/xboard_config.dart';
+import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_user_provider.dart');
@@ -267,6 +269,12 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       if (!success) {
         state = state.copyWith(isLoading: false, errorMessage: '登录失败');
         return false;
+      }
+
+      try {
+        await XBoardConfig.persistRemoteConfiguration();
+      } catch (e) {
+        _logger.warning('保存远程面板配置失败', e);
       }
 
       _logger.info('登录成功，立即获取用户信息');
@@ -568,9 +576,19 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     await _stopProxy();
 
     await XBoardSDK.instance.logout();
+    try {
+      await XBoardConfig.clearPersistedRemoteConfiguration();
+    } catch (e) {
+      _logger.warning('清除远程面板配置失败', e);
+    }
+    XBoardSDK.instance.dispose();
+    XBoardConfig.reset();
+    ref.invalidate(xboardSdkProvider);
     final email = state.email;
     await _storageService.clearAuthData();
-    await _storageService.clearSavedCredentials();
+    if (!await _storageService.getRememberPassword()) {
+      await _storageService.clearSavedCredentials();
+    }
 
     // 清理 xboard 导入的订阅配置 + App Group 残留文件
     try {

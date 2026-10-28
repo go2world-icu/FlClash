@@ -13,6 +13,8 @@ import 'storage_interface.dart';
 /// 便于统一备份和恢复。
 ///
 class FileStorage implements StorageInterface {
+  static Future<FileStorage>? _shared;
+
   late final Directory _baseDir;
   final Map<String, String> _cache = {};
 
@@ -22,6 +24,10 @@ class FileStorage implements StorageInterface {
     final storage = FileStorage._();
     await storage._init();
     return storage;
+  }
+
+  static Future<FileStorage> shared() {
+    return _shared ??= create();
   }
 
   Future<void> _init() async {

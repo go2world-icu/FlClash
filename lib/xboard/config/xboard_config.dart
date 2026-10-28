@@ -31,6 +31,7 @@ export 'utils/config_file_loader.dart';
 // ========== 便捷API ==========
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_clash/xboard/core/core.dart';
 
@@ -42,6 +43,7 @@ import 'models/proxy_info.dart';
 import 'models/subscription_info.dart';
 import '../infrastructure/infrastructure.dart';
 import '../infrastructure/http/board_transport.dart';
+import '../infrastructure/storage/file_storage.dart';
 import 'utils/config_file_loader.dart';
 
 import 'interface/config_provider_interface.dart';
@@ -114,12 +116,12 @@ class _XBoardConfigProvider implements ConfigProviderInterface {
 
   @override
   Future<void> refresh() async {
-    await accessor.refreshConfiguration();
+    await XBoardConfig.refresh();
   }
 
   @override
   Future<void> refreshFromSource(String source) async {
-    await accessor.refreshFromSource(source);
+    await XBoardConfig.refreshFromSource(source);
   }
 
   @override
@@ -130,11 +132,13 @@ class _XBoardConfigProvider implements ConfigProviderInterface {
 ///
 /// 这是唯一的公共API入口，外部应该只通过这个类访问配置功能
 class XBoardConfig {
+  static const String _remoteConfigCacheKey = 'xboard_remote_panel_config';
   static XBoardConfigAccessor? _instance;
   static _XBoardConfigProvider? _provider;
 
   // 缓存最后一次竞速结果
   static DomainRacingResult? _lastRacingResult;
+  static bool _usingPersistedConfig = false;
 
   // 私有构造函数，防止外部实例化
   XBoardConfig._();
@@ -158,18 +162,30 @@ class XBoardConfig {
 
   static Future<void> _doInitialize({ConfigSettings? settings}) async {
     try {
+      _usingPersistedConfig = false;
       final config = settings ?? await ConfigFileLoader.loadFromFile();
-      for (final source in config.remoteConfig.sources) {
-        final uri = Uri.tryParse(source.url);
-        if (uri != null && uri.scheme == 'https' && uri.host.isNotEmpty) {
-          await XBoardTransport.ensureDirectRoute(uri);
-        }
+      final storage = await FileStorage.shared();
+      final cachedJson = (await storage.getString(
+        _remoteConfigCacheKey,
+      )).dataOrNull;
+      final cached = _decodeCachedConfiguration(cachedJson);
+      if (cachedJson != null && cached == null) {
+        await storage.remove(_remoteConfigCacheKey);
       }
-
       final accessor = await ModuleInitializer.createConfigAccessor(
         settings: config,
-        autoWarmUp: true,
+        autoWarmUp: false,
       );
+      if (cached != null) {
+        _usingPersistedConfig = await accessor.loadCachedConfiguration(cached);
+        if (!_usingPersistedConfig) {
+          await storage.remove(_remoteConfigCacheKey);
+        }
+      }
+      if (!_usingPersistedConfig) {
+        await _prepareRemoteConfigRoutes(config);
+        await accessor.refreshConfiguration();
+      }
       if (!accessor.isReady || accessor.getPanelConfigList().isEmpty) {
         throw StateError(
           accessor.lastError ?? 'No usable XBoard panel configuration',
@@ -180,6 +196,47 @@ class XBoardConfig {
     } finally {
       _initializeFuture = null;
     }
+  }
+
+  static Map<String, dynamic>? _decodeCachedConfiguration(String? value) {
+    if (value == null) return null;
+    try {
+      return jsonDecode(value) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> _prepareRemoteConfigRoutes(ConfigSettings config) async {
+    for (final source in config.remoteConfig.sources) {
+      final uri = Uri.tryParse(source.url);
+      if (uri != null && uri.scheme == 'https' && uri.host.isNotEmpty) {
+        await XBoardTransport.ensureDirectRoute(uri);
+      }
+    }
+  }
+
+  static Future<void> persistRemoteConfiguration() async {
+    final data = _instance?.remoteConfigData;
+    if (data == null) return;
+    final saved = await (await FileStorage.shared()).setString(
+      _remoteConfigCacheKey,
+      jsonEncode(data),
+    );
+    if (saved.dataOrNull != true) {
+      throw StateError('Unable to save XBoard remote configuration');
+    }
+    _usingPersistedConfig = true;
+  }
+
+  static Future<void> clearPersistedRemoteConfiguration() async {
+    final removed = await (await FileStorage.shared()).remove(
+      _remoteConfigCacheKey,
+    );
+    if (removed.dataOrNull != true) {
+      throw StateError('Unable to clear XBoard remote configuration');
+    }
+    _usingPersistedConfig = false;
   }
 
   /// 获取配置提供者接口（供SDK层使用）
@@ -206,6 +263,7 @@ class XBoardConfig {
     _instance = null;
     _provider = null;
     _lastRacingResult = null;
+    _usingPersistedConfig = false;
     _racingFuture = null;
     ModuleInitializer.reset();
   }
@@ -417,6 +475,7 @@ class XBoardConfig {
 
   /// 刷新配置
   static Future<void> refresh() async {
+    if (_usingPersistedConfig) return;
     if (!isInitialized) {
       await initialize();
     } else {
@@ -428,6 +487,7 @@ class XBoardConfig {
 
   /// 从指定源刷新配置
   static Future<void> refreshFromSource(String source) async {
+    if (_usingPersistedConfig) return;
     await _accessor.refreshFromSource(source);
   }
 

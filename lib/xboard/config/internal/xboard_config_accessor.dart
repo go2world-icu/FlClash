@@ -28,6 +28,7 @@ class XBoardConfigAccessor {
   // 状态管理
   ConfigAccessorState _state = ConfigAccessorState.uninitialized;
   ParsedConfiguration? _currentConfig;
+  Map<String, dynamic>? _remoteConfigData;
   String? _lastError;
   DateTime? _lastUpdateTime;
 
@@ -79,6 +80,8 @@ class XBoardConfigAccessor {
 
   /// 当前配置
   ParsedConfiguration? get currentConfig => _currentConfig;
+
+  Map<String, dynamic>? get remoteConfigData => _remoteConfigData;
 
   /// 当前提供商
   String get currentProvider => _currentProvider;
@@ -159,6 +162,7 @@ class XBoardConfigAccessor {
       final (data, source) = await selected.future;
       final config = _parser.extractConfigFromRemoteResult(data)!;
       await _processConfigData(config, source);
+      _remoteConfigData = data;
       _extractAppLogFromData(data);
     } catch (e) {
       _lastError = 'Configuration refresh failed: $e';
@@ -168,6 +172,20 @@ class XBoardConfigAccessor {
             : ConfigAccessorState.ready,
       );
       _logger.error('Configuration refresh failed', e);
+    }
+  }
+
+  Future<bool> loadCachedConfiguration(Map<String, dynamic> data) async {
+    try {
+      final config = _parser.extractConfigFromRemoteResult(data);
+      if (config == null) return false;
+      await _processConfigData(config, 'cache');
+      _remoteConfigData = data;
+      _extractAppLogFromData(data);
+      return true;
+    } catch (e) {
+      _logger.warning('Cached remote configuration is invalid', e);
+      return false;
     }
   }
 

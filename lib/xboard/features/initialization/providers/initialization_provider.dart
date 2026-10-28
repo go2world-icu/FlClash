@@ -4,6 +4,7 @@ import 'package:fl_clash/xboard/features/domain_status/providers/domain_status_p
 import 'package:fl_clash/xboard/features/domain_status/models/domain_status_state.dart';
 import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
+import 'package:fl_clash/xboard/config/xboard_config.dart';
 
 import '../models/initialization_state.dart';
 
@@ -21,6 +22,12 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
   @override
   InitializationState build() {
     _logger.info('[Initialization] Provider 已创建');
+    ref.listen(xboardUserAuthProvider, (previous, next) {
+      if (previous?.isAuthenticated == true && !next.isAuthenticated) {
+        ref.invalidate(xboardSdkProvider);
+        state = const InitializationState();
+      }
+    });
     return const InitializationState();
   }
 
@@ -95,7 +102,16 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
       _logger.info('[Initialization] ✅ SDK 初始化完成');
 
       // ========== 自动恢复登录态 ==========
-      await ref.read(xboardUserAuthProvider.notifier).autoAuth();
+      final authenticated = await ref
+          .read(xboardUserAuthProvider.notifier)
+          .autoAuth();
+      if (authenticated) {
+        try {
+          await XBoardConfig.persistRemoteConfiguration();
+        } catch (e) {
+          _logger.warning('[Initialization] 保存远程配置失败', e);
+        }
+      }
 
       _logger.info('[Initialization] 🎉 初始化流程完成');
       state = state.copyWith(

@@ -17,7 +17,7 @@ import 'xboard_storage_service.dart';
 Future<StorageInterface>? _storageFuture;
 
 Future<StorageInterface> _getStorage() {
-  return _storageFuture ??= FileStorage.create();
+  return _storageFuture ??= FileStorage.shared();
 }
 
 /// 预热 xboard 存储（启动时调用）。幂等。
