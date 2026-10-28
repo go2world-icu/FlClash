@@ -12,6 +12,9 @@ class CoreAction extends _$CoreAction {
 
   Future<void> initCore() async {
     if (system.isIOS) {
+      // The tunnel loads GEOIP rules before it reports booted.
+      await CoreController.ensureHomeDir();
+      await CoreController.initGeo();
       final state = await service?.coreState();
       if (state?.booted != true) return;
     }
