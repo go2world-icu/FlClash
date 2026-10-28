@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/xboard.dart';
@@ -31,6 +32,45 @@ class XBoardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userState = ref.watch(xboardUserProvider);
     if (userState.isAuthenticated) {
+      final initialization = ref.watch(initializationProvider);
+      if (!initialization.isReady) {
+        return Scaffold(
+          body: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (initialization.isFailed) ...[
+                      Text(
+                        initialization.errorMessage ??
+                            context.appLocalizations.initFailed,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () async {
+                          try {
+                            await ref
+                                .read(initializationProvider.notifier)
+                                .refresh();
+                          } catch (_) {}
+                        },
+                        child: Text(context.appLocalizations.retry),
+                      ),
+                    ] else ...[
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(context.appLocalizations.loading),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
       return const XBoardHomePage();
     }
     return const LoginPage();

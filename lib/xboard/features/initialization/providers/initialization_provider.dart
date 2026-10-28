@@ -44,6 +44,10 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
       return;
     }
 
+    if (state.isFailed) {
+      ref.invalidate(xboardSdkProvider);
+    }
+
     try {
       _logger.info('[Initialization] 🚀 开始初始化流程');
 
@@ -119,6 +123,7 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
   Future<void> refresh() async {
     _logger.info('[Initialization] 🔄 刷新初始化状态');
 
+    ref.invalidate(xboardSdkProvider);
     // 重置状态
     state = const InitializationState();
 
