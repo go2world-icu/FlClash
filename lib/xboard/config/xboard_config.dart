@@ -41,6 +41,7 @@ import 'models/config_entry.dart';
 import 'models/proxy_info.dart';
 import 'models/subscription_info.dart';
 import '../infrastructure/infrastructure.dart';
+import '../infrastructure/http/board_transport.dart';
 import 'utils/config_file_loader.dart';
 
 import 'interface/config_provider_interface.dart';
@@ -158,6 +159,12 @@ class XBoardConfig {
   static Future<void> _doInitialize({ConfigSettings? settings}) async {
     try {
       final config = settings ?? await ConfigFileLoader.loadFromFile();
+      for (final source in config.remoteConfig.sources) {
+        final uri = Uri.tryParse(source.url);
+        if (uri != null && uri.scheme == 'https' && uri.host.isNotEmpty) {
+          await XBoardTransport.ensureDirectRoute(uri);
+        }
+      }
 
       final accessor = await ModuleInitializer.createConfigAccessor(
         settings: config,
