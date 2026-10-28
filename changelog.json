@@ -2,6 +2,54 @@
   "schemaVersion": 2,
   "versions": [
     {
+      "version": "0.9.3",
+      "tag": "v0.9.3",
+      "date": "2026-10-28",
+      "prerelease": false,
+      "groups": [
+        {
+          "type": "fix",
+          "entries": [
+            {
+              "id": "c133f11",
+              "scope": "ios,xboard",
+              "text": "Route config sources outside the tunnel"
+            },
+            {
+              "id": "1992b0f",
+              "scope": "xboard",
+              "text": "Restore the XBoard panel after reopening the app with VPN running."
+            },
+            {
+              "id": "f70952a",
+              "scope": "xboard",
+              "text": "Fall back to first panel URL when racing fails"
+            },
+            {
+              "id": "560f1ca",
+              "scope": "ios,xboard",
+              "text": "Let the XBoard panel initialise with the VPN already running."
+            },
+            {
+              "id": "99f8d63",
+              "scope": "ios,xboard",
+              "text": "Keep the iOS VPN available after closing the app and restore direct XBoard access."
+            },
+            {
+              "id": "5ed00bc",
+              "scope": "android,xboard",
+              "text": "Correct branding and surface notifications"
+            },
+            {
+              "id": "43e7fb1",
+              "scope": "xboard",
+              "text": "Harden routing, subscriptions, and account state"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.2",
       "tag": "v0.9.2",
       "date": "2026-10-22",

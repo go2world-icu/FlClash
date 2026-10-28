@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.9.3 (2026-10-28)
+
+**Bug Fixes**
+
+- **ios,xboard** Route config sources outside the tunnel (c133f11)
+- **xboard** Restore the XBoard panel after reopening the app with VPN running. (1992b0f)
+- **xboard** Fall back to first panel URL when racing fails (f70952a)
+- **ios,xboard** Let the XBoard panel initialise with the VPN already running. (560f1ca)
+- **ios,xboard** Keep the iOS VPN available after closing the app and restore direct XBoard access. (99f8d63)
+- **android,xboard** Correct branding and surface notifications (5ed00bc)
+- **xboard** Harden routing, subscriptions, and account state (43e7fb1)
+
 ## v0.9.2 (2026-10-22)
 
 **Bug Fixes**
