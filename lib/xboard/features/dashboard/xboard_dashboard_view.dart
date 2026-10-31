@@ -19,9 +19,9 @@ import 'package:material_ui/material_ui.dart';
 import '../ios_shell/ios_core_status.dart';
 import 'widgets/start_button.dart';
 
-// Narrower columns leave the service grid's cells too tight for a status, so
-// the grid takes the memory card's column instead.
-const _memoryColumnMin = 290.0;
+// Narrower columns leave a pair of service cells too tight for a status, so
+// the grid stacks them in one.
+const _servicePairColumnMin = 290.0;
 
 const _maxColumnWidth = 440.0;
 
@@ -89,7 +89,6 @@ class _XBoardDashboardViewState extends ConsumerState<XBoardDashboardView> {
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      backAction: editing ? () => _setEditing(false) : null,
       actions: [
         // The iOS shell used to carry these dots in its bar; with one shell
         // everywhere they live here, where the tunnel is switched — dots only,
@@ -145,9 +144,7 @@ class _XBoardDashboardViewState extends ConsumerState<XBoardDashboardView> {
                 if (!editing)
                   PositionedDirectional(
                     end: layout.isDesktop ? 24 : 16,
-                    bottom: layout.isDesktop
-                        ? 24
-                        : 16 + BottomInsetScope.of(context),
+                    bottom: layout.isDesktop ? 24 : 16 + context.bottomInset,
                     child: const _XBoardDashboardAction(),
                   ),
               ],
@@ -220,7 +217,7 @@ class _DesktopDashboard extends StatelessWidget {
     final scale = DashboardDensityScope.scaleOf(context);
     final base = EdgeInsetsDirectional.fromSTEB(
       16,
-      MediaQuery.paddingOf(context).top,
+      context.contentTopPadding,
       24,
       24 + MediaQuery.paddingOf(context).bottom,
     );
@@ -325,11 +322,15 @@ class _DesktopDashboard extends StatelessWidget {
                 ? row([
                     (1, const IntranetIpCard()),
                     (1, const ProfilesCard()),
-                    if (column >= _memoryColumnMin * scale) ...[
-                      (1, const ServiceStatusCard()),
-                      (1, const MemoryInfo()),
-                    ] else
-                      (2, const ServiceStatusCard()),
+                    (
+                      1,
+                      ServiceStatusCard(
+                        columns: column >= _servicePairColumnMin * scale
+                            ? 2
+                            : 1,
+                      ),
+                    ),
+                    (1, const MemoryInfo()),
                   ])
                 : row([(2, const ProfilesCard()), (2, const MemoryInfo())]),
           ),
@@ -405,8 +406,8 @@ class _MobileDashboard extends ConsumerWidget {
     final saved = ref.watch(
       dashboardStateProvider.select((state) => state.dashboardWidgets),
     );
-    final top = MediaQuery.paddingOf(context).top + 4;
-    final bottom = 16 + BottomInsetScope.of(context);
+    final top = context.contentTopPadding;
+    final bottom = 16 + context.bottomInset;
     return CustomScrollView(
       // A viewport per card lays them all out and holds the scroll end still.
       scrollCacheExtent: editing

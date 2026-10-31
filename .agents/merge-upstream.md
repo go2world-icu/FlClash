@@ -22,6 +22,10 @@ ARB resolution takes upstream keys and deletions plus the fork branding; never u
 Afterwards: `flutter analyze`, `flutter test`, and once the tree is green, the two manual passes in
 "Branding" and "CI delta".
 
+## Sync records
+
+- [2026-10-31: v0.9.1 → v0.9.2](upstream-sync-20261031.md): actual conflicts, fork compatibility changes and validation.
+
 ## Conflicts by kind
 
 Resolve them by kind, not file by file — most of the 77 fall into the first three buckets and need no judgement.
@@ -235,7 +239,7 @@ choice is the product), and prefer referencing a constant over the literal so th
 | `test/views/theme_test.dart` | default `ThemeMode.dark` | `ThemeMode.system` |
 | `test/state_run_globals_test.dart` | UA contains `'FlClash/v…'` | `'$appName/v…'` |
 | `test/providers/backup_action_test.dart`, `test/views/resources_view_test.dart` | homeDir is the support dir | `<supportDir>/<appName>` (commit `838f15a`) |
-| `test/common/tray_menu_test.dart` | `isTemplate: true` on macOS | `false` — the tray art is a full-colour app icon |
+| `test/common/tray_menu_test.dart` | monochrome macOS default | colour default (`isTemplate: false`); explicit monochrome keeps `isTemplate: true` |
 | `test/lint/*` | `p.relative()` compared against `'/'` paths | normalize with `p.posix.joinAll(p.split(...))`; otherwise they vacuously pass on Windows (and their `_allowed` allowlists silently stop matching, so they *fail* on files they mean to skip) |
 | `test/lint/length_unit_test.dart` | nothing may contain `Npx` | allowlist `lib/xboard/features/shared/styles/html_styles.dart` — it builds CSS declarations for the HTML renderer, where `px` is the unit |
 | `test/lint/{reorder_proxy_decorator,sheet_scroll_controller,scaffold_bottom_inset}_test.dart` | *(new in v0.9.0)* | the path fix above; `commission_history_dialog.dart` also had to move to `sheetScrollController(context)` |

@@ -77,6 +77,11 @@ void main() {
 
     expect(find.byType(CurrentOutboundCard), findsOneWidget);
     expect(find.byType(ConnectionsTableCard), findsOneWidget);
+    expect(find.byType(MemoryInfo), findsOneWidget);
+    expect(
+      tester.widget<ServiceStatusCard>(find.byType(ServiceStatusCard)).columns,
+      1,
+    );
     expect(tester.getSize(find.byType(CurrentOutboundCard)).height, 208);
     expect(tester.takeException(), isNull);
 

@@ -22,7 +22,7 @@ import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:fl_clash/ui/shape.dart';
-import 'package:fl_clash/ui/inherited.dart';
+import 'package:fl_clash/ui/context.dart';
 
 class XBoardHomePage extends ConsumerStatefulWidget {
   const XBoardHomePage({super.key});
@@ -162,7 +162,7 @@ class _XBoardHomePageState extends ConsumerState<XBoardHomePage>
                       horizontalPadding,
                       // The floating dock sits over this page; upstream pages
                       // clear it with the inset the home shell publishes.
-                      verticalPadding + BottomInsetScope.of(context),
+                      verticalPadding + context.bottomInset,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -114,8 +114,7 @@ class AutoLatencyService {
       }
 
       _logger.info('开始测试节点延迟: ${currentProxy.name}');
-      final testUrl = _ref!.read(appSettingProvider).testUrl;
-      await _ref!.read(flClashGatewayProvider).testProxy(currentProxy, testUrl);
+      await _ref!.read(flClashGatewayProvider).testProxy(currentProxy);
       _lastTestedProxy = currentProxy.name;
       _lastTestTime = DateTime.now();
       _proxyTestCache[currentProxy.name] = DateTime.now();
@@ -143,8 +142,7 @@ class AutoLatencyService {
       }
 
       _logger.info('开始测试指定节点延迟: ${proxy.name}');
-      final testUrl = _ref!.read(appSettingProvider).testUrl;
-      await _ref!.read(flClashGatewayProvider).testProxy(proxy, testUrl);
+      await _ref!.read(flClashGatewayProvider).testProxy(proxy);
       _proxyTestCache[proxy.name] = DateTime.now();
       _logger.info('指定节点延迟测试完成: ${proxy.name}');
     } catch (e) {
@@ -175,10 +173,7 @@ class AutoLatencyService {
         'AutoLatencyService',
         '测试节点列表: ${nodesToTest.map((p) => p.name).join(', ')}',
       );
-      final testUrl = _ref!.read(appSettingProvider).testUrl;
-      await _ref!
-          .read(flClashGatewayProvider)
-          .testProxies(nodesToTest, testUrl);
+      await _ref!.read(flClashGatewayProvider).testProxies(nodesToTest);
       _logger.info('批量延迟测试完成');
     } catch (e) {
       _logger.error('批量延迟测试失败', e);

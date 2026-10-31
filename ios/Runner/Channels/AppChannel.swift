@@ -55,6 +55,8 @@ class AppChannel: NSObject {
             result(true)
         case "isBatteryOptimizationDisabled":
             result(true)
+        case "requestLocalNetworkPermission":
+            result(true)
         case "openBatteryOptimizationSettings":
             result(false)
         case "getContainerPath":

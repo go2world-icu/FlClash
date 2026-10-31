@@ -1,21 +1,19 @@
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/qr_code.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:fl_clash/ui/shape.dart';
 
 class QrCodeWidget extends StatelessWidget {
   final String data;
   final double size;
   final Color? backgroundColor;
-  final Color? foregroundColor;
 
   const QrCodeWidget({
     super.key,
     required this.data,
     this.size = 200.0,
     this.backgroundColor,
-    this.foregroundColor,
   });
 
   @override
@@ -54,21 +52,7 @@ class QrCodeWidget extends StatelessWidget {
           12,
         ).copyWith(side: BorderSide(color: Colors.grey.shade300)),
       ),
-      child: QrImageView(
-        data: data,
-        version: QrVersions.auto,
-        size: size,
-        backgroundColor: backgroundColor ?? Colors.white,
-        eyeStyle: QrEyeStyle(
-          eyeShape: QrEyeShape.square,
-          color: foregroundColor ?? Colors.black,
-        ),
-        dataModuleStyle: QrDataModuleStyle(
-          dataModuleShape: QrDataModuleShape.square,
-          color: foregroundColor ?? Colors.black,
-        ),
-        errorCorrectionLevel: QrErrorCorrectLevel.M,
-      ),
+      child: QrCodeView(data: data, size: size),
     );
   }
 }

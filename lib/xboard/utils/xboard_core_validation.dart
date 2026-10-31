@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
@@ -87,7 +88,7 @@ Future<String> xboardValidateConfigDataWith(
         return core.validateConfig(file.path);
       });
     }
-    return core.validateConfigWithData(data);
+    return core.validateConfigWithData(utf8.encode(data));
   }
   _logger.info('iOS core 不可达，跳过 core 校验，先保存配置');
   return xboardValidateConfigContent(data);

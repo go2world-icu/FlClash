@@ -18,10 +18,7 @@ class XBoardNotification {
   }
 
   static Future<bool> showConfirm(String message, {String? title}) async {
-    final result = await dialogs.showMessage(
-      message: TextSpan(text: message),
-      cancelable: true,
-    );
+    final result = await dialogs.showMessage(message: TextSpan(text: message));
     return result == true;
   }
 }

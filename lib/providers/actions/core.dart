@@ -26,6 +26,7 @@ class CoreAction extends _$CoreAction {
       commonPrint.log('init result: $res');
     } else {
       await ref.read(proxiesActionProvider.notifier).updateGroups();
+      await ref.read(providersProvider.notifier).syncProviders();
     }
   }
 
@@ -76,6 +77,20 @@ class CoreAction extends _$CoreAction {
 
   Future<void> closeConnections() async {
     await _core.closeConnections();
+  }
+
+  Future<void> clearDnsCacheOnNetworkChange() async {
+    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+      return;
+    }
+    try {
+      await _core.clearDnsCache();
+    } catch (error) {
+      commonPrint.log(
+        'clearDnsCache error: $error',
+        logLevel: coreFailureLogLevel(error),
+      );
+    }
   }
 
   Future<void> requestGc() async {

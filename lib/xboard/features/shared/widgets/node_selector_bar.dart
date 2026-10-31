@@ -214,12 +214,7 @@ class _NodeSelectorBarState extends ConsumerState<NodeSelectorBar> {
   }
 
   Widget _buildProxyLatency(Proxy proxy) {
-    final delayState = ref.watch(
-      delayProvider(
-        proxyName: proxy.name,
-        testUrl: ref.read(appSettingProvider).testUrl,
-      ),
-    );
+    final delayState = ref.watch(delayProvider(proxyName: proxy.name));
     return LatencyIndicator(
       delayValue: delayState,
       onTap: () => _handleManualTest(proxy),

@@ -8,17 +8,14 @@ const pngOutputDir = 'assets/images/tray/unix';
 const icoOutputDir = 'assets/images/tray/windows';
 const macosOutputDir = 'assets/images/tray/macos';
 const statusIconNames = ['status_1', 'status_2', 'status_3', 'status_4'];
-// macOS menu-bar icons. The fork's status art is full-colour app branding, so
-// the running states ship in colour (AppTray passes isTemplate: false); only
-// the safe-mode glyph stays monochrome, matching the template style.
-const macosColoredIcons = ['status_1', 'status_2', 'status_3'];
-const macosMonochromeIcons = ['status_4'];
+const macosMonochromeIcons = {'status_1': 'tray_glyph', 'status_4': 'status_4'};
 const trayBaseSize = 18;
 const trayScales = [1, 2, 3, 4];
 const appIconSource = 'assets/images/icon.png';
 const appIconOutput = 'windows/runner/resources/app_icon.ico';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  final macosOnly = args.contains('--macos-only');
   final rsvgConvert = await _findExecutable('rsvg-convert');
   if (rsvgConvert == null) {
     stderr.writeln(
@@ -32,7 +29,7 @@ Future<void> main() async {
   final tempDir = await Directory.systemTemp.createTemp('status_icons_');
   final renderer = _Renderer(rsvgConvert, tempDir);
   try {
-    for (final name in statusIconNames) {
+    for (final name in macosOnly ? const <String>[] : statusIconNames) {
       final source = File('$sourceDir/$name.svg');
       if (!source.existsSync()) {
         stderr.writeln('Missing source SVG: ${source.path}');
@@ -47,17 +44,8 @@ Future<void> main() async {
         sizes: trayIcoSizes,
       );
     }
-    for (final name in macosColoredIcons) {
-      final source = File('$sourceDir/$name.svg');
-      if (!source.existsSync()) {
-        stderr.writeln('Missing source SVG: ${source.path}');
-        exitCode = 1;
-        return;
-      }
-      await _writeTrayVariants(renderer, source, name, macosOutputDir);
-    }
-    for (final name in macosMonochromeIcons) {
-      final source = File('$sourceDir/$name.svg');
+    for (final entry in macosMonochromeIcons.entries) {
+      final source = File('$sourceDir/${entry.value}.svg');
       if (!source.existsSync()) {
         stderr.writeln('Missing source SVG: ${source.path}');
         exitCode = 1;
@@ -66,12 +54,14 @@ Future<void> main() async {
       await _writeTrayVariants(
         renderer,
         await renderer.monochrome(source),
-        name,
+        entry.key,
         macosOutputDir,
       );
     }
-    final appIcon = await renderer.wrapRaster(File(appIconSource));
-    await _writeIco(renderer, appIcon, File(appIconOutput));
+    if (!macosOnly) {
+      final appIcon = await renderer.wrapRaster(File(appIconSource));
+      await _writeIco(renderer, appIcon, File(appIconOutput));
+    }
   } finally {
     if (tempDir.existsSync()) {
       await tempDir.delete(recursive: true);

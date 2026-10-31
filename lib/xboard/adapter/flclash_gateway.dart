@@ -28,10 +28,10 @@ class FlClashGateway {
     proxiesActionProvider.notifier,
   ).changeProxy(groupName: groupName, proxyName: proxyName);
 
-  Future<void> testProxy(Proxy proxy, String testUrl) =>
+  Future<void> testProxy(Proxy proxy, [String? testUrl]) =>
       _read(proxiesActionProvider.notifier).proxyDelayTest(proxy, testUrl);
 
-  Future<void> testProxies(List<Proxy> proxies, String testUrl) =>
+  Future<void> testProxies(List<Proxy> proxies, [String? testUrl]) =>
       _read(proxiesActionProvider.notifier).delayTest(proxies, testUrl);
 
   void installProfile(Profile profile) {

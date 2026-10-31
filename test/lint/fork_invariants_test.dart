@@ -184,6 +184,17 @@ void main() {
   });
 
   group('iOS: the channels the shared Dart code opens', () {
+    test('the local-network permission request has an iOS answer', () {
+      expect(
+        _read('lib/plugins/app.dart'),
+        contains("'requestLocalNetworkPermission'"),
+      );
+      expect(
+        _read('ios/Runner/Channels/AppChannel.swift'),
+        contains('case "requestLocalNetworkPermission":'),
+      );
+    });
+
     // Upstream split core calls onto their own channel in 2201c199 and named
     // the Android half there. The iOS half lives only in this fork, so a merge
     // that re-copies it — or a new channel upstream adds — is invisible until

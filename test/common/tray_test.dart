@@ -37,7 +37,7 @@ void main() {
       );
     });
 
-    test('macOS keeps the template icon in every state', () {
+    test('macOS keeps the selected template icon in every state', () {
       for (final (isStart, tunEnable) in [
         (false, false),
         (true, false),
@@ -48,8 +48,27 @@ void main() {
             isStart: isStart,
             tunEnable: tunEnable,
             safeMode: false,
+            monochrome: true,
           ),
           'assets/images/tray/macos/status_1.png',
+        );
+      }
+    });
+
+    test('macOS defaults to color status icons', () {
+      for (final (isStart, tunEnable, safeMode, status) in [
+        (false, false, false, 1),
+        (true, false, false, 2),
+        (true, true, false, 3),
+        (true, true, true, 4),
+      ]) {
+        expect(
+          macOS.getTrayIcon(
+            isStart: isStart,
+            tunEnable: tunEnable,
+            safeMode: safeMode,
+          ),
+          'assets/images/tray/unix/status_$status.png',
         );
       }
     });
@@ -81,6 +100,7 @@ void main() {
             isStart: isStart,
             tunEnable: tunEnable,
             safeMode: true,
+            monochrome: true,
           ),
           'assets/images/tray/macos/status_4.png',
         );

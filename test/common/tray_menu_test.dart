@@ -48,6 +48,7 @@ TrayState _trayState({
   bool systemProxy = false,
   bool autoLaunch = false,
   bool showTrayTitle = false,
+  bool monochromeTrayIcon = false,
   bool safeMode = false,
   Mode mode = Mode.rule,
   List<Group> groups = const [],
@@ -63,6 +64,7 @@ TrayState _trayState({
     groups: groups,
     selectedMap: const {},
     showTrayTitle: showTrayTitle,
+    monochromeTrayIcon: monochromeTrayIcon,
     safeMode: safeMode,
     hotKeys: hotKeys,
   );
@@ -207,7 +209,7 @@ void main() {
       expect(
         base['bytes'],
         base64Encode(
-          File('assets/images/tray/macos/status_4.png').readAsBytesSync(),
+          File('assets/images/tray/unix/status_4.png').readAsBytesSync(),
         ),
       );
     });
@@ -235,9 +237,47 @@ void main() {
     final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
     expect(reps.map((rep) => rep['scale']), containsAll([1.0, 2.0, 3.0, 4.0]));
     expect(reps.map((rep) => rep['bytes']), everyElement(isNotEmpty));
-    // The tray art is the full-colour app icon; a macOS template icon would be
-    // masked down to a solid silhouette, so the flag stays off.
     expect((arguments['icon'] as Map)['isTemplate'], isFalse);
+  });
+
+  test('ships the color status icon once monochrome is off', () async {
+    await update(
+      _trayState(isStart: true, tunEnable: true, monochromeTrayIcon: false),
+    );
+
+    final arguments = showCall()!.arguments as Map;
+    expect((arguments['icon'] as Map)['isTemplate'], isFalse);
+    final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
+    final base = reps.firstWhere((rep) => rep['scale'] == 1.0);
+    expect(
+      base['bytes'],
+      base64Encode(
+        File('assets/images/tray/unix/status_3.png').readAsBytesSync(),
+      ),
+    );
+    expect(
+      _item(showCall(), currentAppLocalizations.monochromeIcon)['checked'],
+      isFalse,
+    );
+  });
+
+  test('monochrome uses the transparent template asset', () async {
+    await update(_trayState(isStart: true, monochromeTrayIcon: true));
+
+    final arguments = showCall()!.arguments as Map;
+    expect((arguments['icon'] as Map)['isTemplate'], isTrue);
+    final reps = ((arguments['icon'] as Map)['reps'] as List).cast<Map>();
+    final base = reps.firstWhere((rep) => rep['scale'] == 1.0);
+    expect(
+      base['bytes'],
+      base64Encode(
+        File('assets/images/tray/macos/status_1.png').readAsBytesSync(),
+      ),
+    );
+    expect(
+      _item(showCall(), currentAppLocalizations.monochromeIcon)['checked'],
+      isTrue,
+    );
   });
 
   test('skips the platform call when the tray state is unchanged', () async {
@@ -392,6 +432,10 @@ void main() {
       expect(
         _labels(showCall()),
         isNot(contains(currentAppLocalizations.speedStatistics)),
+      );
+      expect(
+        _labels(showCall()),
+        isNot(contains(currentAppLocalizations.monochromeIcon)),
       );
       expect(_labels(showCall()), isNot(contains(HotAction.delayTest.label)));
     });

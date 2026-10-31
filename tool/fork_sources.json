@@ -8,7 +8,7 @@
     {
       "source": "lib/views/dashboard/dashboard.dart",
       "fork": "lib/xboard/features/dashboard/xboard_dashboard_view.dart",
-      "reviewedBlob": "ee05cbef921505ddec8d7dd11a962dab7dfcc7e9"
+      "reviewedBlob": "8842d6bd4df4d87d2cc50f5a5d7b56ce2d7afe3c"
     }
   ]
 }

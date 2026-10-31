@@ -75,12 +75,7 @@ class NodeSelectorChip extends ConsumerWidget {
   }
 
   Widget _buildChip(BuildContext context, WidgetRef ref, Proxy proxy) {
-    final delay = ref.watch(
-      delayProvider(
-        proxyName: proxy.name,
-        testUrl: ref.read(appSettingProvider).testUrl,
-      ),
-    );
+    final delay = ref.watch(delayProvider(proxyName: proxy.name));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
