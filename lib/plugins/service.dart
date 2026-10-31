@@ -10,6 +10,8 @@ import 'package:fl_clash/models/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'ios_service.dart';
+
 final _utf8JsonDecoder = utf8.decoder.fuse(json.decoder);
 
 Object? _decodeUtf8Json(Uint8List data) => _utf8JsonDecoder.convert(data);
@@ -34,12 +36,6 @@ abstract mixin class ServiceListener {
   void onServiceEvent(CoreEvent event) {}
 
   void onServiceStopped() {}
-
-  void onServiceCrash(String message) {}
-
-  /// iOS only: NEVPNStatus transitions (connected/disconnected/...),
-  /// with the current tunnel run time in milliseconds.
-  void onServiceStatus(String status, int runTime) {}
 }
 
 class Service {
@@ -83,35 +79,10 @@ class Service {
           _startRequested = false;
           _dispatch('stop report', (listener) => listener.onServiceStopped());
           break;
-        case 'status':
-          // iOS only: NEVPNStatus transition (connected/disconnected/...)
-          // + tunnel run time, pushed by ServiceChannel. Without this the
-          // connected flag that gates CoreHandlerInterface calls is never set
-          // and every invoke blocks until the 10s timeout.
-          final data = call.arguments as String? ?? '{}';
-          try {
-            final json = Map<String, dynamic>.from(jsonDecode(data) as Map);
-            final status = json['status'] as String? ?? '';
-            final runTime = json['runTime'] as int? ?? 0;
-            for (final listener in _listeners) {
-              listener.onServiceStatus(status, runTime);
-            }
-          } catch (error) {
-            commonPrint.log(
-              'Unable to dispatch iOS service status: $error',
-              logLevel: LogLevel.error,
-            );
-          }
-          break;
-        case 'crash':
-          // iOS only: fatal NE/tunnel failure reason pushed by ServiceChannel.
-          final message = call.arguments as String? ?? '';
-          for (final listener in _listeners) {
-            listener.onServiceCrash(message);
-          }
-          break;
         default:
-          throw MissingPluginException();
+          if (!dispatchIosServiceCall(call, List.of(_listeners))) {
+            throw MissingPluginException();
+          }
       }
     });
   }
@@ -128,69 +99,6 @@ class Service {
       CoreMethodResponse.fromJson(await _decodeResponse(data, call.method)),
       method: call.method,
     );
-  }
-
-  /// Not a core method: the packet tunnel provider answers `ping` itself,
-  /// without reaching the Go core. That is the point — it separates "the app
-  /// can reach the NE" from "the core inside it answers", which otherwise both
-  /// look like a failed call.
-  Future<bool> ping() async {
-    try {
-      final response = await methodChannel.invokeMethod<Object?>(
-        'invokeMethod',
-        json.encode({'method': 'ping'}),
-      );
-      return response != null;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> setXboardDirectAddresses(List<String> addresses) async {
-    try {
-      return await methodChannel.invokeMethod<bool>(
-            'setXboardDirectAddresses',
-            addresses,
-          ) ??
-          false;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// What the packet tunnel provider knows about the core by itself, answered
-  /// locally rather than by calling into the core.
-  ///
-  /// `getIsInit` cannot tell "the core never booted" from "the call into it
-  /// never came back" — both arrive as no answer. The extension can, because it
-  /// is the one that booted the core.
-  Future<IosCoreState?> coreState() async {
-    try {
-      final response = await methodChannel.invokeMethod<Object?>(
-        'invokeMethod',
-        json.encode({'method': 'getCoreState'}),
-      );
-      // The channel answers in bytes; plain strings are still accepted so a
-      // provider that has not been rebuilt yet does not read as "not booted".
-      final String? text;
-      if (response is String) {
-        text = response;
-      } else if (response is Uint8List) {
-        text = utf8.decode(response);
-      } else {
-        text = null;
-      }
-      if (text == null) return null;
-      final data = json.decode(text);
-      if (data is! Map || !data.containsKey('coreBooted')) return null;
-      return IosCoreState(
-        booted: data['coreBooted'] == true,
-        tunStarted: data['tunStarted'] == true,
-        error: (data['error'] as String?) ?? '',
-      );
-    } catch (_) {
-      return null;
-    }
   }
 
   void _dispatch(String label, void Function(ServiceListener) deliver) {
@@ -233,16 +141,6 @@ class Service {
         '';
   }
 
-  /// iOS only: persist the full SharedState (including setupParams) into the
-  /// App Group so the PacketTunnel extension can boot the core headlessly.
-  Future<String> saveState(SharedState state) async {
-    return await methodChannel.invokeMethod<String>(
-          'saveState',
-          json.encode(state),
-        ) ??
-        '';
-  }
-
   Future<bool> shutdown() async {
     return await methodChannel.invokeMethod<bool>('shutdown') ?? true;
   }
@@ -269,16 +167,3 @@ class Service {
 }
 
 Service? get service => system.isMobile ? Service() : null;
-
-/// The packet tunnel provider's own view of the core. See [Service.coreState].
-class IosCoreState {
-  const IosCoreState({
-    required this.booted,
-    required this.tunStarted,
-    required this.error,
-  });
-
-  final bool booted;
-  final bool tunStarted;
-  final String error;
-}

@@ -1,5 +1,5 @@
+import 'package:fl_clash/xboard/adapter/board_auth_gateway.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
-import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:material_ui/material_ui.dart';
@@ -64,19 +64,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         _isRegistering = true;
       });
       try {
-        // 使用 AuthRepository 注册
-        // 使用 SDK 注册
-        final success = await XBoardSDK.instance.auth.register(
-          _emailController.text,
-          _passwordController.text,
-          inviteCode: _inviteCodeController.text.trim().isNotEmpty
-              ? _inviteCodeController.text
-              : null,
-          emailCode:
-              isEmailVerify && _emailCodeController.text.trim().isNotEmpty
-              ? _emailCodeController.text
-              : null,
-        );
+        final success = await ref
+            .read(boardAuthGatewayProvider)
+            .register(
+              _emailController.text,
+              _passwordController.text,
+              inviteCode: _inviteCodeController.text.trim().isNotEmpty
+                  ? _inviteCodeController.text
+                  : null,
+              emailCode:
+                  isEmailVerify && _emailCodeController.text.trim().isNotEmpty
+                  ? _emailCodeController.text
+                  : null,
+            );
 
         if (!success) {
           throw Exception('注册失败');
@@ -162,9 +162,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     });
 
     try {
-      // 使用 AuthRepository 发送验证码
-      // 使用 SDK 发送验证码
-      await XBoardSDK.instance.auth.sendEmailVerifyCode(_emailController.text);
+      await ref
+          .read(boardAuthGatewayProvider)
+          .sendEmailVerifyCode(_emailController.text);
 
       if (mounted) {
         XBoardNotification.showSuccess(

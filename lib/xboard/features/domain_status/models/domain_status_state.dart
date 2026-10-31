@@ -1,3 +1,5 @@
+const _unchangedErrorMessage = Object();
+
 /// 域名状态枚举
 enum DomainStatus {
   /// 正在检查域名
@@ -33,7 +35,7 @@ class DomainStatusState {
   DomainStatusState copyWith({
     DomainStatus? status,
     String? currentDomain,
-    String? errorMessage,
+    Object? errorMessage = _unchangedErrorMessage,
     DateTime? lastChecked,
     int? latency,
     List<String>? availableDomains,
@@ -42,7 +44,9 @@ class DomainStatusState {
     return DomainStatusState(
       status: status ?? this.status,
       currentDomain: currentDomain ?? this.currentDomain,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: identical(errorMessage, _unchangedErrorMessage)
+          ? this.errorMessage
+          : errorMessage as String?,
       lastChecked: lastChecked ?? this.lastChecked,
       latency: latency ?? this.latency,
       availableDomains: availableDomains ?? this.availableDomains,

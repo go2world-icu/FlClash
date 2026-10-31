@@ -3,33 +3,14 @@ import 'dart:io';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/plugins/service.dart';
+import 'package:fl_clash/plugins/ios_service.dart';
 import 'package:fl_clash/xboard/core/core.dart';
+import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 const _logger = FileLogger('xboard_core_validation.dart');
 
-/// 面板的配置校验，iOS 上核心不可达时怎么做。
-///
-/// iOS 的 Go core 只链接进 PacketTunnel 扩展（`Mobile.xcframework` 不在 Runner
-/// 的 Frameworks phase 里），应用进程问它的每一次调用都要经
-/// `ServiceChannel` → `sendProviderMessage` 转给扩展，而扩展只在隧道
-/// `.connected` 时才转发。于是「登录后自动导入订阅」「手动加订阅」这类
-/// **隧道还没开时的校验**必然拿不到答案：上游 v0.9.1 起
-/// `CoreHandlerInterface._invokeMessage` 把空回复抛成
-/// `CoreMethodException('Core did not answer validateConfig')`，
-/// 导入就此失败——而 `login()` 并不 await 这次导入，用户只看到「无可用套餐」。
-///
-/// （v0.8.96 之所以「能用」，是因为当时 null 被 `?? ''` 读成「配置没问题」，
-/// 校验其实没做。）
-///
-/// 所以 iOS 上分两步：
-/// 1. 先探 core 是否可达。`ping` / `getCoreState` 由扩展自己回答、不经过 core，
-///    这正是它们存在的理由（见 `lib/core/ios_lifecycle.dart`）；
-/// 2. 不可达就**跳过 core 校验、先把配置存下来**，改做本地结构校验兜底。
-///    权威校验推迟到用户点连接、隧道真的起来之后——那时 `applyProfile` 会把
-///    这份配置交给 core，起不来会以 core 的错误呈现，不会静默。
-///
-/// 其余平台（Android 的 core 在应用内、桌面走 socket）行为完全不变。
+// PacketTunnel 无法访问 Runner 缓存，在线校验文件必须放在 App Group。
 
 /// 探一次 core 是否可达。默认问本平台的 [service]。
 typedef XBoardCoreReachability = Future<bool> Function();
@@ -63,12 +44,21 @@ Future<String> xboardValidateProfileWith(
   String ageSecretKey, {
   required CoreController core,
   required XBoardCoreReachability reachable,
+  bool? isIOS,
 }) async {
-  if (ageSecretKey.isNotEmpty) {
-    return core.validateProfile(path, ageSecretKey);
-  }
-  if (await reachable()) {
-    return core.validateConfig(path);
+  if (ageSecretKey.isNotEmpty || await reachable()) {
+    Future<String> validate(String corePath) => ageSecretKey.isNotEmpty
+        ? core.validateProfile(corePath, ageSecretKey)
+        : core.validateConfig(corePath);
+    if (!(isIOS ?? system.isIOS)) return validate(path);
+    return _withSharedValidationFile((file) async {
+      await File(path).copy(file.path);
+      final message = await validate(file.path);
+      if (message.isEmpty && ageSecretKey.isNotEmpty) {
+        await file.copy(path);
+      }
+      return message;
+    });
   }
   _logger.info('iOS core 不可达，跳过 core 校验，先保存配置: $path');
   return xboardValidateConfigFile(path);
@@ -88,12 +78,32 @@ Future<String> xboardValidateConfigDataWith(
   String data, {
   required CoreController core,
   required XBoardCoreReachability reachable,
+  bool? isIOS,
 }) async {
   if (await reachable()) {
+    if (isIOS ?? system.isIOS) {
+      return _withSharedValidationFile((file) async {
+        await file.writeAsString(data, flush: true);
+        return core.validateConfig(file.path);
+      });
+    }
     return core.validateConfigWithData(data);
   }
   _logger.info('iOS core 不可达，跳过 core 校验，先保存配置');
   return xboardValidateConfigContent(data);
+}
+
+Future<String> _withSharedValidationFile(
+  Future<String> Function(File) validate,
+) async {
+  final root = Directory(p.join(await appPath.homeDirPath, '.validation'));
+  await root.create(recursive: true);
+  final directory = await root.createTemp('profile-');
+  try {
+    return await validate(File(p.join(directory.path, 'config.yaml')));
+  } finally {
+    await directory.delete(recursive: true);
+  }
 }
 
 /// 文件版的本地校验，用于 [xboardValidateProfile]。

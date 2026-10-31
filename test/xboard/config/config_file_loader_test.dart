@@ -1,9 +1,26 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:board_sdk/flutter_xboard_sdk.dart';
+import 'package:crypto/crypto.dart';
 import 'package:fl_clash/xboard/config/core/config_settings.dart';
+import 'package:fl_clash/xboard/config/internal/xboard_config_accessor.dart';
+import 'package:fl_clash/xboard/config/parsers/configuration_parser.dart';
 import 'package:fl_clash/xboard/config/utils/config_file_loader.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _HttpClient extends Mock implements HttpClient {}
+
+class _ConfigHttpOverrides extends HttpOverrides {
+  _ConfigHttpOverrides(this.client);
+
+  final HttpClient client;
+
+  @override
+  HttpClient createHttpClient(SecurityContext? context) => client;
+}
 
 /// The panel document, in the shape the shipped
 /// `assets/config/xboard.config.yaml` has, plus the optional blocks the loader
@@ -128,6 +145,56 @@ void main() {
       expect(mirror.timeout, const Duration(seconds: 8));
       expect(mirror.encryptionKey, 'secret');
       expect(mirror.headers, {'X-Trace': 'on'});
+    });
+
+    test('the SDK request retains asset-configured TypeA signing', () async {
+      stubAsset(
+        _document
+            .replaceFirst('provider: "go2world"', 'provider: "signature-test"')
+            .replaceFirst('max_retries: 5', 'max_retries: 0'),
+      );
+      final settings = await ConfigFileLoader.loadFromFile();
+      final client = _HttpClient();
+      final requests = <Uri>[];
+      registerFallbackValue(Uri.parse('https://fallback.invalid'));
+      when(() => client.openUrl('GET', any())).thenAnswer((invocation) async {
+        requests.add(invocation.positionalArguments[1] as Uri);
+        throw const SocketException('request captured locally');
+      });
+      final accessor = XBoardConfigAccessor(
+        remoteManager: RemoteConfigManager.fromSettings(settings.remoteConfig),
+        parser: ConfigurationParser(),
+        currentProvider: settings.currentProvider,
+      );
+      addTearDown(accessor.dispose);
+
+      await HttpOverrides.runWithHttpOverrides(
+        accessor.refreshConfiguration,
+        _ConfigHttpOverrides(client),
+      );
+
+      final uri = requests.single;
+      final source = settings.remoteConfig.sources.first;
+      final original = Uri.parse(source.url);
+      expect(uri.scheme, original.scheme);
+      expect(uri.host, original.host);
+      expect(uri.path, original.path);
+      final fields = uri.queryParameters['sign']!.split('-');
+      expect(fields, hasLength(4));
+      expect(fields[0], matches(r'^\d+$'));
+      expect(fields[1], matches(r'^[a-z0-9]{20}$'));
+      expect(fields[2], '0');
+      expect(
+        fields[3],
+        md5
+            .convert(
+              utf8.encode(
+                '${uri.path}-${fields[0]}-${fields[1]}-0-signature-test',
+              ),
+            )
+            .toString(),
+      );
+      expect(accessor.lastError, contains('redirect:'));
     });
 
     test('a missing document falls back to the defaults', () async {

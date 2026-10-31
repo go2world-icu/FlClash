@@ -1,3 +1,4 @@
+import 'package:fl_clash/xboard/adapter/flclash_gateway.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -103,7 +104,7 @@ class _StartButtonState extends ConsumerState<StartButton>
   }
 
   void handleSwitchStart() {
-    ref.read(commonActionProvider.notifier).toggleRunning();
+    ref.read(flClashGatewayProvider).toggleRunning();
   }
 
   void _updateDisplayRunTime(int? runTime) {

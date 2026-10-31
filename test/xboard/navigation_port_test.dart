@@ -1,7 +1,7 @@
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/ui/icons/app_glyphs.dart';
 import 'package:fl_clash/models/models.dart';
-import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/features/dashboard/dashboard.dart';
 import 'package:fl_clash/xboard/navigation_port.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,14 +13,30 @@ List<PageLabel> _labels(List<NavigationItem> items) =>
 NavigationItem _item(List<NavigationItem> items, PageLabel label) =>
     items.firstWhere((item) => item.label == label);
 
+class _UpstreamNavigation implements NavigationPort {
+  final List<NavigationItem> items;
+  bool? openLogs;
+  bool? hasProxies;
+
+  _UpstreamNavigation(this.items);
+
+  @override
+  List<NavigationItem> getItems({
+    bool openLogs = false,
+    bool hasProxies = false,
+  }) {
+    this.openLogs = openLogs;
+    this.hasProxies = hasProxies;
+    return items;
+  }
+}
+
 void main() {
-  // rootBundle, for the asset probe in resolveXboardConfig below.
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const port = XBoardNavigationPort();
+  const port = XBoardNavigationPort(hasPanel: false);
 
   test('without a panel config it matches upstream\'s item set', () {
-    expect(hasXboardConfig, isFalse, reason: 'resolveXboardConfig has not run');
     final items = port.getItems(openLogs: true, hasProxies: true);
     expect(_labels(items), [
       PageLabel.dashboard,
@@ -100,10 +116,9 @@ void main() {
   });
 
   group('with a panel config', () {
-    setUpAll(resolveXboardConfig);
+    const port = XBoardNavigationPort(hasPanel: true);
 
     test('the profiles tab gives way to the account tab', () {
-      expect(hasXboardConfig, isTrue);
       final items = port.getItems(openLogs: true, hasProxies: true);
       expect(_labels(items), [
         PageLabel.dashboard,
@@ -128,5 +143,35 @@ void main() {
         NavigationItemMode.desktop,
       ]);
     });
+  });
+
+  test('upstream additions, order and metadata survive decoration', () {
+    final dashboard = NavigationItem(
+      glyph: AppGlyphs.dashboard,
+      label: PageLabel.dashboard,
+      path: '/upstream-dashboard',
+      modes: const [NavigationItemMode.more],
+      builder: (_) => const SizedBox(),
+    );
+    final addition = dashboard.copyWith(label: PageLabel.tools);
+    final upstream = _UpstreamNavigation([addition, dashboard]);
+    final port = XBoardNavigationPort(upstream: upstream, hasPanel: true);
+
+    final items = port.getItems(openLogs: true, hasProxies: true);
+    expect(_labels(items), [
+      PageLabel.tools,
+      PageLabel.dashboard,
+      PageLabel.xboard,
+    ]);
+    expect(items.first, same(addition));
+    expect(items[1].path, dashboard.path);
+    expect(items[1].modes, dashboard.modes);
+    expect(upstream.openLogs, isTrue);
+    expect(upstream.hasProxies, isTrue);
+    expect(upstream.items, [addition, dashboard]);
+
+    final laterAddition = addition.copyWith(label: PageLabel.connections);
+    upstream.items.insert(0, laterAddition);
+    expect(port.getItems().first, same(laterAddition));
   });
 }

@@ -10,31 +10,25 @@ cd "$(dirname "$0")/.."
 
 step() { echo "==> $1"; }
 
+step 'merge resolution'
+unmerged=$(git diff --name-only --diff-filter=U)
+if [[ -n "$unmerged" ]]; then
+  echo 'Resolve and stage merge conflicts before regeneration:' >&2
+  echo "$unmerged" >&2
+  exit 1
+fi
+
 step 'submodules'
 git submodule update --init --recursive
 
-# The fork's xboard keys land in upstream's arb files, so a merge conflicts on
-# the whole key block. Union them instead of hand-merging the JSON: upstream's
-# side wins (it carries their reworded values and deletions), and the fork's
-# keys are appended. `:2:` is ours, `:3:` is theirs.
-step 'arb union'
-for arb in arb/intl_*.arb; do
-  grep -q '^<<<<<<<' "$arb" || continue
-  git show ":2:$arb" > /tmp/fork_arb_ours.json
-  git show ":3:$arb" > /tmp/fork_arb_theirs.json
-  jq -n --indent 2 \
-    --slurpfile theirs /tmp/fork_arb_theirs.json \
-    --slurpfile ours /tmp/fork_arb_ours.json \
-    '$theirs[0] + ($ours[0] | with_entries(select(.key as $k | ($theirs[0] | has($k)) | not)))' \
-    > "$arb"
-  echo "    unioned $arb"
-done
+step 'dependencies'
+flutter pub get
 
 step 'l10n generation'
 dart run intl_utils:generate
 
 step 'build_runner'
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 
 step 'dart format'
 dart format lib test tool plugins setup.dart
@@ -46,3 +40,4 @@ echo
 echo 'Done. Still manual, see .agents/merge-upstream.md:'
 echo '  - re-apply the branding and the CI delta'
 echo '  - fix the upstream tests that assert upstream values'
+echo '  - review changed page sources before updating tool/fork_sources.json'

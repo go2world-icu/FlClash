@@ -121,57 +121,65 @@ class XBoardConfigAccessor {
     _lastError = null;
 
     try {
+      final sources = _remoteManager.sourceNames
+          .where((name) => name == 'redirect' || name == 'gitee')
+          .toList();
+      if (sources.isEmpty) {
+        throw StateError('No remote panel configuration sources registered');
+      }
       final selected = Completer<(Map<String, dynamic>, String)>();
-      var pending = 2;
-      void accept(ConfigResult<Map<String, dynamic>> result) {
-        if (!selected.isCompleted && result.isSuccess && result.data != null) {
-          final data = result.data!;
-          final config = _parser.extractConfigFromRemoteResult(data);
-          if (config != null) {
-            try {
-              final parsed = _parser.parseFromJson(config, _currentProvider);
-              if (parsed.panels.getAll().isNotEmpty) {
-                selected.complete((data, result.source));
-              }
-            } catch (_) {}
+      final failures = <String, String>{};
+      var pending = sources.length;
+
+      Future<void> fetch(String source) async {
+        try {
+          final result = source == 'redirect'
+              ? await _remoteManager.getRedirectConfig()
+              : await _remoteManager.getGiteeConfig();
+          if (selected.isCompleted) return;
+          if (!result.isSuccess || result.data == null) {
+            throw StateError(result.error ?? 'Empty response');
+          }
+          final config = _parser.extractConfigFromRemoteResult(result.data!);
+          if (config == null) {
+            throw StateError('No recognizable panel configuration');
+          }
+          final parsed = _parser.parseFromJson(config, _currentProvider);
+          if (parsed.panels.getAll().isEmpty) {
+            throw StateError('No panel URLs for current provider');
+          }
+          selected.complete((result.data!, result.source));
+        } catch (error) {
+          failures[source] = _failureReason(error);
+        } finally {
+          pending--;
+          if (pending == 0 && !selected.isCompleted) {
+            final reasons = [
+              for (final source in sources) '$source: ${failures[source]}',
+            ].join('; ');
+            selected.completeError(
+              StateError('Remote panel configuration unavailable: $reasons'),
+            );
           }
         }
-        pending--;
-        if (pending == 0 && !selected.isCompleted) {
-          selected.completeError(
-            StateError('No valid remote panel configuration'),
-          );
-        }
       }
 
-      void failed(Object _) {
-        pending--;
-        if (pending == 0 && !selected.isCompleted) {
-          selected.completeError(
-            StateError('Remote configuration unavailable'),
-          );
-        }
+      for (final source in sources) {
+        unawaited(fetch(source));
       }
-
-      unawaited(
-        _remoteManager.getRedirectConfig().then(accept).catchError(failed),
-      );
-      unawaited(
-        _remoteManager.getGiteeConfig().then(accept).catchError(failed),
-      );
       final (data, source) = await selected.future;
       final config = _parser.extractConfigFromRemoteResult(data)!;
       await _processConfigData(config, source);
       _remoteConfigData = data;
       _extractAppLogFromData(data);
     } catch (e) {
-      _lastError = 'Configuration refresh failed: $e';
+      _lastError = 'Configuration refresh failed: ${_failureReason(e)}';
       await _updateState(
         _currentConfig == null
             ? ConfigAccessorState.error
             : ConfigAccessorState.ready,
       );
-      _logger.error('Configuration refresh failed', e);
+      _logger.error(_lastError!, e);
     }
   }
 
@@ -187,6 +195,21 @@ class XBoardConfigAccessor {
       _logger.warning('Cached remote configuration is invalid', e);
       return false;
     }
+  }
+
+  String _failureReason(Object error) {
+    final message = error is FormatException ? error.message : error.toString();
+    return message
+        .split('\n')
+        .first
+        .replaceAll(RegExp(r'https?://[^\s\u0022\u0027<>]+'), '[URL]')
+        .replaceAll(
+          RegExp(
+            r'\b(?:token|password|passwd|secret|pkey|key|sign)=([^\s&]+)',
+            caseSensitive: false,
+          ),
+          '[redacted]',
+        );
   }
 
   /// 从远程配置数据中提取 app/log 设置（原 base 内容，现已合并到 redirect 响应中）
@@ -270,9 +293,9 @@ class XBoardConfigAccessor {
         );
       }
     } catch (e) {
-      _lastError = 'Refresh from $sourceName failed: $e';
+      _lastError = 'Refresh from $sourceName failed: ${_failureReason(e)}';
       await _updateState(ConfigAccessorState.error);
-      _logger.error('Refresh from $sourceName failed', e);
+      _logger.error(_lastError!, e);
     }
   }
 

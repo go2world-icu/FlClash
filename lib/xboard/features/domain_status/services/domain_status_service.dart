@@ -12,11 +12,19 @@ final _logger = FileLogger('domain_status_service.dart');
 class DomainStatusService {
   // 使用V2配置模块
   bool _isInitialized = false;
+  Future<void>? _initializing;
 
   /// 初始化服务
-  Future<void> initialize() async {
-    if (_isInitialized) return;
+  Future<void> initialize() {
+    if (_isInitialized) return Future.value();
+    return _initializing ??= Future<void>.microtask(_initialize).whenComplete(
+      () {
+        _initializing = null;
+      },
+    );
+  }
 
+  Future<void> _initialize() async {
     try {
       _logger.info('开始初始化');
 

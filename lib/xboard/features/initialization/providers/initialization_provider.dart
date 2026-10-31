@@ -19,6 +19,8 @@ final _logger = FileLogger('initialization_provider.dart');
 ///
 /// 提供统一的初始化入口和状态管理
 class XBoardInitializationNotifier extends Notifier<InitializationState> {
+  Future<void>? _inFlight;
+
   @override
   InitializationState build() {
     _logger.info('[Initialization] Provider 已创建');
@@ -31,26 +33,15 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
     return const InitializationState();
   }
 
-  /// 统一初始化入口
-  ///
-  /// 执行完整的初始化流程，包括：
-  /// - 域名检查（竞速）
-  /// - SDK 初始化
-  ///
-  /// 如果已经初始化完成，会直接返回（幂等性）
-  Future<void> initialize() async {
-    // 如果已经就绪，跳过初始化
-    if (state.isReady) {
-      _logger.info('[Initialization] ✅ 已初始化，跳过重复执行');
-      return;
-    }
+  Future<void> initialize() {
+    if (state.isReady) return Future.value();
+    return _inFlight ??= Future<void>.microtask(_initialize).whenComplete(() {
+      _inFlight = null;
+    });
+  }
 
-    // 如果正在初始化，避免重复触发
-    if (state.isInitializing) {
-      _logger.info('[Initialization] ⏳ 正在初始化中，跳过重复触发');
-      return;
-    }
-
+  Future<void> _initialize() async {
+    if (!ref.mounted) return;
     if (state.isFailed) {
       ref.invalidate(xboardSdkProvider);
     }
@@ -58,21 +49,19 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
     try {
       _logger.info('[Initialization] 🚀 开始初始化流程');
 
-      // ========== 步骤 0: 本地会话快速恢复（纯本地，不阻塞 UI） ==========
-      // 先读本地 token 恢复登录态，让外壳尽快进入首页；域名竞速 / SDK 初始化
-      // 是网络操作，放到后面后台继续，token 的完整验证由末尾的 autoAuth 兜底。
-      await ref.read(xboardUserAuthProvider.notifier).restoreLocalSession();
-
-      // ========== 步骤 1: 检查域名 ==========
-      _logger.info('[Initialization] 📡 步骤 1/2: 检查域名');
       state = state.copyWith(
         status: InitializationStatus.checkingDomain,
         errorMessage: null,
         currentStepDescription: '正在检查域名可用性...',
       );
+      await ref.read(xboardUserAuthProvider.notifier).restoreLocalSession();
+      if (!ref.mounted) return;
+
+      _logger.info('[Initialization] 📡 步骤 1/2: 检查域名');
 
       // 触发域名检查
       await ref.read(domainStatusProvider.notifier).checkDomain();
+      if (!ref.mounted) return;
 
       // 获取域名检查结果
       final domainStatus = ref.read(domainStatusProvider);
@@ -98,6 +87,7 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
 
       // 等待 SDK 初始化完成
       await ref.read(xboardSdkProvider.future);
+      if (!ref.mounted) return;
 
       _logger.info('[Initialization] ✅ SDK 初始化完成');
 
@@ -105,6 +95,7 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
       final authenticated = await ref
           .read(xboardUserAuthProvider.notifier)
           .autoAuth();
+      if (!ref.mounted) return;
       if (authenticated) {
         try {
           await XBoardConfig.persistRemoteConfiguration();
@@ -113,6 +104,7 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
         }
       }
 
+      if (!ref.mounted) return;
       _logger.info('[Initialization] 🎉 初始化流程完成');
       state = state.copyWith(
         status: InitializationStatus.ready,
@@ -121,6 +113,7 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
         errorMessage: null,
       );
     } catch (e, stackTrace) {
+      if (!ref.mounted) return;
       _logger.error('[Initialization] ❌ 初始化失败', e, stackTrace);
 
       state = state.copyWith(
@@ -133,18 +126,12 @@ class XBoardInitializationNotifier extends Notifier<InitializationState> {
     }
   }
 
-  /// 刷新（重新初始化）
-  ///
-  /// 重置状态并重新执行完整的初始化流程
-  Future<void> refresh() async {
+  Future<void> refresh() {
+    if (_inFlight != null) return _inFlight!;
     _logger.info('[Initialization] 🔄 刷新初始化状态');
-
     ref.invalidate(xboardSdkProvider);
-    // 重置状态
     state = const InitializationState();
-
-    // 重新初始化
-    await initialize();
+    return initialize();
   }
 
   /// 重置为初始状态

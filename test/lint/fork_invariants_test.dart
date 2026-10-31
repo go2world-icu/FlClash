@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:test/test.dart';
 
@@ -38,6 +39,64 @@ String? _goBuildTag(String path) {
 }
 
 void main() {
+  group('fork pages track the upstream source they were reviewed against', () {
+    final manifest = jsonDecode(_read('tool/fork_sources.json')) as Map;
+    for (final entry in manifest['copies'] as List) {
+      final source = entry['source'] as String;
+      final fork = entry['fork'] as String;
+      test('$fork has reviewed $source', () {
+        _read(fork);
+        final result = Process.runSync('git', [
+          'hash-object',
+          '--path=$source',
+          source,
+        ]);
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expect(
+          (result.stdout as String).trim(),
+          entry['reviewedBlob'],
+          reason:
+              '$source changed. Review its changes against $fork, port the '
+              'applicable behavior, then update tool/fork_sources.json.',
+        );
+      });
+    }
+  });
+
+  group('panel adapters contain upstream command coupling', () {
+    test('features send Core and profile commands through the gateway', () {
+      final commands = RegExp(
+        r'\b(setupActionProvider|profilesActionProvider|'
+        r'proxiesActionProvider|commonActionProvider)\b',
+      );
+      final violations = <String>[];
+      for (final file in Directory(
+        'lib/xboard/features',
+      ).listSync(recursive: true)) {
+        if (file is! File || !file.path.endsWith('.dart')) continue;
+        if (file.path.contains(
+          '${Platform.pathSeparator}generated${Platform.pathSeparator}',
+        )) {
+          continue;
+        }
+        if (commands.hasMatch(file.readAsStringSync())) {
+          violations.add(file.path);
+        }
+      }
+      expect(violations, isEmpty, reason: 'Use flClashGatewayProvider.');
+    });
+
+    test('authentication pages await the SDK through their adapter', () {
+      for (final page in ['register_page.dart', 'forgot_password_page.dart']) {
+        expect(
+          _read('lib/xboard/features/auth/pages/$page'),
+          isNot(contains('XBoardSDK.instance')),
+          reason: 'SDK initialization belongs to the authentication adapter.',
+        );
+      }
+    });
+  });
+
   group('iOS: the app only reaches the Rust bridge on desktop', () {
     test('main.dart starts the panel and the desktop-only Rust bridge', () {
       expect(
@@ -242,7 +301,7 @@ void main() {
         _read('lib/common/app_ports.dart'),
         isNot(contains('hasXboard')),
         reason:
-            'the panel builds the whole item list itself in '
+            'the panel decorates the upstream item list in '
             'XBoardNavigationPort; adding a parameter here would drag both '
             'this interface and lib/views/navigation.dart into every merge',
       );

@@ -1,0 +1,14 @@
+{
+  "copies": [
+    {
+      "source": "lib/pages/home.dart",
+      "fork": "lib/xboard/home_shell.dart",
+      "reviewedBlob": "e935ae13665c66c9731de1a3d545c0f300ddf385"
+    },
+    {
+      "source": "lib/views/dashboard/dashboard.dart",
+      "fork": "lib/xboard/features/dashboard/xboard_dashboard_view.dart",
+      "reviewedBlob": "ee05cbef921505ddec8d7dd11a962dab7dfcc7e9"
+    }
+  ]
+}

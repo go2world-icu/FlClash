@@ -43,9 +43,6 @@ class SetupAction extends _$SetupAction {
 
   bool get _isRunning => _startTime != null && _startTime!.isBeforeNow;
 
-  /// Old name, kept for the iOS/xboard module.
-  bool get isStart => _isRunning;
-
   @override
   void build() {
     ref.onDispose(_stopRuntimeTicker);
@@ -196,11 +193,6 @@ class SetupAction extends _$SetupAction {
       globalState.needInitStatus = false;
     }
     return running ? _start(request) : _stop(request);
-  }
-
-  /// Old name, kept for the iOS/xboard module; delegates to [setRunning].
-  Future<void> updateStatus(bool isStart, {bool isInit = false}) {
-    return setRunning(isStart, initialize: isInit);
   }
 
   void reconcileIosStatus(String status, int runTime) {

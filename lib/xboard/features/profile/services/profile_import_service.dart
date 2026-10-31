@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/xboard/adapter/flclash_gateway.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/features/profile/profile.dart';
@@ -86,9 +86,7 @@ class XBoardProfileImportService {
       }
       await _addProfile(profile);
       if (generation != _generation) {
-        await _ref
-            .read(profilesActionProvider.notifier)
-            .deleteProfile(profile.id);
+        await _ref.read(flClashGatewayProvider).deleteProfile(profile.id);
         throw StateError('Subscription import cancelled');
       }
       if (ownerEmail != null && ownerEmail.isNotEmpty) {
@@ -96,9 +94,7 @@ class XBoardProfileImportService {
         final owned = await storage.getOwnedProfileIds(ownerEmail);
         for (final oldId in owned.where((id) => id != profile.id)) {
           if (_ref.read(profilesProvider).any((p) => p.id == oldId)) {
-            await _ref
-                .read(profilesActionProvider.notifier)
-                .deleteProfile(oldId);
+            await _ref.read(flClashGatewayProvider).deleteProfile(oldId);
           }
         }
         await storage.setOwnedProfileIds(ownerEmail, [profile.id]);
@@ -111,9 +107,13 @@ class XBoardProfileImportService {
         profile: profile,
         duration: stopwatch.elapsed,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       stopwatch.stop();
-      _logger.error('订阅配置导入失败', e);
+      _logger.error(
+        '订阅配置导入失败: ${e.toString().split('\n').first}',
+        e,
+        stackTrace,
+      );
       final errorType = _classifyError(e);
       final userMessage = _getUserFriendlyErrorMessage(e, errorType);
       onProgress?.call(ImportStatus.failed, 0.0, userMessage);
@@ -289,14 +289,7 @@ class XBoardProfileImportService {
 
   Future<void> _addProfile(Profile profile) async {
     try {
-      // 1. 添加配置到列表
-      _ref.read(profilesProvider.notifier).put(profile);
-
-      // 2. 强制设置为当前配置（订阅导入是用户主动操作，应该立即生效）
-      final currentProfileIdNotifier = _ref.read(
-        currentProfileIdProvider.notifier,
-      );
-      currentProfileIdNotifier.value = profile.id;
+      _ref.read(flClashGatewayProvider).installProfile(profile);
       _logger.info('✅ 已设置为当前配置: ${profile.label}');
 
       // [DIAGNOSTIC] 检查 Core 是否在运行
@@ -313,9 +306,7 @@ class XBoardProfileImportService {
       // 未 mounted 会失败，所以我们在这里手动用 silence 模式触发
       _logger.info('📋 使用 silence 模式应用配置...');
       try {
-        await _ref
-            .read(setupActionProvider.notifier)
-            .applyProfile(silence: true);
+        await _ref.read(flClashGatewayProvider).applyProfile();
         _logger.info('✅ 配置应用成功');
         // [DIAGNOSTIC] applyProfile 成功后再检查 groups
         final groupsAfter = _ref.read(groupsProvider);

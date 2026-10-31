@@ -37,7 +37,7 @@ class CoreLib extends CoreHandlerInterface {
     return _instance!;
   }
 
-  /// Called by the iOS tunnel once [ServiceListener.onServiceStatus] reports
+  /// Called by the iOS tunnel once its status listener reports
   /// `connected` — only then is the Go core inside the NEProvider actually
   /// reachable, so pending [CoreHandlerInterface] calls can proceed.
   void markConnected() {

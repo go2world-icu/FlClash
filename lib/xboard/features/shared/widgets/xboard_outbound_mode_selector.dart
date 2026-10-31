@@ -1,3 +1,4 @@
+import 'package:fl_clash/xboard/adapter/flclash_gateway.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
@@ -15,7 +16,7 @@ class XBoardOutboundModeSelector extends ConsumerWidget {
   const XBoardOutboundModeSelector({super.key});
 
   void _handleModeChange(WidgetRef ref, Mode mode) {
-    ref.read(setupActionProvider.notifier).changeMode(mode);
+    ref.read(flClashGatewayProvider).changeMode(mode);
     if (mode == Mode.global) {
       Future.delayed(const Duration(milliseconds: 100), () {
         _selectValidProxyForGlobalMode(ref);
@@ -41,8 +42,8 @@ class XBoardOutboundModeSelector extends ConsumerWidget {
     }
     if (validProxy != null) {
       ref
-          .read(proxiesActionProvider.notifier)
-          .changeProxy(groupName: globalGroup.name, proxyName: validProxy.name);
+          .read(flClashGatewayProvider)
+          .selectProxy(groupName: globalGroup.name, proxyName: validProxy.name);
     }
   }
 

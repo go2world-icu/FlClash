@@ -1,9 +1,9 @@
+import 'package:fl_clash/xboard/adapter/board_auth_gateway.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
-import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
@@ -51,8 +51,9 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     });
 
     try {
-      // 使用 SDK 发送验证码
-      await XBoardSDK.instance.auth.sendEmailVerifyCode(_emailController.text);
+      await ref
+          .read(boardAuthGatewayProvider)
+          .sendEmailVerifyCode(_emailController.text);
 
       if (mounted) {
         setState(() {
@@ -88,13 +89,13 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     });
 
     try {
-      // 使用 AuthRepository 重置密码
-      // 使用 SDK 重置密码
-      final success = await XBoardSDK.instance.auth.forgotPassword(
-        _emailController.text,
-        _codeController.text,
-        _passwordController.text,
-      );
+      final success = await ref
+          .read(boardAuthGatewayProvider)
+          .forgotPassword(
+            _emailController.text,
+            _codeController.text,
+            _passwordController.text,
+          );
 
       if (!success) {
         throw Exception('重置密码失败');

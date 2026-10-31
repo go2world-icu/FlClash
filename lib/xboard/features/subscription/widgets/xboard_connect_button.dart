@@ -1,3 +1,4 @@
+import 'package:fl_clash/xboard/adapter/flclash_gateway.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
@@ -65,7 +66,7 @@ class _XBoardConnectButtonState extends ConsumerState<XBoardConnectButton>
     isStart = !isStart;
     updateController();
     debouncer.call(FunctionTag.updateStatus, () {
-      ref.read(setupActionProvider.notifier).updateStatus(isStart);
+      ref.read(flClashGatewayProvider).setRunning(isStart);
     }, duration: commonDuration);
   }
 

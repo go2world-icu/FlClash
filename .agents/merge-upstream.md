@@ -12,10 +12,12 @@ must survive; it is what turns "someone remembered" into "the build fails".
 
 ```bash
 git merge sync/main            # or whatever the upstream branch is called here
-bash tool/merge_postprocess.sh  # submodules, arb union, l10n, build_runner, format, invariants
+bash tool/merge_postprocess.sh  # resolved-conflict check, submodules, pub get, l10n, build_runner, format, invariants
 ```
 
-`tool/merge_postprocess.sh` is idempotent and covers everything that can be scripted. What it cannot do is below.
+`tool/merge_postprocess.sh` runs after all conflicts have been resolved and staged. It rejects an unmerged index before
+submodule or generation work. Resolve generated files by taking either side, then let the script regenerate them.
+ARB resolution takes upstream keys and deletions plus the fork branding; never union old keys back into the table.
 
 Afterwards: `flutter analyze`, `flutter test`, and once the tree is green, the two manual passes in
 "Branding" and "CI delta".
@@ -43,7 +45,7 @@ conflict in the repository (12,200 diff lines across those nine files).
 
 That is fixed at the source now: 355 keys nothing referenced were deleted, and the 199 in use moved to
 `lib/xboard/l10n/xboard_strings.dart`, which the panel's call sites reach as `xboardL10n.<key>`. The nine files carry
-only the four branded strings, so **the arb files are upstream's** — a merge takes theirs and resolves nothing.
+only branded values, so **ARB keys and deletions follow upstream**; re-apply the existing branded values after taking theirs.
 
 Keep it that way. A panel string belongs in the table, not in `arb/`; `test/lint/fork_invariants_test.dart` fails if an
 `xboard*` key reappears there. If a future merge does leave fork keys in the arb, the check is:
@@ -82,7 +84,8 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 Files that are back to upstream byte-for-byte and must stay there: `lib/common/app_ports.dart`, `lib/views/navigation.dart`,
 `lib/providers/state.dart`, `lib/ui/icons/app_glyphs.dart`, `test/icons/glyph_painter_test.dart`,
 `lib/views/dashboard/dashboard.dart`, `lib/views/dashboard/widgets/widgets.dart`, `lib/pages/home.dart`,
-`lib/ui/navigation_dock.dart`. Adding a fork parameter to
+`lib/ui/navigation_dock.dart`. `XBoardNavigationPort` decorates `Navigation.getItems()` by `PageLabel`, preserving
+upstream order, modes, paths and new entries. Adding a fork parameter to
 `NavigationPort` is what pulled the first three into a merge at once; adding fork glyphs to `AppGlyphs`, a
 `NodeSelectorChip` to the dashboard's floating button, or a fork export to the dashboard widgets barrel is what pulled
 the last five in. All of it now lives in `lib/xboard/` (`icons/xboard_glyphs.dart`, `features/dashboard/`), and the
@@ -115,6 +118,30 @@ overlay spot holds `IosCoreStatus` in its bar, which is where the startup dots w
 Accepted residuals — small, additive, self-contained, and not worth a seam: `lib/core/lib.dart` (`markConnected()` and
 `isMobile`), `lib/common/tray.dart`, `lib/views/proxies/{list,tab}.dart` (the iOS empty-state label), `lib/plugins/app.dart`,
 `lib/views/tools.dart`.
+
+## Long-term fork boundaries
+
+- Panel commands go through `lib/xboard/adapter/flclash_gateway.dart`. It uses the existing providers and owns no run
+  state; `SetupAction` and native lifecycle owners keep their arbitration. Adapt upstream command API changes here,
+  rather than adding old panel method names back to upstream notifiers. Read-only view state can still use providers.
+- Registration, verification and password-reset calls use `adapter/board_auth_gateway.dart`, which awaits the current
+  `xboardSdkProvider` for each call. SDK invalidation must affect the next call; do not cache its `AuthApi` in a page.
+  Local session restoration remains independent of SDK/network initialization.
+- `lib/plugins/ios_service.dart` owns iOS listener methods, status decoding, diagnostics and App Group state methods.
+  `service.dart` keeps one inbound MethodChannel handler and delegates unknown calls through `dispatchIosServiceCall`.
+  Do not install a second handler on that channel. Core response bytes and the shared event envelope remain unchanged.
+- iOS framework construction lives in `plugins/setup/setup_hooks/lib/src/ios_framework.dart`, a part/extension of the
+  existing Go builder. It reuses the existing cache and fingerprints; the shared builder keeps only dispatch and target
+  selection. Keep the explicit framework build before Xcode linking.
+- The home shell and dashboard copies are fork-owned product surfaces. `tool/fork_sources.json` records the reviewed
+  Git blob of each upstream source. The invariants suite fails when a source changes, even if Git merges cleanly.
+  Review the source diff, port applicable fixes and behavior, run both upstream/fork page tests, then update the blob
+  with `git hash-object --path=<source> <source>`. A fork-only layout change needs no baseline update. New copies must
+  enter this manifest; shared cards, layout types and widgets stay upstream-owned.
+
+Keep upstream synchronization on a temporary branch from the product branch. Record the selected upstream commit and
+keep compatibility changes separate from feature work. The goal is both a small shared-file patch and a small number of
+copied implementations that need manual review; reducing one by silently growing the other does not reduce maintenance.
 
 ## iOS: the port that has to be redone every merge
 
@@ -223,7 +250,7 @@ conflict set for no gain.
 - `appName = 'ToWorld'`, `repository = 'go2world-icu/FlClash-Publish'`.
 - Default theme mode is `system`, not `dark`.
 - The home directory is `<supportDirectory>/<appName>` on every platform.
-- `PageLabel.xboard` and `FunctionTag.updateStatus` exist in upstream enums; `lib/common/app_ports.dart` may carry
-  fork-facing parameters.
+- `PageLabel.xboard` and `FunctionTag.updateStatus` exist in shared enums; `NavigationPort` keeps upstream
+  parameters, and panel differences live in its decorator.
 - `lib/sdk/board_sdk` is a private submodule; `assets/config/xboard.config.yaml` is tracked and holds placeholders
   only.

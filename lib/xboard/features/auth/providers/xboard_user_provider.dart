@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:fl_clash/xboard/adapter/board_auth_gateway.dart';
+import 'package:fl_clash/xboard/adapter/flclash_gateway.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
@@ -232,7 +234,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   /// 因此即便不 await 也不会产生未捕获的 async error。
   Future<void> _stopProxy() async {
     try {
-      await ref.read(setupActionProvider.notifier).updateStatus(false);
+      await ref.read(flClashGatewayProvider).setRunning(false);
     } catch (e) {
       _logger.info('关闭代理失败: $e');
     }
@@ -356,12 +358,14 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     try {
       _logger.info('开始注册: $email');
 
-      final success = await XBoardSDK.instance.auth.register(
-        email,
-        password,
-        inviteCode: inviteCode,
-        emailCode: emailCode,
-      );
+      final success = await ref
+          .read(boardAuthGatewayProvider)
+          .register(
+            email,
+            password,
+            inviteCode: inviteCode,
+            emailCode: emailCode,
+          );
 
       if (success) {
         _logger.info('注册成功');
@@ -405,11 +409,9 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     try {
       _logger.info('重置密码: $email');
 
-      final success = await XBoardSDK.instance.auth.forgotPassword(
-        email,
-        emailCode,
-        password,
-      );
+      final success = await ref
+          .read(boardAuthGatewayProvider)
+          .forgotPassword(email, emailCode, password);
 
       if (success) {
         _logger.info('密码重置成功');
@@ -599,7 +601,7 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
         if (!ref.read(profilesProvider).any((profile) => profile.id == id)) {
           continue;
         }
-        await ref.read(profilesActionProvider.notifier).deleteProfile(id);
+        await ref.read(flClashGatewayProvider).deleteProfile(id);
       }
       if (email != null) await _storageService.setOwnedProfileIds(email, []);
       // iOS: delete config.yaml + shared.json from App Group

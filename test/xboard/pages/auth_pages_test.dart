@@ -63,7 +63,10 @@ void main() {
       await pumpXboard(
         tester,
         const LoginPage(),
-        overrides: xboardBaseOverrides(),
+        overrides: [
+          ...xboardBaseOverrides(),
+          configProvider.overrideWith((ref) async => null),
+        ],
         textScale: 0.5,
       );
       await tester.tap(find.text('Register'));

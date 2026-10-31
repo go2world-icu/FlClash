@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_clash/plugins/service.dart';
+import 'package:fl_clash/plugins/ios_service.dart';
 import 'package:flutter/services.dart';
 
 class IosBoardResolver {

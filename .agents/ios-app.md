@@ -21,6 +21,13 @@ await methodChannel.invokeMethod<Uint8List>('invokeMethod', json.encode(call));
 要确认这类跨语言类型问题，别猜机制——写一个一次性 widget test，用 `setMockMethodCallHandler` 让通道回一个
 String，再看 `invokeMethod<Uint8List>` 的反应，一分钟拿到铁证。
 
+## Dart 的 iOS 专属接入
+
+`lib/plugins/ios_service.dart` 持有 iOS 专属方法、`IosCoreState` 和 `IosServiceListener`。
+通用 `Service` 只注册一次入站处理器，把平台扩展消息转给 `dispatchIosServiceCall`；iOS 调用方显式导入
+专属文件以使用 extension。不能在专属适配器再次注册同名通道的处理器，否则会覆盖 Core 事件接收。
+隧道诊断继续由 NE 自答，Core 的回复仍遵守下文的字节约定。
+
 ## core 有自己的通道：`com.follow.clash/core`
 
 上游 `2201c199`（v0.9.1）把 core 调用从 `service` 通道拆到 `core` 通道，Kotlin 侧在 `ServicePlugin` 里注册。
@@ -82,7 +89,9 @@ iOS 现在和安卓共用同一个外壳和仪表盘，这三颗点挂在**仪�
 修法在 `lib/xboard/utils/xboard_core_validation.dart`，只碰面板自己的调用点：
 
 - 先用 `ping` + `getCoreState`（**扩展自答，不经过 core**）探 core 可达性；
-- 可达 → 照旧交给 core；
+- 可达 → 将校验输入暂存到 `appPath.homeDirPath/.validation/` 下每次独立的目录，再交给 core；
+  Runner 的 `Library/Caches` 临时文件对 PacketTunnel 不可见，直接传路径会导致「代理关闭能导入、打开就失败」。
+  文件和字符串校验都必须走此共享路径；完成或抛错均删除临时目录。age 解密成功后还要把结果复制回调用方的文件；
 - 不可达 → 跳过 core 校验、**先把配置存下来**，用本地结构校验兜底（YAML 映射、有
   `proxies` 或 `proxy-providers`），把权威校验推迟到隧道起来时——连接时 `applyProfile`
   仍会把同一份配置交给 core，起不来会以 core 的错误呈现。
@@ -96,3 +105,13 @@ iOS 现在和安卓共用同一个外壳和仪表盘，这三颗点挂在**仪�
 `ios/Runner/Channels/AppChannel.swift` 对 Android 独有的概念返回**无害默认值**，让共享 Dart 代码继续工作。新增
 Dart 侧调用时记得在这里补一个 case——否则 iOS 抛 `MissingPluginException`；Dart 侧那层有 try 的（如
 `didCrashOnPreviousExecution`）会静默降级，没有 try 的会直接炸。
+
+## 远程配置请求与账户初始化
+
+SDK 配置源自行创建 Dio / HttpClient，不读取面板 API 的 HttpConfig。初始化先通过
+`XBoardTransport.ensureDirectRoute` 解析配置源域名并登记 iOS 排除路由，随后交给 SDK 按原 URL、
+配置的 TypeA / TypeD 鉴权和正常 HTTPS 流程请求。不要通过 HttpOverrides 强制配置请求连接物理 DNS
+返回的首个 IP：该结果可能来自其他可用接口，也会绕过系统地址选择与失败回退。
+初始化检查合并并发调用，失败即结束当次操作；刷新等待已有操作完成，后续显式重试才启动新操作。
+账户页继续等待 SDK 就绪，失败时显示原因与重试入口。相关回归在 `test/xboard/providers/`、
+`test/xboard/config/` 和 `test/xboard/infrastructure/board_transport_test.dart`。

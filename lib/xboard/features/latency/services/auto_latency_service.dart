@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/xboard/adapter/flclash_gateway.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 // operation_coordinator已废弃，移除相关代码
@@ -114,9 +115,7 @@ class AutoLatencyService {
 
       _logger.info('开始测试节点延迟: ${currentProxy.name}');
       final testUrl = _ref!.read(appSettingProvider).testUrl;
-      await _ref!
-          .read(proxiesActionProvider.notifier)
-          .proxyDelayTest(currentProxy, testUrl);
+      await _ref!.read(flClashGatewayProvider).testProxy(currentProxy, testUrl);
       _lastTestedProxy = currentProxy.name;
       _lastTestTime = DateTime.now();
       _proxyTestCache[currentProxy.name] = DateTime.now();
@@ -145,9 +144,7 @@ class AutoLatencyService {
 
       _logger.info('开始测试指定节点延迟: ${proxy.name}');
       final testUrl = _ref!.read(appSettingProvider).testUrl;
-      await _ref!
-          .read(proxiesActionProvider.notifier)
-          .proxyDelayTest(proxy, testUrl);
+      await _ref!.read(flClashGatewayProvider).testProxy(proxy, testUrl);
       _proxyTestCache[proxy.name] = DateTime.now();
       _logger.info('指定节点延迟测试完成: ${proxy.name}');
     } catch (e) {
@@ -180,8 +177,8 @@ class AutoLatencyService {
       );
       final testUrl = _ref!.read(appSettingProvider).testUrl;
       await _ref!
-          .read(proxiesActionProvider.notifier)
-          .delayTest(nodesToTest, testUrl);
+          .read(flClashGatewayProvider)
+          .testProxies(nodesToTest, testUrl);
       _logger.info('批量延迟测试完成');
     } catch (e) {
       _logger.error('批量延迟测试失败', e);

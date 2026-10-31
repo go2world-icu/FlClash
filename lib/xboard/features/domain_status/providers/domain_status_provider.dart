@@ -33,43 +33,34 @@ final currentDomainProvider = Provider<String?>((ref) {
 /// 域名状态通知器
 class DomainStatusNotifier extends Notifier<DomainStatusState> {
   late final DomainStatusService _service;
+  Future<void>? _checkFuture;
 
   @override
   DomainStatusState build() {
     _service = ref.watch(domainStatusServiceProvider);
     ref.onDispose(() => _service.dispose());
-    _initialize();
     return const DomainStatusState();
   }
 
-  /// 初始化
-  Future<void> _initialize() async {
-    try {
-      await _service.initialize();
-      state = state.copyWith(isInitialized: true);
-      _logger.info('初始化完成');
-    } catch (e) {
-      _logger.error('初始化失败', e);
-      state = state.copyWith(
-        status: DomainStatus.failed,
-        errorMessage: '域名服务初始化失败: $e',
-        isInitialized: true,
-      );
-    }
-  }
+  Future<void> checkDomain() =>
+      _checkFuture ??= Future<void>.microtask(_checkDomain).whenComplete(() {
+        _checkFuture = null;
+      });
 
-  /// 检查域名状态
-  Future<void> checkDomain() async {
-    if (!state.isInitialized) {
-      await _initialize();
-    }
-
+  Future<void> _checkDomain() async {
+    if (!ref.mounted) return;
     state = state.copyWith(status: DomainStatus.checking, errorMessage: null);
-
     try {
+      if (!state.isInitialized) {
+        await _service.initialize();
+        if (!ref.mounted) return;
+        state = state.copyWith(isInitialized: true);
+      }
+
       _logger.info('开始检查域名');
 
       final result = await _service.checkDomainStatus();
+      if (!ref.mounted) return;
 
       if (result['success'] == true) {
         state = state.copyWith(
@@ -94,6 +85,7 @@ class DomainStatusNotifier extends Notifier<DomainStatusState> {
         _logger.error('域名检查失败: ${state.errorMessage}');
       }
     } catch (e) {
+      if (!ref.mounted) return;
       _logger.error('域名检查异常', e);
       state = state.copyWith(
         status: DomainStatus.failed,
