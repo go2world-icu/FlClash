@@ -12,7 +12,7 @@ import unittest
 import zipfile
 from types import SimpleNamespace
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import publish_cos as cos
@@ -193,6 +193,20 @@ class ReleaseTests(unittest.TestCase):
 
 
 class CosTests(unittest.TestCase):
+    def test_cdn_verification_sends_the_download_referer(self):
+        content = b'installer'
+        with patch.object(
+            cos.urllib.request, 'urlopen', return_value=io.BytesIO(content)
+        ) as request:
+            cos.verify_cdn(
+                'https://cdn.example.com/file.apk',
+                hashlib.sha256(content).hexdigest(),
+                {'Referer': 'https://toworld.uk/'},
+            )
+        self.assertEqual(
+            request.call_args.args[0].get_header('Referer'), 'https://toworld.uk/'
+        )
+
     def test_ios_ipa_and_release_records_never_enter_cos_uploads(self):
         source = {
             'tag_name': TAG,
@@ -211,6 +225,8 @@ class CosTests(unittest.TestCase):
 
     def test_existing_cos_object_is_skipped_only_when_size_and_digest_match(self):
         store = object.__new__(cos.Store)
+        store.bucket = 'test-bucket'
+        store.client = SimpleNamespace(put_object_acl=Mock())
         digest = hashlib.sha256(b'apk').hexdigest()
         head = {'content-length': '3', 'x-cos-meta-sha256': digest}
         with patch.object(store, 'head', return_value=head):
@@ -224,6 +240,12 @@ class CosTests(unittest.TestCase):
                     True,
                 )
             )
+            store.client.put_object_acl.assert_called_once_with(
+                Bucket='test-bucket',
+                Key='file',
+                ACL='public-read',
+            )
+            store.client.put_object_acl.reset_mock()
             with self.assertRaises(ValueError):
                 store.put(
                     'file',
@@ -233,6 +255,7 @@ class CosTests(unittest.TestCase):
                     'application/octet-stream',
                     True,
                 )
+            store.client.put_object_acl.assert_not_called()
 
     def test_dry_run_needs_no_cos_sdk_client_or_downloads(self):
         source = {
@@ -295,6 +318,7 @@ class CosTests(unittest.TestCase):
         headers = request.call_args.kwargs['headers']
         self.assertEqual(headers['x-cos-forbid-overwrite'], 'true')
         self.assertEqual(headers['x-cos-meta-sha256'], digest)
+        self.assertEqual(headers['x-cos-acl'], 'public-read')
         self.assertIn('Content-MD5', headers)
 
     def test_all_existing_installer_formats_are_supported(self):

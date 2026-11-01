@@ -43,6 +43,7 @@ jobs:
       COS_BUCKET: ${{ vars.COS_BUCKET }}
       COS_REGION: ${{ vars.COS_REGION }}
       COS_PUBLIC_BASE_URL: ${{ vars.COS_PUBLIC_BASE_URL }}
+      COS_DOWNLOAD_REFERER: ${{ vars.COS_DOWNLOAD_REFERER }}
       COS_KEY_PREFIX: ${{ vars.COS_KEY_PREFIX }}
     steps:
       - uses: actions/checkout@v4

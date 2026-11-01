@@ -99,11 +99,12 @@ def public_url(base, key):
     return base.rstrip('/') + '/' + urllib.parse.quote(key, safe='/')
 
 
-def verify_cdn(url, expected):
+def verify_cdn(url, expected, headers=None):
     for attempt in range(3):
         try:
             digest = hashlib.sha256()
-            with urllib.request.urlopen(url, timeout=180) as response:
+            request = urllib.request.Request(url, headers=headers or {})
+            with urllib.request.urlopen(request, timeout=180) as response:
                 for chunk in iter(lambda: response.read(1024 * 1024), b''):
                     digest.update(chunk)
             if digest.hexdigest() != expected:
@@ -159,6 +160,7 @@ class Store:
                 or int(current['content-length']) != size
             ):
                 raise ValueError(f'Refusing to overwrite different bytes at {key}')
+            self.client.put_object_acl(Bucket=self.bucket, Key=key, ACL='public-read')
             return False
         headers = {'x-cos-meta-sha256': digest}
         if immutable:
@@ -169,6 +171,7 @@ class Store:
             Key=key,
             Body=stream,
             EnableMD5=True,
+            ACL='public-read',
             ContentType=content_type,
             CacheControl=(
                 'public, max-age=31536000, immutable'
@@ -217,6 +220,7 @@ def publish(release, commit, config, store, directory, staging=False):
     if staging:
         prefix += '/staging'
     base = config['publicBaseUrl']
+    download_headers = {'Referer': config['referer']} if config.get('referer') else {}
     public_url(base, prefix)
     manifests = {}
     for asset, target in release_installers(release):
@@ -254,7 +258,7 @@ def publish(release, commit, config, store, directory, staging=False):
                 mimetypes.guess_type(name)[0] or 'application/octet-stream',
                 True,
             )
-        verify_cdn(url, digest)
+        verify_cdn(url, digest, download_headers)
         manifests.setdefault(target['platform'], []).append(
             {
                 **target,
@@ -262,6 +266,7 @@ def publish(release, commit, config, store, directory, staging=False):
                 'size': asset['size'],
                 'sha256': digest,
                 'url': url,
+                'headers': download_headers,
                 'githubUrl': asset['browser_download_url'],
             }
         )
@@ -281,7 +286,7 @@ def publish(release, commit, config, store, directory, staging=False):
         data = encode(manifest)
         digest = hashlib.sha256(data).hexdigest()
         store.put(key, io.BytesIO(data), len(data), digest, 'application/json', True)
-        verify_cdn(public_url(base, key), digest)
+        verify_cdn(public_url(base, key), digest, download_headers)
         advance_channel(
             store,
             f'{prefix}/channels/stable/{platform}.json',
@@ -290,6 +295,7 @@ def publish(release, commit, config, store, directory, staging=False):
                 'tag': tag,
                 'commit': commit,
                 'manifestUrl': public_url(base, key),
+                'headers': download_headers,
             },
         )
 
@@ -314,6 +320,7 @@ def main():
         ('bucket', 'COS_BUCKET'),
         ('region', 'COS_REGION'),
         ('publicBaseUrl', 'COS_PUBLIC_BASE_URL'),
+        ('referer', 'COS_DOWNLOAD_REFERER'),
         ('prefix', 'COS_KEY_PREFIX'),
     ):
         config[key] = os.environ.get(variable) or config[key]

@@ -39,17 +39,21 @@ Defaults live in `cos.json`; repository Variables can override them:
 | `COS_BUCKET` | `dwc-1256539025` |
 | `COS_REGION` | `ap-hongkong` |
 | `COS_PUBLIC_BASE_URL` | `https://dwc-1256539025.file.myqcloud.com` |
+| `COS_DOWNLOAD_REFERER` | `https://toworld.uk/` |
 | `COS_KEY_PREFIX` | `toworld` |
 
 Set GitHub Secrets `COS_SECRET_ID` and `COS_SECRET_KEY`; temporary credentials additionally
-use `COS_SESSION_TOKEN`. The upload identity needs HEAD/GET/PUT access only to the configured
-prefix. Release tools do not read credentials from the app's panel configuration.
+use `COS_SESSION_TOKEN`. The upload identity needs HEAD/GET/PUT and PutObjectACL access only
+to the configured prefix. Release tools do not read credentials from the panel configuration.
 
 Writes and HEAD checks use the COS SDK origin endpoint derived from bucket/region:
 `https://dwc-1256539025.cos.ap-hongkong.myqcloud.com`. `COS_PUBLIC_BASE_URL` is exclusively the
-read/download endpoint. Its CDN configuration must allow anonymous GET of the installer
-prefix and authenticated origin pulls if the bucket is private. Existing configuration
-objects outside `toworld/` are untouched.
+read/download endpoint. Installer objects, manifests and channels receive object-level
+`public-read`; matching existing objects have their ACL repaired without overwriting bytes.
+The bucket ACL and existing panel configuration objects outside `toworld/` are untouched.
+The CDN domain must allow anonymous GET of the distribution prefix.
+CDN verification sends the configured `Referer`. Download entries and channel pointers
+include the same `headers` for clients; browser downloads should originate from `toworld.uk`.
 
 ```text
 toworld/releases/vX.Y.Z/<platform>/<architecture>/<installer>
