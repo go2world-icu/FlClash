@@ -103,7 +103,7 @@ BN_ARGS=""
 if [ -n "$BUILD_NUMBER" ]; then
   BN_ARGS="--build-number=$BUILD_NUMBER"
 fi
-dart setup.dart ios --env "$ENV" --export-options-plist ExportOptions.plist $BN_ARGS -v
+bash ios/scripts/build_ios.sh archive --env "$ENV" --export-options-plist ExportOptions.plist $BN_ARGS -v
 
 echo "==> 5/5 产物"
 IPA=$(ls -t build/ios/ipa/*.ipa 2>/dev/null | head -1)
@@ -114,7 +114,7 @@ echo "  version: $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString
 if [ "$DO_UPLOAD" = "1" ]; then
   echo "==> 上传 TestFlight"
   : "${ASC_KEY_ID:?需要 ASC_KEY_ID}" "${ASC_ISSUER_ID:?需要 ASC_ISSUER_ID}" "${ASC_API_KEY:?需要 ASC_API_KEY}"
-  cp "$IPA" dist/ToWorld-ios-arm64.ipa 2>/dev/null || { mkdir -p dist; cp "$IPA" dist/ToWorld-ios-arm64.ipa; }
+  export IPA_PATH="$IPA"
   bundle exec fastlane deploy_testflight
 fi
 

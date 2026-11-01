@@ -74,8 +74,7 @@ platform :ios do
 
   desc "Upload built IPA to TestFlight"
   lane :deploy_testflight do |options|
-    # ipa 由 workflow 的 Build & Export IPA 步骤（原生 xcodebuild archive+export）产出。
-    # 不要用 gym build_app：它会同时把 CODE_SIGNING_ALLOWED=NO 传给 export，导致 export 卡死。
+    # Keep archive/export in Flutter: gym previously stalled during signed export.
     app_store_connect_api_key(
       key_id: ENV['ASC_KEY_ID'],
       issuer_id: ENV['ASC_ISSUER_ID'],
@@ -83,7 +82,7 @@ platform :ios do
     )
 
     upload_to_testflight(
-      ipa: "dist/ToWorld-ios-arm64.ipa",
+      ipa: File.expand_path(options[:ipa] || ENV['IPA_PATH'] || 'dist/ToWorld-ios-arm64.ipa', File.expand_path('..', __dir__)),
       app_identifier: app_bundle_id,
       skip_waiting_for_build_processing: true
     )

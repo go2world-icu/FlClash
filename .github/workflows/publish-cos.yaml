@@ -1,0 +1,68 @@
+name: publish-cos
+
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '已发布的正式 tag，例如 v0.9.3'
+        required: true
+      dry_run:
+        description: '只检查 GitHub Release 并显示上传计划'
+        type: boolean
+        default: true
+      staging:
+        description: '上传到 toworld/staging，验证后再上传正式目录'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cos-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.repository == 'go2world-icu/FlClash' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        startsWith(github.event.workflow_run.head_branch, 'v') &&
+        !contains(github.event.workflow_run.head_branch, '-')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      COS_BUCKET: ${{ vars.COS_BUCKET }}
+      COS_REGION: ${{ vars.COS_REGION }}
+      COS_PUBLIC_BASE_URL: ${{ vars.COS_PUBLIC_BASE_URL }}
+      COS_KEY_PREFIX: ${{ vars.COS_KEY_PREFIX }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install COS SDK
+        if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
+        run: python3 -m pip install -r tool/distribution/requirements.txt
+      - name: Test release tooling
+        run: python3 -m unittest discover -s tool/distribution/tests -v
+      - name: Publish release installers
+        env:
+          COS_SECRET_ID: ${{ secrets.COS_SECRET_ID }}
+          COS_SECRET_KEY: ${{ secrets.COS_SECRET_KEY }}
+          COS_SESSION_TOKEN: ${{ secrets.COS_SESSION_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          STAGING: ${{ inputs.staging }}
+        run: |
+          args=()
+          [[ "$DRY_RUN" != true ]] || args+=(--dry-run)
+          [[ "$STAGING" != true ]] || args+=(--staging)
+          python3 tool/distribution/publish_cos.py "${args[@]}"

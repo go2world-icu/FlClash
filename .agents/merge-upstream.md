@@ -79,6 +79,7 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `lib/application.dart` | `buildXBoardHome()` returns the panel's `XBoardShellHome` on every platform — so the shell itself (the start button at the dock's end) is the fork's | `lib/xboard/home_shell.dart` |
 | `lib/common/path.dart` | `forkDataDir(supportDirectory)`, `forkTempDir(temporaryDirectory)` | `lib/common/data_dir.dart` |
 | `lib/common/request.dart` | `downloadXBoardProfile` before the ordinary file download | `lib/xboard/adapter/profile_download.dart` |
+| `setup.dart` | early iOS CLI dispatch | `ios/scripts/build_ios.sh` |
 | `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
 | `lib/providers/state/navigation.dart` | the `iosCoreOff` filter | *(still inline — small and self-contained)* |
 | `core/config.go` | `loadConfigForPlatform(path)`, `loadConfigForPlatformLimits(cfg)` | `core/config_{ios,default}.go` |
@@ -159,8 +160,8 @@ the fork's, and it is wired into upstream files. Checklist, outermost to innermo
 2. **iOS is bound with gomobile, like Android.** `core/mobile/mobile_ios.go` is the iOS half of the binding package;
    `plugins/setup/setup_hooks` builds one `Mobile.framework` per slice with `gomobile bind` and combines them into
    `libclash/ios/Mobile.xcframework`, which `Runner` and `PacketTunnel` link. That xcframework has to exist before
-   `flutter build ios` reaches Xcode's link step, so `bin/build_ios.dart` builds it explicitly — the CI's `Build iOS`
-   step and `setup.dart`'s iOS branch both run it first. The Swift side is `ios/PacketTunnel/ClashCore.swift`, which
+   `flutter build ios` reaches Xcode's link step. `ios/scripts/build_ios.sh` invokes `bin/build_ios.dart` before both
+   Flutter modes; the fork's iOS workflow calls this script. The Swift side is `ios/PacketTunnel/ClashCore.swift`, which
    talks to the generated `Mobile*` API rather than the C function pointers the hand-built archive used.
 3. **A few things upstream shares between the mobile targets only compile on Android.** `handleUpdateDns` calls
    `dns.UpdateSystemDNS`, which mihomo builds behind an `android` tag; `lib.go`'s protect/resolve hooks call
@@ -176,8 +177,8 @@ the fork's, and it is wired into upstream files. Checklist, outermost to innermo
    the branch to the fork-owned side of a tag pair and leave a one-line call behind. `core/config.go`, `core/lifecycle.go`
    and `core/tun/tun.go` are the three that already are.
 
-   The iOS side of a pair is compiled by nothing before a release tag (CI vets host and Android only), so the
-   invariants test asserts both sides still define every hook — and locally, `GOOS=darwin GOARCH=arm64 CGO_ENABLED=0
+   Shared host/Android checks do not compile the iOS side; the fork's iOS workflow does that on tags and manual runs.
+   The invariants test checks both hook definitions before that — and locally, `GOOS=darwin GOARCH=arm64 CGO_ENABLED=0
    go build -tags "ios <build_config tags>" ./...` type-checks the same file set `GOOS=ios` would, which real
    `GOOS=ios` cannot because it forces cgo.
 
@@ -219,14 +220,16 @@ self-checks its SHA256), the bundle id `com.follow.clash`, the URL scheme `flcla
 - six checkouts carry `submodules: recursive` **and** `token: ${{ secrets.BOARD_SDK_PAT || secrets.GITHUB_TOKEN }}`
   (`dart`, `desktop`, `go`, `android`, `build`, `upload`). Missing the token → `Repository not found` on the private
   `board_sdk` submodule; missing `submodules` → `flutter pub get` cannot find the path dependency.
-- `strategy.fail-fast: false` on `build` — otherwise a failing iOS cancels the other six platforms' artifacts.
-- the `ios` matrix entry and the two `if: startsWith(matrix.platform,'ios')` steps (`Build iOS core`, `Build iOS`).
+- `strategy.fail-fast: false` on `build` preserves independent platform artifacts.
+- iOS is absent from this matrix. Its pre/manual verification and stable signing/publication live entirely in
+  `build-ios-fastlane.yaml`; keep its Core-before-Xcode order in `ios/scripts/build_ios.sh`.
 - `Push to telegram`, the telegram-bot-api service, and the Homebrew/fdroid steps stay commented out — the script
   posts to `@FlClash`, upstream's channel, and the service is disabled here.
 
 Upstream has none of the fork's other workflows — `build-ios-fastlane.yaml` (signed IPA + TestFlight),
-`regen-ios-profiles.yaml`, `pages.yaml`, `sync-gitee-gitcode.yaml` — so a merge never touches them and whatever they pin
-drifts silently. **Check their toolchain pins against `build.yaml` after every merge**: v0.9.0 moved to
+`publish-cos.yaml`, `regen-ios-profiles.yaml`, `pages.yaml`, `sync-gitee-gitcode.yaml` — so a merge never touches them.
+The iOS workflow reads Flutter/Go/CA pins from `build.yaml`; retain those keys. **Check other workflow pins against
+`build.yaml` after every merge**: v0.9.0 moved to
 Flutter 3.47.6 / Go 1.27.1, and `build-ios-fastlane.yaml` had been left on 3.44.4 / 1.26.4. Go is the sharp one —
 `core/go.mod`'s `go` line makes an older toolchain download a newer one mid-build rather than fail cleanly.
 

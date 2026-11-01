@@ -1,30 +1,45 @@
 name: build-ios-fastlane
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       build_number:
-        description: '可选的构建号（build number）覆盖。TestFlight 每次上传必须比上一次大，留空则用 pubspec.yaml 的 +xxxx'
+        description: '构建测试的可选 build number；手动运行只验证，不发布'
         required: false
         default: ''
 
-env:
-  # 必须跟 build.yaml 的 FLUTTER_VERSION / GO_VERSION 一致：上游升工具链时不会碰到
-  # 这个文件（它不存在于上游），钉住的版本会悄悄落后。Go 尤其硬——core/go.mod 的
-  # `go 1.27.0` 会让 1.26 的 toolchain 现去下载一个新版本。
-  FLUTTER_VERSION: '3.47.6'
-  GO_VERSION: '1.27.1'
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-ios:
     runs-on: macos-latest
     timeout-minutes: 60
+    outputs:
+      tag: ${{ steps.context.outputs.tag }}
+      publish: ${{ steps.context.outputs.publish }}
+      commit: ${{ steps.context.outputs.commit }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
           token: ${{ secrets.BOARD_SDK_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Resolve release context and pinned tools
+        id: context
+        run: python3 tool/distribution/release_tools.py context
+
+      - name: Test release tooling
+        run: python3 -m unittest discover -s tool/distribution/tests -v
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -36,7 +51,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: master
+          channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
@@ -46,6 +61,7 @@ jobs:
           xcodebuild -version
 
       - name: Setup Ruby
+        if: steps.context.outputs.publish == 'true'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
@@ -65,9 +81,26 @@ jobs:
           cd ios && pod install && cd ..
           test -d ios/Runner.xcworkspace || { echo "ERROR: pod install 未生成 Runner.xcworkspace"; exit 1; }
 
+      - name: Fetch pinned CA certificates
+        run: |
+          bundle=core/Clash.Meta/component/ca/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/$CA_BUNDLE"
+          echo "$CA_BUNDLE_SHA256  $bundle" | shasum -a 256 -c -
+
+      - name: Verify unsigned iOS build
+        if: steps.context.outputs.publish != 'true'
+        env:
+          BUILD_NUMBER_INPUT: ${{ inputs.build_number }}
+        run: |
+          args=()
+          if [[ -n "$BUILD_NUMBER_INPUT" ]]; then
+            [[ "$BUILD_NUMBER_INPUT" =~ ^[0-9]+$ ]] || exit 64
+            args+=(--build-number "$BUILD_NUMBER_INPUT")
+          fi
+          bash ios/scripts/build_ios.sh verify --env pre "${args[@]}" -v
+
       - name: Resolve bundle identifiers
-        # bundle id / App Group 单一数据源 = Xcode 工程（pbxproj + entitlements）。
-        # Xcode 里改完，CI 自动跟随，不再硬编码在 workflow / ExportOptions 里。
+        if: steps.context.outputs.publish == 'true'
         run: |
           APP_ID=$(xcodebuild -showBuildSettings -project ios/Runner.xcodeproj -target Runner -sdk iphoneos -configuration Release 2>/dev/null | awk -F' = ' '$1 ~ /^[[:space:]]*PRODUCT_BUNDLE_IDENTIFIER$/ {print $2; exit}')
           PKT_ID=$(xcodebuild -showBuildSettings -project ios/Runner.xcodeproj -target PacketTunnel -sdk iphoneos -configuration Release 2>/dev/null | awk -F' = ' '$1 ~ /^[[:space:]]*PRODUCT_BUNDLE_IDENTIFIER$/ {print $2; exit}')
@@ -81,39 +114,25 @@ jobs:
           echo "[ids] APP_ID=$APP_ID PKT_ID=$PKT_ID GROUP=$GROUP_APP"
 
       - name: Setup Code Signing
+        if: steps.context.outputs.publish == 'true'
+        env:
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
         run: |
-          # 创建专用钥匙串
           security create-keychain -p temp build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p temp build.keychain
 
-          # 导入 iPhone Distribution 证书。
-          #
-          # 用 -A（any application may use the key）而不是 -T /usr/bin/codesign：
-          # codesign 卡死那几次，栈都停在 CSSM_GetKeyAcl —— 也就是 ACL 在问「这个
-          # 进程能不能用这把私钥」，而 CI 上没人能点那个授权框。runner 是一次性的，
-          # 放宽到 -A 的代价可以接受。
-          echo "${{ secrets.IOS_CERTIFICATE }}" | base64 --decode > cert.p12
+          echo "$IOS_CERTIFICATE" | base64 --decode > cert.p12
           security import cert.p12 -k build.keychain \
-            -P "${{ secrets.IOS_CERTIFICATE_PASSWORD }}" -A
-          # 分区列表留着：曾经以「SWBBuildService 不在名单里」为由删掉过，但那条推理
-          # 后来被 canary 证伪（canary 由 shell 发起、签 1 字节文件，照样会挂），而删掉
-          # 之后的每一次运行都挂了。既然带着它能跑通，就先回到那一套，别在样本这么小的
-          # 情况下去掉一个已知能工作的环节。
+            -P "$IOS_CERTIFICATE_PASSWORD" -A
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: -s -k temp build.keychain
 
-          # 搜索列表显式写上，并在 import 之后再解锁一次：codesign 读私钥 ACL 时若
-          # 判定需要授权，会弹一个 CI 上没人能点的窗口，然后永远等下去
-          # （sample 里就是卡在 CSSM_GetKeyAcl）。macOS 26 的 runner 上这一步不
-          # 保险，所以把顺序补全、构建前再确认一次。
           security list-keychains -d user -s build.keychain
           security unlock-keychain -p temp build.keychain
-          # 钥匙串默认 300 秒不使用就自动上锁，上锁后取私钥必然走授权那条路。
           security set-keychain-settings -lut 21600 build.keychain
 
-          # 安装仓库中的 Provisioning Profiles（无需 secrets），按每个 profile 内嵌的 UUID 命名。
-          # 两处都装：MobileDevice 给 codesign/export，UserData 给 Xcode 的 GatherProvisioningInputs。
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
           main_uuid=$(grep -a -A1 '<key>UUID</key>' ios/ToWorld.mobileprovision | grep -a '<string>' | sed 's/.*<string>//;s/<\/string>.*//')
@@ -127,10 +146,7 @@ jobs:
           echo "[signing] profiles installed ($main_uuid, $pkt_uuid)"
 
       - name: Enforce Manual signing specifiers
-        # 保险：本地调试可能把 pbxproj 的 Release 配置误改成 Automatic/空 profile
-        # （f476904 曾因此导致 TestFlight 找不到 profile）。构建前强制设回
-        # Manual + 当前 profile UUID。按每个 Release buildSettings 块里的
-        # PRODUCT_BUNDLE_IDENTIFIER 区分主 App / PacketTunnel，不依赖文件顺序。
+        if: steps.context.outputs.publish == 'true'
         run: |
           set -euo pipefail
           [ -n "$APP_ID" ] && [ -n "$PKT_ID" ] || { echo "ERROR: bundle ids missing"; exit 1; }
@@ -163,11 +179,8 @@ jobs:
           grep -n 'CODE_SIGN_STYLE\|PROVISIONING_PROFILE_SPECIFIER' ios/Runner.xcodeproj/project.pbxproj
 
       - name: Build & Export IPA
-        # 统一入口：dart setup.dart ios —— 内部负责 make core-ios + flutter build ipa。
-        # 签名：cert/profile 已由 Setup Code Signing 装好，pbxproj 是 Manual + profile UUID，
-        # export 用下面这个 ExportOptions.plist（manual 签名 + 按 UUID 匹配）。
+        if: steps.context.outputs.publish == 'true'
         run: |
-          # ExportOptions.plist（manual 签名 + 按 UUID 匹配，profile 名每次重建会变）
           cat > ExportOptions.plist <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -190,26 +203,20 @@ jobs:
           </plist>
           PLIST
 
-          BN=""
-          if [ -n "${{ github.event.inputs.build_number }}" ]; then
-            BN="--build-number=${{ github.event.inputs.build_number }}"
-          fi
-
-          # 这个 codesign 挂死是间歇性的、而且和「谁在发起签名」无关：同一个镜像、
-          # 同一个 Xcode、同一个配方，同一个 canary 命令一次通过一次挂死。所以要盯的
-          # 不是「这一步跑了多久」，而是**卡住的那个 codesign 本身**。
-          #
-          # 判据刻意不用 `ps -o etimes`：macOS 的 BSD ps 没有那个字段，取值为空，
-          # 于是「跳过」分支永远命中，看门狗静默失效，job 一路挂到 60 分钟超时——
-          # 而 GNU ps（本地开发机）上是测不出来的。改成看**同一个 pid 跨过采样周期
-          # 是否还在**：正常签名不到一秒，跨过一个周期还在就是死。
-          #
-          # 也不好用 `local`：runner 上是 bash 3.2。
-          #
-          # 杀掉之后留 $HUNG 标记，让下面重试。
-          HUNG=/tmp/codesign-hung
           WATCHDOG_INTERVAL=20
           ATTEMPT_BUDGET=1200
+
+          build_processes() {
+            ps -axo pid=,ppid=,comm= | awk -v root="$BUILD_PID" '
+              { parents[$1]=$2; commands[$1]=$3 }
+              END {
+                for (pid in parents) {
+                  current=pid
+                  while (current in parents && current != root && current > 1) current=parents[current]
+                  if (current == root) print pid, commands[pid]
+                }
+              }'
+          }
 
           start_watchdog() {
             (
@@ -218,28 +225,30 @@ jobs:
               while true; do
                 sleep $WATCHDOG_INTERVAL
                 waited=$((waited + WATCHDOG_INTERVAL))
-                cur_codesign=$(pgrep -x codesign | sort | tr '\n' ' ')
+                cur_codesign=$(build_processes | awk '$2 ~ /(^|\/)codesign$/ {print $1}' | sort | tr '\n' ' ')
                 if [ -n "$cur_codesign" ] && [ "$cur_codesign" = "$prev_codesign" ]; then
                   echo "=== codesign（pid $cur_codesign）跨过 ${WATCHDOG_INTERVAL}s 仍在，判定挂死 ==="
                   ps -o pid,etime,stat,command -p $cur_codesign || true
-                  sample $cur_codesign 2 -mayDie 2>&1 | sed -n '1,60p' || true
+                  for signing_pid in $cur_codesign; do
+                    sample "$signing_pid" 2 -mayDie 2>&1 | sed -n '1,60p' || true
+                  done
                   echo "--- 钥匙串 ---"
                   security list-keychains || true
                   security default-keychain || true
                   security find-identity -v -p codesigning || true
-                  touch "$HUNG"
                   echo "=== 杀掉它（不退出：xcodebuild 可能换 pid 重试）==="
-                  pkill -9 -x codesign || true
+                  for signing_pid in $cur_codesign; do
+                    kill -9 "$signing_pid" 2>/dev/null || true
+                  done
                   prev_codesign=""
                   continue
                 fi
                 prev_codesign="$cur_codesign"
-                # 兜底：本次尝试的总上限，覆盖不是 codesign 的卡法。
                 if [ "$waited" -ge "$ATTEMPT_BUDGET" ]; then
                   echo "=== 本次尝试已 ${waited}s，兜底杀掉 ==="
-                  touch "$HUNG"
-                  pkill -x xcodebuild || true
-                  pkill -x codesign || true
+                  build_processes | while read -r child_pid child_command; do
+                    kill "$child_pid" 2>/dev/null || true
+                  done
                   exit 0
                 fi
               done
@@ -247,15 +256,6 @@ jobs:
             WATCHDOG=$!
           }
 
-          # canary：用构建要用的那个身份签一个 1 字节文件，在构建之前，并且**限时**。
-          #
-          # 它现在是这台 runner 的体检：钥匙串授权坏掉的机器上，canary 一上来就挂，
-          # 而且接下来每一次签名都会挂——在同一个 job 里重试是没有意义的，只会把
-          # 二十分钟一轮的失败重复三遍。所以这里 20 秒不返回就判定这台机器不可用，
-          # 立刻退出，让重新派发去换一台（约 40 秒的成本，而不是三十分钟）。
-          #
-          # 不限时的版本也证明过：它和挂住的构建打出来的栈完全一样，都在
-          # CSSM_GetKeyAcl —— 也就是说和「谁在发起签名」「签什么」都无关。
           verify_keychain() {
             printf canary > /tmp/codesign-canary
             identity=$(security find-identity -v -p codesigning build.keychain \
@@ -265,8 +265,6 @@ jobs:
               exit 1
             fi
             echo "[canary] codesign --force --sign $identity --timestamp /tmp/codesign-canary"
-            # 和构建用同样的 --timestamp：App Store 要求安全时间戳，那条网络路径
-            # 也是挂死的候选原因之一，canary 不该把它绕过去。
             codesign --force --sign "$identity" --timestamp /tmp/codesign-canary &
             CANARY_PID=$!
             waited=0
@@ -293,31 +291,90 @@ jobs:
             echo "[canary] ok"
           }
 
-          # 签名前最后确认一次：解锁 + 搜索列表 + 默认钥匙串，并检查身份确实在场。
           security unlock-keychain -p temp build.keychain
           security default-keychain -s build.keychain
           security find-identity -v -p codesigning build.keychain | tail -5
 
           verify_keychain
 
-          # canary 通过之后，挂死就只剩「构建里的某一次签名」这种可能了。看门狗
-          # （见上）负责把它抓出来；这里只要把这一步跑完。
-          #
-          # 注意 run: 是 `bash -e`：命令失败会直接终止脚本，所以要显式 `|| BUILD_RC=$?`
-          # 把返回值吞下来。
           BUILD_RC=0
+          bash ios/scripts/build_ios.sh archive --env stable --export-options-plist ExportOptions.plist -v &
+          BUILD_PID=$!
           start_watchdog
-          # 统一入口：setup.dart 负责 make core-ios + flutter build ipa（含签名/export）
-          dart setup.dart ios --env stable --export-options-plist ExportOptions.plist $BN -v || BUILD_RC=$?
+          trap 'kill "$WATCHDOG" 2>/dev/null || true' EXIT
+          wait "$BUILD_PID" || BUILD_RC=$?
           kill "$WATCHDOG" 2>/dev/null || true
 
           [ "$BUILD_RC" -eq 0 ] || exit "$BUILD_RC"
 
-          # 重命名 IPA（flutter build ipa 输出到 build/ios/ipa/）
-          mkdir -p dist
-          mv build/ios/ipa/*.ipa dist/ToWorld-ios-arm64.ipa 2>/dev/null || \
-          { ls -la build/ios/ipa/; echo "ERROR: 找不到 IPA"; exit 1; }
+      - name: Save iOS build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-ios-arm64
+          path: ./dist/
+          if-no-files-found: error
+          overwrite: true
 
+  github-release:
+    needs: build-ios
+    if: needs.build-ios.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.build-ios.outputs.tag }}
+      SOURCE_COMMIT: ${{ needs.build-ios.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifact-ios-arm64
+          path: dist
+      - name: Wait for the matching build and GitHub Release
+        run: python3 tool/distribution/release_tools.py wait-release --tag "$RELEASE_TAG" --commit "$SOURCE_COMMIT"
+      - name: Attach verified iOS files
+        run: python3 tool/distribution/release_tools.py attach-ios --tag "$RELEASE_TAG" --commit "$SOURCE_COMMIT"
+
+  sync-mirror:
+    needs: [build-ios, github-release]
+    if: needs.build-ios.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.FlClash_AND_Publish_PAT }}
+      RELEASE_TAG: ${{ needs.build-ios.outputs.tag }}
+    steps:
+      - name: Sync completed Release to FlClash-Publish
+        run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo 'Mirror sync skipped: FlClash_AND_Publish_PAT is not configured'
+            exit 0
+          fi
+          python3 -c 'import json, os; print(json.dumps({"event_type": "new-release", "client_payload": {"tag": os.environ["RELEASE_TAG"]}}))' > /tmp/release-dispatch.json
+          gh api --method POST repos/go2world-icu/FlClash-Publish/dispatches --input /tmp/release-dispatch.json
+
+  testflight:
+    needs: [build-ios, github-release]
+    if: needs.build-ios.outputs.publish == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ needs.build-ios.outputs.tag }}
+      SOURCE_COMMIT: ${{ needs.build-ios.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: artifact-ios-arm64
+          path: dist
+      - name: Verify the signed artifact
+        run: python3 tool/distribution/release_tools.py validate-ios --tag "$RELEASE_TAG" --commit "$SOURCE_COMMIT"
       - name: Deploy to TestFlight
         env:
           CI: 'true'
@@ -325,11 +382,5 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY: ${{ secrets.ASC_API_KEY }}
         run: |
+          export IPA_PATH="$PWD/dist/ToWorld-${RELEASE_TAG#v}-ios-arm64.ipa"
           bundle exec fastlane deploy_testflight --verbose
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: FlClash-ios-fastlane
-          path: ./dist/ToWorld-ios-arm64.ipa
-          overwrite: true

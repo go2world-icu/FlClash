@@ -1495,6 +1495,11 @@ that asks the OS for a permission, a global shortcut or a registration, must con
 the `chen08209/flutter_distributor` fork pinned to a `v<version>-flclash.<n>` tag (cut a new tag there and bump
 `--git-ref` when the fork changes), and leaves the Core artifacts to the build hook.
 
+iOS uses the fork-owned `ios/scripts/build_ios.sh` (`verify` or `archive`); `setup.dart ios` is a thin compatibility
+dispatch. The script invokes `setup_hooks/bin/build_ios.dart` before Flutter links `Mobile.xcframework`, reusing the
+existing Go builder and cache. The independent `build-ios-fastlane.yaml` verifies pre/manual runs and signs/publishes
+stable tag pushes. `publish-cos.yaml` mirrors stable Android/desktop installers only; see `tool/distribution/README.md`.
+
 The desktop Go core and the Rust helper are built by a Dart build hook; Android's Core is built by Gradle (see Android
 Core Build). `plugins/setup/hook/build.dart` only constructs
 `CoreBuilder`, a `package:hooks` `Builder` in `plugins/setup/setup_hooks/`, the same shape `rust_api` uses. Flutter

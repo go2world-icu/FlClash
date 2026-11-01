@@ -4,26 +4,28 @@ iOS 发布到 TestFlight 的构建/签名管线。改动签名、CI、描述文�
 
 ## 构建方式
 
-iOS 已统一进 `setup.dart`（所有平台统一入口）：
+iOS 编排位于 fork 自己的 `ios/scripts/build_ios.sh`：
 
 ```bash
-dart setup.dart ios --env stable \
+bash ios/scripts/build_ios.sh verify --env pre
+bash ios/scripts/build_ios.sh archive --env stable \
   --export-options-plist ExportOptions.plist \
   --build-number <递增的构建号>
 ```
 
-`setup.dart` 的 iOS 分支做两件事：
+两种模式复用现有核心构建器：
 
-1. `make core-ios` —— 编 Go core（产出 `libclash/ios/Mobile.xcframework`，Xcode 嵌入用）。
-2. `flutter build ipa --release --dart-define-from-file=env.json [--build-number N] [--export-options-plist <path>]`。
+1. 在 `plugins/setup/setup_hooks/` 运行 `dart run bin/build_ios.dart`，生成 `libclash/ios/Mobile.xcframework`。
+2. `verify` 运行 `flutter build ios --release --no-codesign`；`archive` 运行 `flutter build ipa --release`。
    - `--build-number` 直接覆盖 `CFBundleVersion`（Info.plist 引用 `$(FLUTTER_BUILD_NUMBER)`，flutter 的 flag 正确处理）。
    - TestFlight 构建号必须**严格递增**，否则上传被拒。
 
-`setup.dart` 只负责编译/打包；**证书、描述文件的安装**和 **TestFlight 上传**在 CI workflow 里单独做，不归它管。iOS 只能在 macOS 上编译（签名依赖 Xcode）。
+证书、描述文件安装和 TestFlight 上传由 workflow 或本地签名 wrapper 管理。`dart setup.dart ios ...`
+仅保留兼容转发；新调用直接使用 shell，避免根 Dart 包先触发主机 native hooks。iOS 只能在 macOS 上构建。
 
 ## 本地运行（与 CI 一致）
 
-本地跑 `dart setup.dart ios` 前，需要手动复刻 CI 的 Setup Code Signing 那几步。封装好的脚本在 **`ios/scripts/ios_release.sh`**（把签名前置 + ExportOptions.plist + 构建 + 可选上传做成一条命令，与 CI 逻辑一致）：
+本地签名脚本是 **`ios/scripts/ios_release.sh`**，负责安装证书和描述文件、生成 ExportOptions、调用 archive 模式并可选上传：
 
 ```bash
 # 证书来源（二选一）
@@ -36,19 +38,30 @@ export IOS_CERTIFICATE_PASSWORD=...
 ./ios/scripts/ios_release.sh --upload                   # 构建后上传 TestFlight
 ```
 
-脚本做的事 = CI 的 Setup Code Signing + Build & Export：证书进登录钥匙串 → 描述文件按 UUID 装两处 → 生成 ExportOptions.plist → `dart setup.dart ios --env stable ...`。`--upload` 还需 `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_API_KEY`。
+脚本调用 `bash ios/scripts/build_ios.sh archive --env stable ...`。`--upload` 还需 `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_API_KEY`。
 
 要点：**构建号必须比 TestFlight 上已上传的大**（本地传之前先看一眼上次的号），否则上传被拒。
 
 ## CI 流水线（`.github/workflows/build-ios-fastlane.yaml`）
+
+- pre tag 和手动运行只做无签名 Release 验证，保存 Actions artifact。
+- 正式 `vX.Y.Z` tag push 才执行签名构建、添加 GitHub Release 附件并上传 TestFlight。
+- Flutter、Go 和 CA bundle pin 从 `build.yaml` 读取；通用 build matrix 不再包含 iOS。
+
+正式流程：
 
 1. 环境：Go / Flutter / Xcode / Ruby + bundler。
 2. `flutter precache --ios`、`pod install`。
 3. **Setup Code Signing**：建 `build.keychain` 并放进搜索列表、导入 `IOS_CERTIFICATE` p12、`set-key-partition-list`、再 `unlock-keychain`；把仓库里两个描述文件按**内嵌 UUID** 装到两处：
    - `~/Library/MobileDevice/Provisioning Profiles/`（codesign/export 用）
    - `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`（archive 的 GatherProvisioningInputs 用）
-4. **Build & Export**：写 `ExportOptions.plist`（manual 签名 + profile UUID）→ 再解锁一次钥匙串并打印 `find-identity` → `dart setup.dart ios ...` → 产出 `dist/ToWorld-ios-arm64.ipa`。**这一步带看门狗**，见下。
-5. **fastlane 上传**：`bundle exec fastlane deploy_testflight`（只上传，不做构建）。
+4. **Build & Export**：写 `ExportOptions.plist` → 解锁钥匙串 → `build_ios.sh archive`，产出
+   `dist/ToWorld-<version>-ios-arm64.ipa`、SHA256 和来源 JSON。验证 Runner/PacketTunnel 的签名、VPN entitlement 和 App Group。
+5. **保存 artifact**：发布前保存这份 IPA。等待同 tag、同 commit 的通用 build 成功并创建 Release 后添加附件。
+6. **fastlane 上传**：独立 job 校验已保存的 IPA 并上传 TestFlight。失败后只重试发布 job，避免重编译不同的签名字节。
+
+COS 配置与首次 dry-run/staging 验证见 [`tool/distribution/README.md`](../tool/distribution/README.md)。
+无签名验证产物仅保存在 CI；签名 IPA 只进入 GitHub Release 和 TestFlight，不上传 COS。
 
 ## 关键非显然约束
 

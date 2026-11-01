@@ -332,8 +332,6 @@ jobs:
     needs: [ dart, plugins, go, android, rust, windows-helper-test ]
     runs-on: ${{ matrix.os }}
     strategy:
-      # One platform failing should not cancel the rest: iOS is the only one
-      # built on macOS, and its artifacts are worth having while it is fixed.
       fail-fast: false
       matrix:
         include:
@@ -349,9 +347,6 @@ jobs:
             os: macos-15-intel
             arch: amd64
           - platform: macos
-            os: macos-latest
-            arch: arm64
-          - platform: ios
             os: macos-latest
             arch: arm64
           - platform: windows
@@ -451,30 +446,9 @@ jobs:
           echo "$CA_BUNDLE_SHA256  $bundle" | sha256sum -c -
 
       - name: Setup
-        if: ${{ !startsWith(matrix.platform, 'ios') }}
         env:
           ANDROID_NDK_HOME: ${{ steps.build-ndk.outputs.ndk-path }}
         run: dart setup.dart ${{ matrix.platform }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }} -v
-
-      - name: Build iOS core
-        if: startsWith(matrix.platform, 'ios')
-        # Runner links libclash/ios/Mobile.xcframework, so it has to exist
-        # before Xcode runs. The code-asset hook reports its output too late
-        # for that, so the slices are built explicitly first.
-        run: |
-          cd plugins/setup/setup_hooks
-          dart pub get
-          dart run bin/build_ios.dart
-
-      - name: Build iOS
-        if: startsWith(matrix.platform, 'ios')
-        run: |
-          version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          flutter build ios --release --no-codesign
-          mkdir -p dist/Payload
-          cp -R build/ios/iphoneos/Runner.app dist/Payload/
-          cd dist && zip -r "ToWorld-${version}-ios-arm64.ipa" Payload/
-          rm -rf Payload
 
       - name: Upload
         uses: actions/upload-artifact@v4

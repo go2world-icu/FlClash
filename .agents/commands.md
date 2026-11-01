@@ -8,14 +8,16 @@ Update submodules first. The ClashMeta Go core lives in `core/Clash.Meta/`.
 git submodule update --init --recursive
 ```
 
-Full package build, including Go core, Flutter, and packaging, runs through `setup.dart`:
+Android/desktop package builds, including Go core, Flutter, and packaging, run through `setup.dart`.
+iOS uses its fork-owned script:
 
 ```bash
 dart setup.dart macos
 dart setup.dart linux
 dart setup.dart windows
 dart setup.dart android
-dart setup.dart ios          # macOS only; see .agents/release-ios.md for signing
+bash ios/scripts/build_ios.sh verify --env pre   # macOS, unsigned compilation check
+# For signed IPA: ios/scripts/ios_release.sh; see .agents/release-ios.md.
 ```
 
 iOS signing + TestFlight publishing has its own CI flow — see [release-ios.md](release-ios.md).
