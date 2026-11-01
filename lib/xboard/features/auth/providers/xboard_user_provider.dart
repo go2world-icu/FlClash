@@ -20,6 +20,9 @@ import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
+import 'package:fl_clash/xboard/features/auth/providers/subscription_info_provider.dart';
+
+export 'subscription_info_provider.dart' show subscriptionInfoProvider;
 
 // 初始化文件级日志器
 final _logger = FileLogger('xboard_user_provider.dart');
@@ -28,10 +31,6 @@ final _logger = FileLogger('xboard_user_provider.dart');
 final userInfoProvider = NotifierProvider<_DomainUserHolder, DomainUser?>(
   _DomainUserHolder.new,
 );
-final subscriptionInfoProvider =
-    NotifierProvider<_DomainSubscriptionHolder, DomainSubscription?>(
-      _DomainSubscriptionHolder.new,
-    );
 final userUIStateProvider = NotifierProvider<_UIStateHolder, UIState>(
   _UIStateHolder.new,
 );
@@ -40,12 +39,6 @@ class _DomainUserHolder extends Notifier<DomainUser?> {
   @override
   DomainUser? build() => null;
   void set(DomainUser? value) => state = value;
-}
-
-class _DomainSubscriptionHolder extends Notifier<DomainSubscription?> {
-  @override
-  DomainSubscription? build() => null;
-  void set(DomainSubscription? value) => state = value;
 }
 
 class _UIStateHolder extends Notifier<UIState> {

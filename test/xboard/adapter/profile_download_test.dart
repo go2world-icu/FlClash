@@ -7,7 +7,7 @@ import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/xboard/adapter/profile_download.dart';
 import 'package:fl_clash/xboard/domain/models/subscription.dart';
-import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
+import 'package:fl_clash/xboard/features/auth/providers/subscription_info_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';

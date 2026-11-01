@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:fl_clash/common/constant.dart';
 import 'package:fl_clash/common/provider_reader.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
-import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
+import 'package:fl_clash/xboard/features/auth/providers/subscription_info_provider.dart';
 import 'package:fl_clash/xboard/features/subscription/services/subscription_downloader.dart';
 
 Future<Response<Uint8List>?> downloadXBoardProfile(
