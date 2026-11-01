@@ -77,7 +77,8 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `lib/bootstrap.dart` | `navigationPort = const XBoardNavigationPort();` | `lib/xboard/navigation_port.dart` |
 | `lib/application.dart` | `mobileManagerStack(state)`, `preloadXBoard(ref)`, `buildXBoardHome()` | `lib/manager/ios_manager.dart`, `lib/xboard/bridge.dart` |
 | `lib/application.dart` | `buildXBoardHome()` returns the panel's `XBoardShellHome` on every platform — so the shell itself (the start button at the dock's end) is the fork's | `lib/xboard/home_shell.dart` |
-| `lib/common/path.dart` | `forkDataDir(supportDirectory)` | `lib/common/data_dir.dart` |
+| `lib/common/path.dart` | `forkDataDir(supportDirectory)`, `forkTempDir(temporaryDirectory)` | `lib/common/data_dir.dart` |
+| `lib/common/request.dart` | `downloadXBoardProfile` before the ordinary file download | `lib/xboard/adapter/profile_download.dart` |
 | `lib/providers/actions/setup.dart` | `shouldDeferApply(ref, isBoot: …)` | `lib/core/ios_lifecycle.dart` |
 | `lib/providers/state/navigation.dart` | the `iosCoreOff` filter | *(still inline — small and self-contained)* |
 | `core/config.go` | `loadConfigForPlatform(path)`, `loadConfigForPlatformLimits(cfg)` | `core/config_{ios,default}.go` |

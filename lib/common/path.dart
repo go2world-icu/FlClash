@@ -43,7 +43,7 @@ class AppPath {
   void _bind() {
     _dataDir = ResolveOnce(dataDirForPlatform);
     _downloadDir = ResolveOnce(downloadDirectory);
-    _tempDir = ResolveOnce(temporaryDirectory);
+    _tempDir = ResolveOnce(() => forkTempDir(temporaryDirectory));
     cacheDirectory().then(cacheDir.complete);
   }
 

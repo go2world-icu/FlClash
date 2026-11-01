@@ -97,8 +97,31 @@ iOS 现在和安卓共用同一个外壳和仪表盘，这三颗点挂在**仪�
   仍会把同一份配置交给 core，起不来会以 core 的错误呈现。
 - 带 age 密钥时一律走 core：解密只有 core 做得了。
 
-上游自己的加订阅路径（`lib/providers/actions/profiles.dart` 等）仍在直接调
-`validateProfile`，iOS 上隧道没开时照样报这个错；那是上游行为，fork 不动。
+普通配置刷新（仪表盘配置卡、配置详情和自动更新）及文件导入仍由上游的
+`ProfilesAction` / `Profile.saveFile` 调用 `validateProfile`。它们的 `appPath.tempFilePath`
+通过 `lib/common/data_dir.dart` 的 `forkTempDir` 在 iOS 解析到 App Group 的
+`Library/Caches/<appName>`，以便 PacketTunnel 读取临时文件；其他平台继续使用系统临时目录。
+不能只为 XBoard 导入暂存共享副本，否则普通配置刷新仍会把 Runner 缓存路径传给扩展并报
+`operation not permitted`。没有 App Group 的未签名环境保留系统临时目录回退。
+普通上游路径在隧道没开时仍要求 core 校验；本地结构校验降级只属于面板导入。
+
+普通配置刷新通过 `Request.getFileResponseForUrl` 的 `downloadXBoardProfile` 接缝识别 iOS 面板订阅：
+当前账户缓存的 `subscribeUrl` 要精确匹配；配置订阅源按 scheme/host/port 匹配。不能只认配置源域名，
+账户返回的原始订阅 URL 可能属于另一个域名。匹配后复用 `SubscriptionDownloader.fetchSubscription` 的
+原 URL + 配置 SOCKS5 代理竞速，不改写路径或 token，不创建 Profile、不更新 provider 状态。
+响应原字节和订阅头仍交给上游保存流程；其他下载沿用原逻辑。普通刷新保留 20 秒总预算，
+面板导入保留 30 秒及竞速内的配置校验，取消和超时均关闭客户端。
+
+## 配置重载未回复与隧道断开
+
+`Core did not answer setupConfig` 表示服务没有返回回复，不能直接当作 YAML 校验错误或内存不足。
+Swift 通道在 VPN 会话不再可用、发送失败或 NE 回复为空时返回 nil；普通配置错误有独立的错误响应。
+`ne_stderr.log` 每次启动会覆盖，排查必须看故障同一轮的日志和对应设备终止报告。
+`setupConfig begin/answered` 日志只记录扩展是否收到/回复及可用内存，不记录配置或订阅凭据。
+
+`loadConfigWithBase` 已解析配置之后，iOS 的 `loadConfigForPlatformLimits` 在 geodata 齐全时直接复用结果，
+避免再次构建整份配置；缺库时仍保留原过滤路径。这个优化减少重载分配，不能证明所有偶发断开都由内存导致。
+TUN 仍由 PacketTunnel 持有，重载不重新创建。
 
 ## App 通道的 Android-only 方法
 

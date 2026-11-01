@@ -101,3 +101,27 @@ reported violations are unchanged upstream comments (up to 48% of a file's added
 preserve. The merge-resolution check excludes lines already in either parent and enforces the normal 5% cap on
 new fork lines: 21 files, 66 added lines, two standalone comments, no violation. For this merge only, use the hook's
 COMMENT_DENSITY_MAX=50 override for the imported-comment check; do not persist that setting or apply it to new code.
+
+## Device follow-up: ordinary profile refresh
+
+A real-device refresh exposed a path not exercised by panel-import tests: the dashboard delegates to upstream
+ProfilesAction/Profile.saveFile. Its temporary file must be in the shared App Group cache, not Runner's cache.
+Keep forkTempDir in the path resolver; do not duplicate the profile updater in the dashboard.
+
+Ordinary refresh also used one Request route while panel import raced DIRECT and configured SOCKS5 routes.
+They now share a fetch-only SubscriptionDownloader entry point; bytes and subscription headers return to the
+upstream updater without creating another profile. Recognize the cached account subscribeUrl as well as configured
+subscription origins: the account URL can use a different host. Do not rewrite its path or token based on that
+host difference. A timeout with the VPN off is not evidence of a local proxy listener failure.
+
+The iOS limits hook also reparsed an already parsed base config even when all required geodata was present.
+It now reuses that config in the no-filter case; this pre-existing fork behavior increases reload allocations,
+but neither its presence nor no_response alone proves the cause of an intermittent tunnel termination.
+NE setupConfig begin/answered markers record available memory without configuration contents. Match these with
+the failing launch's ne_stderr.log and device termination report; later launches overwrite the log.
+
+Follow-up checks: 174 focused Flutter tests passed, analysis retained only the 161 existing infos, and the iOS
+configuration regressions passed both top-level tests and all five subcases using the iOS source file set.
+The complete package test set cannot be built with the ios tag because desktop IPC tests require excluded symbols;
+use the targeted file set rather than changing those unrelated tests. Fresh device and simulator frameworks built.
+The unsigned iOS Profile application also built successfully (165.4 MB); no install or launch was performed.

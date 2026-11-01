@@ -57,6 +57,10 @@ const recreateTunOnReload = false
 // parses. Upstream calls this hook from withPlatformLimits, which every load
 // path runs through.
 func loadConfigForPlatformLimits(cfg *config.Config) *config.Config {
+	if !geodataMissing(geoSiteFileName) &&
+		(!geodataMissing(geoIpFileName) || !geodataMissing(asnFileName)) {
+		return cfg
+	}
 	path := filepath.Join(constant.Path.HomeDir(), "config.yaml")
 	if _, err := os.Stat(path); err != nil {
 		return cfg

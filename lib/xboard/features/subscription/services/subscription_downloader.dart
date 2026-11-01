@@ -43,14 +43,54 @@ class SubscriptionDownloader {
     bool enableRacing = true,
     SubscriptionCancellation? cancellation,
   }) async {
+    final result = await fetchSubscription(
+      url,
+      proxyUrls: enableRacing ? null : const [],
+      cancellation: cancellation,
+      validate: (bytes) async {
+        final content = utf8.decode(bytes);
+        final localError = xboardValidateConfigContent(content);
+        if (localError.isNotEmpty) throw FormatException(localError);
+        final coreError = await xboardValidateConfigData(content);
+        if (coreError.isNotEmpty) throw FormatException(coreError);
+      },
+    );
+    final profile = Profile.normal(url: url);
+    final saved = await profile.saveFile(
+      result.bytes,
+      validate: xboardValidateProfile,
+    );
+    final disposition = result.headers['content-disposition'];
+    final match = disposition == null
+        ? null
+        : RegExp(r'filename="?([^";\n]+)"?').firstMatch(disposition.join(';'));
+    final userInfo = result.headers['subscription-userinfo']?.join(';');
+    return saved.copyWith(
+      label: match?.group(1)?.trim() ?? saved.id.toString(),
+      subscriptionInfo: userInfo == null
+          ? null
+          : SubscriptionInfo.formHString(userInfo),
+      lastUpdateDate: DateTime.now(),
+    );
+  }
+
+  static Future<SubscriptionDownload> fetchSubscription(
+    String url, {
+    List<String>? proxyUrls,
+    SubscriptionCancellation? cancellation,
+    Duration timeout = _timeout,
+    Map<String, Object> headers = const {},
+    Future<void> Function(Uint8List)? validate,
+    Future<HttpClient> Function(Uri, String?)? createClient,
+  }) async {
     final uri = Uri.parse(url);
     if (uri.scheme != 'https') {
       throw const FormatException('Subscription URL must use HTTPS');
     }
     final active = cancellation ?? SubscriptionCancellation();
-    final proxies = enableRacing ? XBoardConfig.allProxyUrls : <String>[];
+    final proxies = proxyUrls ?? XBoardConfig.allProxyUrls;
     final routes = <String?>[null, ...proxies];
-    final winner = Completer<_Downloaded>();
+    final winner = Completer<SubscriptionDownload>();
     var next = 0;
     var finished = 0;
     Object? firstError;
@@ -61,10 +101,16 @@ class SubscriptionDownloader {
           next < routes.length) {
         final proxy = routes[next++];
         try {
-          final candidate = await _download(uri, proxy, active);
+          final candidate = await _download(
+            uri,
+            proxy,
+            active,
+            headers: headers,
+            validate: validate,
+            createClient: createClient,
+          );
           if (!winner.isCompleted && !active.isCancelled) {
             winner.complete(candidate);
-            active.cancel();
             return;
           }
         } catch (error) {
@@ -82,29 +128,29 @@ class SubscriptionDownloader {
 
     final workers = [for (var i = 0; i < 3 && i < routes.length; i++) worker()];
     try {
-      final result = await winner.future.timeout(_timeout);
-      final profile = Profile.normal(url: url);
-      final saved = await profile.saveFile(
-        utf8.encode(result.content),
-        validate: xboardValidateProfile,
-      );
-      return saved.copyWith(
-        label: result.label ?? saved.id.toString(),
-        subscriptionInfo: result.subscriptionInfo,
-        lastUpdateDate: DateTime.now(),
-      );
+      return await Future.any([
+        winner.future,
+        active.whenCancelled.then<SubscriptionDownload>(
+          (_) => throw const HttpException('Subscription download cancelled'),
+        ),
+      ]).timeout(timeout);
     } finally {
       active.cancel();
       unawaited(Future.wait(workers));
     }
   }
 
-  static Future<_Downloaded> _download(
+  static Future<SubscriptionDownload> _download(
     Uri uri,
     String? proxy,
-    SubscriptionCancellation cancellation,
-  ) async {
-    final client = await XBoardTransport.create(uri, proxyUrl: proxy);
+    SubscriptionCancellation cancellation, {
+    required Map<String, Object> headers,
+    required Future<void> Function(Uint8List)? validate,
+    required Future<HttpClient> Function(Uri, String?)? createClient,
+  }) async {
+    final client = await (createClient != null
+        ? createClient(uri, proxy)
+        : XBoardTransport.create(uri, proxyUrl: proxy));
     cancellation.attach(client);
     client.connectionTimeout = _timeout;
     try {
@@ -112,8 +158,8 @@ class SubscriptionDownloader {
         throw const HttpException('Subscription import cancelled');
       }
       final request = await client.getUrl(uri).timeout(_timeout);
-      request.followRedirects = false;
       request.headers.set(HttpHeaders.userAgentHeader, globalState.ua);
+      headers.forEach(request.headers.set);
       final response = await request.close().timeout(_timeout);
       if (response.statusCode != HttpStatus.ok) {
         throw HttpException('HTTP ${response.statusCode}');
@@ -130,21 +176,13 @@ class SubscriptionDownloader {
             builder.add(chunk);
           })
           .timeout(_timeout);
-      final content = utf8.decode(builder.takeBytes());
-      final localError = xboardValidateConfigContent(content);
-      if (localError.isNotEmpty) throw FormatException(localError);
-      final coreError = await xboardValidateConfigData(content);
-      if (coreError.isNotEmpty) throw FormatException(coreError);
-      final disposition = response.headers.value('content-disposition');
-      final match = disposition == null
-          ? null
-          : RegExp(r'filename="?([^";\n]+)"?').firstMatch(disposition);
-      final userInfo = response.headers.value('subscription-userinfo');
-      return _Downloaded(
-        content,
-        match?.group(1)?.trim(),
-        userInfo == null ? null : SubscriptionInfo.formHString(userInfo),
-      );
+      final bytes = builder.takeBytes();
+      await validate?.call(bytes);
+      final responseHeaders = <String, List<String>>{};
+      response.headers.forEach((name, values) {
+        responseHeaders[name.toLowerCase()] = List.of(values);
+      });
+      return SubscriptionDownload(bytes, responseHeaders);
     } finally {
       cancellation.detach(client);
       client.close(force: true);
@@ -152,10 +190,9 @@ class SubscriptionDownloader {
   }
 }
 
-class _Downloaded {
-  final String content;
-  final String? label;
-  final SubscriptionInfo? subscriptionInfo;
+class SubscriptionDownload {
+  final Uint8List bytes;
+  final Map<String, List<String>> headers;
 
-  _Downloaded(this.content, this.label, this.subscriptionInfo);
+  SubscriptionDownload(this.bytes, this.headers);
 }

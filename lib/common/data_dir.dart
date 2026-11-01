@@ -36,6 +36,18 @@ Future<Directory> forkDataDir(
   return _appSubdirectory(await supportDirectory());
 }
 
+Future<Directory> forkTempDir(
+  Future<Directory> Function() temporaryDirectory, {
+  bool? isIOS,
+  Future<String?> Function()? containerPath,
+}) async {
+  if (!(isIOS ?? system.isIOS)) return temporaryDirectory();
+  final sharedPath = await (containerPath ?? app!.getContainerPath)();
+  if (sharedPath == null) return temporaryDirectory();
+  final directory = Directory(join(sharedPath, 'Library', 'Caches', appName));
+  return directory.create(recursive: true);
+}
+
 Future<Directory> _appSubdirectory(Directory supportDirectory) async {
   final dir = Directory(join(supportDirectory.path, appName));
   await dir.create(recursive: true);

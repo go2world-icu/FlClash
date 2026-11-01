@@ -8,6 +8,7 @@ import 'package:dio/io.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/adapter/profile_download.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
 class Request {
@@ -63,6 +64,13 @@ class Request {
 
   Future<Response<Uint8List>> getFileResponseForUrl(String url) async {
     try {
+      final target = downloadTarget(url);
+      final response = await downloadXBoardProfile(
+        target.uri,
+        read: _read,
+        headers: target.headers,
+      );
+      if (response != null) return response;
       return await _download<Uint8List>(url, ResponseType.bytes);
     } catch (e) {
       commonPrint.log(
