@@ -67,7 +67,8 @@ object or failed CDN validation aborts before advancing channels. Channels have 
 cache policy; configure CDN rules to respect it. Urgent channel changes may require a CDN
 cache purge. An older release cannot replace a newer channel recommendation.
 
-COS accepts Android, Windows, macOS and Linux installers only. iOS IPA files and their
+COS accepts Android, Windows, macOS and Linux installers only. Windows uploads include
+only EXE installers; ZIP archives remain available on GitHub Release. iOS IPA files and their
 release records stay in GitHub Release / TestFlight and are excluded even during manual
 backfills. iOS workflow completion does not trigger COS publication.
 

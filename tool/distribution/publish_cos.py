@@ -28,11 +28,11 @@ INSTALLER = re.compile(
     r'(?:ToWorld|FlClash)-(?P<version>[\d.]+)-'
     r'(?P<platform>android|windows|macos|linux)-'
     r'(?P<architecture>arm64-v8a|armeabi-v7a|x86_64|amd64|arm64|aarch64)'
-    r'(?P<setup>-setup)?\.(?P<format>apk|exe|zip|dmg|deb|rpm|AppImage)\Z'
+    r'(?P<setup>-setup)?\.(?P<format>apk|exe|dmg|deb|rpm|AppImage)\Z'
 )
 FORMATS = {
     'android': {'apk'},
-    'windows': {'exe', 'zip'},
+    'windows': {'exe'},
     'macos': {'dmg'},
     'linux': {'deb', 'rpm', 'AppImage'},
 }

@@ -289,6 +289,26 @@ class CosTests(unittest.TestCase):
             )
         self.assertIsNone(cos.installer({'name': 'ToWorld-0.9.3-ios-arm64.exe'}, TAG))
 
+    def test_windows_zip_archives_are_excluded_from_cos(self):
+        for brand in ('ToWorld', 'FlClash'):
+            with self.subTest(brand=brand):
+                installers = [
+                    f'{brand}-0.9.3-windows-{arch}-setup.exe'
+                    for arch in ('amd64', 'arm64')
+                ]
+                archives = [
+                    f'{brand}-0.9.3-windows-{arch}.zip'
+                    for arch in ('amd64', 'arm64')
+                ]
+                source = {
+                    'tag_name': TAG,
+                    'assets': [{'name': name} for name in installers + archives],
+                }
+                self.assertEqual(
+                    [asset['name'] for asset, _ in cos.release_installers(source)],
+                    installers,
+                )
+
     @unittest.skipUnless(
         importlib.util.find_spec('qcloud_cos'), 'COS SDK is only needed by the uploader'
     )
@@ -325,7 +345,7 @@ class CosTests(unittest.TestCase):
     def test_all_existing_installer_formats_are_supported(self):
         for platform, arch, formats in (
             ('android', 'arm64-v8a', ['apk']),
-            ('windows', 'arm64', ['exe', 'zip']),
+            ('windows', 'arm64', ['exe']),
             ('macos', 'amd64', ['dmg']),
             ('linux', 'amd64', ['deb', 'rpm', 'AppImage']),
         ):
