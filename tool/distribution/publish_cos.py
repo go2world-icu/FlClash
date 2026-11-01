@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import io
 import json
@@ -109,6 +110,7 @@ def verify_cdn(url, expected, headers=None):
                     digest.update(chunk)
             if digest.hexdigest() != expected:
                 raise ValueError('CDN returned different bytes')
+            print(f'Verified CDN: {url}', flush=True)
             return
         except (OSError, ValueError):
             if attempt == 2:
@@ -223,53 +225,59 @@ def publish(release, commit, config, store, directory, staging=False):
     download_headers = {'Referer': config['referer']} if config.get('referer') else {}
     public_url(base, prefix)
     manifests = {}
-    for asset, target in release_installers(release):
-        name = asset['name']
-        subprocess.run(
-            [
-                'gh',
-                'release',
-                'download',
-                tag,
-                '--repo',
-                REPOSITORY,
-                '--pattern',
-                name,
-                '--dir',
-                str(directory),
-            ],
-            check=True,
-        )
-        path = directory / name
-        digest = sha256(path)
-        if path.stat().st_size != asset['size'] or asset.get('digest') not in (
-            None,
-            'sha256:' + digest,
-        ):
-            raise ValueError(f'GitHub asset integrity check failed: {name}')
-        key = f'{prefix}/releases/{tag}/{target["platform"]}/{target["architecture"]}/{name}'
-        url = public_url(base, key)
-        with path.open('rb') as stream:
-            store.put(
-                key,
-                stream,
-                asset['size'],
-                digest,
-                mimetypes.guess_type(name)[0] or 'application/octet-stream',
-                True,
+    with ThreadPoolExecutor(max_workers=4) as verifier:
+        checks = []
+        for asset, target in release_installers(release):
+            name = asset['name']
+            print(f'Downloading GitHub asset: {name}', flush=True)
+            subprocess.run(
+                [
+                    'gh',
+                    'release',
+                    'download',
+                    tag,
+                    '--repo',
+                    REPOSITORY,
+                    '--pattern',
+                    name,
+                    '--dir',
+                    str(directory),
+                ],
+                check=True,
             )
-        verify_cdn(url, digest, download_headers)
-        manifests.setdefault(target['platform'], []).append(
-            {
-                **target,
-                'fileName': name,
-                'size': asset['size'],
-                'sha256': digest,
-                'url': url,
-                'headers': download_headers,
-                'githubUrl': asset['browser_download_url'],
-            }
-        )
+            path = directory / name
+            digest = sha256(path)
+            if path.stat().st_size != asset['size'] or asset.get('digest') not in (
+                None,
+                'sha256:' + digest,
+            ):
+                raise ValueError(f'GitHub asset integrity check failed: {name}')
+            key = f'{prefix}/releases/{tag}/{target["platform"]}/{target["architecture"]}/{name}'
+            url = public_url(base, key)
+            with path.open('rb') as stream:
+                store.put(
+                    key,
+                    stream,
+                    asset['size'],
+                    digest,
+                    mimetypes.guess_type(name)[0] or 'application/octet-stream',
+                    True,
+                )
+            print(f'Uploaded or reused COS object: {key}', flush=True)
+            checks.append(verifier.submit(verify_cdn, url, digest, download_headers))
+            manifests.setdefault(target['platform'], []).append(
+                {
+                    **target,
+                    'fileName': name,
+                    'size': asset['size'],
+                    'sha256': digest,
+                    'url': url,
+                    'headers': download_headers,
+                    'githubUrl': asset['browser_download_url'],
+                }
+            )
+        for check in checks:
+            check.result()
     if not manifests:
         raise ValueError('Release contains no supported installers')
     for platform, files in manifests.items():

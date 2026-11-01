@@ -8,6 +8,7 @@ import plistlib
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 import zipfile
 from types import SimpleNamespace
@@ -432,6 +433,45 @@ class CosTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, self.assertRaises(ValueError):
             self.publish_fixture(Path(directory), store, cdn_error=True)
         self.assertFalse(any('/channels/' in key for key in store.writes))
+
+    def test_parallel_cdn_checks_finish_before_any_index_is_published(self):
+        store = MemoryStore()
+        content = b'installer'
+        names = [f'ToWorld-0.9.3-linux-{arch}.deb' for arch in ('amd64', 'arm64')]
+        source = {
+            'tag_name': TAG,
+            'assets': [
+                {
+                    'name': name,
+                    'size': len(content),
+                    'browser_download_url': 'https://github.com/example/' + name,
+                }
+                for name in names
+            ],
+        }
+        barrier = threading.Barrier(2)
+
+        def verify(url, *args):
+            barrier.wait(timeout=5)
+            if '/arm64/' in url:
+                raise ValueError('CDN failure')
+
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            for name in names:
+                (directory / name).write_bytes(content)
+            with patch.object(cos.subprocess, 'run'), patch.object(
+                cos, 'verify_cdn', side_effect=verify
+            ), self.assertRaisesRegex(ValueError, 'CDN failure'):
+                cos.publish(
+                    source,
+                    COMMIT,
+                    {'prefix': 'toworld', 'publicBaseUrl': 'https://cdn.example.com'},
+                    store,
+                    directory,
+                )
+        self.assertEqual(len(store.writes), 2)
+        self.assertFalse(any(key.endswith('.json') for key in store.writes))
 
     def test_retries_preserve_immutable_manifest_and_artifact_bytes(self):
         store = MemoryStore()
