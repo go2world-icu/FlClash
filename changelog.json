@@ -4,12 +4,116 @@
     {
       "version": "0.9.3",
       "tag": "v0.9.3",
-      "date": "2026-10-28",
+      "date": "2026-11-02",
       "prerelease": false,
       "groups": [
         {
+          "type": "feat",
+          "entries": [
+            {
+              "id": "e8aac17",
+              "scope": "access",
+              "text": "Access control state shown in a bar at the bottom"
+            },
+            {
+              "id": "5d6552d",
+              "scope": "config",
+              "text": "Optional general overrides; settings apply sooner"
+            },
+            {
+              "id": "8176cce",
+              "scope": "dashboard",
+              "text": "IP quality cached for 3 days; simpler Android dashboard"
+            },
+            {
+              "id": "0817c3b",
+              "text": "Update the core to mihomo v1.19.33"
+            },
+            {
+              "id": "bbfafde",
+              "scope": "tray",
+              "text": "Colored tray status icons; monochrome option on macOS"
+            },
+            {
+              "id": "6928521",
+              "scope": "desktop",
+              "text": "Sidebar blur; Windows fixes; keeps system proxies FlClash didn't set"
+            },
+            {
+              "id": "eaaf3e3",
+              "scope": "profiles",
+              "text": "Profile QR codes, phone-to-TV links, more proxy fields"
+            },
+            {
+              "id": "0f9f89c",
+              "scope": "proxies",
+              "text": "Add proxies to local proxies; adjustable delay test timeout"
+            },
+            {
+              "id": "a4fc067",
+              "scope": "theme",
+              "text": "Higher-contrast dark mode and a refreshed app icon"
+            },
+            {
+              "id": "0d98a9d",
+              "scope": "ui",
+              "text": "iOS-style docked search and menus; bar buttons lift on hover"
+            },
+            {
+              "id": "ae902ed",
+              "scope": "ui",
+              "text": "iOS-style switches, stretchy sheets, menus and long-press reordering"
+            },
+            {
+              "id": "4837fb3",
+              "scope": "ui",
+              "text": "Pages scroll under the Android navigation bar"
+            },
+            {
+              "id": "09e7e56",
+              "scope": "core",
+              "text": "Clear the DNS cache by hand or on network change"
+            }
+          ]
+        },
+        {
           "type": "fix",
           "entries": [
+            {
+              "id": "0d7273d",
+              "scope": "ci",
+              "text": "Authorize installer objects and CDN reads"
+            },
+            {
+              "id": "d189eb8",
+              "scope": "ios",
+              "text": "Fix iOS subscription refresh downloads and shared-file validation"
+            },
+            {
+              "id": "631f484",
+              "scope": "fork",
+              "text": "Improve iOS panel initialization and subscription imports"
+            },
+            {
+              "id": "0855545",
+              "scope": "ios",
+              "text": "Fix missing geo databases on fresh iOS installations"
+            },
+            {
+              "id": "575ef1e",
+              "scope": "ios",
+              "text": "Fix subscription updates failing while the iOS VPN is connected"
+            },
+            {
+              "id": "ee6e5a0",
+              "scope": "xboard",
+              "text": "Bump socks5_proxy to 2.1.2"
+            },
+            {
+              "id": "64a56f9",
+              "scope": "xboard",
+              "text": "Preserve panel access and remembered credentials after relaunch"
+            },
             {
               "id": "c133f11",
               "scope": "ios,xboard",
@@ -44,6 +148,21 @@
               "id": "43e7fb1",
               "scope": "xboard",
               "text": "Harden routing, subscriptions, and account state"
+            },
+            {
+              "id": "99b3381",
+              "scope": "android",
+              "text": "Opening the app no longer reloads a running VPN"
+            }
+          ]
+        },
+        {
+          "type": "perf",
+          "entries": [
+            {
+              "id": "7035edd",
+              "scope": "editor",
+              "text": "Smoother editor for large files and in sheets"
             }
           ]
         }
