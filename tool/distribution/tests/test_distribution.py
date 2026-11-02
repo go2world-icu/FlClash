@@ -163,34 +163,35 @@ class ReleaseTests(unittest.TestCase):
             metadata = package.with_suffix('.json')
             metadata.write_text(json.dumps(record))
             self.assertEqual(release.validate_ios(directory, TAG, COMMIT), record)
-            record['distribution'] = 'unsigned'
-            metadata.write_text(json.dumps(record))
-            with self.assertRaises(ValueError):
-                release.validate_ios(directory, TAG, COMMIT)
-            record['distribution'] = 'app-store'
+            with patch.object(
+                sys,
+                'argv',
+                [
+                    'release_tools.py',
+                    'validate-ios',
+                    '--tag',
+                    TAG,
+                    '--commit',
+                    COMMIT,
+                    '--directory',
+                    str(directory),
+                ],
+            ), patch.object(release, 'github') as github:
+                release.main()
+            github.assert_not_called()
+            for key, value in (
+                ('tag', 'v0.9.2'),
+                ('commit', 'b' * 40),
+                ('distribution', 'unsigned'),
+                ('appEnv', 'pre'),
+            ):
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    metadata.write_text(json.dumps({**record, key: value}))
+                    release.validate_ios(directory, TAG, COMMIT)
             metadata.write_text(json.dumps(record))
             package.write_bytes(b'tampered package')
             with self.assertRaises(ValueError):
                 release.validate_ios(directory, TAG, COMMIT)
-
-    def test_moved_tag_cannot_publish_a_previously_built_ipa(self):
-        with patch.object(
-            release, 'tag_commit', return_value='b' * 40
-        ), self.assertRaises(ValueError):
-            release.wait_release(release.REPOSITORY, TAG, COMMIT, 0)
-
-    def test_a_failed_common_build_prevents_ios_release(self):
-        run = {
-            'id': 1,
-            'head_branch': TAG,
-            'head_sha': COMMIT,
-            'status': 'completed',
-            'conclusion': 'failure',
-        }
-        with patch.object(release, 'tag_commit', return_value=COMMIT), patch.object(
-            release, 'github', return_value={'workflow_runs': [run]}
-        ), self.assertRaises(ValueError):
-            release.wait_release(release.REPOSITORY, TAG, COMMIT, 5)
 
 
 class CosTests(unittest.TestCase):
@@ -507,6 +508,17 @@ class CosTests(unittest.TestCase):
 
 
 class IosScriptTests(unittest.TestCase):
+    def test_ios_publishing_depends_only_on_the_saved_build(self):
+        root = Path(__file__).resolve().parents[3]
+        workflow = (root / '.github/workflows/build-ios-fastlane.yaml').read_text()
+        for removed in ('github-release:', 'sync-mirror:', 'wait-release', 'attach-ios'):
+            self.assertNotIn(removed, workflow)
+        testflight = workflow.split('\n  testflight:\n', 1)[1]
+        self.assertIn('    needs: build-ios\n', testflight)
+        self.assertIn("    if: needs.build-ios.outputs.publish == 'true'\n", testflight)
+        self.assertIn('actions/download-artifact@v4', testflight)
+        self.assertIn('release_tools.py validate-ios', testflight)
+
     def test_verify_and_archive_commands_use_the_same_core_entry(self):
         script = Path(__file__).resolve().parents[3] / 'ios/scripts/build_ios.sh'
         for mode, expected in (('verify', '--no-codesign'), ('archive', 'build ipa')):

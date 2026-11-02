@@ -45,7 +45,8 @@ export IOS_CERTIFICATE_PASSWORD=...
 ## CI 流水线（`.github/workflows/build-ios-fastlane.yaml`）
 
 - pre tag 和手动运行只做无签名 Release 验证，保存 Actions artifact。
-- 正式 `vX.Y.Z` tag push 才执行签名构建、添加 GitHub Release 附件并上传 TestFlight。
+- 正式 `vX.Y.Z` tag push 才执行签名构建并上传 TestFlight。
+- iOS 不附加 GitHub Release 文件、不触发镜像同步；TestFlight 只依赖 iOS 构建成功。
 - Flutter、Go 和 CA bundle pin 从 `build.yaml` 读取；通用 build matrix 不再包含 iOS。
 
 正式流程：
@@ -57,11 +58,11 @@ export IOS_CERTIFICATE_PASSWORD=...
    - `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`（archive 的 GatherProvisioningInputs 用）
 4. **Build & Export**：写 `ExportOptions.plist` → 解锁钥匙串 → `build_ios.sh archive`，产出
    `dist/ToWorld-<version>-ios-arm64.ipa`、SHA256 和来源 JSON。验证 Runner/PacketTunnel 的签名、VPN entitlement 和 App Group。
-5. **保存 artifact**：发布前保存这份 IPA。等待同 tag、同 commit 的通用 build 成功并创建 Release 后添加附件。
+5. **保存 artifact**：发布前保存这份 IPA、来源 JSON 和 SHA256。
 6. **fastlane 上传**：独立 job 校验已保存的 IPA 并上传 TestFlight。失败后只重试发布 job，避免重编译不同的签名字节。
 
 COS 配置与首次 dry-run/staging 验证见 [`tool/distribution/README.md`](../tool/distribution/README.md)。
-无签名验证产物仅保存在 CI；签名 IPA 只进入 GitHub Release 和 TestFlight，不上传 COS。
+无签名验证产物仅保存在 CI；签名 IPA 保存在 Actions artifact 并上传 TestFlight，不上传 COS 或 GitHub Release。
 
 ## 关键非显然约束
 

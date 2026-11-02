@@ -3,16 +3,16 @@
 `build.yaml` owns the Android/desktop checks, packages and GitHub Release. The fork's
 `build-ios-fastlane.yaml` owns iOS; `publish-cos.yaml` mirrors stable Android/desktop installers.
 
-| Trigger | iOS | GitHub Release / TestFlight | COS |
+| Trigger | iOS | iOS distribution | COS |
 | --- | --- | --- | --- |
-| `vX.Y.Z-pre.N` | Unsigned Release verification | Neither | Skipped |
-| Manual iOS run | Unsigned Release verification | Neither | Skipped |
-| `vX.Y.Z` push | Signed archive/export | Attach IPA after the same tag/SHA's `build` succeeds, then upload to TestFlight | Mirror Android/desktop installers |
+| `vX.Y.Z-pre.N` | Unsigned Release verification | Actions artifact only | Skipped |
+| Manual iOS run | Unsigned Release verification | Actions artifact only | Skipped |
+| `vX.Y.Z` push | Signed archive/export | Actions artifact and TestFlight | Mirror Android/desktop installers |
 
-The iOS workflow saves its artifact before publishing. Re-run only the failed publishing
-job to reuse that signed IPA; re-running the build can produce different signed bytes and
-existing Release attachments are never overwritten. A failed common build blocks iOS
-publication. Fastlane uploads the IPA; Flutter owns archive/export so VPN entitlements are
+The iOS workflow saves its artifact before uploading to TestFlight. Re-run only a failed
+TestFlight job to reuse that signed IPA; re-running the build can produce different signed
+bytes. TestFlight depends only on the successful iOS build, not the common build or GitHub
+Release. Fastlane uploads the IPA; Flutter owns archive/export so VPN entitlements are
 embedded during signing. A TestFlight upload does not submit an App Store review.
 
 ## iOS entry point
@@ -69,8 +69,8 @@ cache purge. An older release cannot replace a newer channel recommendation.
 
 COS accepts Android, Windows, macOS and Linux installers only. Windows uploads include
 only EXE installers; ZIP archives remain available on GitHub Release. iOS IPA files and their
-release records stay in GitHub Release / TestFlight and are excluded even during manual
-backfills. iOS workflow completion does not trigger COS publication.
+release records stay in Actions artifacts, and signed IPAs go to TestFlight. iOS files are
+excluded from COS even during manual backfills. iOS workflow completion does not trigger COS publication.
 
 ## First validation and retries
 
@@ -93,7 +93,6 @@ python3 tool/distribution/publish_cos.py --tag v0.9.3 --dry-run
 ```
 
 The publisher uses Python and `gh`; it does not need Flutter, Go, submodules or Apple
-credentials. TestFlight uses the existing `ASC_*` secrets, signing uses the existing
-`IOS_CERTIFICATE` / `IOS_CERTIFICATE_PASSWORD`, and optional mirror dispatch uses
-`FlClash_AND_Publish_PAT`. iOS attachment completion dispatches the mirror again so it can
-pick up the late iOS assets.
+credentials. TestFlight uses the existing `ASC_*` secrets, and signing uses the existing
+`IOS_CERTIFICATE` / `IOS_CERTIFICATE_PASSWORD`. The iOS workflow does not attach GitHub
+Release files or dispatch mirror publication.

@@ -315,48 +315,8 @@ jobs:
           if-no-files-found: error
           overwrite: true
 
-  github-release:
-    needs: build-ios
-    if: needs.build-ios.outputs.publish == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 70
-    permissions:
-      contents: write
-      actions: read
-    env:
-      GH_TOKEN: ${{ github.token }}
-      RELEASE_TAG: ${{ needs.build-ios.outputs.tag }}
-      SOURCE_COMMIT: ${{ needs.build-ios.outputs.commit }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: artifact-ios-arm64
-          path: dist
-      - name: Wait for the matching build and GitHub Release
-        run: python3 tool/distribution/release_tools.py wait-release --tag "$RELEASE_TAG" --commit "$SOURCE_COMMIT"
-      - name: Attach verified iOS files
-        run: python3 tool/distribution/release_tools.py attach-ios --tag "$RELEASE_TAG" --commit "$SOURCE_COMMIT"
-
-  sync-mirror:
-    needs: [build-ios, github-release]
-    if: needs.build-ios.outputs.publish == 'true'
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.FlClash_AND_Publish_PAT }}
-      RELEASE_TAG: ${{ needs.build-ios.outputs.tag }}
-    steps:
-      - name: Sync completed Release to FlClash-Publish
-        run: |
-          if [[ -z "$GH_TOKEN" ]]; then
-            echo 'Mirror sync skipped: FlClash_AND_Publish_PAT is not configured'
-            exit 0
-          fi
-          python3 -c 'import json, os; print(json.dumps({"event_type": "new-release", "client_payload": {"tag": os.environ["RELEASE_TAG"]}}))' > /tmp/release-dispatch.json
-          gh api --method POST repos/go2world-icu/FlClash-Publish/dispatches --input /tmp/release-dispatch.json
-
   testflight:
-    needs: [build-ios, github-release]
+    needs: build-ios
     if: needs.build-ios.outputs.publish == 'true'
     runs-on: macos-latest
     timeout-minutes: 30

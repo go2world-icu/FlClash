@@ -7,7 +7,6 @@ import plistlib
 import re
 import shutil
 import subprocess
-import time
 import zipfile
 from pathlib import Path
 
@@ -217,58 +216,6 @@ def validate_ios(directory, tag, commit):
     return record
 
 
-def wait_release(repo, tag, commit, timeout):
-    if tag_commit(repo, tag) != commit:
-        raise ValueError('Tag moved since the iOS build')
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        runs = github(
-            f'repos/{repo}/actions/workflows/build.yaml/runs?head_sha={commit}&event=push&per_page=100'
-        )['workflow_runs']
-        matching = [
-            run
-            for run in runs
-            if run['head_branch'] == tag and run['head_sha'] == commit
-        ]
-        if matching:
-            run = max(matching, key=lambda item: item['id'])
-            if run['status'] == 'completed':
-                if run['conclusion'] != 'success':
-                    raise ValueError('The matching build workflow did not succeed')
-                return check_release(github(f'repos/{repo}/releases/tags/{tag}'), tag)
-        print('Waiting for the matching build workflow and Release', flush=True)
-        time.sleep(20)
-    raise TimeoutError('Timed out waiting for the matching build workflow')
-
-
-def attach_ios(repo, tag, commit, directory):
-    if tag_commit(repo, tag) != commit:
-        raise ValueError('Tag moved since the iOS build')
-    record = validate_ios(directory, tag, commit)
-    release = check_release(github(f'repos/{repo}/releases/tags/{tag}'), tag)
-    existing = {asset['name']: asset for asset in release['assets']}
-    package = Path(record['fileName'])
-    allowed = {
-        package.name,
-        package.with_suffix('.json').name,
-        package.name + '.sha256',
-    }
-    for path in sorted(Path(directory).iterdir()):
-        if not path.is_file() or path.name not in allowed:
-            raise ValueError('Unexpected file in the iOS artifact')
-        asset = existing.get(path.name)
-        if asset:
-            if (
-                asset.get('digest') != 'sha256:' + sha256(path)
-                or asset['size'] != path.stat().st_size
-            ):
-                raise ValueError(f'Release already has different bytes for {path.name}')
-            continue
-        subprocess.run(
-            ['gh', 'release', 'upload', tag, str(path), '--repo', repo], check=True
-        )
-
-
 def main():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest='command', required=True)
@@ -276,22 +223,15 @@ def main():
     record = commands.add_parser('record-ios')
     record.add_argument('--mode', choices=('verify', 'archive'), required=True)
     record.add_argument('--export-options-plist')
-    for name in ('wait-release', 'attach-ios', 'validate-ios'):
-        command = commands.add_parser(name)
-        command.add_argument('--repo', default=REPOSITORY)
-        command.add_argument('--tag', required=True)
-        command.add_argument('--commit', required=True)
-        command.add_argument('--directory', default='dist')
-        command.add_argument('--timeout', type=int, default=3600)
+    validate = commands.add_parser('validate-ios')
+    validate.add_argument('--tag', required=True)
+    validate.add_argument('--commit', required=True)
+    validate.add_argument('--directory', default='dist')
     args = parser.parse_args()
     if args.command == 'context':
         context()
     elif args.command == 'record-ios':
         record_ios(args.mode, args.export_options_plist)
-    elif args.command == 'wait-release':
-        wait_release(args.repo, args.tag, args.commit, args.timeout)
-    elif args.command == 'attach-ios':
-        attach_ios(args.repo, args.tag, args.commit, args.directory)
     else:
         validate_ios(args.directory, args.tag, args.commit)
 
