@@ -44,8 +44,9 @@ export IOS_CERTIFICATE_PASSWORD=...
 
 ## CI 流水线（`.github/workflows/build-ios-fastlane.yaml`）
 
-- pre tag 和手动运行只做无签名 Release 验证，保存 Actions artifact。
-- 正式 `vX.Y.Z` tag push 才执行签名构建并上传 TestFlight。
+- pre tag 自动运行、手动运行且 `upload_testflight=false`（默认）只做无签名 Release 验证，保存 Actions artifact。
+- 正式 `vX.Y.Z` tag push 或手动勾选 `upload_testflight` 时执行签名构建并上传 TestFlight。
+- 手动上传选择 `main`，应用版本取 `pubspec.yaml`，不需要新建 tag。可选 `build_number` 对验证和签名构建都生效；留空使用 pubspec 构建号，上传时必须大于 TestFlight 已有构建号。
 - iOS 不附加 GitHub Release 文件、不触发镜像同步；TestFlight 只依赖 iOS 构建成功。
 - Flutter、Go 和 CA bundle pin 从 `build.yaml` 读取；通用 build matrix 不再包含 iOS。
 

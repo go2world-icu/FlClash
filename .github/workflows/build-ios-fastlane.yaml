@@ -6,8 +6,12 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
+      upload_testflight:
+        description: '签名构建并上传 TestFlight'
+        type: boolean
+        default: false
       build_number:
-        description: '构建测试的可选 build number；手动运行只验证，不发布'
+        description: '可选 build number；留空使用 pubspec，上传时须大于已有构建号'
         required: false
         default: ''
 
@@ -36,6 +40,9 @@ jobs:
 
       - name: Resolve release context and pinned tools
         id: context
+        env:
+          UPLOAD_TESTFLIGHT: ${{ inputs.upload_testflight }}
+          BUILD_NUMBER_INPUT: ${{ inputs.build_number }}
         run: python3 tool/distribution/release_tools.py context
 
       - name: Test release tooling
@@ -89,15 +96,7 @@ jobs:
 
       - name: Verify unsigned iOS build
         if: steps.context.outputs.publish != 'true'
-        env:
-          BUILD_NUMBER_INPUT: ${{ inputs.build_number }}
-        run: |
-          args=()
-          if [[ -n "$BUILD_NUMBER_INPUT" ]]; then
-            [[ "$BUILD_NUMBER_INPUT" =~ ^[0-9]+$ ]] || exit 64
-            args+=(--build-number "$BUILD_NUMBER_INPUT")
-          fi
-          bash ios/scripts/build_ios.sh verify --env pre "${args[@]}" -v
+        run: bash ios/scripts/build_ios.sh verify --env pre --build-number "$IOS_BUILD_NUMBER" -v
 
       - name: Resolve bundle identifiers
         if: steps.context.outputs.publish == 'true'
@@ -298,7 +297,7 @@ jobs:
           verify_keychain
 
           BUILD_RC=0
-          bash ios/scripts/build_ios.sh archive --env stable --export-options-plist ExportOptions.plist -v &
+          bash ios/scripts/build_ios.sh archive --env stable --export-options-plist ExportOptions.plist --build-number "$IOS_BUILD_NUMBER" -v &
           BUILD_PID=$!
           start_watchdog
           trap 'kill "$WATCHDOG" 2>/dev/null || true' EXIT

@@ -6,7 +6,8 @@
 | Trigger | iOS | iOS distribution | COS |
 | --- | --- | --- | --- |
 | `vX.Y.Z-pre.N` | Unsigned Release verification | Actions artifact only | Skipped |
-| Manual iOS run | Unsigned Release verification | Actions artifact only | Skipped |
+| Manual iOS run, `upload_testflight=false` (default) | Unsigned Release verification | Actions artifact only | Skipped |
+| Manual iOS run, `upload_testflight=true` | Signed archive/export | Actions artifact and TestFlight | Skipped |
 | `vX.Y.Z` push | Signed archive/export | Actions artifact and TestFlight | Mirror Android/desktop installers |
 
 The iOS workflow saves its artifact before uploading to TestFlight. Re-run only a failed
@@ -14,6 +15,12 @@ TestFlight job to reuse that signed IPA; re-running the build can produce differ
 bytes. TestFlight depends only on the successful iOS build, not the common build or GitHub
 Release. Fastlane uploads the IPA; Flutter owns archive/export so VPN entitlements are
 embedded during signing. A TestFlight upload does not submit an App Store review.
+
+For a manual run, select `main` and enable `upload_testflight` to sign and upload.
+The application version comes from `pubspec.yaml`; no GitHub tag or Release is needed.
+The optional `build_number` overrides the build number in both build modes. Leaving it
+empty uses the pubspec build number; TestFlight uploads need a number greater than the
+one already uploaded. The source commit and application version remain in the artifact record.
 
 ## iOS entry point
 

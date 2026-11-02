@@ -47,8 +47,13 @@ class MemoryStore:
 
 class ReleaseTests(unittest.TestCase):
     def test_signed_ios_record_requires_vpn_entitlements_and_matching_app_groups(self):
-        for fault in (None, 'vpn', 'group'):
-            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as directory:
+        for ref, release_tag, fault in (
+            (TAG, '', None),
+            ('main', TAG, None),
+            ('main', TAG, 'vpn'),
+            ('main', TAG, 'group'),
+        ):
+            with self.subTest(ref=ref, fault=fault), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 ipa_dir = root / 'build/ios/ipa'
                 ipa_dir.mkdir(parents=True)
@@ -86,7 +91,10 @@ class ReleaseTests(unittest.TestCase):
                 previous = Path.cwd()
                 try:
                     os.chdir(root)
-                    with patch.dict(os.environ, {'GITHUB_REF_NAME': TAG}), patch.object(
+                    with patch.dict(
+                        os.environ,
+                        {'GITHUB_REF_NAME': ref, 'RELEASE_TAG': release_tag},
+                    ), patch.object(
                         release.subprocess, 'check_output', return_value=COMMIT
                     ), patch.object(release.subprocess, 'run', side_effect=codesign):
                         if fault:
@@ -107,18 +115,32 @@ class ReleaseTests(unittest.TestCase):
             with self.subTest(tag=tag), self.assertRaises(ValueError):
                 release.stable_version(tag)
 
-    def test_only_the_fork_stable_tag_push_enables_ios_publishing(self):
+    def test_ios_publishing_requires_a_stable_push_or_manual_opt_in(self):
         root = Path(__file__).resolve().parents[3]
         pins = (root / '.github/workflows/build.yaml').read_text()
-        for ref, event, repository, expected in (
-            ('refs/tags/v0.9.3', 'push', release.REPOSITORY, True),
-            ('refs/tags/v0.9.3-pre.9', 'push', release.REPOSITORY, False),
-            ('refs/heads/v0.9.3', 'push', release.REPOSITORY, False),
-            ('refs/tags/v0.9.3', 'workflow_dispatch', release.REPOSITORY, False),
-            ('refs/tags/v0.9.3', 'push', 'other/fork', False),
+        repo = release.REPOSITORY
+        manual = 'workflow_dispatch'
+        stable = 'refs/tags/v0.9.3'
+        pre = 'refs/tags/v0.9.3-pre.9'
+        branch = 'refs/heads/main'
+        for ref, event, repository, upload, build_number, expected in (
+            (stable, 'push', repo, '', '', True),
+            (pre, 'push', repo, '', '', False),
+            (pre, 'push', repo, 'true', '', False),
+            ('refs/heads/v0.9.3', 'push', repo, 'true', '', False),
+            (stable, manual, repo, '', '', False),
+            (branch, manual, repo, '', '', False),
+            (branch, manual, repo, 'false', '', False),
+            (branch, manual, repo, 'true', '', True),
+            (branch, manual, repo, 'true', '2026110203', True),
+            (pre, manual, repo, 'true', '', True),
+            (branch, manual, 'other/fork', 'true', '', False),
+            (branch, 'pull_request', repo, 'true', '', False),
+            (stable, 'push', 'other/fork', 'true', '', False),
         ):
             with self.subTest(
-                ref=ref, event=event, repository=repository
+                ref=ref, event=event, repository=repository, upload=upload,
+                build_number=build_number,
             ), tempfile.TemporaryDirectory() as directory:
                 output = Path(directory) / 'output'
                 env_file = Path(directory) / 'env'
@@ -131,20 +153,60 @@ class ReleaseTests(unittest.TestCase):
                     'GITHUB_REF': ref,
                     'GITHUB_EVENT_NAME': event,
                     'GITHUB_REPOSITORY': repository,
+                    'UPLOAD_TESTFLIGHT': upload,
+                    'BUILD_NUMBER_INPUT': build_number,
                     'GITHUB_OUTPUT': str(output),
                     'GITHUB_ENV': str(env_file),
                 }
                 previous = Path.cwd()
                 try:
                     os.chdir(directory)
-                    with patch.dict(os.environ, env), patch.object(
+                    with patch.dict(os.environ, env, clear=True), patch.object(
                         release.subprocess, 'check_output', return_value=COMMIT
                     ):
                         release.context()
                 finally:
                     os.chdir(previous)
                 self.assertIn(f'publish={str(expected).lower()}\n', output.read_text())
+                self.assertIn(
+                    f'app_env={"stable" if expected else "pre"}\n', output.read_text()
+                )
+                label = TAG if expected and event == 'workflow_dispatch' else (
+                    ref.removeprefix('refs/tags/') if ref.startswith('refs/tags/') else ''
+                )
+                self.assertIn(f'tag={label}\n', output.read_text())
+                self.assertIn(f'RELEASE_TAG={label}\n', env_file.read_text())
+                self.assertIn(
+                    f'IOS_BUILD_NUMBER={build_number or "2026110102"}\n',
+                    env_file.read_text(),
+                )
                 self.assertIn('CA_BUNDLE_SHA256=', env_file.read_text())
+
+    def test_invalid_ios_build_numbers_are_rejected_before_writing_ci_outputs(self):
+        for build_number in ('invalid', '-1', '123\nEXTRA=value'):
+            with self.subTest(build_number=build_number), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / 'pubspec.yaml').write_text('version: 0.9.3+2026110102\n')
+                env = {
+                    'GITHUB_REF': 'refs/heads/main',
+                    'GITHUB_EVENT_NAME': 'workflow_dispatch',
+                    'GITHUB_REPOSITORY': release.REPOSITORY,
+                    'UPLOAD_TESTFLIGHT': 'true',
+                    'BUILD_NUMBER_INPUT': build_number,
+                    'GITHUB_OUTPUT': str(root / 'output'),
+                    'GITHUB_ENV': str(root / 'env'),
+                }
+                previous = Path.cwd()
+                try:
+                    os.chdir(root)
+                    with patch.dict(os.environ, env, clear=True), self.assertRaisesRegex(
+                        ValueError, 'numeric iOS build number'
+                    ):
+                        release.context()
+                finally:
+                    os.chdir(previous)
+                self.assertFalse((root / 'output').exists())
+                self.assertFalse((root / 'env').exists())
 
     def test_unsigned_or_tampered_ios_artifact_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -518,18 +580,28 @@ class IosScriptTests(unittest.TestCase):
         self.assertIn("    if: needs.build-ios.outputs.publish == 'true'\n", testflight)
         self.assertIn('actions/download-artifact@v4', testflight)
         self.assertIn('release_tools.py validate-ios', testflight)
+        self.assertIn('UPLOAD_TESTFLIGHT: ${{ inputs.upload_testflight }}', workflow)
+        self.assertEqual(workflow.count('--build-number "$IOS_BUILD_NUMBER"'), 2)
 
     def test_verify_and_archive_commands_use_the_same_core_entry(self):
         script = Path(__file__).resolve().parents[3] / 'ios/scripts/build_ios.sh'
         for mode, expected in (('verify', '--no-codesign'), ('archive', 'build ipa')):
             result = subprocess.run(
-                ['bash', str(script), mode, '--dry-run'],
+                [
+                    'bash',
+                    str(script),
+                    mode,
+                    '--build-number',
+                    '2026110203',
+                    '--dry-run',
+                ],
                 check=True,
                 capture_output=True,
                 text=True,
             )
             self.assertIn('bin/build_ios.dart', result.stdout)
             self.assertIn(expected, result.stdout)
+            self.assertIn('--build-number=2026110203', result.stdout)
         result = subprocess.run(
             ['bash', str(script), 'verify', '--env', 'invalid', '--dry-run'],
             capture_output=True,

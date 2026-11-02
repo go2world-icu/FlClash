@@ -60,16 +60,29 @@ def check_release(release, tag):
 
 def context():
     ref = os.environ['GITHUB_REF']
+    event = os.environ['GITHUB_EVENT_NAME']
     tag = ref.removeprefix('refs/tags/') if ref.startswith('refs/tags/') else ''
     publish = (
-        os.environ['GITHUB_EVENT_NAME'] == 'push'
-        and os.environ['GITHUB_REPOSITORY'] == REPOSITORY
-        and STABLE_TAG.fullmatch(tag) is not None
+        os.environ['GITHUB_REPOSITORY'] == REPOSITORY
+        and (
+            (event == 'push' and STABLE_TAG.fullmatch(tag) is not None)
+            or (
+                event == 'workflow_dispatch'
+                and os.environ.get('UPLOAD_TESTFLIGHT') == 'true'
+            )
+        )
     )
     version = re.search(r'^version:\s*(\S+)', Path('pubspec.yaml').read_text(), re.M)
     if not version:
         raise ValueError('Missing pubspec version')
-    if publish and tag != 'v' + version[1].split('+')[0]:
+    app_version, _, default_build_number = version[1].partition('+')
+    build_number = os.environ.get('BUILD_NUMBER_INPUT') or default_build_number
+    if not re.fullmatch(r'[0-9]+', build_number):
+        raise ValueError('Expected a numeric iOS build number')
+    if publish and event == 'workflow_dispatch':
+        tag = 'v' + app_version
+        stable_version(tag)
+    if publish and tag != 'v' + app_version:
         raise ValueError('Release tag and pubspec version differ')
     with Path(os.environ['GITHUB_OUTPUT']).open('a') as output:
         output.write(f'tag={tag}\npublish={str(publish).lower()}\n')
@@ -80,6 +93,7 @@ def context():
         output.write(f'commit={commit}\n')
     source = Path('.github/workflows/build.yaml').read_text()
     with Path(os.environ['GITHUB_ENV']).open('a') as output:
+        output.write(f'RELEASE_TAG={tag}\nIOS_BUILD_NUMBER={build_number}\n')
         for key in ('FLUTTER_VERSION', 'GO_VERSION', 'CA_BUNDLE', 'CA_BUNDLE_SHA256'):
             match = re.search(
                 rf'^\s+{key}:\s*[\x27\x22]?([\w.-]+)[\x27\x22]?\s*$', source, re.M
@@ -95,7 +109,7 @@ def record_ios(mode, export_options=None):
     source_sha = subprocess.check_output(
         ['git', 'rev-parse', 'HEAD'], text=True
     ).strip()
-    tag = os.environ.get('GITHUB_REF_NAME', '')
+    tag = os.environ.get('RELEASE_TAG') or os.environ.get('GITHUB_REF_NAME', '')
     app = Path('build/ios/iphoneos/Runner.app')
     if mode == 'archive':
         files = list(Path('build/ios/ipa').glob('*.ipa'))
