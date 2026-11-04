@@ -53,6 +53,6 @@
 
 <div dir="ltr">
 
-**List of all changes:** [ChangeLog](https://github.com/chen08209/FlClash/blob/main/CHANGELOG.md)
+**List of all changes:** [ChangeLog](https://github.com/go2world-icu/FlClash/blob/main/CHANGELOG.md)
 
 </div>
