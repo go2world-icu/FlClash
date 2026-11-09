@@ -272,48 +272,50 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
         _logger.warning('保存远程面板配置失败', e);
       }
 
-      _logger.info('登录成功，立即获取用户信息');
+      if (epoch != _sessionEpoch) return false;
       await _storageService.saveUserEmail(email);
+      if (epoch != _sessionEpoch) return false;
 
-      // 获取用户信息和订阅信息
-      try {
-        _logger.info('开始获取用户信息...');
-        final userModel = await ref.read(getUserInfoProvider.future);
-        final userInfo = _mapUser(userModel);
-
-        _logger.info('用户信息API调用完成');
-        ref.read(userInfoProvider.notifier).state = userInfo;
-        await _storageService.saveDomainUser(userInfo);
-        _logger.info('用户信息已保存: ${userInfo.email}');
-
-        _logger.info('开始获取订阅信息...');
-        final subscriptionModel = await ref.read(
-          getSubscriptionProvider.future,
-        );
-        final subscriptionInfo = _mapSubscription(subscriptionModel);
-
-        _logger.info('订阅信息API调用完成');
-        ref.read(subscriptionInfoProvider.notifier).state = subscriptionInfo;
-        await _storageService.saveDomainSubscription(subscriptionInfo);
-        _logger.info('订阅信息已保存，subscribeUrl: ${subscriptionInfo.subscribeUrl}');
-
-        // 登录成功后自动导入订阅配置
-        if (subscriptionInfo.subscribeUrl.isNotEmpty) {
-          unawaited(
-            ref
-                .read(profileImportProvider.notifier)
-                .importSubscription(
-                  subscriptionInfo.subscribeUrl,
-                  ownerEmail: email,
-                ),
-          );
-        } else {
-          _logger.info('[登录成功] 订阅URL为空，跳过配置导入');
+      Future<void> loadUserInfo() async {
+        try {
+          final userModel = await ref.read(getUserInfoProvider.future);
+          if (epoch != _sessionEpoch) return;
+          final userInfo = _mapUser(userModel);
+          ref.read(userInfoProvider.notifier).state = userInfo;
+          await _storageService.saveDomainUser(userInfo);
+        } catch (e, stackTrace) {
+          _logger.warning('获取用户信息失败，但继续登录', e, stackTrace);
         }
-      } catch (e, stackTrace) {
-        _logger.info('获取用户/订阅信息失败，但继续登录: $e');
-        _logger.info('错误堆栈: $stackTrace');
       }
+
+      Future<void> loadSubscriptionInfo() async {
+        try {
+          final subscriptionModel = await ref.read(
+            getSubscriptionProvider.future,
+          );
+          if (epoch != _sessionEpoch) return;
+          final subscriptionInfo = _mapSubscription(subscriptionModel);
+          ref.read(subscriptionInfoProvider.notifier).state = subscriptionInfo;
+          await _storageService.saveDomainSubscription(subscriptionInfo);
+          if (epoch != _sessionEpoch) return;
+
+          if (subscriptionInfo.subscribeUrl.isNotEmpty) {
+            unawaited(
+              ref
+                  .read(profileImportProvider.notifier)
+                  .importSubscription(
+                    subscriptionInfo.subscribeUrl,
+                    ownerEmail: email,
+                  ),
+            );
+          }
+        } catch (e, stackTrace) {
+          _logger.warning('获取订阅信息失败，但继续登录', e, stackTrace);
+        }
+      }
+
+      await Future.wait([loadUserInfo(), loadSubscriptionInfo()]);
+      if (epoch != _sessionEpoch) return false;
 
       _logger.info('准备更新状态...');
       final newState = state.copyWith(

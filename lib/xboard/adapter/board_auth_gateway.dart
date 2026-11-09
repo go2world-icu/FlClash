@@ -25,8 +25,13 @@ class BoardAuthGateway {
     emailCode: emailCode,
   );
 
-  Future<bool> sendEmailVerifyCode(String email) async =>
-      (await _auth()).sendEmailVerifyCode(email);
+  Future<bool> sendEmailVerifyCode(
+    String email, {
+    bool? isPasswordReset,
+  }) async => (await _auth()).sendEmailVerifyCode(
+    email,
+    isPasswordReset: isPasswordReset,
+  );
 
   Future<bool> forgotPassword(
     String email,

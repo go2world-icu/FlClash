@@ -23,10 +23,16 @@ void main() {
       when(() => first.auth).thenReturn(firstAuth);
       when(() => next.auth).thenReturn(nextAuth);
       when(
-        () => firstAuth.sendEmailVerifyCode('user@example.com'),
+        () => firstAuth.sendEmailVerifyCode(
+          'user@example.com',
+          isPasswordReset: true,
+        ),
       ).thenAnswer((_) async => true);
       when(
-        () => nextAuth.sendEmailVerifyCode('user@example.com'),
+        () => nextAuth.sendEmailVerifyCode(
+          'user@example.com',
+          isPasswordReset: true,
+        ),
       ).thenAnswer((_) async => false);
       var initialization = ready.future;
       final container = ProviderContainer(
@@ -34,14 +40,25 @@ void main() {
       );
       addTearDown(container.dispose);
       final gateway = container.read(boardAuthGatewayProvider);
-      final pending = gateway.sendEmailVerifyCode('user@example.com');
-      verifyNever(() => firstAuth.sendEmailVerifyCode(any()));
+      final pending = gateway.sendEmailVerifyCode(
+        'user@example.com',
+        isPasswordReset: true,
+      );
+      verifyNever(
+        () => firstAuth.sendEmailVerifyCode(any(), isPasswordReset: true),
+      );
       ready.complete(first);
       expect(await pending, isTrue);
 
       initialization = Future.value(next);
       container.invalidate(xboardSdkProvider);
-      expect(await gateway.sendEmailVerifyCode('user@example.com'), isFalse);
+      expect(
+        await gateway.sendEmailVerifyCode(
+          'user@example.com',
+          isPasswordReset: true,
+        ),
+        isFalse,
+      );
     },
   );
 

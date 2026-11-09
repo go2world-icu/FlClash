@@ -9,7 +9,8 @@ import 'package:fl_clash/xboard/features/shared/shared.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:board_sdk/flutter_xboard_sdk.dart' show ConfigModel;
+import 'package:board_sdk/flutter_xboard_sdk.dart'
+    show ConfigModel, XBoardException;
 import 'package:fl_clash/ui/shape.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
@@ -67,14 +68,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         final success = await ref
             .read(boardAuthGatewayProvider)
             .register(
-              _emailController.text,
+              _emailController.text.trim(),
               _passwordController.text,
               inviteCode: _inviteCodeController.text.trim().isNotEmpty
-                  ? _inviteCodeController.text
+                  ? _inviteCodeController.text.trim()
                   : null,
               emailCode:
                   isEmailVerify && _emailCodeController.text.trim().isNotEmpty
-                  ? _emailCodeController.text
+                  ? _emailCodeController.text.trim()
                   : null,
             );
 
@@ -101,40 +102,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         }
       } catch (e) {
         if (mounted) {
-          // 提取详细的错误信息
-          String errorMessage = '注册失败';
-
-          final errorStr = e.toString();
-
-          // 尝试提取具体的错误信息
-          if (errorStr.contains('XBoardException')) {
-            // 格式1: XBoardException(400): 具体错误信息
-            if (errorStr.contains('): ')) {
-              final parts = errorStr.split('): ');
-              if (parts.length > 1) {
-                errorMessage = parts.sublist(1).join('): ').trim();
-              }
-            }
-            // 格式2: XBoardException: 具体错误信息
-            else if (errorStr.contains('XBoardException: ')) {
-              errorMessage = errorStr.split('XBoardException: ').last.trim();
-            }
-          } else {
-            // 其他类型的错误，直接使用错误文本
-            errorMessage = errorStr;
-          }
-
-          // 移除可能的 "Error: " 前缀
-          if (errorMessage.startsWith('Error: ')) {
-            errorMessage = errorMessage.substring(7);
-          }
-
-          // 500错误或通用错误提示：可能是邀请码问题
-          if (errorMessage.contains('遇到了些问题') || errorMessage.contains('500')) {
-            errorMessage = xboardL10n.inviteCodeIncorrect;
-          }
-
-          XBoardNotification.showError(errorMessage);
+          XBoardNotification.showError(
+            e is XBoardException ? e.message : e.toString(),
+          );
         }
       } finally {
         if (mounted) {
@@ -162,9 +132,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     });
 
     try {
-      await ref
+      final sent = await ref
           .read(boardAuthGatewayProvider)
-          .sendEmailVerifyCode(_emailController.text);
+          .sendEmailVerifyCode(
+            _emailController.text.trim(),
+            isPasswordReset: false,
+          );
+      if (!sent) {
+        if (mounted) XBoardNotification.showError(xboardL10n.sendCodeFailed);
+        return;
+      }
 
       if (mounted) {
         XBoardNotification.showSuccess(
@@ -383,7 +360,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     return xboardL10n
                                         .pleaseEnterEmailVerificationCode;
                                   }
-                                  if (value.length != 6) {
+                                  if (!RegExp(
+                                    r'^\d{6}$',
+                                  ).hasMatch(value.trim())) {
                                     return xboardL10n.verificationCode6Digits;
                                   }
                                   return null;

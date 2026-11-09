@@ -51,9 +51,16 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
     });
 
     try {
-      await ref
+      final sent = await ref
           .read(boardAuthGatewayProvider)
-          .sendEmailVerifyCode(_emailController.text);
+          .sendEmailVerifyCode(
+            _emailController.text.trim(),
+            isPasswordReset: true,
+          );
+      if (!sent) {
+        if (mounted) XBoardNotification.showError(xboardL10n.sendCodeFailed);
+        return;
+      }
 
       if (mounted) {
         setState(() {
@@ -92,8 +99,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
       final success = await ref
           .read(boardAuthGatewayProvider)
           .forgotPassword(
-            _emailController.text,
-            _codeController.text,
+            _emailController.text.trim(),
+            _codeController.text.trim(),
             _passwordController.text,
           );
 
@@ -207,8 +214,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
             if (value == null || value.isEmpty) {
               return xboardL10n.pleaseEnterVerificationCode;
             }
-            if (value.length < 4) {
-              return xboardL10n.pleaseEnterValidVerificationCode;
+            if (!RegExp(r'^\d{6}$').hasMatch(value.trim())) {
+              return xboardL10n.verificationCode6Digits;
             }
             return null;
           },
@@ -238,8 +245,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
             if (value == null || value.isEmpty) {
               return xboardL10n.pleaseEnterNewPassword;
             }
-            if (value.length < 6) {
-              return xboardL10n.passwordMinLength;
+            if (value.runes.length < 8) {
+              return xboardL10n.passwordMin8Chars;
+            }
+            if (value.runes.length > 64) {
+              return xboardL10n.passwordMax64Chars;
             }
             return null;
           },

@@ -97,6 +97,7 @@ class XBoardStrings {
       'orderNumber': 'Order: {orderNo}',
       'pageNumber': 'Page {page}',
       'passwordMin8Chars': 'Password must be at least 8 characters',
+      'passwordMax64Chars': 'Password must be at most 64 characters',
       'passwordMinLength': 'Password must be at least 6 characters',
       'passwordMismatch': 'Passwords do not match',
       'passwordResetFailed': 'Password reset failed',
@@ -321,6 +322,7 @@ class XBoardStrings {
       'orderNumber': '注文番号: {orderNo}',
       'pageNumber': 'ページ {page}',
       'passwordMin8Chars': 'パスワードは8文字以上である必要があります',
+      'passwordMax64Chars': 'パスワードは64文字以内で入力してください',
       'passwordMinLength': 'パスワードは6文字以上である必要があります',
       'passwordMismatch': 'パスワードが一致しません',
       'passwordResetFailed': 'パスワードのリセットに失敗しました',
@@ -539,6 +541,7 @@ class XBoardStrings {
       'orderNumber': 'Заказ: {orderNo}',
       'pageNumber': 'Страница {page}',
       'passwordMin8Chars': 'Пароль должен содержать не менее 8 символов',
+      'passwordMax64Chars': 'Пароль должен содержать не более 64 символов',
       'passwordMinLength': 'Пароль должен содержать не менее 6 символов',
       'passwordMismatch': 'Пароли не совпадают',
       'passwordResetFailed': 'Не удалось сбросить пароль',
@@ -765,6 +768,7 @@ class XBoardStrings {
       'orderNumber': '订单: {orderNo}',
       'pageNumber': '第 {page} 页',
       'passwordMin8Chars': '密码至少需要8位字符',
+      'passwordMax64Chars': '密码最多 64 个字符',
       'passwordMinLength': '密码长度至少6位',
       'passwordMismatch': '两次输入的密码不一致',
       'passwordResetFailed': '密码重置失败',
@@ -987,6 +991,7 @@ class XBoardStrings {
   String pageNumber(Object page) =>
       _s('pageNumber').replaceAll('{page}', '$page');
   String get passwordMin8Chars => _s('passwordMin8Chars');
+  String get passwordMax64Chars => _s('passwordMax64Chars');
   String get passwordMinLength => _s('passwordMinLength');
   String get passwordMismatch => _s('passwordMismatch');
   String get passwordResetFailed => _s('passwordResetFailed');
