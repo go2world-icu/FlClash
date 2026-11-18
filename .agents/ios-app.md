@@ -53,9 +53,9 @@ for method invokeMethod on channel com.follow.clash/core)`**——加订阅、�
 三颗点**刻意全部不经过 core**：「core 没起来」和「调用没回来」是两类问题，只有绕开 core 才分得开。内核点不用
 `getIsInit` 正是因为它分不出这两者——两者都是「没答案」。长按有点的 Tooltip 带细节。
 
-iOS 现在和安卓共用同一个外壳和仪表盘，这三颗点挂在**仪表盘标题栏**（`xboard_dashboard_view.dart` 的 `actions`），
-`compact: true`：只画点不画标签，标签并进 Tooltip——标题栏还要放标题和页面自己的动作，带标签的版本在 412pt 宽
-的屏幕上会溢出。`ios_shell/` 整个目录是停用（注释掉引用，未删除）状态，恢复外壳时把 `compact` 去掉即可。
+带 XBoard 配置的 iOS 构建从 `lib/xboard/bridge.dart` 进入会员面板。连接卡读取真实的 NE 状态，
+健康检查通过 `getCoreState` 确认隧道就绪，再使用托管线路探测 `toworld.uk` 的出口。未配置面板的构建
+沿用通用界面，诊断点保留在仪表盘标题栏。
 
 ## 配置：交给 core 的是订阅原文
 

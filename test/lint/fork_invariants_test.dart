@@ -430,55 +430,13 @@ void main() {
       );
     });
 
-    test('one shell serves every platform', () {
-      // iOS used to open on its own shell (`features/ios_shell/`), which is
-      // parked, not deleted: the files are still there for when it comes back.
+    test('the fork bridge owns the managed iOS shell decision', () {
       final bridge = _read('lib/xboard/bridge.dart');
-      final live = bridge
-          .split('\n')
-          .where((line) => !line.trimLeft().startsWith('//'))
-          .join('\n');
-      expect(live, contains('XBoardShellHome()'));
-      expect(
-        live,
-        isNot(contains('XBoardIosShell')),
-        reason:
-            'iOS opens on the same shell as Android now; the iOS shell is '
-            'reached only through the commented-out branch beside it',
-      );
-      expect(
-        live,
-        isNot(contains('ios_shell')),
-        reason: 'its barrel export is parked with it',
-      );
-      for (final path in const [
-        'lib/xboard/features/ios_shell/ios_shell_page.dart',
-        'lib/xboard/features/ios_shell/ios_home_tab.dart',
-      ]) {
-        expect(
-          File(path).existsSync(),
-          isTrue,
-          reason:
-              '$path is parked, not gone — deleting it throws away the iOS '
-              'shell the fork may put back',
-        );
-      }
-      // The startup dots moved out of that shell's bar into the dashboard's,
-      // which is the only place they can be seen now.
-      final dashboard = _read(
-        'lib/xboard/features/dashboard/xboard_dashboard_view.dart',
-      );
-      expect(
-        dashboard,
-        contains('IosCoreStatus'),
-        reason:
-            'with one shell the tunnel/channel/core dots have no other home; '
-            'losing them is losing the only view of startup the panel has',
-      );
+      expect(bridge, contains('if (usesIosMemberPanel)'));
+      expect(bridge, contains('XBoardIosShell()'));
+      expect(bridge, contains('XBoardShellHome()'));
     });
-  });
 
-  group('the panel keeps its strings out of upstream\'s arb', () {
     test('no arb file carries a panel key', () {
       for (final file in Directory('arb').listSync().whereType<File>()) {
         final name = file.path.replaceAll(r'\', '/');

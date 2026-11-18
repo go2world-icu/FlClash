@@ -43,3 +43,14 @@ final iosCoreChannelProvider = FutureProvider<bool>((ref) async {
   if (!system.isIOS) return false;
   return await service?.ping() ?? false;
 });
+
+final iosTunnelStatusProvider = NotifierProvider<IosTunnelStatus, String>(
+  IosTunnelStatus.new,
+);
+
+class IosTunnelStatus extends Notifier<String> {
+  @override
+  String build() => 'disconnected';
+
+  void update(String status) => state = status;
+}

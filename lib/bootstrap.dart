@@ -14,6 +14,7 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/navigation_port.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
@@ -111,7 +112,13 @@ class Bootstrap {
       systemUiOverlayStyle: const SystemUiOverlayStyle(),
     );
     final appStateOverrides = buildAppStateOverrides(appState);
-    final configOverrides = buildConfigOverrides(config);
+    final configOverrides = buildConfigOverrides(
+      usesIosMemberPanel
+          ? config.copyWith(
+              appSettingProps: config.appSettingProps.copyWith(autoRun: false),
+            )
+          : config,
+    );
     final container = ProviderContainer(
       overrides: [...appStateOverrides, ...configOverrides],
     );

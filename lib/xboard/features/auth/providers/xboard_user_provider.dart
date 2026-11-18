@@ -51,6 +51,8 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
   late final XBoardStorageService _storageService;
   int _sessionEpoch = 0;
 
+  int get sessionEpoch => _sessionEpoch;
+
   @override
   UserAuthState build() {
     _storageService = ref.read(storageServiceProvider);

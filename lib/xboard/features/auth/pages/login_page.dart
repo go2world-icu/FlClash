@@ -14,10 +14,15 @@ import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
+import 'package:fl_clash/xboard/features/ios_shell/ios_member_privacy.dart';
+import 'package:fl_clash/xboard/features/ios_shell/ios_member_strings.dart';
+import 'package:prism_ui/typography.dart';
 import 'package:prism_ui/shape.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.managedIos = false});
+
+  final bool managedIos;
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
 }
@@ -26,6 +31,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _privacyRead = false;
   bool _rememberPassword = false;
   bool _isPasswordVisible = false;
   late XBoardStorageService _storageService;
@@ -134,6 +140,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final savedEmail = await _storageService.getSavedEmail();
       final savedPassword = await _storageService.getSavedPassword();
       final rememberPassword = await _storageService.getRememberPassword();
+      if (!mounted) return;
       if (savedEmail != null && savedEmail.isNotEmpty) {
         _emailController.text = savedEmail;
       }
@@ -260,40 +267,79 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: colorScheme.primary.withValues(alpha: 0.1),
-                            ),
-                            child: GlyphIcon(
-                              AppGlyphs.key,
-                              size: 48,
-                              color: colorScheme.primary,
-                            ),
+                    if (widget.managedIos)
+                      DecoratedBox(
+                        decoration: const ShapeDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xff102645), Color(0xff214e8c)],
                           ),
-                          const SizedBox(height: 24),
-                          Text(
-                            _appTitle,
-                            style: textTheme.displaySmall?.copyWith(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          shape: AppShape.xl,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Image.asset(
+                                'assets/images/icon.png',
+                                width: 42,
+                                height: 42,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                context.iosMemberStrings.welcome,
+                                style: AppTextStyle.title2
+                                    .of(context, emphasized: true)
+                                    .copyWith(color: Colors.white),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                context.iosMemberStrings.signInHint,
+                                style: AppTextStyle.subheadline
+                                    .of(context)
+                                    .copyWith(color: const Color(0xffd4e4fa)),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _appWebsite,
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    else
+                      Center(
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
+                              child: GlyphIcon(
+                                AppGlyphs.key,
+                                size: 48,
+                                color: colorScheme.primary,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 24),
+                            Text(
+                              _appTitle,
+                              style: textTheme.displaySmall?.copyWith(
+                                color: colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _appWebsite,
+                              style: textTheme.titleMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 48),
+                    SizedBox(height: widget.managedIos ? 24 : 48),
                     XBInputField(
                       controller: _emailController,
                       labelText: xboardL10n.xboardEmail,
@@ -338,39 +384,60 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       },
                     ),
                     const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Checkbox(
-                            value: _rememberPassword,
-                            onChanged: (value) {
+                    if (widget.managedIos)
+                      Row(
+                        children: [
+                          Checkbox(
+                            semanticLabel: context.iosMemberStrings.privacyRead,
+                            value: _privacyRead,
+                            onChanged: (value) =>
+                                setState(() => _privacyRead = value ?? false),
+                          ),
+                          Flexible(
+                            child: TextButton(
+                              onPressed: () => showIosMemberPrivacy(context),
+                              child: Text(context.iosMemberStrings.privacyRead),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: _rememberPassword,
+                              onChanged: (value) {
+                                setState(() {
+                                  _rememberPassword = value ?? false;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
                               setState(() {
-                                _rememberPassword = value ?? false;
+                                _rememberPassword = !_rememberPassword;
                               });
                             },
+                            child: Text(
+                              xboardL10n.xboardRememberPassword,
+                              style: textTheme.bodyMedium,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _rememberPassword = !_rememberPassword;
-                            });
-                          },
-                          child: Text(
-                            xboardL10n.xboardRememberPassword,
-                            style: textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                     const SizedBox(height: 32),
                     SizedBox(
                       height: 48,
                       child: FilledButton(
-                        onPressed: initState.isReady && !userState.isLoading
+                        onPressed:
+                            initState.isReady &&
+                                !userState.isLoading &&
+                                (!widget.managedIos || _privacyRead)
                             ? _login
                             : null,
                         child: userState.isLoading
@@ -381,7 +448,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Text(xboardL10n.xboardLogin),
+                            : Text(
+                                widget.managedIos
+                                    ? context.iosMemberStrings.signIn
+                                    : xboardL10n.xboardLogin,
+                              ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -392,10 +463,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           onPressed: _navigateToForgotPassword,
                           child: Text(xboardL10n.xboardForgotPassword),
                         ),
-                        TextButton(
-                          onPressed: _navigateToRegister,
-                          child: Text(xboardL10n.xboardRegister),
-                        ),
+                        if (!widget.managedIos)
+                          TextButton(
+                            onPressed: _navigateToRegister,
+                            child: Text(xboardL10n.xboardRegister),
+                          ),
                       ],
                     ),
                   ],

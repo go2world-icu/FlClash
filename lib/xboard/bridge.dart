@@ -6,18 +6,11 @@ import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/xboard.dart';
 
 import 'home_shell.dart';
+import 'features/ios_shell/ios_shell.dart';
 import 'xboard_material_theme.dart';
 
 /// The panel's home, upstream's page with the start button at the dock's end.
 export 'home_shell.dart';
-
-// iOS used to open on its own shell — a subscription feed with two tabs and a
-// connect button in place of the dashboard. It now opens on the same shell as
-// Android, so `XBoardIosShell` (`features/ios_shell/`) is parked rather than
-// deleted: un-comment the two lines below and the branch in `buildXBoardHome`
-// to bring it back. The startup dots it carried in its bar moved with it, to
-// the dashboard's — see `IosCoreStatus`.
-// export 'features/ios_shell/ios_shell.dart';
 
 /// 面板自有字符串表（原本放在上游 arb 里，是每次合并最大的冲突源）
 export 'l10n/xboard_strings.dart';
@@ -81,27 +74,10 @@ class XBoardPage extends ConsumerWidget {
   }
 }
 
-/// The shell's home: the panel's copy of upstream's page, which seats the
-/// start button at the end of the floating dock.
-///
-/// `lib/application.dart` only names this, so what the panel adds to the shell
-/// can change without adding fork diff to an upstream file.
 Widget buildXBoardHome() {
-  // iOS used to take its own shell here (`XBoardIosShell`); it now opens on
-  // this one too, so the panel's screen is the same on every platform.
-  //
-  //   if (system.isIOS) {
-  //     return const XBoardIosShell(
-  //       connectionControl: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           Card(margin: EdgeInsets.zero, child: NodeSelectorBar()),
-  //           SizedBox(height: 12),
-  //           XBoardConnectButton(),
-  //         ],
-  //       ),
-  //     );
-  //   }
+  if (usesIosMemberPanel) {
+    return const XBoardMaterialTheme(child: XBoardIosShell());
+  }
   return const XBoardShellHome();
 }
 

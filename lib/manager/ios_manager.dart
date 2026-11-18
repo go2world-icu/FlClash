@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/core.dart';
+import 'package:fl_clash/core/ios_lifecycle.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/manager/android_manager.dart';
 import 'package:fl_clash/manager/tile_manager.dart';
@@ -82,6 +83,7 @@ class _IosContainerState extends ConsumerState<IosManager>
 
   @override
   void onServiceStatus(String status, int runTime) {
+    ref.read(iosTunnelStatusProvider.notifier).update(status);
     commonPrint.log('vpn status: $status runTime: $runTime');
     // Reconcile UI state with NEVPNStatus — the tunnel can be toggled
     // outside the app (Settings, Shortcuts, on-demand rules, NE crash).

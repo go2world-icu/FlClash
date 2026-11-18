@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart' show rootBundle;
 
 bool _hasXboardConfig = false;
 
 /// 判断 xboard 配置文件是否存在
 bool get hasXboardConfig => _hasXboardConfig;
+
+bool get usesIosMemberPanel => Platform.isIOS && hasXboardConfig;
 
 /// 在 runApp 前调用一次。
 ///
