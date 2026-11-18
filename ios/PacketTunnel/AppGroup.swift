@@ -4,6 +4,7 @@ import Foundation
 /// Constants shared between the Runner app and the PacketTunnel extension.
 /// This file is compiled into both targets.
 enum AppGroup {
+    static let homeDirectoryName = "ToWorld"
     static let xboardDirectAddressesKey = "xboardDirectAddresses"
     static let vpnRunRequestedKey = "vpnRunRequested"
 
@@ -41,7 +42,7 @@ enum AppGroup {
     /// Must match `appName` in lib/common/constant.dart (the Dart side joins
     /// the container path with `appName`). Keep these in sync when renaming.
     static var homeDirectory: URL {
-        containerURL.appendingPathComponent("ToWorld", isDirectory: true)
+        containerURL.appendingPathComponent(homeDirectoryName, isDirectory: true)
     }
 
     /// SharedState JSON persisted by the app's `syncState`/`saveState`

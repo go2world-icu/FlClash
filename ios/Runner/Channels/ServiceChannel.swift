@@ -577,7 +577,8 @@ class ServiceChannel: NSObject {
                         self.eventSeq = seq
                     }
                     for event in root["events"] as? [String] ?? [] {
-                        self.channel.invokeMethod("event", arguments: event)
+                        self.channel.invokeMethod(
+                            "event", arguments: FlutterStandardTypedData(bytes: Data(event.utf8)))
                     }
                 }
             }

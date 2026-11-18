@@ -59,6 +59,10 @@ class AppChannel: NSObject {
             result(true)
         case "openBatteryOptimizationSettings":
             result(false)
+        case "extractAsset":
+            extractAsset(call.arguments, result: result)
+        case "clearDownloads":
+            result(true)
         case "getContainerPath":
             // App Group container shared with the PacketTunnel extension.
             // Returns nil until the App Groups entitlement is configured.
@@ -68,6 +72,53 @@ class AppChannel: NSObject {
             result(url?.path)
         default:
             result(FlutterMethodNotImplemented)
+        }
+    }
+
+    private func extractAsset(_ arguments: Any?, result: @escaping FlutterResult) {
+        guard let arguments = arguments as? [String: String],
+              let asset = arguments["asset"],
+              let path = arguments["path"], path.hasPrefix("/")
+        else {
+            result(FlutterError(
+                code: "invalid_asset", message: "Expected an asset and destination", details: nil))
+            return
+        }
+
+        let destination = URL(fileURLWithPath: path)
+        let files = FileManager.default
+        let container = files.containerURL(
+            forSecurityApplicationGroupIdentifier: AppGroup.identifier
+        ) ?? files.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        let home = container?
+            .appendingPathComponent(AppGroup.homeDirectoryName, isDirectory: true)
+            .resolvingSymlinksInPath()
+        guard asset == "assets/data/\(destination.lastPathComponent)",
+              home?.path == destination.deletingLastPathComponent().resolvingSymlinksInPath().path
+        else {
+            result(FlutterError(
+                code: "invalid_asset", message: "Unsupported asset destination", details: nil))
+            return
+        }
+
+        let key = FlutterDartProject.lookupKey(forAsset: asset)
+        guard let source = Bundle.main.url(forResource: key, withExtension: nil) else {
+            result(FlutterError(
+                code: "asset_not_found", message: asset, details: nil))
+            return
+        }
+
+        DispatchQueue.global(qos: .utility).async {
+            let response: Any
+            do {
+                let contents = try Data(contentsOf: source, options: .mappedIfSafe)
+                try contents.write(to: destination, options: .atomic)
+                response = true
+            } catch {
+                response = FlutterError(
+                    code: "asset_extract_failed", message: error.localizedDescription, details: nil)
+            }
+            DispatchQueue.main.async { result(response) }
         }
     }
 }

@@ -159,6 +159,20 @@ void main() {
   });
 
   group('iOS: the channels the shared Dart code opens', () {
+    test('the iOS app channel extracts bundled geodata', () {
+      expect(
+        _read('lib/plugins/app.dart'),
+        contains("invokeMethod<bool>('extractAsset'"),
+      );
+      final swift = _read('ios/Runner/Channels/AppChannel.swift');
+      expect(swift, contains('case "extractAsset":'));
+      expect(swift, contains('FlutterDartProject.lookupKey(forAsset:'));
+      expect(
+        swift,
+        contains('contents.write(to: destination, options: .atomic)'),
+      );
+    });
+
     test('the local-network permission request has an iOS answer', () {
       expect(
         _read('lib/plugins/app.dart'),
@@ -167,6 +181,23 @@ void main() {
       expect(
         _read('ios/Runner/Channels/AppChannel.swift'),
         contains('case "requestLocalNetworkPermission":'),
+      );
+    });
+
+    test('iOS answers download cleanup when there are no system downloads', () {
+      expect(
+        _read('ios/Runner/Channels/AppChannel.swift'),
+        matches(r'case "clearDownloads":\s*result\(true\)'),
+      );
+    });
+
+    test('iOS forwards Core events as UTF-8 bytes', () {
+      expect(
+        _read('ios/Runner/Channels/ServiceChannel.swift'),
+        matches(
+          r'invokeMethod\(\s*"event",\s*arguments:\s*'
+          r'FlutterStandardTypedData\(bytes: Data\(event\.utf8\)\)',
+        ),
       );
     });
 
