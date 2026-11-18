@@ -57,7 +57,7 @@ void main() {
             expect(isWithin(sandbox.path, path), isFalse);
             expect(await File(path).readAsString(), 'proxies: []');
             await File(path).writeAsString('proxies: [{name: converted}]');
-            return '';
+            return null;
           },
         );
 
