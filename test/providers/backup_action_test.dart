@@ -123,10 +123,10 @@ void main() {
         lastUpdateTime: DateTime(2026),
       );
       await testDatabase.mitmModulesDao.putAll([module.toCompanion()]);
-      File(join(home.path, 'mitm', 'modules', module.fileName))
+      File(join(await appPath.mitmModulesDirPath, module.fileName))
         ..createSync(recursive: true)
         ..writeAsStringSync('[Map Local]\n^https://a data="own.json"\n');
-      final resources = join(home.path, 'mitm', 'resources');
+      final resources = await appPath.mitmResourcesDirPath;
       final own = File(join(resources, 'own.json'))
         ..createSync(recursive: true)
         ..writeAsStringSync('{}');
