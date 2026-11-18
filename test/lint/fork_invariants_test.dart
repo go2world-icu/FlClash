@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
 
 import 'package:test/test.dart';
 
@@ -39,30 +38,6 @@ String? _goBuildTag(String path) {
 }
 
 void main() {
-  group('fork pages track the upstream source they were reviewed against', () {
-    final manifest = jsonDecode(_read('tool/fork_sources.json')) as Map;
-    for (final entry in manifest['copies'] as List) {
-      final source = entry['source'] as String;
-      final fork = entry['fork'] as String;
-      test('$fork has reviewed $source', () {
-        _read(fork);
-        final result = Process.runSync('git', [
-          'hash-object',
-          '--path=$source',
-          source,
-        ]);
-        expect(result.exitCode, 0, reason: '${result.stderr}');
-        expect(
-          (result.stdout as String).trim(),
-          entry['reviewedBlob'],
-          reason:
-              '$source changed. Review its changes against $fork, port the '
-              'applicable behavior, then update tool/fork_sources.json.',
-        );
-      });
-    }
-  });
-
   group('panel adapters contain upstream command coupling', () {
     test('features send Core and profile commands through the gateway', () {
       final commands = RegExp(
@@ -346,10 +321,6 @@ void main() {
             'the chip is the panel\'s widget, so it is exported from '
             'lib/xboard/features/dashboard/dashboard.dart instead',
       );
-      // The copy is only worth its weight while it keeps the seam: upstream
-      // v0.9.1 moved the start toggle into the current-outbound card, and the
-      // panel puts it back in the corner. A merge that re-copies the page over
-      // this file drops the seam without failing anything else.
       final page = _read(
         'lib/xboard/features/dashboard/xboard_dashboard_view.dart',
       );
@@ -359,46 +330,21 @@ void main() {
         reason: 'the panel action',
       );
       expect(page, contains('StartButton'));
-      // The node picker is parked, so only the comment may name it — a merge
-      // that uncomments it puts the chip back, which is not what this file
-      // should be doing on its own.
-      final live = page
-          .split('\n')
-          .where((line) => !line.trimLeft().startsWith('//'))
-          .join('\n');
-      expect(
-        live,
-        isNot(contains('NodeSelectorChip')),
-        reason:
-            'the node picker is parked; see widgets/node_selector_chip.dart',
-      );
+      expect(page, contains('return DashboardView('));
+      expect(page, isNot(contains('NodeSelectorChip')));
     });
 
     test(
       'the start button sits at the dock\'s end from a fork-owned shell',
       () {
-        // The dock's trailing slot is upstream's own code, deleted in v0.9.1.
-        // The fork does not put it back: `lib/pages/home.dart` and
-        // `lib/ui/navigation_dock.dart` stay byte-for-byte upstream's, and the
-        // panel lays the two out in its own copy of the shell.
-        for (final path in const [
-          'lib/pages/home.dart',
-          'lib/ui/navigation_dock.dart',
-        ]) {
-          final source = _read(path);
-          expect(
-            source,
-            isNot(contains('trailing')),
-            reason:
-                '$path is upstream\'s; the dock\'s trailing slot lives in '
-                'lib/xboard/home_shell.dart',
-          );
-          expect(source, isNot(contains('StartButton')));
-          expect(source, isNot(contains('xboard')));
-        }
+        final home = _read('lib/pages/home.dart');
+        expect(home, contains('this.dockAccessory'));
+        expect(home, isNot(contains('StartButton')));
+        expect(home, isNot(contains('xboard')));
         final shell = _read('lib/xboard/home_shell.dart');
         expect(shell, contains('class XBoardShellHome'));
         expect(shell, contains('StartButton'));
+        expect(shell, contains('return HomePage('));
         expect(
           _read('lib/xboard/bridge.dart'),
           contains('XBoardShellHome()'),

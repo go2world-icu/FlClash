@@ -24,7 +24,7 @@ class LocationPermissions extends _$LocationPermissions {
   /// Only a request can tell a permanent denial apart, so a check leaves that
   /// answer in place until it sees the grant.
   Future<void> refresh() async {
-    if (ref.read(safeModeProvider)) {
+    if (system.isIOS || ref.read(safeModeProvider)) {
       return;
     }
     final WifiSsidPermission permission;

@@ -1,4 +1,4 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:fl_clash/models/models.dart' as fl_models;
 import 'package:fl_clash/xboard/features/auth/auth.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';

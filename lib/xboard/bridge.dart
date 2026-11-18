@@ -1,4 +1,4 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/xboard/config_check.dart';
@@ -6,6 +6,7 @@ import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/xboard.dart';
 
 import 'home_shell.dart';
+import 'xboard_material_theme.dart';
 
 /// The panel's home, upstream's page with the start button at the dock's end.
 export 'home_shell.dart';
@@ -29,7 +30,10 @@ class XBoardPage extends ConsumerWidget {
   const XBoardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) =>
+      XBoardMaterialTheme(child: _buildPage(context, ref));
+
+  Widget _buildPage(BuildContext context, WidgetRef ref) {
     final userState = ref.watch(xboardUserProvider);
     if (userState.isAuthenticated) {
       final initialization = ref.watch(initializationProvider);

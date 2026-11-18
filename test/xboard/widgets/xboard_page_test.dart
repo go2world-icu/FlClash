@@ -7,7 +7,7 @@ import 'package:fl_clash/xboard/features/auth/models/auth_state.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
 import 'package:fl_clash/xboard/features/subscription/pages/xboard_home_page.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/xboard_provider_fakes.dart';

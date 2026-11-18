@@ -454,8 +454,6 @@ class ServiceChannel: NSObject {
 
     // MARK: - On-Demand Rules
 
-    /// Persist the requested run state as system-owned on-demand rules, with
-    /// configured Wi-Fi exclusions taking precedence over the catch-all rule.
     private func applyOnDemandRules(completion: @escaping (Bool) -> Void) {
         onDemandCompletions.append(completion)
         saveOnDemandRulesIfNeeded()
@@ -518,51 +516,7 @@ class ServiceChannel: NSObject {
         else {
             return []
         }
-        guard
-            let data = try? Data(contentsOf: AppGroup.sharedStateURL),
-            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let vpnOptions = root["vpnOptions"] as? [String: Any],
-            let accessControl = vpnOptions["accessControlProps"] as? [String: Any],
-            let enabled = accessControl["enable"] as? Bool,
-            enabled
-        else {
-            return fallbackOnDemandRules()
-        }
-        let mode = accessControl["mode"] as? String ?? ""
-        let acceptList = accessControl["acceptList"] as? [String] ?? []
-        let rejectList = accessControl["rejectList"] as? [String] ?? []
-
-        var rules: [NEOnDemandRule] = []
-        switch mode {
-        case "acceptSelected":
-            // Connect only on listed SSIDs
-            for ssid in acceptList where !ssid.isEmpty {
-                let rule = NEOnDemandRuleConnect()
-                rule.ssidMatch = [ssid]
-                rules.append(rule)
-            }
-        case "rejectSelected":
-            // Don't connect on listed SSIDs; connect on everything else
-            for ssid in rejectList where !ssid.isEmpty {
-                let rule = NEOnDemandRuleDisconnect()
-                rule.ssidMatch = [ssid]
-                rules.append(rule)
-            }
-            // Catch-all: connect on any other network
-            if !rejectList.isEmpty {
-                let catchAll = NEOnDemandRuleConnect()
-                rules.append(catchAll)
-            }
-        default:
-            break
-        }
-        return rules.isEmpty ? fallbackOnDemandRules() : rules
-    }
-
-    private func fallbackOnDemandRules() -> [NEOnDemandRule] {
-        UserDefaults(suiteName: AppGroup.identifier)?
-            .bool(forKey: AppGroup.vpnRunRequestedKey) == true
-            ? [NEOnDemandRuleConnect()] : []
+        return [NEOnDemandRuleConnect()]
     }
 
     // MARK: - SharedState persistence

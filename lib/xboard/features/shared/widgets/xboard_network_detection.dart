@@ -2,11 +2,12 @@ import 'package:fl_clash/common/service_probe.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/providers/outbound_ip.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 /// 网络检测（出口 IP 与归属地），供 iOS 外壳首页使用。
 ///

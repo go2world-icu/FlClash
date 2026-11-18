@@ -76,7 +76,7 @@ an upstream file needs fork behaviour, put the behaviour in the owner column and
 | `lib/main.dart` | `await xboardStartup();` | `lib/xboard/startup.dart` |
 | `lib/bootstrap.dart` | `navigationPort = const XBoardNavigationPort();` | `lib/xboard/navigation_port.dart` |
 | `lib/application.dart` | `mobileManagerStack(state)`, `preloadXBoard(ref)`, `buildXBoardHome()` | `lib/manager/ios_manager.dart`, `lib/xboard/bridge.dart` |
-| `lib/application.dart` | `buildXBoardHome()` returns the panel's `XBoardShellHome` on every platform — so the shell itself (the start button at the dock's end) is the fork's | `lib/xboard/home_shell.dart` |
+| `lib/application.dart` | `buildXBoardHome()` composes the upstream home with a ToWorld dock accessory | `lib/xboard/home_shell.dart` |
 | `lib/common/path.dart` | `forkDataDir(supportDirectory)`, `forkTempDir(temporaryDirectory)` | `lib/common/data_dir.dart` |
 | `lib/common/request.dart` | `downloadXBoardProfile` before the ordinary file download | `lib/xboard/adapter/profile_download.dart` |
 | `setup.dart` | early iOS CLI dispatch | `ios/scripts/build_ios.sh` |
@@ -97,29 +97,19 @@ upstream order, modes, paths and new entries. Adding a fork parameter to
 the last five in. All of it now lives in `lib/xboard/` (`icons/xboard_glyphs.dart`, `features/dashboard/`), and the
 invariants test fails if any of it creeps back.
 
-The last two are how the start button got its place back. Upstream v0.9.1 deleted `NavigationDock`'s trailing slot
-(`trailing`, `_DockTrailing`, `_SlotMaterialize`) with the Liquid Glass rewrite, and the fork restores the layout in
-`lib/xboard/home_shell.dart` instead of in the dock: `XBoardShellHome` is a copy of `lib/pages/home.dart` whose dock row is
-`Expanded(NavigationDock) + _DockedStartButton` on a phone, and `buildXBoardHome()` serves it. That keeps both upstream
-files byte-for-byte; a merge that re-copies `home.dart` over the copy drops the row and the invariants test says so.
+ToWorld reuses the upstream HomePage and DashboardView. HomePage accepts an optional dock accessory;
+the fork decides when to show its start button in `lib/xboard/home_shell.dart`. DashboardView accepts an
+optional status, overlay, and set of hidden cards; the fork sets these in
+`lib/xboard/features/dashboard/xboard_dashboard_view.dart`. Card visibility applies to rendering and
+editing, including cards already saved by a user. Keep the shared slots generic and leave the widgets,
+configuration checks and iOS policy in the fork wrappers.
 
-iOS opens on that same shell now, so `buildXBoardHome()` has no platform branch at all. The old iOS shell
-(`lib/xboard/features/ios_shell/`, a subscription feed with two tabs and a connect button) is **parked, not deleted**:
-`bridge.dart` keeps its export and its branch commented out, and the startup dots it carried in its bar moved to the
-dashboard's. Un-comment both to bring it back.
+iOS opens the same shell as other platforms. The former separate shell remains in
+`lib/xboard/features/ios_shell/`; its connection status now appears through the dashboard status slot.
 
-The dashboard is the one upstream page the fork copies rather than wraps
-(`lib/xboard/features/dashboard/xboard_dashboard_view.dart` is upstream's `dashboard.dart` with a `_XBoardDashboardAction`
-overlay in the corner). When upstream rewrites that page — v0.9.1 moved the start toggle out of the floating button and
-into the current-outbound card, and replaced the `SuperGrid` layout with `DashboardDensity` — re-copy the file and re-apply
-only the overlay; everything else it imports (`views/dashboard/{layout,style,edit,widget_registry}.dart`, the cards) is
-upstream's and is shared, not copied. Copying `DashboardDensityScope` or `DashboardWidgetMetrics` would give the cards a
-second inherited type and make them silently fall back to the mobile metrics.
-
-That copy is also where iOS drops two cards (`serviceStatus`, `intranetIp`: the service probe runs HTTP out of the core
-and there is no inbound listener to name). It is a render-time filter in `lib/xboard/`, not an edit to upstream's
-`DashboardWidget.platforms` — the phones that already have the cards saved would otherwise keep drawing them. The same
-overlay spot holds `IosCoreStatus` in its bar, which is where the startup dots went when the iOS shell was parked.
+The panel still uses Flutter Material for existing forms and dialogs. Keep that dependency in
+`lib/xboard/` and its tests, use the Prism palette through XBoardMaterialTheme, and use Prism components
+when adding or replacing shared UI.
 
 Accepted residuals — small, additive, self-contained, and not worth a seam: `lib/core/lib.dart` (`markConnected()` and
 `isMobile`), `lib/common/tray.dart`, `lib/views/proxies/{list,tab}.dart` (the iOS empty-state label), `lib/plugins/app.dart`,
@@ -139,11 +129,8 @@ Accepted residuals — small, additive, self-contained, and not worth a seam: `l
 - iOS framework construction lives in `plugins/setup/setup_hooks/lib/src/ios_framework.dart`, a part/extension of the
   existing Go builder. It reuses the existing cache and fingerprints; the shared builder keeps only dispatch and target
   selection. Keep the explicit framework build before Xcode linking.
-- The home shell and dashboard copies are fork-owned product surfaces. `tool/fork_sources.json` records the reviewed
-  Git blob of each upstream source. The invariants suite fails when a source changes, even if Git merges cleanly.
-  Review the source diff, port applicable fixes and behavior, run both upstream/fork page tests, then update the blob
-  with `git hash-object --path=<source> <source>`. A fork-only layout change needs no baseline update. New copies must
-  enter this manifest; shared cards, layout types and widgets stay upstream-owned.
+- The fork's home and dashboard wrappers compose the upstream pages. After a merge, check the dock button,
+  the dashboard overlay and iOS status, and both visible and editable card lists.
 
 Keep upstream synchronization on a temporary branch from the product branch. Record the selected upstream commit and
 keep compatibility changes separate from feature work. The goal is both a small shared-file patch and a small number of

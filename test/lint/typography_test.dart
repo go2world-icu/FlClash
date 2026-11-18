@@ -3,19 +3,12 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-/// Normalise the platform separator: `file.path` is `lib\views\...` on Windows,
-/// while the allow lists below are written with `/`.
-String _posix(String path) => p.posix.joinAll(p.split(path));
+import 'sources.dart';
 
-const _typography = 'lib/ui/typography.dart';
+const _typography = 'package:prism_ui/typography.dart';
 
 // The code editor sizes its text from the editor font-size setting.
 const _editorSizes = ['lib/pages/editor.dart', 'lib/features/editor/'];
-
-/// The panel's own pages predate [AppTextStyle] and still size their text by
-/// hand. Bringing them onto the scale is the panel module's work, not
-/// something a merge should silently rewrite.
-const _panelPages = 'lib/xboard/';
 
 final _textTheme = RegExp(r'\btextTheme\b');
 final _fontSize = RegExp(r'\bfontSize:');
@@ -30,16 +23,15 @@ void main() {
   test('lib takes its text sizes from AppTextStyle', () {
     final offenders = <String>[];
 
-    for (final entity in Directory('lib').listSync(recursive: true)) {
-      final path = _posix(p.relative(entity.path));
+    for (final entity in sourceEntities()) {
+      final path = p.posix.joinAll(p.split(p.relative(entity.path)));
       if (entity is! File ||
           !path.endsWith('.dart') ||
           _isGenerated(path) ||
-          path.startsWith(_panelPages)) {
+          path.startsWith('lib/xboard/')) {
         continue;
       }
-      final checksSize =
-          !path.startsWith('lib/ui/') && !_editorSizes.any(path.startsWith);
+      final checksSize = !_editorSizes.any(path.startsWith);
       final lines = entity.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         final line = lines[i];
@@ -51,13 +43,13 @@ void main() {
         }
         if (checksSize && _fontSize.hasMatch(line)) {
           offenders.add(
-            '$path:${i + 1} — sets a font size outside lib/ui; use an '
+            '$path:${i + 1} — sets a font size outside prism_ui; use an '
             'AppTextStyle, or AppTextStyle.custom for a size off the scale.',
           );
         }
         if (checksSize && _fontWeight.hasMatch(line)) {
           offenders.add(
-            '$path:${i + 1} — sets a font weight outside lib/ui; pass '
+            '$path:${i + 1} — sets a font weight outside prism_ui; pass '
             'emphasized to AppTextStyle.of.',
           );
         }

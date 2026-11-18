@@ -3,12 +3,13 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/common/common.dart';
-import 'package:fl_clash/ui/metrics.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/metrics.dart';
+import 'package:prism_ui/shape.dart';
 
 /// 上游移除了旧的 `utils.getTimeDifference`（`Utils` 单例已删除），
 /// 这里用上游保留的顶层 [getDateStringLast2] 复现原有格式化行为。

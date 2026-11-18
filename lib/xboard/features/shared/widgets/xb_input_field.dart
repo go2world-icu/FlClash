@@ -1,5 +1,5 @@
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 
 class XBInputField extends StatelessWidget {
   final TextEditingController controller;

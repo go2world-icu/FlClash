@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:board_sdk/flutter_xboard_sdk.dart';
-import 'package:fl_clash/common/context.dart';
+import 'package:fl_clash/common/dialog.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 import 'package:fl_clash/xboard/features/remote_task/services/device_info_service.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
+import 'package:prism_ui/shape.dart';
 
 /// 日志上报行（内嵌在滚动内容中）
 ///
@@ -141,6 +142,6 @@ class _LogUploadRowState extends State<LogUploadRow> {
   /// 显示 SnackBar 提示
   void _showSnackBar(String msg) {
     if (!mounted) return;
-    context.showNotifier(msg);
+    dialogs.showBanner(msg);
   }
 }

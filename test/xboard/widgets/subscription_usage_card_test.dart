@@ -4,7 +4,7 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:fl_clash/xboard/features/auth/models/auth_state.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/subscription/widgets/subscription_usage_card.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/xboard_support.dart';

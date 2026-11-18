@@ -2,7 +2,8 @@ import 'package:fl_clash/xboard/adapter/board_auth_gateway.dart';
 import 'package:fl_clash/xboard/features/auth/auth.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:fl_clash/xboard/utils/xboard_notification.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/shared/shared.dart';
@@ -11,7 +12,7 @@ import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart'
     show ConfigModel, XBoardException;
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});

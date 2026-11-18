@@ -1,10 +1,12 @@
 import 'package:fl_clash/xboard/domain/domain.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
-import 'package:fl_clash/widgets/widgets.dart';
+import 'package:prism_ui/inherited.dart' show sheetScrollController;
+import 'package:prism_ui/prism_list.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 
@@ -105,7 +107,7 @@ class _CommissionHistoryDialogState
                         ],
                       ),
                     )
-                  : ListView.builder(
+                  : PrismListView(
                       controller: _scrollController,
                       itemCount:
                           inviteState.commissionHistory.length +

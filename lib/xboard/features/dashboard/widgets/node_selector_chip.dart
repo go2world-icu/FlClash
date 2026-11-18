@@ -5,10 +5,12 @@ import 'package:fl_clash/views/proxies/proxies.dart';
 // The chip shows the panel's label, and the panel keeps its strings in its own
 // module — the arb copy of them is what made l10n.dart the largest conflict.
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:fl_clash/ui/delay_color.dart';
+import 'package:prism_ui/context.dart';
+import 'package:prism_ui/shape.dart';
 
 class NodeSelectorChip extends ConsumerWidget {
   const NodeSelectorChip({super.key});
@@ -151,7 +153,7 @@ class _LatencyLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasDelay = delay != null && delay! > 0;
     final color =
-        theme.colorScheme.delayColor(delay) ?? theme.colorScheme.outline;
+        context.colorScheme.delayColor(delay) ?? theme.colorScheme.outline;
     final text = hasDelay ? '$delay ms' : '--';
 
     return Row(

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+import 'sources.dart';
+
 final _pxLength = RegExp(r'\b\d+(?:\.\d+)?\s?px\b', caseSensitive: false);
 
 /// xboard builds CSS declarations for the HTML renderer, where `px` is the
@@ -13,7 +15,7 @@ void main() {
   test('lib and test give Flutter lengths in dp, not px', () {
     final offenders = <String>[];
 
-    for (final root in ['lib', 'test']) {
+    for (final root in [...sourceRoots, 'test']) {
       for (final entity in Directory(root).listSync(recursive: true)) {
         if (entity is! File ||
             !entity.path.endsWith('.dart') ||

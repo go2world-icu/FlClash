@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:fl_clash/ui/icons/glyph.dart';
+import 'package:prism_ui/icons/glyph.dart';
 
 /// The glyphs the panel draws itself.
 ///

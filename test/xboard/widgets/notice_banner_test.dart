@@ -3,8 +3,9 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:fl_clash/xboard/features/notice/providers/notice_provider.dart';
 import 'package:fl_clash/xboard/features/shared/widgets/notice_banner.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../support/xboard_support.dart';
 import '../support/xboard_provider_fakes.dart';

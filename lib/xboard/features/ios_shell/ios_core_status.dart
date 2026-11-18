@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:fl_clash/core/ios_lifecycle.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:fl_clash/ui/color.dart';
-import 'package:fl_clash/ui/context.dart';
+import 'package:prism_ui/color.dart';
+import 'package:prism_ui/context.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
+import 'package:prism_ui/prism_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Where the shell's startup got to, for the navigation bar's actions.
@@ -149,9 +150,9 @@ class _StatusLine extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.caption2
+                  .of(context)
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ],

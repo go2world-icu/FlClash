@@ -1,8 +1,10 @@
-import 'package:fl_clash/ui/color.dart';
+import 'package:fl_clash/ui/delay_color.dart';
+import 'package:prism_ui/context.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
+import 'package:prism_ui/shape.dart';
 
 class LatencyIndicator extends StatelessWidget {
   final int? delayValue;
@@ -111,7 +113,7 @@ class LatencyIndicator extends StatelessWidget {
 
   Widget _buildTestedState(BuildContext context) {
     final displayText = delayValue! < 0 ? 'Timeout' : '${delayValue}ms';
-    final color = Theme.of(context).colorScheme.delayColor(delayValue!);
+    final color = context.colorScheme.delayColor(delayValue!);
     if (isCompact) {
       return GestureDetector(
         onTap: onTap,

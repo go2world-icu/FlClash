@@ -1,6 +1,7 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 /// Markdown样式配置
 /// 用于统一管理应用内Markdown内容的显示样式

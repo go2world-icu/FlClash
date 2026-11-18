@@ -37,9 +37,6 @@ class CoreLib extends CoreHandlerInterface {
     return _instance!;
   }
 
-  /// Called by the iOS tunnel once its status listener reports
-  /// `connected` — only then is the Go core inside the NEProvider actually
-  /// reachable, so pending [CoreHandlerInterface] calls can proceed.
   void markConnected() {
     if (!_connectedCompleter.isCompleted) {
       _connectedCompleter.complete(true);
@@ -63,6 +60,7 @@ class CoreLib extends CoreHandlerInterface {
       throw StateError(initializationError);
     }
     await globalState.container.read(vpnOptionsProvider.future);
+    if (!system.isIOS) markConnected();
     final syncError =
         await _service?.syncState(
           globalState.container.read(sharedStateProvider),
@@ -73,14 +71,7 @@ class CoreLib extends CoreHandlerInterface {
       await _service?.shutdown();
       throw StateError(syncError);
     }
-    // iOS: the core lives inside the PacketTunnel NEProvider. Do NOT boot the
-    // tunnel here — the core is only pulled up when the user flips the connect
-    // switch, via startListener() → service.start(). The init()/syncState()
-    // calls above already installed the VPN manager and persisted SharedState.
-    // The status event can arrive during init() and complete this flag first.
-    if (!_connectedCompleter.isCompleted) {
-      _connectedCompleter.complete(true);
-    }
+    markConnected();
     return CoreLifecycleResult(
       revision: revision,
       outcome: CoreLifecycleOutcome.applied,
@@ -130,63 +121,69 @@ class CoreLib extends CoreHandlerInterface {
 
   // The service opens and closes the Core's listeners itself and reports a run
   // that ends, so once it takes the command the Core's own answer is moot.
-  //
-  // iOS: the Swift ServiceChannel.start() no-ops unless the tunnel is
-  // disconnected, so asking it to start a live session never tears it down.
   @override
-  Future<bool> startListener() async {
-    if (!system.isIOS) {
-      await super.startListener();
+  Future<void> startListener() async {
+    if (!system.isIOS) await _ignoreUnanswered(super.startListener);
+    if (!await _service!.start()) {
+      throw const CoreMethodException(
+        code: 'service_refused',
+        message: 'The VPN service did not start',
+      );
     }
-    return await _service?.start() ?? false;
   }
 
   @override
-  Future<bool> stopListener() async {
-    final serviceStopped = await _service?.stop() ?? false;
-    if (!system.isIOS) {
-      await super.stopListener();
+  Future<void> stopListener() async {
+    final serviceStopped = await _service!.stop();
+    if (!system.isIOS) await _ignoreUnanswered(super.stopListener);
+    if (!serviceStopped) {
+      throw const CoreMethodException(
+        code: 'service_refused',
+        message: 'The VPN service did not stop',
+      );
     }
-    return serviceStopped;
+  }
+
+  Future<void> _ignoreUnanswered(Future<void> Function() command) async {
+    try {
+      await command();
+    } catch (error) {
+      if (!isUnansweredCoreError(error)) {
+        rethrow;
+      }
+    }
   }
 
   @override
-  Future<T?> invokeMethod<T>({
+  Future<Object?> invokeMethod({
     required CoreMethod method,
     Object? arguments,
     Duration? timeout,
   }) {
-    final call = _invokeMethod<T>(method: method, arguments: arguments);
+    final call = _send(method: method, arguments: arguments);
     return call.withTimeout(
       timeout: timeout,
       onTimeout: () {
         unawaited(call.then(discardSpilledFile, onError: (_) {}));
-        return null;
+        throw TimeoutException('Core method ${method.wireName} timed out');
       },
     );
   }
 
-  Future<T?> _invokeMethod<T>({
-    required CoreMethod method,
-    Object? arguments,
-  }) async {
+  Future<Object?> _send({required CoreMethod method, Object? arguments}) async {
     try {
       await _connectedCompleter.future.timeout(coreConnectionWaitDuration);
-    } catch (error) {
-      commonPrint.log(
-        'Invoke method ${method.name} before connection timed out: $error',
-        logLevel: coreFailureLogLevel(error),
+    } on TimeoutException {
+      throw CoreMethodException(
+        code: 'core_unavailable',
+        message: 'Core is not connected for ${method.wireName}',
       );
-      return null;
     }
     final id = '${++_methodCallId}';
-    final response = await _service?.invokeMethod(
+    final response = await _service!.invokeMethod(
       CoreMethodCall(id: id, method: method, arguments: arguments),
     );
-    if (response == null) {
-      return null;
-    }
-    return response.unwrap<T>();
+    return response.unwrap<Object?>();
   }
 }
 

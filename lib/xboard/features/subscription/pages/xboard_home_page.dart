@@ -2,7 +2,8 @@
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape, BuildContextExtension;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fl_clash/xboard/features/shared/shared.dart';
@@ -21,8 +22,8 @@ import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:fl_clash/ui/shape.dart';
-import 'package:fl_clash/ui/context.dart';
+import 'package:prism_ui/shape.dart';
+import 'package:prism_ui/context.dart';
 
 class XBoardHomePage extends ConsumerStatefulWidget {
   const XBoardHomePage({super.key});

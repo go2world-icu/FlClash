@@ -4,7 +4,8 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
+import 'package:prism_ui/prism_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _threeDigitHourThreshold = 100 * 60 * 60 * 1000;
@@ -51,7 +52,9 @@ class RunTimeText extends StatelessWidget {
 }
 
 class StartButton extends ConsumerStatefulWidget {
-  const StartButton({super.key});
+  const StartButton({super.key, this.dockHeight});
+
+  final double? dockHeight;
 
   @override
   ConsumerState<StartButton> createState() => _StartButtonState();
@@ -200,79 +203,80 @@ class _StartButtonState extends ConsumerState<StartButton>
     // current-outbound card; the panel keeps it as the page's floating action,
     // where the dock already holds the corner.
     final docked = ref.watch(isMobileViewProvider);
+    final colors = context.colorScheme;
     if (docked) {
-      return FloatingActionButton(
-        heroTag: null,
-        tooltip: suspended ? appLocalizations.suspended : null,
-        onPressed: handleSwitchStart,
-        child: _buildIcon(isStart, suspended: suspended),
+      final height = widget.dockHeight ?? _buttonHeight;
+      return Tooltip(
+        message: suspended
+            ? appLocalizations.suspended
+            : (isStart ? appLocalizations.stop : appLocalizations.start),
+        child: FilledButton(
+          style: ButtonStyle.from(
+            fixedSize: Size.square(height),
+            padding: EdgeInsets.zero,
+            shape: AppShape.full,
+            backgroundColor: colors.primaryContainer,
+            foregroundColor: colors.onPrimaryContainer,
+            iconSize: 28,
+          ),
+          onPressed: handleSwitchStart,
+          child: _buildIcon(isStart, suspended: suspended),
+        ),
       );
     }
     final hasThreeDigitHours =
         (_displayRunTime ?? 0) >= _threeDigitHourThreshold;
-    final theme = Theme.of(context);
     final textWidth = suspend
         ? _getSuspendedTextWidth(context, appLocalizations.suspended)
         : _getRunTimeTextWidth(context, hasThreeDigitHours: hasThreeDigitHours);
     return RepaintBoundary(
-      child: Theme(
-        data: theme.copyWith(
-          floatingActionButtonTheme: theme.floatingActionButtonTheme.copyWith(
-            sizeConstraints: const BoxConstraints(
-              minWidth: 56,
-              maxWidth: 220,
-              minHeight: _buttonHeight,
-              maxHeight: _buttonHeight,
-            ),
-          ),
+      child: FilledButton(
+        style: ButtonStyle.from(
+          shape: AppShape.full,
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(56, _buttonHeight),
+          maximumSize: const Size(220, _buttonHeight),
+          backgroundColor: colors.primaryContainer,
+          foregroundColor: colors.onPrimaryContainer,
         ),
-        child: ElasticButton(
-          child: FloatingActionButton(
-            clipBehavior: Clip.antiAlias,
-            materialTapTargetSize: MaterialTapTargetSize.padded,
-            heroTag: null,
-            onPressed: () {
-              handleSwitchStart();
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedBuilder(
-                  animation: _animation,
-                  builder: (_, child) {
-                    return Container(
-                      height: _buttonHeight,
-                      padding: EdgeInsets.only(
-                        left: 16,
-                        right: 16 - 8 * _animation.value,
-                      ),
-                      alignment: Alignment.centerLeft,
-                      child: child,
-                    );
-                  },
-                  child: _buildIcon(isStart, suspended: suspended),
-                ),
-                SizeTransition(
-                  axis: Axis.horizontal,
-                  alignment: Alignment.centerLeft,
-                  sizeFactor: _animation,
-                  child: AnimatedContainer(
-                    width: textWidth,
-                    duration: _widthAnimationDuration,
-                    curve: Curves.easeOut,
-                    child: suspend
-                        ? Text(
-                            appLocalizations.suspended,
-                            maxLines: 1,
-                            overflow: TextOverflow.visible,
-                            style: _runTimeTextStyle(context),
-                          )
-                        : RunTimeText(timeStamp: _displayRunTime),
+        onPressed: handleSwitchStart,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (_, child) {
+                return Container(
+                  height: _buttonHeight,
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16 - 8 * _animation.value,
                   ),
-                ),
-              ],
+                  alignment: Alignment.centerLeft,
+                  child: child,
+                );
+              },
+              child: _buildIcon(isStart, suspended: suspended),
             ),
-          ),
+            SizeTransition(
+              axis: Axis.horizontal,
+              alignment: Alignment.centerLeft,
+              sizeFactor: _animation,
+              child: AnimatedContainer(
+                width: textWidth,
+                duration: _widthAnimationDuration,
+                curve: Curves.easeOut,
+                child: suspend
+                    ? Text(
+                        appLocalizations.suspended,
+                        maxLines: 1,
+                        overflow: TextOverflow.visible,
+                        style: _runTimeTextStyle(context),
+                      )
+                    : RunTimeText(timeStamp: _displayRunTime),
+              ),
+            ),
+          ],
         ),
       ),
     );

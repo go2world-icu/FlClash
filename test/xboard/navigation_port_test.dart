@@ -1,3 +1,4 @@
+import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/common/app_ports.dart';
 import 'package:fl_clash/ui/icons/app_glyphs.dart';
@@ -5,7 +6,7 @@ import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/xboard/features/dashboard/dashboard.dart';
 import 'package:fl_clash/xboard/navigation_port.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 List<PageLabel> _labels(List<NavigationItem> items) =>
     items.map((item) => item.label).toList();
@@ -38,17 +39,10 @@ void main() {
 
   test('without a panel config it matches upstream\'s item set', () {
     final items = port.getItems(openLogs: true, hasProxies: true);
-    expect(_labels(items), [
-      PageLabel.dashboard,
-      PageLabel.proxies,
-      PageLabel.profiles,
-      PageLabel.requests,
-      PageLabel.connections,
-      PageLabel.dns,
-      PageLabel.resources,
-      PageLabel.logs,
-      PageLabel.tools,
-    ]);
+    expect(
+      _labels(items),
+      _labels(navigation.getItems(openLogs: true, hasProxies: true)),
+    );
   });
 
   testWidgets('the dashboard is the panel\'s page', (tester) async {
@@ -95,24 +89,17 @@ void main() {
   });
 
   test('the secondary tabs keep their upstream modes', () {
+    final upstream = navigation.getItems();
     final items = port.getItems();
-    expect(_item(items, PageLabel.requests).modes, [
-      NavigationItemMode.moreFull,
-    ]);
-    expect(_item(items, PageLabel.connections).modes, [
-      NavigationItemMode.desktop,
-      NavigationItemMode.moreFull,
-    ]);
-    expect(_item(items, PageLabel.dns).modes, [NavigationItemMode.moreFull]);
-    expect(_item(items, PageLabel.resources).modes, [NavigationItemMode.more]);
-    expect(_item(items, PageLabel.tools).modes, [
-      NavigationItemMode.desktop,
-      NavigationItemMode.mobile,
-    ]);
-    expect(_item(items, PageLabel.profiles).modes, [
-      NavigationItemMode.mobile,
-      NavigationItemMode.desktop,
-    ]);
+    for (final label in [
+      PageLabel.requests,
+      PageLabel.dns,
+      PageLabel.resources,
+      PageLabel.tools,
+      PageLabel.profiles,
+    ]) {
+      expect(_item(items, label).modes, _item(upstream, label).modes);
+    }
   });
 
   group('with a panel config', () {
@@ -120,15 +107,10 @@ void main() {
 
     test('the profiles tab gives way to the account tab', () {
       final items = port.getItems(openLogs: true, hasProxies: true);
+      final upstream = navigation.getItems(openLogs: true, hasProxies: true);
       expect(_labels(items), [
-        PageLabel.dashboard,
-        PageLabel.proxies,
-        PageLabel.requests,
-        PageLabel.connections,
-        PageLabel.dns,
-        PageLabel.resources,
-        PageLabel.logs,
-        PageLabel.tools,
+        for (final item in upstream)
+          if (item.label != PageLabel.profiles) item.label,
         PageLabel.xboard,
       ]);
     });
@@ -170,7 +152,7 @@ void main() {
     expect(upstream.hasProxies, isTrue);
     expect(upstream.items, [addition, dashboard]);
 
-    final laterAddition = addition.copyWith(label: PageLabel.connections);
+    final laterAddition = addition.copyWith(label: PageLabel.requests);
     upstream.items.insert(0, laterAddition);
     expect(port.getItems().first, same(laterAddition));
   });

@@ -1,6 +1,7 @@
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/models/models.dart' as fl_models;
 import 'package:fl_clash/xboard/domain/domain.dart';
@@ -9,7 +10,7 @@ import 'package:fl_clash/xboard/config/xboard_config.dart';
 import '../services/subscription_status_service.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 class SubscriptionUsageCard extends ConsumerWidget {
   final DomainSubscription? subscriptionInfo;

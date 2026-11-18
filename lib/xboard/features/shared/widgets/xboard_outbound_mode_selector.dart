@@ -3,10 +3,11 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/l10n/l10n.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 /// 出站模式选择器（仅「规则」/「全局」两种）。
 ///

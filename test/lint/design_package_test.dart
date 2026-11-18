@@ -10,14 +10,18 @@ String _posix(String path) => p.posix.joinAll(p.split(path));
 const _roots = ['lib', 'test', 'tool', 'plugins'];
 
 const _forbiddenImports = <String, String>{
+  'package:material_ui/':
+      'widgets come from package:flutter/widgets.dart and components from '
+      'prism_ui',
   'package:cupertino_ui/':
-      'the app is Material only; take widgets-layer types from '
-      'package:flutter/widgets.dart instead',
+      'widgets come from package:flutter/widgets.dart and components from '
+      'prism_ui',
   'package:flutter/material.dart':
-      'Material comes from package:material_ui/material_ui.dart',
+      'widgets come from package:flutter/widgets.dart and components from '
+      'prism_ui',
   'package:flutter/cupertino.dart':
-      'the app is Material only; take widgets-layer types from '
-      'package:flutter/widgets.dart instead',
+      'widgets come from package:flutter/widgets.dart and components from '
+      'prism_ui',
 };
 
 const _generatedL10n = ['lib/l10n/l10n.dart', 'lib/l10n/intl/'];
@@ -30,7 +34,7 @@ bool _isGenerated(String path) {
 }
 
 void main() {
-  test('material_ui is the only design library the project imports', () {
+  test('the project imports no design library', () {
     final offenders = <String>[];
 
     for (final root in _roots) {
@@ -53,6 +57,11 @@ void main() {
             continue;
           }
           for (final entry in _forbiddenImports.entries) {
+            if (entry.key == 'package:flutter/material.dart' &&
+                (relative.startsWith('lib/xboard/') ||
+                    relative.startsWith('test/xboard/'))) {
+              continue;
+            }
             if (line.contains("'${entry.key}") ||
                 line.contains('"${entry.key}')) {
               offenders.add('$relative:${i + 1} — ${entry.value}');

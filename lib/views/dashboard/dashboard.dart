@@ -8,7 +8,7 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 import 'edit.dart';
 import 'layout.dart';
@@ -24,7 +24,17 @@ const _servicePairColumnMin = 290.0;
 const _maxColumnWidth = 440.0;
 
 class DashboardView extends ConsumerStatefulWidget {
-  const DashboardView({super.key, this.platform});
+  const DashboardView({
+    super.key,
+    this.platform,
+    this.status,
+    this.overlay,
+    this.hiddenCards = const {},
+  });
+
+  final Widget? status;
+  final Widget? overlay;
+  final Set<DashboardWidget> hiddenCards;
 
   /// The host's platform when null.
   final SupportPlatform? platform;
@@ -58,12 +68,16 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final editing = _editing;
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
-    return CommonScaffold(
+    return Scaffold(
       backgroundColor: DashboardColors.of(context).page,
       title: editing
           ? appLocalizations.editDashboard
           : appLocalizations.dashboard,
-      actions: [if (!editing && coreLib == null) const CoreStatusButton()],
+      actions: [
+        if (!editable) const UpdateStatusButton(),
+        if (!editing && widget.status != null) widget.status!,
+        if (!editing && coreLib == null) const CoreStatusButton(),
+      ],
       confirmationAction: editing
           ? IconButtonData(
               glyph: AppGlyphs.check,
@@ -84,22 +98,36 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         builder: (context, constraints) {
           final room = constraints.biggest / scale;
           final layout = DashboardDensity.of(room);
-          return DashboardDensityScope(
+          final content = DashboardDensityScope(
             density: layout,
             scale: scale,
             child: layout.isDesktop
                 ? _DesktopDashboard(
+                    hiddenCards: widget.hiddenCards,
                     platform: platform,
                     columns: dashboardColumnsOf(room.width),
                     gap: gap,
                   )
                 : _MobileDashboard(
+                    hiddenCards: widget.hiddenCards,
                     platform: platform,
                     gap: gap,
                     editing: editing,
                     cardKeyOf: _cardKeyOf,
                     onDone: () => _setEditing(false),
                   ),
+          );
+          final overlay = widget.overlay;
+          if (editing || overlay == null) return content;
+          return Stack(
+            children: [
+              Positioned.fill(child: content),
+              PositionedDirectional(
+                end: layout.isDesktop ? 24 : 16,
+                bottom: layout.isDesktop ? 24 : 16 + context.bottomInset,
+                child: overlay,
+              ),
+            ],
           );
         },
       ),
@@ -111,7 +139,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
 /// leave. A window too short for the tables, and every two column one, gets
 /// the summary cards instead, so no list scrolls inside a page that scrolls.
 class _DesktopDashboard extends StatelessWidget {
+  final Set<DashboardWidget> hiddenCards;
   const _DesktopDashboard({
+    required this.hiddenCards,
     required this.platform,
     required this.columns,
     required this.gap,
@@ -198,11 +228,19 @@ class _DesktopDashboard extends StatelessWidget {
                 sized(controlHeight, row(switches)),
                 sized(
                   middleHeight,
-                  row(const [(1, IntranetIpCard()), (1, ProfilesCard())]),
+                  row([
+                    if (!hiddenCards.contains(DashboardWidget.intranetIp))
+                      (1, const IntranetIpCard()),
+                    (1, const ProfilesCard()),
+                  ]),
                 ),
                 sized(
                   middleHeight,
-                  row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
+                  row([
+                    if (!hiddenCards.contains(DashboardWidget.serviceStatus))
+                      (1, const ServiceStatusCard()),
+                    (1, const MemoryInfo()),
+                  ]),
                 ),
                 sized(summaryHeight, summaries),
               ],
@@ -225,14 +263,16 @@ class _DesktopDashboard extends StatelessWidget {
           sized(
             middleHeight,
             row([
-              (1, const IntranetIpCard()),
+              if (!hiddenCards.contains(DashboardWidget.intranetIp))
+                (1, const IntranetIpCard()),
               (1, const ProfilesCard()),
-              (
-                1,
-                ServiceStatusCard(
-                  columns: column >= _servicePairColumnMin * scale ? 2 : 1,
+              if (!hiddenCards.contains(DashboardWidget.serviceStatus))
+                (
+                  1,
+                  ServiceStatusCard(
+                    columns: column >= _servicePairColumnMin * scale ? 2 : 1,
+                  ),
                 ),
-              ),
               (1, const MemoryInfo()),
             ]),
           ),
@@ -289,7 +329,9 @@ class _DesktopDashboard extends StatelessWidget {
 }
 
 class _MobileDashboard extends ConsumerWidget {
+  final Set<DashboardWidget> hiddenCards;
   const _MobileDashboard({
+    required this.hiddenCards,
     required this.platform,
     required this.gap,
     required this.editing,
@@ -321,12 +363,15 @@ class _MobileDashboard extends ConsumerWidget {
             final side = dashboardMobileSideOf(constraints.crossAxisExtent);
             final widgets = [
               for (final widget in saved)
-                if (widget.platforms.contains(platform)) widget,
+                if (widget.platforms.contains(platform) &&
+                    !hiddenCards.contains(widget))
+                  widget,
             ];
             if (editing) {
               return DashboardEditor(
                 platform: platform,
                 widgets: widgets,
+                hiddenCards: hiddenCards,
                 cardKeyOf: cardKeyOf,
                 padding: EdgeInsets.fromLTRB(side, top, side, bottom),
                 gap: gap,
@@ -339,13 +384,19 @@ class _MobileDashboard extends ConsumerWidget {
               // ones it has; cards this uneven move the scroll end as it goes.
               sliver: SliverToBoxAdapter(
                 child: Column(
-                  spacing: gap,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final widget in widgets)
-                      RepaintBoundary(
-                        key: cardKeyOf(widget),
-                        child: widget.card,
-                      ),
+                    UpdateStatusSlot(gap: gap),
+                    Column(
+                      spacing: gap,
+                      children: [
+                        for (final widget in widgets)
+                          RepaintBoundary(
+                            key: cardKeyOf(widget),
+                            child: widget.card,
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),

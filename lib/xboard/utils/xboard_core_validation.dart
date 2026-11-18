@@ -48,9 +48,11 @@ Future<String> xboardValidateProfileWith(
   bool? isIOS,
 }) async {
   if (ageSecretKey.isNotEmpty || await reachable()) {
-    Future<String> validate(String corePath) => ageSecretKey.isNotEmpty
-        ? core.validateProfile(corePath, ageSecretKey)
-        : core.validateConfig(corePath);
+    Future<String> validate(String corePath) async =>
+        (ageSecretKey.isNotEmpty
+            ? await core.validateProfile(corePath, ageSecretKey)
+            : await core.validateConfig(corePath)) ??
+        '';
     if (!(isIOS ?? system.isIOS)) return validate(path);
     return _withSharedValidationFile((file) async {
       await File(path).copy(file.path);
@@ -85,10 +87,10 @@ Future<String> xboardValidateConfigDataWith(
     if (isIOS ?? system.isIOS) {
       return _withSharedValidationFile((file) async {
         await file.writeAsString(data, flush: true);
-        return core.validateConfig(file.path);
+        return await core.validateConfig(file.path) ?? '';
       });
     }
-    return core.validateConfigWithData(utf8.encode(data));
+    return await core.validateConfigWithData(utf8.encode(data)) ?? '';
   }
   _logger.info('iOS core 不可达，跳过 core 校验，先保存配置');
   return xboardValidateConfigContent(data);

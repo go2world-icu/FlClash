@@ -265,7 +265,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         guard let json = String(data: messageData, encoding: .utf8) else {
             return nil
         }
-        if method == "setupConfig" {
+        if method == "config.setup" {
             fputs("[Swift setupConfig begin] available memory: \(Self.availableMemoryMB()) MB\n", stderr)
         }
         let result: String = await withCheckedContinuation { continuation in
@@ -273,7 +273,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 continuation.resume(returning: result)
             }
         }
-        if method == "setupConfig" {
+        if method == "config.setup" {
             fputs("[Swift setupConfig answered] available memory: \(Self.availableMemoryMB()) MB\n", stderr)
         }
         return Data(result.utf8)

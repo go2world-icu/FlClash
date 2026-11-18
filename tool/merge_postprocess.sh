@@ -31,7 +31,7 @@ step 'build_runner'
 dart run build_runner build
 
 step 'dart format'
-dart format lib test tool plugins setup.dart
+git ls-files -z -- '*.dart' | xargs -0 dart format
 
 step 'fork invariants'
 flutter test test/lint/fork_invariants_test.dart
@@ -40,4 +40,4 @@ echo
 echo 'Done. Still manual, see .agents/merge-upstream.md:'
 echo '  - re-apply the branding and the CI delta'
 echo '  - fix the upstream tests that assert upstream values'
-echo '  - review changed page sources before updating tool/fork_sources.json'
+echo '  - verify the dashboard and dock extension points still render the ToWorld controls'

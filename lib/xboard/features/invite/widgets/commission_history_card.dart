@@ -1,5 +1,6 @@
 import 'package:fl_clash/xboard/domain/domain.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
@@ -8,7 +9,7 @@ import 'package:fl_clash/xboard/features/invite/dialogs/withdraw_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/commission_history_dialog.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 class CommissionHistoryCard extends ConsumerWidget {
   const CommissionHistoryCard({super.key});

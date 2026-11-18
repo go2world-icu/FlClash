@@ -3,13 +3,14 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/views/proxies/proxies.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/latency/services/auto_latency_service.dart';
 import 'package:fl_clash/xboard/features/latency/widgets/latency_indicator.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 class NodeSelectorBar extends ConsumerStatefulWidget {
   const NodeSelectorBar({super.key});

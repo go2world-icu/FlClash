@@ -1,4 +1,5 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart' hide ThemeMode;
+import 'package:prism_ui/theme_data.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/ui/icons/icons.dart';

@@ -28,9 +28,7 @@ void main() {
     final home = await useAppPaths(root);
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
-    final invocation = client.invoke<Map<String, dynamic>>(
-      method: CoreMethod.getConfig,
-    );
+    final invocation = client.invoke(method: CoreMethod.configRead);
     final request = await _sentRequest(transport);
     final file = File(join(home.path, coreSpillDirectoryName, '1.json'))
       ..createSync(recursive: true)
@@ -52,7 +50,7 @@ void main() {
   test('correlates a response and ignores a late duplicate', () async {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
-    final invocation = client.invoke<bool>(method: CoreMethod.getIsInit);
+    final invocation = client.invoke(method: CoreMethod.coreInitialized);
     final request = await _sentRequest(transport);
 
     transport.addJson({'id': request['id'], 'result': true});
@@ -68,7 +66,7 @@ void main() {
   test('disconnect fails every pending request exactly once', () async {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
-    final invocation = client.invoke<bool>(method: CoreMethod.getIsInit);
+    final invocation = client.invoke(method: CoreMethod.coreInitialized);
     await _sentRequest(transport);
 
     transport.disconnect(1);
@@ -91,7 +89,7 @@ void main() {
   test('maps a Core error envelope to CoreMethodException', () async {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
-    final invocation = client.invoke<bool>(method: CoreMethod.getIsInit);
+    final invocation = client.invoke(method: CoreMethod.coreInitialized);
     final request = await _sentRequest(transport);
 
     transport.addJson({
@@ -121,7 +119,7 @@ void main() {
     final client = CoreRpcClient(transport);
 
     await expectLater(
-      client.invoke<bool>(method: CoreMethod.getIsInit),
+      client.invoke(method: CoreMethod.coreInitialized),
       throwsA(
         isA<CoreMethodException>().having(
           (error) => error.code,
@@ -139,12 +137,10 @@ void main() {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
 
-    final result = await client.invoke<bool>(
-      method: CoreMethod.getIsInit,
-      timeout: Duration.zero,
+    await expectLater(
+      client.invoke(method: CoreMethod.coreInitialized, timeout: Duration.zero),
+      throwsA(isA<TimeoutException>()),
     );
-
-    expect(result, isNull);
     expect(client.pendingCount, 0);
     await client.close();
     await transport.close();
@@ -155,12 +151,13 @@ void main() {
     final client = CoreRpcClient(transport);
     final stopwatch = Stopwatch()..start();
 
-    final result = await client.invoke<bool>(
-      method: CoreMethod.asyncTestDelay,
-      timeout: const Duration(milliseconds: 150),
+    await expectLater(
+      client.invoke(
+        method: CoreMethod.proxyTestDelay,
+        timeout: const Duration(milliseconds: 150),
+      ),
+      throwsA(isA<TimeoutException>()),
     );
-
-    expect(result, isNull);
     expect(stopwatch.elapsed, lessThan(const Duration(seconds: 5)));
     expect(transport.sentMessages, isEmpty);
     expect(client.pendingCount, 0);
@@ -172,12 +169,13 @@ void main() {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
 
-    final result = await client.invoke<bool>(
-      method: CoreMethod.getIsInit,
-      timeout: const Duration(milliseconds: 150),
+    await expectLater(
+      client.invoke(
+        method: CoreMethod.coreInitialized,
+        timeout: const Duration(milliseconds: 150),
+      ),
+      throwsA(isA<TimeoutException>()),
     );
-
-    expect(result, isNull);
     expect(client.pendingCount, 0);
     await client.close();
     await transport.close();
@@ -188,12 +186,12 @@ void main() {
     final client = CoreRpcClient(transport);
     const timeout = Duration(milliseconds: 300);
 
-    final slow = client.invoke<bool>(
-      method: CoreMethod.asyncTestDelay,
+    final slow = client.invoke(
+      method: CoreMethod.proxyTestDelay,
       timeout: timeout,
     );
-    final sibling = client.invoke<bool>(
-      method: CoreMethod.asyncTestDelay,
+    final sibling = client.invoke(
+      method: CoreMethod.proxyTestDelay,
       timeout: timeout,
     );
     await pumpEventQueue();
@@ -221,8 +219,8 @@ void main() {
     final client = CoreRpcClient(transport);
     const timeout = Duration(milliseconds: 200);
 
-    final wedged = client.invoke<bool>(
-      method: CoreMethod.asyncTestDelay,
+    final wedged = client.invoke(
+      method: CoreMethod.proxyTestDelay,
       timeout: timeout,
     );
     await pumpEventQueue();
@@ -235,7 +233,7 @@ void main() {
     );
     addTearDown(chatter.cancel);
 
-    expect(await wedged, isNull);
+    await expectLater(wedged, throwsA(isA<TimeoutException>()));
     expect(client.pendingCount, 0);
     expect(request['id'], isNotNull);
 
@@ -254,8 +252,8 @@ void main() {
       final client = CoreRpcClient(transport, extensionGrace: grace);
 
       final stopwatch = Stopwatch()..start();
-      final wedged = client.invoke<bool>(
-        method: CoreMethod.getIsInit,
+      final wedged = client.invoke(
+        method: CoreMethod.coreInitialized,
         timeout: timeout,
       );
       final chatter = Timer.periodic(
@@ -264,7 +262,7 @@ void main() {
       );
       addTearDown(chatter.cancel);
 
-      expect(await wedged, isNull);
+      await expectLater(wedged, throwsA(isA<TimeoutException>()));
       expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 500)));
       expect(client.pendingCount, 0);
 
@@ -277,7 +275,7 @@ void main() {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
     transport.addFrame(Uint8List.fromList(utf8.encode('{invalid')));
-    final invocation = client.invoke<bool>(method: CoreMethod.getIsInit);
+    final invocation = client.invoke(method: CoreMethod.coreInitialized);
     final request = await _sentRequest(transport);
 
     transport.addJson({'id': request['id'], 'result': true});
@@ -294,7 +292,7 @@ void main() {
     coreEventManager.addListener(listener);
 
     transport.addJson({
-      'method': CoreMethod.message.name,
+      'method': CoreMethod.message.wireName,
       'arguments': {'type': 'loaded', 'data': 'provider-a'},
     });
 
@@ -307,7 +305,7 @@ void main() {
   test('close fails pending requests and is idempotent', () async {
     final transport = FakeDesktopCoreTransport.connected();
     final client = CoreRpcClient(transport);
-    final invocation = client.invoke<bool>(method: CoreMethod.getIsInit);
+    final invocation = client.invoke(method: CoreMethod.coreInitialized);
     await _sentRequest(transport);
 
     final failure = expectLater(
@@ -331,7 +329,7 @@ void main() {
   test('transport failure before connection fails without waiting', () async {
     final transport = FakeDesktopCoreTransport();
     final client = CoreRpcClient(transport);
-    final invocation = client.invoke<bool>(method: CoreMethod.getIsInit);
+    final invocation = client.invoke(method: CoreMethod.coreInitialized);
 
     transport.fail(StateError('bind failed'));
 

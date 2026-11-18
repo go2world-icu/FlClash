@@ -1,4 +1,4 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/stat_item_widget.dart';

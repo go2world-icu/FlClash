@@ -6,7 +6,7 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/on_demand.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wifi_ssid/wifi_ssid.dart';
 
@@ -76,7 +76,8 @@ class _ConnectivityManagerState extends ConsumerState<ConnectivityManager> {
     // The SSID costs a blocking platform call and a location permission on
     // Android, macOS and Windows, and nothing reads it until a network is
     // excluded.
-    if (!_onWifi ||
+    if (system.isIOS ||
+        !_onWifi ||
         ref.read(safeModeProvider) ||
         ref.read(excludeSSIDsProvider).isEmpty) {
       _publishSsid(requestId, null);

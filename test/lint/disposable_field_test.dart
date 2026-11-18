@@ -3,10 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-/// Relative paths are compared against `_allowed`, written with `/`, so
-/// normalise the platform separator away — `p.relative` returns `lib\core\...`
-/// on Windows.
-String _posix(String path) => p.posix.joinAll(p.split(path));
+import 'sources.dart';
 
 const _disposableTypes = {
   'AnimationController',
@@ -54,14 +51,13 @@ bool _isGenerated(String path) {
 
 void main() {
   test('every self-created disposable field is released in the same file', () {
-    final root = Directory('lib');
     final offenders = <String>[];
 
-    for (final entity in root.listSync(recursive: true)) {
+    for (final entity in sourceEntities()) {
       if (entity is! File || !entity.path.endsWith('.dart')) {
         continue;
       }
-      final relative = _posix(p.relative(entity.path));
+      final relative = p.posix.joinAll(p.split(p.relative(entity.path)));
       if (_isGenerated(relative)) {
         continue;
       }

@@ -1,8 +1,9 @@
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/qr_code.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
-import 'package:material_ui/material_ui.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
+import 'package:prism_ui/shape.dart';
 
 class QrCodeWidget extends StatelessWidget {
   final String data;

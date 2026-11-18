@@ -54,7 +54,7 @@ void main() {
         sharedPath = call.positionalArguments.single as String;
         expect(p.isWithin(home.path, sharedPath), isTrue);
         expect(await File(sharedPath).readAsString(), content);
-        return '';
+        return null;
       });
 
       expect(
@@ -78,7 +78,7 @@ void main() {
         expect(sharedPath, isNot(source.path));
         expect(p.isWithin(home.path, sharedPath), isTrue);
         expect(await File(sharedPath).readAsString(), _clashConfig);
-        return '';
+        return null;
       });
 
       expect(
@@ -150,7 +150,7 @@ void main() {
         if (contents.length == 2) entered.complete();
         await release.future;
         expect(await File(path).exists(), isTrue);
-        return '';
+        return null;
       });
 
       final validations = [
@@ -203,7 +203,7 @@ void main() {
       when(() => coreInterface.validateConfig(any())).thenAnswer((call) async {
         expect(call.positionalArguments.single, sharedPath);
         expect(await File(sharedPath).readAsString(), _clashConfig);
-        return '';
+        return null;
       });
 
       expect(
@@ -225,7 +225,7 @@ void main() {
     setUp(() {
       when(
         () => coreInterface.validateConfig(any()),
-      ).thenAnswer((_) async => '');
+      ).thenAnswer((_) async => null);
     });
 
     test('校验交给 core，本地检查不插手', () async {
@@ -291,7 +291,7 @@ void main() {
       ).thenAnswer((_) async => _clashConfig);
       when(
         () => coreInterface.validateConfig(any()),
-      ).thenAnswer((_) async => '');
+      ).thenAnswer((_) async => null);
       final file = File(p.join(root.path, 'encrypted.yaml'));
       await file.writeAsString(
         '-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24\n'

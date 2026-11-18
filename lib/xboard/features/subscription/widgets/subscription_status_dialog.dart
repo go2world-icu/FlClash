@@ -1,9 +1,10 @@
 import 'package:fl_clash/ui/icons/icons.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:prism_ui/prism_ui.dart' show AppShape;
 import '../services/subscription_status_service.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:fl_clash/ui/shape.dart';
+import 'package:prism_ui/shape.dart';
 
 class SubscriptionStatusDialog extends StatelessWidget {
   final SubscriptionStatusResult statusResult;

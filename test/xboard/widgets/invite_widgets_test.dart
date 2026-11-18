@@ -10,7 +10,7 @@ import 'package:fl_clash/xboard/features/invite/widgets/invite_stats_card.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/stat_item_widget.dart';
 import 'package:fl_clash/xboard/features/invite/widgets/wallet_details_card.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/xboard_support.dart';

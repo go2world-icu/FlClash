@@ -6,7 +6,7 @@ import 'package:fl_clash/views/navigation.dart';
 import 'package:fl_clash/xboard/bridge.dart';
 import 'package:fl_clash/xboard/config_check.dart';
 import 'package:fl_clash/xboard/features/dashboard/dashboard.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 class XBoardNavigationPort implements NavigationPort {
   const XBoardNavigationPort({NavigationPort? upstream, bool? hasPanel})
