@@ -1,10 +1,13 @@
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/widgets/widgets.dart' show ListItem;
 import 'package:fl_clash/xboard/features/auth/pages/login_page.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
-import 'package:fl_clash/xboard/features/invite/dialogs/logout_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/dialogs/theme_dialog.dart';
+import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:flutter/material.dart' as material;
@@ -12,8 +15,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prism_ui/prism_ui.dart';
 
+import 'ios_connection_activity.dart';
 import 'ios_health_tab.dart';
 import 'ios_home_tab.dart';
+import 'ios_invite_page.dart';
 import 'ios_member_privacy.dart';
 import 'ios_member_strings.dart';
 import 'ios_splash_screen.dart';
@@ -32,22 +37,23 @@ class XBoardIosShell extends ConsumerWidget {
   }
 }
 
-class _IosMemberTabs extends StatefulWidget {
+class _IosMemberTabs extends ConsumerStatefulWidget {
   const _IosMemberTabs({super.key});
 
   @override
-  State<_IosMemberTabs> createState() => _IosMemberTabsState();
+  ConsumerState<_IosMemberTabs> createState() => _IosMemberTabsState();
 }
 
-class _IosMemberTabsState extends State<_IosMemberTabs> {
+class _IosMemberTabsState extends ConsumerState<_IosMemberTabs> {
   int _selected = 0;
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(iosConnectionActivityProvider.notifier);
     final labels = [
       xboardL10n.xboardHome,
       context.iosMemberStrings.connectionHealth,
-      context.appLocalizations.account,
+      context.iosMemberStrings.my,
     ];
     return material.Scaffold(
       backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
@@ -67,7 +73,9 @@ class _IosMemberTabsState extends State<_IosMemberTabs> {
                 ],
               )
             : Text(
-                labels[_selected],
+                _selected == 2
+                    ? context.iosMemberStrings.accountTitle
+                    : labels[_selected],
                 style: AppTextStyle.title2.of(context, emphasized: true),
               ),
         actions: [
@@ -84,7 +92,9 @@ class _IosMemberTabsState extends State<_IosMemberTabs> {
         bottom: false,
         child: switch (_selected) {
           1 => const IosHealthTab(),
-          2 => const _IosAccountTab(),
+          2 => _IosAccountTab(
+            onShowHealth: () => setState(() => _selected = 1),
+          ),
           _ => const IosHomeTab(),
         },
       ),
@@ -115,11 +125,59 @@ class _IosMemberTabsState extends State<_IosMemberTabs> {
 }
 
 class _IosAccountTab extends ConsumerWidget {
-  const _IosAccountTab();
+  const _IosAccountTab({required this.onShowHealth});
+
+  final VoidCallback onShowHealth;
+
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    final strings = context.iosMemberStrings;
+    final confirmed = await dialogs.showCommonDialog<bool>(
+      context: context,
+      child: Builder(
+        builder: (context) => AlertDialog(
+          title: strings.logoutTitle,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(context.appLocalizations.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(strings.confirmLogout),
+            ),
+          ],
+          child: Text(strings.logoutHint),
+        ),
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ref.read(xboardUserProvider.notifier).logout();
+    } catch (error) {
+      if (context.mounted) {
+        dialogs.showBanner(
+          xboardL10n.logoutFailed(error.toString()),
+          level: BannerLevel.error,
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final email = ref.watch(xboardUserProvider.select((state) => state.email));
+    final commission = ref.watch(
+      inviteProvider.select(
+        (state) =>
+            state.hasInviteData ? state.formattedAvailableCommission : null,
+      ),
+    );
+    final locale = ref.watch(
+      appSettingProvider.select((state) => state.locale),
+    );
+    final app = context.appLocalizations;
+    final strings = context.iosMemberStrings;
+    final packageInfo = globalState.packageInfo;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
       children: [
@@ -134,7 +192,7 @@ class _IosAccountTab extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      context.iosMemberStrings.toworldMember,
+                      strings.toworldMember,
                       style: AppTextStyle.headline.of(context),
                     ),
                     if (email != null)
@@ -146,33 +204,71 @@ class _IosAccountTab extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const IosMembershipCard(),
+        const IosMembershipCard(showDetails: true),
         const SizedBox(height: 12),
         Card(
-          padding: const EdgeInsets.all(6),
+          onPressed: () => Navigator.of(context).push<void>(
+            PageRouteBuilder<void>(
+              pageBuilder: (_, _, _) => const IosInvitePage(),
+            ),
+          ),
+          child: ListRow(
+            leading: const GlyphIcon(XBoardGlyphs.people),
+            title: Text(strings.inviteRewards),
+            subtitle: commission == null
+                ? null
+                : Text('${xboardL10n.availableCommission} · $commission'),
+            trailing: const GlyphIcon(AppGlyphs.chevronForward),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextButton(
-                onPressed: () => showIosMemberPrivacy(context),
-                child: Text(context.iosMemberStrings.privacy),
+              ListItem<Locale?>.options(
+                leading: const GlyphIcon(AppGlyphs.language),
+                title: Text(app.language),
+                options: const [null, Locale('zh', 'CN'), Locale('en')],
+                value: getLocaleForString(locale),
+                textBuilder: (option) => switch (option?.languageCode) {
+                  'zh' => '简体中文',
+                  'en' => 'English',
+                  _ => app.defaultText,
+                },
+                onChanged: (option) => ref
+                    .read(appSettingProvider.notifier)
+                    .update(
+                      (state) => state.copyWith(locale: option?.toString()),
+                    ),
               ),
-              TextButton(
-                onPressed: () => material.showDialog<void>(
+              ListItem<void>(
+                onTap: () => showIosMemberPrivacy(context),
+                title: Text(strings.privacy),
+              ),
+              ListItem<void>(
+                onTap: onShowHealth,
+                title: Text(strings.connectionDiagnosis),
+              ),
+              ListItem<void>(
+                onTap: () => material.showDialog<void>(
                   context: context,
                   builder: (_) => const ThemeDialog(),
                 ),
-                child: Text(context.appLocalizations.theme),
+                title: Text(app.theme),
               ),
-              TextButton(
-                onPressed: () => material.showDialog<void>(
-                  context: context,
-                  builder: (_) => const LogoutDialog(),
+              ListRow(
+                title: Text(strings.aboutToWorld),
+                subtitle: Text(
+                  '${packageInfo.version} (${packageInfo.buildNumber})',
                 ),
-                child: Text(xboardL10n.logout),
               ),
             ],
           ),
+        ),
+        TextButton(
+          onPressed: () => _logout(context, ref),
+          child: Text(xboardL10n.logout),
         ),
       ],
     );

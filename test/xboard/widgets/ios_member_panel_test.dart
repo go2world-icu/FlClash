@@ -7,24 +7,33 @@ import 'package:fl_clash/l10n/l10n.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/plugins/ios_service.dart';
+import 'package:fl_clash/state.dart';
+import 'package:fl_clash/ui/qr_code.dart';
+import 'package:fl_clash/xboard/xboard_material_theme.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:fl_clash/xboard/features/auth/models/auth_state.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
+import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
+import 'package:fl_clash/xboard/features/ios_shell/ios_home_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_line_page.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_managed_connection.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_shell_page.dart';
+import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:fl_clash/xboard/features/notice/notice.dart';
 import 'package:fl_clash/xboard/features/profile/models/import_models.dart';
 import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart' as material;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prism_ui/common_button.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../helpers/app_paths.dart';
+import '../../helpers/test_app.dart';
 import '../support/xboard_provider_fakes.dart';
 import '../support/xboard_support.dart';
 
@@ -49,6 +58,33 @@ class _Core extends Mock implements CoreHandlerInterface {}
 
 class _ImportNotifier extends ProfileImportNotifier {
   void fail() => state = const ImportState(status: ImportStatus.failed);
+}
+
+class _MemberInviteNotifier extends FakeInviteNotifier {
+  _MemberInviteNotifier()
+    : super(
+        InviteState(
+          inviteData: const DomainInvite(
+            codes: [DomainInviteCode(code: 'TO+WORLD')],
+            stats: InviteStats(availableCommission: 48),
+          ),
+          commissionHistory: [
+            DomainCommission(
+              id: 1,
+              tradeNo: 'TW01',
+              amount: 24,
+              createdAt: DateTime(2026),
+            ),
+          ],
+          hasMoreHistory: false,
+        ),
+      );
+
+  @override
+  Future<void> loadInviteData() async {}
+
+  @override
+  Future<void> refreshCommissionHistory() async {}
 }
 
 void main() {
@@ -259,10 +295,79 @@ void main() {
     },
   );
 
+  testWidgets('opens the member website and shows read-only commissions', (
+    tester,
+  ) async {
+    globalState.packageInfo = PackageInfo(
+      appName: 'ToWorld',
+      packageName: 'com.toworld',
+      version: '0.9.4',
+      buildNumber: '2026111901',
+    );
+    const channel = MethodChannel('plugins.flutter.io/url_launcher');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <MethodCall>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return true;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final website = Uri.parse('https://example.test/');
+
+    await pumpXboard(
+      tester,
+      const XBoardIosShell(),
+      overrides: [
+        ...xboardBaseOverrides(),
+        xboardUserProvider.overrideWith(() => FakeUserAuthNotifier(_member)),
+        subscriptionInfoProvider.overrideWithBuild(
+          (_, _) => _plan.copyWith(
+            expiredAt: DateTime.now().add(const Duration(days: 8)),
+          ),
+        ),
+        iosMembershipWebsiteProvider.overrideWithValue(website),
+        iosManagedProfileProvider.overrideWith((_) => null),
+        inviteProvider.overrideWith(_MemberInviteNotifier.new),
+      ],
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Renew on website'));
+    await tester.pumpAndSettle();
+    expect(calls.single.method, 'launch');
+    expect(calls.single.arguments['url'], website.toString());
+    expect(calls.single.arguments['useWebView'], false);
+    expect(find.text('Member Plan'), findsOneWidget);
+
+    await tester.tap(find.text('My'));
+    await tester.pumpAndSettle();
+    expect(find.text('Renew on website'), findsOneWidget);
+    await tester.tap(find.text('Invite and earn'));
+    await tester.pumpAndSettle();
+    expect(find.text('¥48.00'), findsOneWidget);
+    expect(find.text(xboardL10n.transferToWallet), findsNothing);
+    expect(find.text(xboardL10n.withdrawCommission), findsNothing);
+    await tester.tap(find.text('Share invitation'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<QrCodeView>(find.byType(QrCodeView)).data,
+      'https://example.test/login#/register?code=TO%2BWORLD',
+    );
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Commission details'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining(xboardL10n.orderNumber('TW01')), findsOneWidget);
+    expect(find.text('+¥24.00'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('health checks the ToWorld endpoint and clears stale results', (
     tester,
   ) async {
     final core = _Core();
+    var reachesExtension = false;
     const request = OutboundIpParams(
       proxyName: 'Hong Kong 01',
       urls: ['https://toworld.uk/cdn-cgi/trace'],
@@ -277,10 +382,11 @@ void main() {
       ),
     );
     const node = Proxy(name: 'Hong Kong 01', type: 'Shadowsocks');
+    const singapore = Proxy(name: 'Singapore 01', type: 'Shadowsocks');
     const group = Group(
       name: 'ToWorld',
       type: GroupType.Selector,
-      all: [node],
+      all: [node, singapore],
       now: 'Hong Kong 01',
     );
     const profile = Profile(id: 42, autoUpdateDuration: Duration.zero);
@@ -295,8 +401,9 @@ void main() {
         currentProfileProvider.overrideWithValue(profile),
         selectedMapProvider.overrideWithValue(const {}),
         iosManagedLinesProvider.overrideWith(
-          (_) => (group: group, options: [node]),
+          (_) => (group: group, options: [node, singapore]),
         ),
+        iosCoreChannelProvider.overrideWith((_) async => reachesExtension),
         iosCoreBootProvider.overrideWith(
           (_) async =>
               const IosCoreState(booted: true, tunStarted: true, error: ''),
@@ -314,13 +421,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(IosLinePage), findsOneWidget);
     expect(find.text('Test line response times'), findsOneWidget);
+    expect(find.text('Singapore 01'), findsOneWidget);
+    await tester.enterText(find.byType(EditableText), 'hong');
+    await tester.pumpAndSettle();
+    expect(find.text('Hong Kong 01'), findsOneWidget);
+    expect(find.text('Singapore 01'), findsNothing);
     Navigator.of(tester.element(find.byType(IosLinePage))).pop();
     await tester.pumpAndSettle();
     await tester.tap(find.text('Connection health'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Check connection'));
     await tester.pumpAndSettle();
-    expect(find.text('Exit verified'), findsOneWidget);
+    expect(find.text('VPN extension did not respond'), findsWidgets);
+    verifyNever(() => core.outboundIp(any()));
+    reachesExtension = true;
+    await tester.scrollUntilVisible(find.text('Check again'), 100);
+    await tester.tap(find.text('Check again'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Connection healthy'), -150);
+    expect(find.text('Connection healthy'), findsOneWidget);
     expect(find.text('203.0.113.24'), findsOneWidget);
     expect(find.text('42 ms'), findsOneWidget);
     final calls = verify(() => core.outboundIp(captureAny())).captured;
@@ -330,6 +449,107 @@ void main() {
     container.read(iosTunnelStatusProvider.notifier).update('disconnected');
     await tester.pumpAndSettle();
     expect(find.text('203.0.113.24'), findsNothing);
+    final activity = find.text('Recent connection activity');
+    await tester.scrollUntilVisible(activity, 150);
+    await tester.tap(activity);
+    await tester.pumpAndSettle();
+    expect(find.text('VPN connected'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 10));
+  });
+
+  testWidgets('Chinese member copy matches the approved prototype', (
+    tester,
+  ) async {
+    await AppLocalizations.load(const Locale('zh', 'CN'));
+    addTearDown(() => AppLocalizations.load(const Locale('en')));
+    globalState.packageInfo = PackageInfo(
+      appName: 'ToWorld',
+      packageName: 'com.toworld',
+      version: '0.9.4',
+      buildNumber: '2026111902',
+    );
+    const profile = Profile(id: 42, autoUpdateDuration: Duration.zero);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      TestApp(
+        locale: const Locale('zh', 'CN'),
+        overrides: [
+          ...xboardBaseOverrides(),
+          xboardUserProvider.overrideWith(() => FakeUserAuthNotifier(_member)),
+          subscriptionInfoProvider.overrideWithBuild((_, _) => _plan),
+          iosManagedProfileProvider.overrideWith((_) => profile),
+          currentProfileProvider.overrideWithValue(profile),
+          initProvider.overrideWithBuild((_, _) => true),
+          inviteProvider.overrideWith(_MemberInviteNotifier.new),
+          iosMembershipWebsiteProvider.overrideWithValue(
+            Uri.parse('https://example.test/'),
+          ),
+        ],
+        child: const XBoardMaterialTheme(child: XBoardIosShell()),
+      ),
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(find.text('未连接'), findsOneWidget);
+    expect(find.text('配置已同步，可以连接'), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(XBoardIosShell)),
+    );
+    container.read(iosTunnelStatusProvider.notifier).update('connected');
+    await tester.pumpAndSettle();
+    for (final text in [
+      '连接已开启',
+      'ToWorld VPN 正在运行',
+      '断开连接',
+      '上行',
+      '下行',
+      '连接时长',
+    ]) {
+      expect(find.text(text), findsOneWidget);
+    }
+    container.read(iosTunnelStatusProvider.notifier).update('disconnected');
+    await tester.tap(find.text('连接健康'));
+    await tester.pumpAndSettle();
+    for (final text in [
+      '等待连接',
+      '账号与套餐',
+      '托管配置',
+      'VPN 隧道',
+      '扩展通信',
+      '内核启动',
+      '先连接 VPN',
+    ]) {
+      await tester.scrollUntilVisible(find.text(text), 80);
+      expect(find.text(text), findsOneWidget);
+    }
+    await tester.tap(find.text('我的'));
+    await tester.pumpAndSettle();
+    for (final text in ['我的账户', '官网续费', '邀请返佣', '连接诊断', '关于 ToWorld']) {
+      expect(find.text(text), findsOneWidget);
+    }
+    await tester.tap(find.text('邀请返佣'));
+    await tester.pumpAndSettle();
+    for (final text in [
+      '返佣规则',
+      '可用佣金',
+      '待结算',
+      '累计佣金',
+      '已邀请',
+      '分享邀请',
+      '复制链接',
+      '佣金明细',
+    ]) {
+      expect(find.text(text), findsOneWidget);
+    }
+    await tester.tap(find.text('佣金明细'));
+    await tester.pumpAndSettle();
+    expect(find.text('邀请佣金'), findsOneWidget);
+    expect(find.text('+¥24.00'), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 10));
   });

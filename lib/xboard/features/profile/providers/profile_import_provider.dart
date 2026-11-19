@@ -63,6 +63,10 @@ class ProfileImportNotifier extends Notifier<ImportState> {
         isImporting: false,
         progress: 0.0,
         message: '导入失败: $e',
+        lastResult: ImportResult.failure(
+          errorMessage: e.toString(),
+          errorType: ImportErrorType.unknownError,
+        ),
       );
       return false;
     }

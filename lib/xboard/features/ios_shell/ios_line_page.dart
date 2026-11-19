@@ -1,5 +1,7 @@
+import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/widgets/widgets.dart' show ListItem;
 import 'package:fl_clash/core/ios_lifecycle.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/xboard/adapter/flclash_gateway.dart';
@@ -22,14 +24,23 @@ class IosLinePage extends ConsumerStatefulWidget {
 class _IosLinePageState extends ConsumerState<IosLinePage> {
   bool _changing = false;
   bool _testing = false;
+  bool _tested = false;
+  String _query = '';
+  ({String group, String name})? _draft;
 
-  Future<void> _testLines(IosManagedLines lines) async {
+  Future<void> _testLines(List<Proxy> lines) async {
     if (_testing) return;
-    setState(() => _testing = true);
+    setState(() {
+      _testing = true;
+      _tested = false;
+    });
     try {
       await ref
           .read(flClashGatewayProvider)
-          .testProxies(lines.options, iosManagedProbeUrl);
+          .testProxies(lines, iosManagedProbeUrl);
+      if (mounted) setState(() => _tested = true);
+    } catch (_) {
+      if (mounted) _showTestFailure();
     } finally {
       if (mounted) setState(() => _testing = false);
     }
@@ -42,103 +53,219 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
       await ref
           .read(flClashGatewayProvider)
           .selectProxy(groupName: lines.group.name, proxyName: proxy);
+      if (mounted &&
+          ModalRoute.of(context)?.isCurrent == true &&
+          ref.read(iosSelectedLineProvider) == proxy) {
+        Navigator.of(context).pop();
+      }
+    } catch (_) {
+      if (mounted) {
+        dialogs.showBanner(
+          context.iosMemberStrings.lineChangeFailed,
+          level: BannerLevel.error,
+        );
+      }
     } finally {
       if (mounted) setState(() => _changing = false);
     }
   }
 
+  void _showTestFailure() => dialogs.showBanner(
+    context.iosMemberStrings.lineTestFailed,
+    level: BannerLevel.error,
+  );
+
   @override
   Widget build(BuildContext context) {
     final lines = ref.watch(iosManagedLinesProvider);
     final connected = ref.watch(iosTunnelStatusProvider) == 'connected';
-    final map = ref.watch(selectedMapProvider);
-    final visible = lines?.options ?? const [];
-    final selected = lines?.group.getCurrentSelectedName(
-      map[lines.group.name] ?? '',
-    );
-    return material.Scaffold(
-      backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
-      appBar: material.AppBar(
+    final options = lines?.options ?? const <Proxy>[];
+    final visible = _query.isEmpty
+        ? options
+        : options
+              .where((line) => line.name.toLowerCase().contains(_query))
+              .toList();
+    final current = ref.watch(iosSelectedLineProvider);
+    final selected = _draft?.group == lines?.group.name
+        ? _draft?.name ?? current
+        : current;
+    final canApply =
+        lines != null &&
+        selected != null &&
+        selected != current &&
+        options.any((line) => line.name == selected);
+    final strings = context.iosMemberStrings;
+    return KeyboardInsetHold(
+      child: material.Scaffold(
         backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
-        title: Text(context.iosMemberStrings.managedLines),
-      ),
-      body: SafeArea(
-        top: false,
-        child: PrismListView(
-          padding: const EdgeInsets.all(16),
-          itemCount: visible.length + 1,
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        appBar: material.AppBar(
+          backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
+          title: Text(strings.managedLines),
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (options.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: SearchField(
+                    hintText: strings.searchLines,
+                    onChanged: (value) =>
+                        setState(() => _query = value.trim().toLowerCase()),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                child: Row(
                   children: [
-                    Text(
-                      visible.isEmpty && connected
-                          ? context.iosMemberStrings.noSelectableLines
-                          : visible.isEmpty
-                          ? context.iosMemberStrings.connectToLoadLines
-                          : context.iosMemberStrings.chooseLine,
-                      style: AppTextStyle.subheadline.of(context),
+                    Expanded(
+                      child: Text(
+                        options.isEmpty
+                            ? connected
+                                  ? strings.noSelectableLines
+                                  : strings.connectToLoadLines
+                            : strings.lineCount(visible.length),
+                        style: AppTextStyle.subheadline.of(context),
+                      ),
                     ),
-                    if (lines != null)
-                      TextButton(
-                        onPressed: _testing ? null : () => _testLines(lines),
-                        child: Text(
-                          _testing
-                              ? context.iosMemberStrings.testingLines
-                              : context.iosMemberStrings.testLines,
+                    if (options.isNotEmpty)
+                      Flexible(
+                        flex: 2,
+                        child: TextButton(
+                          onPressed: _testing || !connected
+                              ? null
+                              : () => _testLines(options),
+                          child: Text(
+                            _testing ? strings.testingLines : strings.testLines,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                   ],
                 ),
-              );
-            }
-            final proxy = visible[index - 1];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Consumer(
-                builder: (context, ref, _) {
-                  final delay = ref.watch(
-                    delayProvider(
-                      proxyName: proxy.name,
-                      testUrl: iosManagedProbeUrl,
-                    ),
-                  );
-                  return Card(
-                    isSelected: selected == proxy.name,
-                    onPressed: _changing
-                        ? null
-                        : () => _select(lines!, proxy.name),
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        const GlyphIcon(XBoardGlyphs.router),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            proxy.name,
-                            style: AppTextStyle.body.of(context),
-                          ),
-                        ),
-                        if (delay != null && delay > 0) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            '$delay ms',
-                            style: AppTextStyle.footnote.of(context),
-                          ),
-                        ],
-                        const SizedBox(width: 8),
-                        if (selected == proxy.name) const SelectionCheck(),
-                      ],
-                    ),
-                  );
-                },
               ),
-            );
-          },
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(
+                  !connected
+                      ? strings.linesDisconnectedHint
+                      : _testing
+                      ? strings.linesTestingHint
+                      : _tested
+                      ? strings.linesTestedHint
+                      : strings.lineTestHint,
+                  style: AppTextStyle.footnote.of(context),
+                ),
+              ),
+              if (options.isNotEmpty && visible.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(strings.noMatchingLines),
+                ),
+              Expanded(
+                child: PrismListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: visible.length,
+                  itemBuilder: (context, index) {
+                    final proxy = visible[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _IosLineRow(
+                        key: ValueKey(proxy.name),
+                        proxy: proxy,
+                        selected: selected == proxy.name,
+                        onSelect: _changing || !connected
+                            ? null
+                            : () => setState(() {
+                                _draft = (
+                                  group: lines!.group.name,
+                                  name: proxy.name,
+                                );
+                              }),
+                        onRetest: _testing || !connected
+                            ? null
+                            : () => _testLines([proxy]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (options.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: FilledButton(
+                    onPressed: _changing || !connected || !canApply
+                        ? null
+                        : () => _select(lines, selected),
+                    child: Text(strings.useLine),
+                  ),
+                ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _IosLineRow extends ConsumerWidget {
+  const _IosLineRow({
+    super.key,
+    required this.proxy,
+    required this.selected,
+    required this.onSelect,
+    required this.onRetest,
+  });
+
+  final Proxy proxy;
+  final bool selected;
+  final VoidCallback? onSelect;
+  final VoidCallback? onRetest;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final delay = ref.watch(
+      delayProvider(proxyName: proxy.name, testUrl: iosManagedProbeUrl),
+    );
+    final phase = ref.watch(
+      delayTestPhaseProvider(
+        proxyName: proxy.name,
+        testUrl: iosManagedProbeUrl,
+      ),
+    );
+    final app = context.appLocalizations;
+    final strings = context.iosMemberStrings;
+    final label = phase != null
+        ? strings.testingLines
+        : delay == null
+        ? strings.lineNotTested
+        : delay > 0
+        ? '$delay ms'
+        : delay == delayTimedOutValue
+        ? strings.lineTimeout
+        : delayFailureText(delay, app);
+    return Card(
+      isSelected: selected,
+      child: Row(
+        children: [
+          Expanded(
+            child: ListItem<void>(
+              onTap: onSelect,
+              leading: const GlyphIcon(XBoardGlyphs.router),
+              title: Text(proxy.name),
+              subtitle: Text(label),
+              trailing: selected ? const SelectionCheck() : null,
+            ),
+          ),
+          IconButton(
+            tooltip: app.delayTest,
+            onPressed: phase == null ? onRetest : null,
+            icon: const GlyphIcon(AppGlyphs.refresh),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
     );
   }

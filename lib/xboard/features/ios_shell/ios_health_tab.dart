@@ -11,16 +11,25 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
+import 'package:fl_clash/xboard/features/profile/models/import_models.dart';
+import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prism_ui/prism_ui.dart';
 
+import 'ios_connection_activity.dart';
 import 'ios_managed_connection.dart';
 import 'ios_member_strings.dart';
 
-typedef _HealthResult = ({bool tunnelReady, IpInfo? exit, int? delay});
+typedef _HealthResult = ({
+  bool channelReady,
+  bool? tunnelReady,
+  IpInfo? exit,
+  int? delay,
+});
 
 class IosHealthTab extends ConsumerStatefulWidget {
   const IosHealthTab({super.key});
@@ -47,19 +56,22 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
   Future<void> _check() async {
     if (_checking) return;
     final line = ref.read(iosSelectedLineProvider);
-    if (line == null) return;
     final revision = ++_revision;
     setState(() {
       _checking = true;
       _result = null;
     });
-    var ready = false;
+    var channelReady = false;
+    bool? tunnelReady;
     IpInfo? exit;
     int? delay;
     try {
+      channelReady = await ref.refresh(iosCoreChannelProvider.future);
+      if (!channelReady || !mounted || revision != _revision) return;
+      tunnelReady = false;
       final state = await ref.refresh(iosCoreBootProvider.future);
-      ready = state?.booted == true && state?.tunStarted == true;
-      if (ready && mounted && revision == _revision) {
+      tunnelReady = state?.booted == true && state?.tunStarted == true;
+      if (tunnelReady && line != null && mounted && revision == _revision) {
         final reply = await ref
             .read(coreHandlerProvider)
             .outboundIp(
@@ -84,30 +96,84 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
       if (mounted && revision == _revision) {
         setState(() {
           _checking = false;
-          _result = (tunnelReady: ready, exit: exit, delay: delay);
+          _result = (
+            channelReady: channelReady,
+            tunnelReady: tunnelReady,
+            exit: exit,
+            delay: delay,
+          );
         });
       }
     }
   }
 
-  Future<void> _report(String status) async {
+  Future<void> _copySummary(String summary) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: summary));
+      if (mounted) dialogs.showBanner(context.iosMemberStrings.summaryCopied);
+    } catch (_) {
+      if (mounted) {
+        dialogs.showBanner(
+          context.iosMemberStrings.copyFailed,
+          level: BannerLevel.error,
+        );
+      }
+    }
+  }
+
+  Future<void> _report(String status, List<(String, String)> checks) async {
     if (_sending) return;
     final result = _result;
+    final packageInfo = globalState.packageInfo;
     final payload = {
-      'app_version': globalState.packageInfo.version,
+      'app_version': packageInfo.version,
+      'build_number': packageInfo.buildNumber,
       'vpn_status': status,
+      'channel_ready': result?.channelReady,
       'tunnel_ready': result?.tunnelReady,
       'exit_verified': result == null ? null : result.exit != null,
       'response_ms': result?.delay,
     };
+    final strings = context.iosMemberStrings;
+    final canSend = ref.read(initializationProvider).isReady;
+    final summary = [
+      '${strings.appVersion} · ${packageInfo.version} (${packageInfo.buildNumber})',
+      for (final (label, value) in checks) '$label · $value',
+    ].join('\n');
     setState(() => _sending = true);
     try {
-      final confirmed = await dialogs.showMessage(
+      final confirmed = await dialogs.showCommonDialog<bool>(
         context: context,
-        title: context.iosMemberStrings.diagnosticReport,
-        message: TextSpan(text: context.iosMemberStrings.confirmReport),
-        confirmText: context.iosMemberStrings.sendReport,
-        cancelText: context.appLocalizations.cancel,
+        child: Builder(
+          builder: (context) => AlertDialog(
+            title: strings.diagnosticReport,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(context.appLocalizations.close),
+              ),
+              TextButton(
+                onPressed: () => _copySummary(summary),
+                child: Text(strings.copySummary),
+              ),
+              TextButton(
+                onPressed: canSend
+                    ? () => Navigator.of(context).pop(true)
+                    : null,
+                child: Text(strings.sendReport),
+              ),
+            ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SelectableText(summary),
+                const SizedBox(height: 10),
+                Text(strings.confirmReport),
+              ],
+            ),
+          ),
+        ),
       );
       if (confirmed != true ||
           !mounted ||
@@ -138,6 +204,7 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
   @override
   Widget build(BuildContext context) {
     final app = context.appLocalizations;
+    final strings = context.iosMemberStrings;
     ref.listen(iosTunnelStatusProvider, (_, _) => _resetResult());
     ref.listen(iosSelectedLineProvider, (_, _) => _resetResult());
     ref.listen(currentProfileIdProvider, (_, _) => _resetResult());
@@ -153,31 +220,68 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
       ref.watch(userInfoProvider),
     );
     final profile = ref.watch(iosManagedProfileProvider);
-    final syncing =
-        profile.isLoading ||
-        ref.watch(xboardUserProvider.select((state) => state.isLoading));
+    final (syncing, accountSyncFailed) = ref.watch(
+      xboardUserProvider.select(
+        (state) => (state.isLoading, state.membershipRefreshFailed),
+      ),
+    );
+    final (importing, failed, errorType) = ref.watch(
+      profileImportProvider.select(
+        (state) => (
+          state.isImporting,
+          state.status == ImportStatus.failed,
+          state.lastResult?.errorType,
+        ),
+      ),
+    );
     final connected = status == 'connected';
     final line = ref.watch(iosSelectedLineProvider);
     final result = _result;
     final exit = result?.exit;
-    final initReady = ref.watch(
-      initializationProvider.select((state) => state.isReady),
-    );
     final tunnelStatus = switch (status) {
       'connected' => app.connected,
       'connecting' || 'reasserting' => app.connecting,
-      'disconnecting' => context.iosMemberStrings.disconnecting,
-      _ => app.disconnected,
+      'disconnecting' => strings.disconnecting,
+      _ => strings.notConnected,
     };
     final title = switch (result) {
       _ when _checking => xboardL10n.checking,
-      _ when !connected => context.iosMemberStrings.waitingForVpn,
-      _ when line == null => context.iosMemberStrings.selectLineToCheck,
-      null => context.iosMemberStrings.readyToCheck,
-      _ when exit != null => context.iosMemberStrings.exitVerified,
-      _ when !result.tunnelReady => context.iosMemberStrings.tunnelUnavailable,
-      _ => context.iosMemberStrings.exitFailed,
+      _ when !connected => strings.waitingForVpn,
+      null when line == null => strings.selectLineToCheck,
+      null => strings.readyToCheck,
+      _ when !result.channelReady => strings.extensionUnavailable,
+      _ when result.tunnelReady != true => strings.tunnelUnavailable,
+      _ when exit != null => strings.connectionHealthy,
+      _ when line == null => strings.selectLineToCheck,
+      _ => strings.exitFailed,
     };
+    final configuration = switch (errorType) {
+      _ when importing || profile.isLoading => app.loading,
+      ImportErrorType.networkError ||
+      ImportErrorType.downloadError when failed => strings.configDownloadFailed,
+      ImportErrorType.validationError when failed =>
+        strings.configValidationFailed,
+      ImportErrorType.storageError when failed => strings.configSaveFailed,
+      _ when failed || profile.hasError => strings.configSyncFailed,
+      _ when profile.asData?.value != null => strings.synced,
+      _ => strings.needsSync,
+    };
+    final channel = switch (result?.channelReady) {
+      true => strings.reachable,
+      false => strings.extensionUnavailable,
+      null => connected ? strings.notChecked : strings.waitingForConnection,
+    };
+    final core = switch (result?.tunnelReady) {
+      true => strings.ready,
+      false => strings.coreUnavailable,
+      null => connected ? strings.notChecked : strings.waitingForConnection,
+    };
+    final checks = [
+      (strings.vpnTunnel, tunnelStatus),
+      (strings.extensionChannel, channel),
+      (strings.coreStartup, core),
+    ];
+    final responseTime = result?.delay == null ? '—' : '${result!.delay} ms';
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
       children: [
@@ -194,57 +298,65 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(title, style: AppTextStyle.headline.of(context)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyle.headline.of(context)),
+                    const SizedBox(height: 4),
+                    Text(
+                      !connected
+                          ? strings.healthDisconnectedHint
+                          : exit != null
+                          ? strings.healthSuccessHint
+                          : result?.tunnelReady == true
+                          ? strings.healthFailedHint
+                          : strings.healthReadyHint,
+                      style: AppTextStyle.subheadline.of(context),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 12),
         _CheckSection(
-          title: context.iosMemberStrings.connectionChecklist,
+          title: strings.connectionChecklist,
           values: [
             (
-              context.iosMemberStrings.membership,
-              active
-                  ? xboardL10n.subscriptionValid
-                  : xboardL10n.subscriptionNoSubscription,
-            ),
-            (
-              context.iosMemberStrings.configuration,
+              strings.accountAndPlan,
               syncing
                   ? app.loading
-                  : profile.asData?.value != null
-                  ? context.iosMemberStrings.synced
-                  : context.iosMemberStrings.needsSync,
+                  : accountSyncFailed
+                  ? strings.accountSyncFailed
+                  : active
+                  ? strings.valid
+                  : xboardL10n.subscriptionNoSubscription,
             ),
-            (xboardL10n.iosTunnel, tunnelStatus),
+            (strings.configuration, configuration),
+            ...checks,
           ],
         ),
         const SizedBox(height: 12),
         _CheckSection(
-          title: context.iosMemberStrings.exitVerification,
+          title: strings.exitVerification,
           values: [
             (context.iosMemberStrings.exitRegion, exit?.countryCode ?? '—'),
             (context.iosMemberStrings.exitIp, exit?.ip ?? '—'),
-            (
-              context.iosMemberStrings.responseTime,
-              result?.delay == null ? '—' : '${result!.delay} ms',
-            ),
+            (strings.responseTime, responseTime),
           ],
         ),
         const SizedBox(height: 12),
         FilledButton(
-          onPressed:
-              connected &&
-                  !_checking &&
-                  profile.asData?.value != null &&
-                  line != null
-              ? _check
-              : null,
+          onPressed: connected && !_checking ? _check : null,
           child: Text(
             _checking
                 ? xboardL10n.checking
-                : context.iosMemberStrings.checkConnection,
+                : !connected
+                ? strings.connectFirst
+                : result == null
+                ? strings.checkConnection
+                : strings.recheckConnection,
           ),
         ),
         const SizedBox(height: 9),
@@ -255,9 +367,16 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
               .copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
         TextButton(
-          onPressed: _sending || !initReady ? null : () => _report(status),
-          child: Text(context.iosMemberStrings.diagnosticReport),
+          onPressed: _sending
+              ? null
+              : () => _report(status, [
+                  ...checks,
+                  (strings.exitVerification, title),
+                  (strings.responseTime, responseTime),
+                ]),
+          child: Text(strings.viewDiagnosticReport),
         ),
+        const IosConnectionActivityCard(),
       ],
     );
   }

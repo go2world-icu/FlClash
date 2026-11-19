@@ -1,8 +1,10 @@
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/ios_lifecycle.dart';
+import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
+import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/profile/models/import_models.dart';
 import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
@@ -14,6 +16,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:prism_ui/prism_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'ios_line_page.dart';
 import 'ios_managed_connection.dart';
@@ -106,8 +109,10 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
     final active = hasActiveIosPlan(subscription, user);
     final ready = profile.asData?.value != null && active;
     final currentLine = ref.watch(iosSelectedLineProvider);
-    final syncingAccount = ref.watch(
-      xboardUserProvider.select((state) => state.isLoading),
+    final (syncingAccount, accountSyncFailed) = ref.watch(
+      xboardUserProvider.select(
+        (state) => (state.isLoading, state.membershipRefreshFailed),
+      ),
     );
     final syncPending =
         _refreshing || importing || profile.isLoading || syncingAccount;
@@ -119,7 +124,7 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
       'connected' => app.connected,
       'connecting' || 'reasserting' => app.connecting,
       'disconnecting' => strings.disconnecting,
-      _ => app.disconnected,
+      _ => strings.notConnected,
     };
     final statusHint = safeMode && !canStop
         ? app.safeMode
@@ -186,6 +191,10 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
                       .of(context)
                       .copyWith(color: const Color(0xffd4e4fa)),
                 ),
+                if (connected) ...[
+                  const SizedBox(height: 10),
+                  const _IosLiveTraffic(),
+                ],
                 const SizedBox(height: 15),
                 FilledButton.icon(
                   style: ButtonStyle.from(
@@ -206,7 +215,7 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
                     AppGlyphs.playPause(canStop ? 1 : 0),
                     fill: 1,
                   ),
-                  label: Text(canStop ? app.stopVpn : strings.connect),
+                  label: Text(canStop ? strings.disconnect : strings.connect),
                 ),
               ],
             ),
@@ -253,6 +262,16 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
         ),
         const SizedBox(height: 12),
         const IosMembershipCard(),
+        if (!syncPending && accountSyncFailed)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              strings.accountSyncFailed,
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: context.colorScheme.error),
+            ),
+          ),
         if (!syncPending && (_refreshFailed || importFailed))
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -274,8 +293,80 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
   }
 }
 
+class _IosLiveTraffic extends ConsumerWidget {
+  const _IosLiveTraffic();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final traffic = ref.watch(
+      trafficsProvider.select((state) => state.list.safeLast(const Traffic())),
+    );
+    final runTime = ref.watch(runTimeProvider);
+    final strings = context.iosMemberStrings;
+    final metrics = [
+      (strings.upstream, '${traffic.up.traffic.show}/s'),
+      (strings.downstream, '${traffic.down.traffic.show}/s'),
+      (context.iosMemberStrings.connectionDuration, getTimeText(runTime)),
+    ];
+    return Wrap(
+      spacing: 16,
+      runSpacing: 8,
+      children: [
+        for (final (label, value) in metrics)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyle.footnote
+                    .of(context)
+                    .copyWith(color: const Color(0xffd4e4fa)),
+              ),
+              Text(
+                value,
+                style: AppTextStyle.subheadline
+                    .of(context, emphasized: true)
+                    .copyWith(color: const Color(0xfff4f9ff)),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+final iosMembershipWebsiteProvider = Provider<Uri?>((ref) {
+  ref.watch(initializationProvider.select((state) => state.isReady));
+  for (final url in [XBoardConfig.panelUrl, XBoardConfig.appWebsite]) {
+    final uri = url == null ? null : Uri.tryParse(url.trim());
+    if (uri != null &&
+        (uri.isScheme('https') || uri.isScheme('http')) &&
+        uri.host.isNotEmpty &&
+        uri.userInfo.isEmpty) {
+      return uri;
+    }
+  }
+  return null;
+});
+
 class IosMembershipCard extends ConsumerWidget {
-  const IosMembershipCard({super.key});
+  const IosMembershipCard({super.key, this.showDetails = false});
+
+  final bool showDetails;
+
+  Future<void> _renew(BuildContext context, Uri website) async {
+    try {
+      if (await launchUrl(website, mode: LaunchMode.externalApplication)) {
+        return;
+      }
+    } catch (_) {}
+    if (context.mounted) {
+      dialogs.showBanner(
+        context.iosMemberStrings.openWebsiteFailed,
+        level: BannerLevel.error,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -284,12 +375,31 @@ class IosMembershipCard extends ConsumerWidget {
     final colors = context.colorScheme;
     final active = hasActiveIosPlan(plan, user);
     final expiry = plan?.expiredAt;
+    final days = plan?.daysRemaining;
+    final strings = context.iosMemberStrings;
+    final nearExpiry = days != null && days < 10;
+    final website = ref.watch(iosMembershipWebsiteProvider);
+    final offerRenewal =
+        website != null &&
+        user?.banned != true &&
+        (showDetails ||
+            !active ||
+            nearExpiry ||
+            (plan?.usagePercentage ?? 0) >= 80);
+    final syncedAt = showDetails
+        ? ref.watch(
+            iosManagedProfileProvider.select(
+              (state) => state.asData?.value?.lastUpdateDate,
+            ),
+          )
+        : null;
     final label = switch (plan) {
       _ when user?.banned == true => context.iosMemberStrings.accountRestricted,
       null => xboardL10n.xboardNoSubscriptionInfo,
       _ when plan.isExpired => xboardL10n.subscriptionExpired,
       _ when plan.transferLimit > 0 && plan.isTrafficExhausted =>
         xboardL10n.subscriptionTrafficExhausted,
+      _ when active && nearExpiry => strings.daysRemaining(days),
       _ when active => xboardL10n.subscriptionValid,
       _ => xboardL10n.subscriptionNoSubscription,
     };
@@ -301,7 +411,7 @@ class IosMembershipCard extends ConsumerWidget {
           Text(
             plan?.planName?.isNotEmpty == true
                 ? plan!.planName!
-                : context.iosMemberStrings.membership,
+                : strings.membership,
             style: AppTextStyle.headline.of(context),
           ),
           const SizedBox(height: 2),
@@ -316,7 +426,7 @@ class IosMembershipCard extends ConsumerWidget {
           if (plan != null && plan.transferLimit > 0) ...[
             const SizedBox(height: 10),
             Text(
-              context.iosMemberStrings.remainingData,
+              strings.remainingData,
               style: AppTextStyle.footnote.of(context),
             ),
             Text(
@@ -325,7 +435,7 @@ class IosMembershipCard extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Semantics(
-              label: context.iosMemberStrings.remainingData,
+              label: strings.remainingData,
               value: plan.formattedRemainingTraffic,
               child: LayoutBuilder(
                 builder: (_, constraints) => Container(
@@ -348,7 +458,12 @@ class IosMembershipCard extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              context.iosMemberStrings.total(plan.formattedTotalTraffic),
+              showDetails
+                  ? strings.usedData(
+                      plan.formattedUsedTraffic,
+                      plan.formattedTotalTraffic,
+                    )
+                  : strings.total(plan.formattedTotalTraffic),
               style: AppTextStyle.footnote
                   .of(context)
                   .copyWith(color: colors.onSurfaceVariant),
@@ -357,12 +472,35 @@ class IosMembershipCard extends ConsumerWidget {
           if (expiry != null) ...[
             const SizedBox(height: 7),
             Text(
-              '${xboardL10n.xboardExpiryTime} · ${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(expiry.toLocal())}',
+              showDetails
+                  ? '${strings.expiryDate} · ${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(expiry.toLocal())}'
+                  : strings.expiresOn(
+                      DateFormat.yMMMd(
+                        Localizations.localeOf(context).languageCode,
+                      ).format(expiry.toLocal()),
+                    ),
               style: AppTextStyle.footnote
                   .of(context)
                   .copyWith(color: colors.onSurfaceVariant),
             ),
           ],
+          if (syncedAt != null) ...[
+            const SizedBox(height: 7),
+            Text(
+              '${strings.latestConfigSync} · '
+              '${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).add_jm().format(syncedAt.toLocal())}',
+              style: AppTextStyle.footnote.of(context),
+            ),
+          ],
+          if (offerRenewal)
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                onPressed: () => _renew(context, website),
+                icon: const GlyphIcon(AppGlyphs.openExternal),
+                label: Text(strings.renewedOnWebsite),
+              ),
+            ),
         ],
       ),
     );

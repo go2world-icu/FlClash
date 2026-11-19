@@ -15,6 +15,7 @@ class InviteState {
   final bool isLoading;
   final bool isGenerating;
   final bool isLoadingHistory;
+  final bool historyLoadFailed;
   final String? errorMessage;
   final int currentHistoryPage;
   final bool hasMoreHistory;
@@ -27,6 +28,7 @@ class InviteState {
     this.isLoading = false,
     this.isGenerating = false,
     this.isLoadingHistory = false,
+    this.historyLoadFailed = false,
     this.errorMessage,
     this.currentHistoryPage = 1,
     this.hasMoreHistory = true,
@@ -40,6 +42,7 @@ class InviteState {
     bool? isLoading,
     bool? isGenerating,
     bool? isLoadingHistory,
+    bool? historyLoadFailed,
     String? errorMessage,
     int? currentHistoryPage,
     bool? hasMoreHistory,
@@ -52,6 +55,7 @@ class InviteState {
       isLoading: isLoading ?? this.isLoading,
       isGenerating: isGenerating ?? this.isGenerating,
       isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
+      historyLoadFailed: historyLoadFailed ?? this.historyLoadFailed,
       errorMessage: errorMessage,
       currentHistoryPage: currentHistoryPage ?? this.currentHistoryPage,
       hasMoreHistory: hasMoreHistory ?? this.hasMoreHistory,
@@ -87,6 +91,8 @@ class InviteState {
 }
 
 class InviteNotifier extends Notifier<InviteState> {
+  int _historyPageRequested = 1;
+
   @override
   InviteState build() {
     return const InviteState();
@@ -99,13 +105,15 @@ class InviteNotifier extends Notifier<InviteState> {
 
     try {
       _logger.info('加载邀请信息...');
-      final inviteInfoModel = await ref.read(getInviteInfoProvider.future);
+      final inviteInfoModel = await ref.refresh(getInviteInfoProvider.future);
+      if (!ref.mounted) return;
       final inviteData = _mapInviteInfo(inviteInfoModel);
 
       state = state.copyWith(inviteData: inviteData, isLoading: false);
 
       _logger.info('邀请信息加载成功');
     } catch (e) {
+      if (!ref.mounted) return;
       _logger.info('加载邀请信息失败: $e');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
@@ -117,15 +125,17 @@ class InviteNotifier extends Notifier<InviteState> {
   }) async {
     if (state.isLoadingHistory) return;
 
-    state = state.copyWith(isLoadingHistory: true);
+    _historyPageRequested = page;
+    state = state.copyWith(isLoadingHistory: true, historyLoadFailed: false);
 
     try {
       _logger.info('加载佣金历史... 页码: $page');
       final commissionList = await getCommissionDetails(ref, page: page);
+      if (!ref.mounted) return;
       final newHistory = commissionList.map(_mapCommission).toList();
 
       List<DomainCommission> updatedHistory;
-      if (append && newHistory.isNotEmpty) {
+      if (append) {
         // 追加到现有列表
         updatedHistory = [...state.commissionHistory, ...newHistory];
       } else {
@@ -142,8 +152,9 @@ class InviteNotifier extends Notifier<InviteState> {
 
       _logger.info('佣金历史加载成功: 第$page页，${newHistory.length} 条记录');
     } catch (e) {
+      if (!ref.mounted) return;
       _logger.info('加载佣金历史失败: $e');
-      state = state.copyWith(isLoadingHistory: false);
+      state = state.copyWith(isLoadingHistory: false, historyLoadFailed: true);
     }
   }
 
@@ -158,6 +169,11 @@ class InviteNotifier extends Notifier<InviteState> {
   Future<void> refreshCommissionHistory() async {
     await loadCommissionHistory(page: 1, append: false);
   }
+
+  Future<void> retryCommissionHistory() => loadCommissionHistory(
+    page: _historyPageRequested,
+    append: _historyPageRequested > 1,
+  );
 
   Future<void> loadUserInfo() async {
     try {
@@ -179,6 +195,7 @@ class InviteNotifier extends Notifier<InviteState> {
     try {
       _logger.info('生成邀请码...');
       final codeString = await XBoardSDK.instance.invite.generateInviteCode();
+      if (!ref.mounted) return null;
 
       // SDK returns String, we need to wrap it or reload data
       // Assuming generateInviteCode returns the code string
@@ -191,11 +208,13 @@ class InviteNotifier extends Notifier<InviteState> {
         createdAt: DateTime.now(),
       );
       await loadInviteData();
+      if (!ref.mounted) return null;
 
       state = state.copyWith(isGenerating: false);
       _logger.info('邀请码生成成功: $newInviteCode');
       return newInviteCode;
     } catch (e) {
+      if (!ref.mounted) return null;
       _logger.info('生成邀请码失败: $e');
       state = state.copyWith(isGenerating: false, errorMessage: e.toString());
       return null;

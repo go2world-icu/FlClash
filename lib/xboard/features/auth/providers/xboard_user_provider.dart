@@ -488,7 +488,12 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     if (!state.isAuthenticated) {
       return;
     }
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    final epoch = _sessionEpoch;
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      membershipRefreshFailed: false,
+    );
     try {
       _logger.info('刷新订阅信息...');
 
@@ -497,30 +502,40 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
 
       try {
         final userModel = await ref.read(getUserInfoProvider.future);
-        userInfo = _mapUser(userModel);
-        await _storageService.saveDomainUser(userInfo);
-        ref.read(userInfoProvider.notifier).state = userInfo;
+        if (epoch != _sessionEpoch) return;
+        final fetchedUser = _mapUser(userModel);
+        await _storageService.saveDomainUser(fetchedUser);
+        if (epoch != _sessionEpoch) return;
+        userInfo = fetchedUser;
+        ref.read(userInfoProvider.notifier).state = fetchedUser;
       } catch (e) {
         _logger.info('获取用户详细信息失败: $e');
       }
 
+      if (epoch != _sessionEpoch) return;
       try {
         final subscriptionModel = await ref.read(
           getSubscriptionProvider.future,
         );
-        subscriptionData = _mapSubscription(subscriptionModel);
-        await _storageService.saveDomainSubscription(subscriptionData);
-        ref.read(subscriptionInfoProvider.notifier).state = subscriptionData;
+        if (epoch != _sessionEpoch) return;
+        final fetchedSubscription = _mapSubscription(subscriptionModel);
+        await _storageService.saveDomainSubscription(fetchedSubscription);
+        if (epoch != _sessionEpoch) return;
+        subscriptionData = fetchedSubscription;
+        ref.read(subscriptionInfoProvider.notifier).state = fetchedSubscription;
       } catch (e) {
         _logger.info('获取订阅信息失败: $e');
       }
 
+      if (epoch != _sessionEpoch) return;
+      final refreshFailed = userInfo == null || subscriptionData == null;
       state = state.copyWith(
         userInfo: userInfo,
         subscriptionInfo: subscriptionData,
         isLoading: false,
+        membershipRefreshFailed: refreshFailed,
       );
-      _logger.info('订阅信息已刷新');
+      if (!refreshFailed) _logger.info('订阅信息已刷新');
 
       // 触发订阅导入流程
       if (subscriptionData?.subscribeUrl.isNotEmpty == true) {
@@ -540,7 +555,12 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
       }
     } catch (e) {
       _logger.info('刷新订阅信息出错: $e');
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (epoch != _sessionEpoch) return;
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+        membershipRefreshFailed: true,
+      );
     }
   }
 
