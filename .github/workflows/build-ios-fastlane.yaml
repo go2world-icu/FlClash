@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   build-ios:
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 60
     outputs:
       tag: ${{ steps.context.outputs.tag }}
@@ -62,10 +62,16 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Setup Xcode
+      - name: Verify Xcode and iOS SDK
         run: |
-          sudo xcode-select -s /Applications/Xcode_26.3.app || sudo xcode-select -s /Applications/Xcode_26.2.app
           xcodebuild -version
+          ios_sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
+          ios_sdk_major="${ios_sdk%%.*}"
+          echo "iOS SDK: $ios_sdk"
+          if [[ ! "$ios_sdk_major" =~ ^[0-9]+$ ]] || (( ios_sdk_major < 27 )); then
+            echo "::error::iOS builds require SDK 27 or later (found $ios_sdk)"
+            exit 1
+          fi
 
       - name: Setup Ruby
         if: steps.context.outputs.publish == 'true'
