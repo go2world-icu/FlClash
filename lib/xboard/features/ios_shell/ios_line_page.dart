@@ -146,19 +146,6 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text(
-                  !connected
-                      ? strings.linesDisconnectedHint
-                      : _testing
-                      ? strings.linesTestingHint
-                      : _tested
-                      ? strings.linesTestedHint
-                      : strings.lineTestHint,
-                  style: AppTextStyle.footnote.of(context),
-                ),
-              ),
               if (options.isNotEmpty && visible.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -171,7 +158,7 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
                   itemBuilder: (context, index) {
                     final proxy = visible[index];
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 2),
                       child: _IosLineRow(
                         key: ValueKey(proxy.name),
                         proxy: proxy,
@@ -190,6 +177,19 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
                       ),
                     );
                   },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text(
+                  !connected
+                      ? strings.linesDisconnectedHint
+                      : _testing
+                      ? strings.linesTestingHint
+                      : _tested
+                      ? strings.linesTestedHint
+                      : strings.lineTestHint,
+                  style: AppTextStyle.footnote.of(context),
                 ),
               ),
               if (options.isNotEmpty)
@@ -237,7 +237,9 @@ class _IosLineRow extends ConsumerWidget {
     );
     final app = context.appLocalizations;
     final strings = context.iosMemberStrings;
-    final label = phase != null
+    final label = proxy.type == 'URLTest' || proxy.type == 'Fallback'
+        ? strings.autoLineHint
+        : phase != null
         ? strings.testingLines
         : delay == null
         ? strings.lineNotTested

@@ -159,17 +159,40 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
               children: [
                 Row(
                   children: [
-                    const GlyphIcon(
-                      XBoardGlyphs.shieldCheck,
-                      color: Color(0xffd4e4fa),
-                      size: 27,
+                    DecoratedBox(
+                      decoration: const ShapeDecoration(
+                        color: Color(0x33c5dcff),
+                        shape: AppShape.md,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: const GlyphIcon(
+                          XBoardGlyphs.shieldCheck,
+                          color: Color(0xffd4e4fa),
+                          size: 22,
+                        ),
+                      ),
                     ),
                     const Spacer(),
-                    Text(
-                      status,
-                      style: AppTextStyle.footnote
-                          .of(context, emphasized: true)
-                          .copyWith(color: const Color(0xffd4e4fa)),
+                    DecoratedBox(
+                      decoration: ShapeDecoration(
+                        color: connected
+                            ? const Color(0xff0d634c)
+                            : const Color(0x33e1eeff),
+                        shape: AppShape.full,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 4,
+                        ),
+                        child: Text(
+                          status,
+                          style: AppTextStyle.footnote
+                              .of(context, emphasized: true)
+                              .copyWith(color: const Color(0xfff0f6ff)),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -308,27 +331,27 @@ class _IosLiveTraffic extends ConsumerWidget {
       (strings.downstream, '${traffic.down.traffic.show}/s'),
       (context.iosMemberStrings.connectionDuration, getTimeText(runTime)),
     ];
-    return Wrap(
-      spacing: 16,
-      runSpacing: 8,
+    return Row(
       children: [
         for (final (label, value) in metrics)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: AppTextStyle.footnote
-                    .of(context)
-                    .copyWith(color: const Color(0xffd4e4fa)),
-              ),
-              Text(
-                value,
-                style: AppTextStyle.subheadline
-                    .of(context, emphasized: true)
-                    .copyWith(color: const Color(0xfff4f9ff)),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyle.footnote
+                      .of(context)
+                      .copyWith(color: const Color(0xffd4e4fa)),
+                ),
+                Text(
+                  value,
+                  style: AppTextStyle.subheadline
+                      .of(context, emphasized: true)
+                      .copyWith(color: const Color(0xfff4f9ff)),
+                ),
+              ],
+            ),
           ),
       ],
     );
@@ -403,25 +426,100 @@ class IosMembershipCard extends ConsumerWidget {
       _ when active => xboardL10n.subscriptionValid,
       _ => xboardL10n.subscriptionNoSubscription,
     };
+    final dateFormat = DateFormat.yMMMd(
+      Localizations.localeOf(context).languageCode,
+    );
+    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    if (showDetails) {
+      return Card(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    plan?.planName?.isNotEmpty == true
+                        ? plan!.planName!
+                        : strings.membership,
+                    style: AppTextStyle.headline.of(context),
+                  ),
+                ),
+                if (offerRenewal)
+                  TextButton.icon(
+                    onPressed: () => _renew(context, website),
+                    icon: const GlyphIcon(AppGlyphs.openExternal),
+                    label: Text(strings.renewedOnWebsite),
+                  ),
+              ],
+            ),
+            if (plan == null || !active)
+              Text(label, style: AppTextStyle.footnote.of(context)),
+            if (plan != null && plan.transferLimit > 0)
+              _DetailRow(
+                label: strings.usedDataLabel,
+                value:
+                    '${plan.formattedUsedTraffic} / ${plan.formattedTotalTraffic}',
+              ),
+            if (expiry != null)
+              _DetailRow(
+                label: strings.expiryDate,
+                value: dateFormat.format(expiry.toLocal()),
+              ),
+            if (syncedAt != null)
+              _DetailRow(
+                label: strings.latestConfigSync,
+                value: dateFormat.add_jm().format(syncedAt.toLocal()),
+              ),
+          ],
+        ),
+      );
+    }
     return Card(
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            plan?.planName?.isNotEmpty == true
-                ? plan!.planName!
-                : strings.membership,
-            style: AppTextStyle.headline.of(context),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: AppTextStyle.footnote
-                .of(context)
-                .copyWith(
-                  color: active ? colors.primary : colors.onSurfaceVariant,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  plan?.planName?.isNotEmpty == true
+                      ? plan!.planName!
+                      : strings.membership,
+                  style: AppTextStyle.headline.of(context),
                 ),
+              ),
+              DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: active
+                      ? dark
+                            ? const Color(0xff473321)
+                            : const Color(0xfffff1db)
+                      : colors.surfaceContainerHighest,
+                  shape: AppShape.full,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    label,
+                    style: AppTextStyle.footnote
+                        .of(context)
+                        .copyWith(
+                          color: active
+                              ? dark
+                                    ? const Color(0xffffd3a0)
+                                    : const Color(0xff8b4b11)
+                              : colors.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+              ),
+            ],
           ),
           if (plan != null && plan.transferLimit > 0) ...[
             const SizedBox(height: 10),
@@ -429,9 +527,19 @@ class IosMembershipCard extends ConsumerWidget {
               strings.remainingData,
               style: AppTextStyle.footnote.of(context),
             ),
-            Text(
-              plan.formattedRemainingTraffic,
-              style: AppTextStyle.title2.of(context, emphasized: true),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    plan.formattedRemainingTraffic,
+                    style: AppTextStyle.title1.of(context, emphasized: true),
+                  ),
+                ),
+                Text(
+                  strings.total(plan.formattedTotalTraffic),
+                  style: AppTextStyle.footnote.of(context),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             Semantics(
@@ -457,52 +565,62 @@ class IosMembershipCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              showDetails
-                  ? strings.usedData(
-                      plan.formattedUsedTraffic,
-                      plan.formattedTotalTraffic,
-                    )
-                  : strings.total(plan.formattedTotalTraffic),
-              style: AppTextStyle.footnote
-                  .of(context)
-                  .copyWith(color: colors.onSurfaceVariant),
-            ),
           ],
-          if (expiry != null) ...[
-            const SizedBox(height: 7),
-            Text(
-              showDetails
-                  ? '${strings.expiryDate} · ${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(expiry.toLocal())}'
-                  : strings.expiresOn(
-                      DateFormat.yMMMd(
-                        Localizations.localeOf(context).languageCode,
-                      ).format(expiry.toLocal()),
-                    ),
-              style: AppTextStyle.footnote
-                  .of(context)
-                  .copyWith(color: colors.onSurfaceVariant),
-            ),
-          ],
-          if (syncedAt != null) ...[
-            const SizedBox(height: 7),
-            Text(
-              '${strings.latestConfigSync} · '
-              '${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).add_jm().format(syncedAt.toLocal())}',
-              style: AppTextStyle.footnote.of(context),
-            ),
-          ],
-          if (offerRenewal)
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: TextButton.icon(
-                onPressed: () => _renew(context, website),
-                icon: const GlyphIcon(AppGlyphs.openExternal),
-                label: Text(strings.renewedOnWebsite),
-              ),
+          if (expiry != null || offerRenewal)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    expiry == null
+                        ? ''
+                        : strings.expiresOn(
+                            dateFormat.format(expiry.toLocal()),
+                          ),
+                    style: AppTextStyle.footnote
+                        .of(context)
+                        .copyWith(color: colors.onSurfaceVariant),
+                  ),
+                ),
+                if (offerRenewal)
+                  TextButton.icon(
+                    onPressed: () => _renew(context, website),
+                    icon: const GlyphIcon(AppGlyphs.openExternal),
+                    label: Text(strings.renewedOnWebsite),
+                  ),
+              ],
             ),
         ],
       ),
     );
   }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 7),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyle.subheadline
+                .of(context)
+                .copyWith(color: context.colorScheme.onSurfaceVariant),
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: AppTextStyle.subheadline.of(context, emphasized: true),
+          ),
+        ),
+      ],
+    ),
+  );
 }

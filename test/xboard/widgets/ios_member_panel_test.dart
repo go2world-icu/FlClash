@@ -15,6 +15,7 @@ import 'package:fl_clash/xboard/features/auth/models/auth_state.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_home_tab.dart';
+import 'package:fl_clash/xboard/features/ios_shell/ios_health_tab.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_line_page.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_managed_connection.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_shell_page.dart';
@@ -429,6 +430,9 @@ void main() {
     Navigator.of(tester.element(find.byType(IosLinePage))).pop();
     await tester.pumpAndSettle();
     await tester.tap(find.text('Connection health'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Check connection'), 250);
+    await tester.drag(find.byType(IosHealthTab), const Offset(0, -180));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Check connection'));
     await tester.pumpAndSettle();

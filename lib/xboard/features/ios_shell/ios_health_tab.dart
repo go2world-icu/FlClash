@@ -338,8 +338,15 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
           ],
         ),
         const SizedBox(height: 12),
+        const IosConnectionActivityCard(),
+        const SizedBox(height: 12),
         _CheckSection(
           title: strings.exitVerification,
+          status: result == null
+              ? strings.notChecked
+              : exit == null
+              ? strings.exitFailed
+              : strings.passed,
           values: [
             (context.iosMemberStrings.exitRegion, exit?.countryCode ?? '—'),
             (context.iosMemberStrings.exitIp, exit?.ip ?? '—'),
@@ -376,17 +383,17 @@ class _IosHealthTabState extends ConsumerState<IosHealthTab> {
                 ]),
           child: Text(strings.viewDiagnosticReport),
         ),
-        const IosConnectionActivityCard(),
       ],
     );
   }
 }
 
 class _CheckSection extends StatelessWidget {
-  const _CheckSection({required this.title, required this.values});
+  const _CheckSection({required this.title, required this.values, this.status});
 
   final String title;
   final List<(String, String)> values;
+  final String? status;
 
   @override
   Widget build(BuildContext context) {
@@ -395,7 +402,15 @@ class _CheckSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: AppTextStyle.headline.of(context)),
+          Row(
+            children: [
+              Expanded(
+                child: Text(title, style: AppTextStyle.headline.of(context)),
+              ),
+              if (status != null)
+                Text(status!, style: AppTextStyle.footnote.of(context)),
+            ],
+          ),
           const SizedBox(height: 6),
           for (final (label, value) in values)
             Padding(

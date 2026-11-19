@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
@@ -6,7 +8,6 @@ import 'package:fl_clash/widgets/widgets.dart' show ListItem;
 import 'package:fl_clash/xboard/features/auth/pages/login_page.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
-import 'package:fl_clash/xboard/features/invite/dialogs/theme_dialog.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
@@ -46,6 +47,15 @@ class _IosMemberTabs extends ConsumerStatefulWidget {
 
 class _IosMemberTabsState extends ConsumerState<_IosMemberTabs> {
   int _selected = 0;
+  bool _loadedInvite = false;
+
+  void _selectTab(int index) {
+    setState(() => _selected = index);
+    if (index == 2 && !_loadedInvite) {
+      _loadedInvite = true;
+      unawaited(ref.read(inviteProvider.notifier).loadInviteData());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +92,7 @@ class _IosMemberTabsState extends ConsumerState<_IosMemberTabs> {
           if (_selected == 0)
             material.IconButton(
               tooltip: labels[2],
-              onPressed: () => setState(() => _selected = 2),
+              onPressed: () => _selectTab(2),
               icon: const GlyphIcon(XBoardGlyphs.person),
             ),
         ],
@@ -117,7 +127,7 @@ class _IosMemberTabsState extends ConsumerState<_IosMemberTabs> {
             ),
           ],
           selectedIndex: _selected,
-          onSelected: (index) => setState(() => _selected = index),
+          onSelected: _selectTab,
         ),
       ),
     );
@@ -244,20 +254,16 @@ class _IosAccountTab extends ConsumerWidget {
               ),
               ListItem<void>(
                 onTap: () => showIosMemberPrivacy(context),
+                leading: const GlyphIcon(XBoardGlyphs.shieldCheck),
                 title: Text(strings.privacy),
               ),
               ListItem<void>(
                 onTap: onShowHealth,
+                leading: const GlyphIcon(XBoardGlyphs.supportAgent),
                 title: Text(strings.connectionDiagnosis),
               ),
-              ListItem<void>(
-                onTap: () => material.showDialog<void>(
-                  context: context,
-                  builder: (_) => const ThemeDialog(),
-                ),
-                title: Text(app.theme),
-              ),
               ListRow(
+                leading: const GlyphIcon(XBoardGlyphs.accountBox),
                 title: Text(strings.aboutToWorld),
                 subtitle: Text(
                   '${packageInfo.version} (${packageInfo.buildNumber})',

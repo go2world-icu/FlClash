@@ -15,6 +15,7 @@ class IosMemberStrings {
   String total(String value) => _text('Total $value', '总计 $value');
   String usedData(String used, String total) =>
       _text('$used used of $total', '已用 / 总流量 · $used / $total');
+  String get usedDataLabel => _text('Used / total data', '已用 / 总流量');
   String daysRemaining(int days) => _text(
     days == 1 ? 'Expires in 1 day' : 'Expires in $days days',
     '$days 天后到期',
@@ -89,6 +90,8 @@ class IosMemberStrings {
   String get searchLines => _text('Search lines', '搜索线路');
   String get noMatchingLines => _text('No matching lines', '没有匹配的线路');
   String get lineNotTested => _text('Not tested', '未测速');
+  String get autoLineHint =>
+      _text('Picks an available line for this network', '按当前网络挑选可用线路');
   String get useLine => _text('Use this line', '使用此线路');
   String get lineChangeFailed => _text('Could not switch lines.', '线路切换失败。');
   String get lineTestFailed => _text('Could not test lines.', '无法测试线路。');
@@ -149,6 +152,7 @@ class IosMemberStrings {
   String get connectionDiagnosis => _text('Connection diagnostics', '连接诊断');
   String get accountAndPlan => _text('Account and plan', '账号与套餐');
   String get valid => _text('Valid', '有效');
+  String get passed => _text('Passed', '通过');
   String get vpnTunnel => _text('VPN tunnel', 'VPN 隧道');
   String get extensionChannel => _text('Extension communication', '扩展通信');
   String get coreStartup => _text('Core startup', '内核启动');

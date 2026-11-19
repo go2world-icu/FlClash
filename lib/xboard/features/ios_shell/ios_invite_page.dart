@@ -98,6 +98,7 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
               )
               .toString();
     final loading = invite.isLoading || invite.isGenerating;
+    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return material.Scaffold(
       backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
       appBar: material.AppBar(
@@ -111,72 +112,104 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
               padding: const EdgeInsets.all(16),
               children: [
                 if (invite.hasInviteData) ...[
-                  Card(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const GlyphIcon(XBoardGlyphs.coin),
-                            const Spacer(),
-                            TextButton(
-                              onPressed: () => dialogs.showAlert(
-                                title: strings.commissionRules,
-                                message: TextSpan(
-                                  text: strings.commissionRuleDetails(rate),
+                  DecoratedBox(
+                    decoration: ShapeDecoration(
+                      gradient: LinearGradient(
+                        colors: dark
+                            ? [const Color(0xff382a20), const Color(0xff423221)]
+                            : [
+                                const Color(0xfffff2db),
+                                const Color(0xfff8dfbd),
+                              ],
+                      ),
+                      shape: AppShape.xl,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(15, 13, 15, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              DecoratedBox(
+                                decoration: ShapeDecoration(
+                                  color: dark
+                                      ? const Color(0xff172333)
+                                      : const Color(0xffffffff),
+                                  shape: AppShape.md,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: const GlyphIcon(
+                                    XBoardGlyphs.coin,
+                                    color: Color(0xff8b4b11),
+                                  ),
                                 ),
                               ),
-                              child: Text(strings.commissionRules),
-                            ),
-                          ],
-                        ),
-                        Text(xboardL10n.availableCommission),
-                        Text(
-                          invite.formattedAvailableCommission,
-                          style: AppTextStyle.title1.of(
-                            context,
-                            emphasized: true,
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () => dialogs.showAlert(
+                                  title: strings.commissionRules,
+                                  message: TextSpan(
+                                    text: strings.commissionRuleDetails(rate),
+                                  ),
+                                ),
+                                child: Text(strings.commissionRules),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 8,
-                          children: [
-                            for (final (label, value) in [
-                              (
-                                strings.pendingSettlement,
-                                invite.formattedPendingCommission,
-                              ),
-                              (
-                                strings.cumulativeCommission,
-                                invite.formattedCommission,
-                              ),
-                              (
-                                strings.invited,
-                                strings.invitedCount(invite.totalInvites),
-                              ),
-                            ])
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    label,
-                                    style: AppTextStyle.footnote.of(context),
+                          const SizedBox(height: 8),
+                          Text(xboardL10n.availableCommission),
+                          Text(
+                            invite.formattedAvailableCommission,
+                            style: AppTextStyle.title1.of(
+                              context,
+                              emphasized: true,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const SizedBox(height: 1),
+                          Row(
+                            children: [
+                              for (final (label, value) in [
+                                (
+                                  strings.pendingSettlement,
+                                  invite.formattedPendingCommission,
+                                ),
+                                (
+                                  strings.cumulativeCommission,
+                                  invite.formattedCommission,
+                                ),
+                                (
+                                  strings.invited,
+                                  strings.invitedCount(invite.totalInvites),
+                                ),
+                              ])
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        label,
+                                        style: AppTextStyle.footnote.of(
+                                          context,
+                                        ),
+                                      ),
+                                      Text(
+                                        value,
+                                        style: AppTextStyle.subheadline.of(
+                                          context,
+                                          emphasized: true,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    value,
-                                    style: AppTextStyle.subheadline.of(
-                                      context,
-                                      emphasized: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ],
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -185,31 +218,64 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(xboardL10n.inviteCode),
-                        Text(
-                          activeCode?.code ?? '—',
-                          style: AppTextStyle.headline.of(context),
-                        ),
-                        Text(
-                          strings.commissionRate(rate),
-                          style: AppTextStyle.footnote.of(context),
-                        ),
-                        if (link != null)
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
-                            children: [
-                              FilledButton.icon(
-                                onPressed: () => _share(link),
-                                icon: const GlyphIcon(
-                                  AppGlyphs.qrCode,
-                                  fill: 1,
-                                ),
-                                label: Text(strings.shareInvite),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(xboardL10n.inviteCode),
+                                  Text(
+                                    activeCode?.code ?? '—',
+                                    style: AppTextStyle.headline.of(context),
+                                  ),
+                                ],
                               ),
-                              TextButton(
-                                onPressed: () => _copy(link),
-                                child: Text(context.iosMemberStrings.copyLink),
+                            ),
+                            DecoratedBox(
+                              decoration: ShapeDecoration(
+                                color: dark
+                                    ? const Color(0xff473321)
+                                    : const Color(0xfffff1db),
+                                shape: AppShape.full,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                child: Text(
+                                  strings.commissionRate(rate),
+                                  style: AppTextStyle.footnote
+                                      .of(context)
+                                      .copyWith(color: const Color(0xff8b4b11)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        if (link != null)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: FilledButton.icon(
+                                  onPressed: () => _share(link),
+                                  icon: const GlyphIcon(
+                                    AppGlyphs.qrCode,
+                                    fill: 1,
+                                  ),
+                                  label: Text(strings.shareInvite),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: () => _copy(link),
+                                  child: Text(
+                                    context.iosMemberStrings.copyLink,
+                                  ),
+                                ),
                               ),
                             ],
                           )

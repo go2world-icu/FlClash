@@ -61,12 +61,21 @@ class _IosConnectionActivityCardState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextButton.icon(
+          TextButton(
             onPressed: () => setState(() => _expanded = !_expanded),
-            icon: GlyphIcon(
-              _expanded ? AppGlyphs.chevronUp : AppGlyphs.caretDown,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.iosMemberStrings.connectionActivity,
+                    style: AppTextStyle.headline.of(context),
+                  ),
+                ),
+                GlyphIcon(
+                  _expanded ? AppGlyphs.chevronUp : AppGlyphs.caretDown,
+                ),
+              ],
             ),
-            label: Text(context.iosMemberStrings.connectionActivity),
           ),
           if (_expanded)
             if (events.isEmpty)
