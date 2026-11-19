@@ -4,6 +4,7 @@ import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/adapter/state/invite_state.dart';
 import 'package:fl_clash/xboard/adapter/state/user_state.dart';
+import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 
 // 初始化文件级日志器
 final _logger = FileLogger('invite_provider.dart');
@@ -194,24 +195,30 @@ class InviteNotifier extends Notifier<InviteState> {
 
     try {
       _logger.info('生成邀请码...');
-      final codeString = await XBoardSDK.instance.invite.generateInviteCode();
+      final sdk = await ref.read(xboardSdkProvider.future);
+      final codeString = await sdk.invite.generateInviteCode();
       if (!ref.mounted) return null;
 
-      // SDK returns String, we need to wrap it or reload data
-      // Assuming generateInviteCode returns the code string
-      // But DomainInviteCode is an object.
-      // We should reload invite data to get the new code in the list.
-      // 更新本地状态
       final newInviteCode = DomainInviteCode(
         code: codeString,
         status: 0,
         createdAt: DateTime.now(),
       );
+      final invite =
+          state.inviteData ?? const DomainInvite(stats: InviteStats());
+      state = state.copyWith(
+        inviteData: invite.copyWith(
+          codes: [
+            newInviteCode,
+            ...invite.codes.where((code) => code.code != codeString),
+          ],
+        ),
+      );
       await loadInviteData();
       if (!ref.mounted) return null;
 
       state = state.copyWith(isGenerating: false);
-      _logger.info('邀请码生成成功: $newInviteCode');
+      _logger.info('邀请码生成成功');
       return newInviteCode;
     } catch (e) {
       if (!ref.mounted) return null;

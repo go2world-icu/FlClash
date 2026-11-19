@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prism_ui/prism_ui.dart';
 
 import 'ios_managed_connection.dart';
+import 'ios_line_country.dart';
 import 'ios_member_strings.dart';
 
 class IosLinePage extends ConsumerStatefulWidget {
@@ -99,6 +100,13 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
       child: material.Scaffold(
         backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
         appBar: material.AppBar(
+          leading: material.IconButton(
+            tooltip: material.MaterialLocalizations.of(
+              context,
+            ).backButtonTooltip,
+            icon: const GlyphIcon(AppGlyphs.arrowBack),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
           backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
           title: Text(strings.managedLines),
         ),
@@ -111,6 +119,7 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: SearchField(
+                    fill: SurfaceLevel.card.colorOf(context.colorScheme),
                     hintText: strings.searchLines,
                     onChanged: (value) =>
                         setState(() => _query = value.trim().toLowerCase()),
@@ -133,13 +142,18 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
                     if (options.isNotEmpty)
                       Flexible(
                         flex: 2,
-                        child: TextButton(
-                          onPressed: _testing || !connected
-                              ? null
-                              : () => _testLines(options),
-                          child: Text(
-                            _testing ? strings.testingLines : strings.testLines,
-                            textAlign: TextAlign.center,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: TextButton(
+                            onPressed: _testing || !connected
+                                ? null
+                                : () => _testLines(options),
+                            child: Text(
+                              _testing
+                                  ? strings.testingLines
+                                  : strings.testLines,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
                       ),
@@ -237,7 +251,9 @@ class _IosLineRow extends ConsumerWidget {
     );
     final app = context.appLocalizations;
     final strings = context.iosMemberStrings;
-    final label = proxy.type == 'URLTest' || proxy.type == 'Fallback'
+    final automatic = proxy.type == 'URLTest' || proxy.type == 'Fallback';
+    final flag = automatic ? null : iosLineCountryFlag(proxy.name);
+    final label = automatic
         ? strings.autoLineHint
         : phase != null
         ? strings.testingLines
@@ -255,7 +271,17 @@ class _IosLineRow extends ConsumerWidget {
           Expanded(
             child: ListItem<void>(
               onTap: onSelect,
-              leading: const GlyphIcon(XBoardGlyphs.router),
+              leading: flag == null
+                  ? const GlyphIcon(XBoardGlyphs.router)
+                  : SizedBox.square(
+                      dimension: 28,
+                      child: Center(
+                        child: EmojiText(
+                          flag,
+                          style: AppTextStyle.title2.of(context),
+                        ),
+                      ),
+                    ),
               title: Text(proxy.name),
               subtitle: Text(label),
               trailing: selected ? const SelectionCheck() : null,

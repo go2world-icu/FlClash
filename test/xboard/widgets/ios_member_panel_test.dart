@@ -30,6 +30,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prism_ui/common_button.dart';
+import 'package:prism_ui/prism_ui.dart' as prism;
 import 'package:mocktail/mocktail.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -334,6 +335,17 @@ void main() {
     );
     tester.view.physicalSize = const Size(390, 844);
     await tester.pumpAndSettle();
+    final connectionBackground = tester
+        .widgetList<DecoratedBox>(
+          find.ancestor(
+            of: find.text('Not connected'),
+            matching: find.byType(DecoratedBox),
+          ),
+        )
+        .map((box) => box.decoration)
+        .whereType<ShapeDecoration>()
+        .firstWhere((decoration) => decoration.gradient != null)
+        .gradient;
     await tester.tap(find.text('Renew on website'));
     await tester.pumpAndSettle();
     expect(calls.single.method, 'launch');
@@ -347,6 +359,20 @@ void main() {
     await tester.tap(find.text('Invite and earn'));
     await tester.pumpAndSettle();
     expect(find.text('¥48.00'), findsOneWidget);
+    expect(find.text('TO+WORLD'), findsOneWidget);
+    final commissionBackground = tester
+        .widgetList<DecoratedBox>(
+          find.ancestor(
+            of: find.text('¥48.00'),
+            matching: find.byType(DecoratedBox),
+          ),
+        )
+        .map((box) => box.decoration)
+        .whereType<ShapeDecoration>()
+        .firstWhere((decoration) => decoration.gradient != null)
+        .gradient;
+    expect(commissionBackground, connectionBackground);
+    expect(find.byType(material.BackButtonIcon), findsNothing);
     expect(find.text(xboardL10n.transferToWallet), findsNothing);
     expect(find.text(xboardL10n.withdrawCommission), findsNothing);
     await tester.tap(find.text('Share invitation'));
@@ -361,6 +387,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining(xboardL10n.orderNumber('TW01')), findsOneWidget);
     expect(find.text('+¥24.00'), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('TO+WORLD'), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('About ToWorld'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -422,11 +454,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(IosLinePage), findsOneWidget);
     expect(find.text('Test line response times'), findsOneWidget);
+    expect(
+      tester
+          .getRect(find.widgetWithText(TextButton, 'Test line response times'))
+          .right,
+      closeTo(tester.getRect(find.byType(IosLinePage)).right - 16, 1),
+    );
     expect(find.text('Singapore 01'), findsOneWidget);
+    final search = tester.widget<prism.SearchField>(
+      find.byType(prism.SearchField),
+    );
+    final pageColors = prism.Theme.of(
+      tester.element(find.byType(IosLinePage)),
+    ).colorScheme;
+    expect(search.fill, isNotNull);
+    expect(search.fill, isNot(prism.SurfaceLevel.page.colorOf(pageColors)));
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is prism.EmojiText && widget.text == '🇭🇰',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is prism.EmojiText && widget.text == '🇸🇬',
+      ),
+      findsOneWidget,
+    );
     await tester.enterText(find.byType(EditableText), 'hong');
     await tester.pumpAndSettle();
     expect(find.text('Hong Kong 01'), findsOneWidget);
     expect(find.text('Singapore 01'), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is prism.EmojiText && widget.text == '🇸🇬',
+      ),
+      findsNothing,
+    );
     Navigator.of(tester.element(find.byType(IosLinePage))).pop();
     await tester.pumpAndSettle();
     await tester.tap(find.text('Connection health'));

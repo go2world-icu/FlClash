@@ -17,6 +17,7 @@ import 'package:prism_ui/prism_ui.dart';
 
 import 'ios_home_tab.dart';
 import 'ios_member_strings.dart';
+import 'ios_member_colors.dart';
 
 class IosInvitePage extends ConsumerStatefulWidget {
   const IosInvitePage({super.key});
@@ -98,10 +99,20 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
               )
               .toString();
     final loading = invite.isLoading || invite.isGenerating;
-    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    ref.listen(inviteProvider.select((state) => state.errorMessage), (
+      _,
+      error,
+    ) {
+      if (error != null) dialogs.showBanner(error, level: BannerLevel.error);
+    });
     return material.Scaffold(
       backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
       appBar: material.AppBar(
+        leading: material.IconButton(
+          tooltip: material.MaterialLocalizations.of(context).backButtonTooltip,
+          icon: const GlyphIcon(AppGlyphs.arrowBack),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
         title: Text(strings.inviteRewards),
       ),
@@ -114,14 +125,7 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
                 if (invite.hasInviteData) ...[
                   DecoratedBox(
                     decoration: ShapeDecoration(
-                      gradient: LinearGradient(
-                        colors: dark
-                            ? [const Color(0xff382a20), const Color(0xff423221)]
-                            : [
-                                const Color(0xfffff2db),
-                                const Color(0xfff8dfbd),
-                              ],
-                      ),
+                      gradient: IosMemberColors.gradient,
                       shape: AppShape.xl,
                     ),
                     child: Padding(
@@ -133,16 +137,14 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
                             children: [
                               DecoratedBox(
                                 decoration: ShapeDecoration(
-                                  color: dark
-                                      ? const Color(0xff172333)
-                                      : const Color(0xffffffff),
+                                  color: const Color(0x33c5dcff),
                                   shape: AppShape.md,
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
                                   child: const GlyphIcon(
                                     XBoardGlyphs.coin,
-                                    color: Color(0xff8b4b11),
+                                    color: IosMemberColors.secondary,
                                   ),
                                 ),
                               ),
@@ -154,18 +156,29 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
                                     text: strings.commissionRuleDetails(rate),
                                   ),
                                 ),
-                                child: Text(strings.commissionRules),
+                                child: Text(
+                                  strings.commissionRules,
+                                  style: AppTextStyle.footnote
+                                      .of(context)
+                                      .copyWith(
+                                        color: IosMemberColors.secondary,
+                                      ),
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(xboardL10n.availableCommission),
+                          Text(
+                            xboardL10n.availableCommission,
+                            style: AppTextStyle.body
+                                .of(context)
+                                .copyWith(color: IosMemberColors.secondary),
+                          ),
                           Text(
                             invite.formattedAvailableCommission,
-                            style: AppTextStyle.title1.of(
-                              context,
-                              emphasized: true,
-                            ),
+                            style: AppTextStyle.title1
+                                .of(context, emphasized: true)
+                                .copyWith(color: IosMemberColors.foreground),
                           ),
                           const SizedBox(height: 10),
                           const SizedBox(height: 1),
@@ -192,16 +205,19 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
                                     children: [
                                       Text(
                                         label,
-                                        style: AppTextStyle.footnote.of(
-                                          context,
-                                        ),
+                                        style: AppTextStyle.footnote
+                                            .of(context)
+                                            .copyWith(
+                                              color: IosMemberColors.secondary,
+                                            ),
                                       ),
                                       Text(
                                         value,
-                                        style: AppTextStyle.subheadline.of(
-                                          context,
-                                          emphasized: true,
-                                        ),
+                                        style: AppTextStyle.subheadline
+                                            .of(context, emphasized: true)
+                                            .copyWith(
+                                              color: IosMemberColors.foreground,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -234,9 +250,7 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
                             ),
                             DecoratedBox(
                               decoration: ShapeDecoration(
-                                color: dark
-                                    ? const Color(0xff473321)
-                                    : const Color(0xfffff1db),
+                                color: IosMemberColors.badge,
                                 shape: AppShape.full,
                               ),
                               child: Padding(
@@ -248,7 +262,9 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
                                   strings.commissionRate(rate),
                                   style: AppTextStyle.footnote
                                       .of(context)
-                                      .copyWith(color: const Color(0xff8b4b11)),
+                                      .copyWith(
+                                        color: IosMemberColors.foreground,
+                                      ),
                                 ),
                               ),
                             ),
@@ -352,6 +368,11 @@ class _IosCommissionPageState extends ConsumerState<_IosCommissionPage> {
       appBar: material.AppBar(
         backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
         title: Text(context.iosMemberStrings.commissionDetails),
+        leading: material.IconButton(
+          tooltip: material.MaterialLocalizations.of(context).backButtonTooltip,
+          icon: const GlyphIcon(AppGlyphs.arrowBack),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
       ),
       body:
           !ref.watch(xboardUserProvider.select((user) => user.isAuthenticated))

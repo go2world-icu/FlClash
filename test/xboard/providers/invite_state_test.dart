@@ -1,8 +1,87 @@
+import 'package:board_sdk/flutter_xboard_sdk.dart';
+import 'package:board_sdk/src/adapters/v2board/v2board_invite_adapter.dart';
+import 'package:board_sdk/src/core/http/http_service.dart';
+import 'package:board_sdk/src/panels/v2board/apis/v2board_invite_api.dart';
+import 'package:fl_clash/xboard/adapter/initialization/sdk_provider.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:fl_clash/xboard/features/invite/providers/invite_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _Http extends Mock implements HttpService {}
+
+class _Sdk extends Mock implements XBoardSDK {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'panel status zero stays available after loading and generating',
+    () async {
+      final http = _Http();
+      final sdk = _Sdk();
+      var generated = false;
+      Map<String, dynamic> code(String value, int status) => {
+        'user_id': 1,
+        'code': value,
+        'pv': 0,
+        'status': status,
+        'created_at': 1700000000,
+        'updated_at': 1700000000,
+      };
+      when(() => http.getRequest('/api/v1/user/invite/fetch')).thenAnswer(
+        (_) async => {
+          'data': {
+            'codes': [
+              if (generated) code('NEW', 0),
+              code('EXISTING', 0),
+              code('USED', 1),
+            ],
+            'stat': [2, 1000, 200, 20, 800],
+          },
+        },
+      );
+      when(() => http.getRequest('/api/v1/user/invite/save')).thenAnswer((
+        _,
+      ) async {
+        generated = true;
+        return {'data': true};
+      });
+      when(
+        () => sdk.invite,
+      ).thenReturn(V2BoardInviteAdapter(V2BoardInviteApi(http)));
+      final container = ProviderContainer(
+        overrides: [xboardSdkProvider.overrideWith((_) async => sdk)],
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(inviteProvider.notifier);
+      await notifier.loadInviteData();
+      final loaded = container.read(inviteProvider);
+      expect(loaded.inviteData!.codes.first.isAvailable, isTrue);
+      expect(loaded.inviteData!.codes.last.isAvailable, isFalse);
+      expect(loaded.availableCommission, 8);
+      expect((await notifier.generateInviteCode())!.code, 'NEW');
+      expect(
+        container.read(inviteProvider).inviteData!.codes.first.code,
+        'NEW',
+      );
+      expect(container.read(inviteProvider).isGenerating, isFalse);
+      when(
+        () => http.getRequest('/api/v1/user/invite/save'),
+      ).thenThrow(Exception('generation refused'));
+      expect(await notifier.generateInviteCode(), isNull);
+      expect(container.read(inviteProvider).isGenerating, isFalse);
+      expect(
+        container.read(inviteProvider).errorMessage,
+        contains('generation refused'),
+      );
+      expect(
+        container.read(inviteProvider).inviteData!.codes.first.code,
+        'NEW',
+      );
+    },
+  );
+
   DomainInvite invite({
     int invitedCount = 0,
     double total = 0,

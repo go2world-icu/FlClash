@@ -21,6 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'ios_line_page.dart';
 import 'ios_managed_connection.dart';
 import 'ios_member_strings.dart';
+import 'ios_member_colors.dart';
 
 class IosHomeTab extends ConsumerStatefulWidget {
   const IosHomeTab({super.key});
@@ -147,9 +148,7 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
         if (showNotice) const NoticeBanner(),
         DecoratedBox(
           decoration: const ShapeDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xff102645), Color(0xff214e8c)],
-            ),
+            gradient: IosMemberColors.gradient,
             shape: AppShape.xl,
           ),
           child: Padding(
@@ -429,7 +428,6 @@ class IosMembershipCard extends ConsumerWidget {
     final dateFormat = DateFormat.yMMMd(
       Localizations.localeOf(context).languageCode,
     );
-    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     if (showDetails) {
       return Card(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
@@ -494,9 +492,7 @@ class IosMembershipCard extends ConsumerWidget {
               DecoratedBox(
                 decoration: ShapeDecoration(
                   color: active
-                      ? dark
-                            ? const Color(0xff473321)
-                            : const Color(0xfffff1db)
+                      ? IosMemberColors.badge
                       : colors.surfaceContainerHighest,
                   shape: AppShape.full,
                 ),
@@ -511,9 +507,7 @@ class IosMembershipCard extends ConsumerWidget {
                         .of(context)
                         .copyWith(
                           color: active
-                              ? dark
-                                    ? const Color(0xffffd3a0)
-                                    : const Color(0xff8b4b11)
+                              ? IosMemberColors.foreground
                               : colors.onSurfaceVariant,
                         ),
                   ),
