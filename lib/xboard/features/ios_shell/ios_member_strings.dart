@@ -49,6 +49,10 @@ class IosMemberStrings {
   String get membership => _text('Membership', '会员套餐');
   String get membershipRequired =>
       _text('An active membership is required to connect.', '请确认账号有有效套餐。');
+  String get membershipSyncFailed => _text(
+    'Could not sync the membership configuration. Try refreshing again.',
+    '会员配置同步失败，请重新刷新。',
+  );
   String get needsSync => _text('Needs sync', '待同步');
   String get noSelectableLines =>
       _text('No selectable lines have loaded.', '暂无可切换的线路。');

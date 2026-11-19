@@ -55,7 +55,7 @@ class _NoticeBannerState extends ConsumerState<NoticeBanner>
           CurvedAnimation(parent: _slideController, curve: Curves.easeInOut),
         );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(noticeProvider.notifier).fetchNotices();
+      if (mounted) ref.read(noticeProvider.notifier).fetchNotices();
     });
   }
 
@@ -102,7 +102,7 @@ class _NoticeBannerState extends ConsumerState<NoticeBanner>
         .map((notice) => notice.title)
         .toList();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startAutoScroll(notices);
+      if (mounted) _startAutoScroll(notices);
     });
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

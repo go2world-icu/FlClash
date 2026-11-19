@@ -13,6 +13,9 @@ import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dar
 import 'package:fl_clash/xboard/features/ios_shell/ios_line_page.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_managed_connection.dart';
 import 'package:fl_clash/xboard/features/ios_shell/ios_shell_page.dart';
+import 'package:fl_clash/xboard/features/notice/notice.dart';
+import 'package:fl_clash/xboard/features/profile/models/import_models.dart';
+import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
 import 'package:fl_clash/xboard/services/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart' as material;
@@ -43,6 +46,10 @@ const _plan = DomainSubscription(
 );
 
 class _Core extends Mock implements CoreHandlerInterface {}
+
+class _ImportNotifier extends ProfileImportNotifier {
+  void fail() => state = const ImportState(status: ImportStatus.failed);
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -85,6 +92,11 @@ void main() {
     expect(await verifiedProfile(), isNull);
     await storage.setOwnedProfileIds(_email, [manual.id]);
     expect(await verifiedProfile(), manual);
+    await file.writeAsString('');
+    expect(await verifiedProfile(), isNull);
+    await file.delete();
+    expect(await verifiedProfile(), isNull);
+    expect(await file.exists(), isFalse);
   });
 
   test(
@@ -133,6 +145,9 @@ void main() {
         ...xboardBaseOverrides(),
         xboardUserProvider.overrideWith(() => FakeUserAuthNotifier(_member)),
         subscriptionInfoProvider.overrideWithBuild((_, _) => _plan),
+        noticeProvider.overrideWith(
+          () => FakeNoticeNotifier(const NoticeState()),
+        ),
         iosManagedProfileProvider.overrideWith((_) => null),
         currentProfileProvider.overrideWithValue(null),
         selectedMapProvider.overrideWithValue(const {}),
@@ -161,6 +176,60 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 10));
   });
+
+  testWidgets('shows notices and keeps refresh available after a sync', (
+    tester,
+  ) async {
+    const profile = Profile(id: 12, autoUpdateDuration: Duration.zero);
+    await pumpXboard(
+      tester,
+      const XBoardIosShell(),
+      overrides: [
+        ...xboardBaseOverrides(),
+        xboardUserProvider.overrideWith(() => FakeUserAuthNotifier(_member)),
+        subscriptionInfoProvider.overrideWithBuild((_, _) => _plan),
+        iosManagedProfileProvider.overrideWith((_) => profile),
+        currentProfileProvider.overrideWithValue(profile),
+        initProvider.overrideWithBuild((_, _) => true),
+        noticeProvider.overrideWith(
+          () => FakeNoticeNotifier(
+            NoticeState(
+              notices: [
+                DomainNotice(
+                  id: 1,
+                  title: 'Service notice',
+                  content: 'Maintenance is scheduled.',
+                  createdAt: DateTime(2026),
+                  updatedAt: DateTime(2026),
+                ),
+              ],
+            ),
+          ),
+        ),
+        profileImportProvider.overrideWith(_ImportNotifier.new),
+      ],
+    );
+    final refresh = find.widgetWithText(
+      TextButton,
+      'Refresh membership and configuration',
+    );
+    expect(find.text('Service notice', findRichText: true), findsOneWidget);
+    expect(tester.widget<TextButton>(refresh).onPressed, isNotNull);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(XBoardIosShell)),
+    );
+    (container.read(profileImportProvider.notifier) as _ImportNotifier).fail();
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'Could not sync the membership configuration. Try refreshing again.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.widget<TextButton>(refresh).onPressed, isNotNull);
+  });
+
   testWidgets(
     'managed sign-in asks the member to read the privacy information',
     (tester) async {

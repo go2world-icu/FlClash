@@ -202,6 +202,8 @@ class XBoardProfileImportService {
       throw Exception('网络连接失败: ${e.message}');
     } on HttpException catch (e) {
       throw Exception('HTTP请求失败: ${e.message}');
+    } on MessageException {
+      rethrow;
     } catch (e) {
       if (e.toString().contains('validateConfig')) {
         throw Exception('配置文件格式错误: $e');
@@ -280,6 +282,8 @@ class XBoardProfileImportService {
       );
       _logger.debug('✅ 完整的加密订阅处理流程已成功完成');
       return updatedProfile;
+    } on MessageException {
+      rethrow;
     } catch (e) {
       _logger.error('💥 加密配置下载失败', e);
       _logger.debug('❌ 加密订阅处理流程异常终止');
@@ -332,6 +336,7 @@ class XBoardProfileImportService {
   }
 
   ImportErrorType _classifyError(dynamic error) {
+    if (error is MessageException) return ImportErrorType.validationError;
     final errorString = error.toString().toLowerCase();
     if (errorString.contains('timeout') ||
         errorString.contains('连接失败') ||

@@ -35,7 +35,12 @@ final iosManagedProfileProvider = FutureProvider.autoDispose<Profile?>((
   final ownsProfile =
       ids.contains(profile.id) ||
       url != null && url.isNotEmpty && profile.url == url;
-  return ownsProfile && await (await profile.file).exists() ? profile : null;
+  if (!ownsProfile) return null;
+  final path = await appPath.getProfilePath(profile.id.toString());
+  final stat = await FileStat.stat(path);
+  return stat.type == FileSystemEntityType.file && stat.size > 0
+      ? profile
+      : null;
 });
 
 bool hasActiveIosPlan(DomainSubscription? subscription, DomainUser? user) =>

@@ -193,7 +193,7 @@ final class CoreActionProvider extends $NotifierProvider<CoreAction, void> {
   }
 }
 
-String _$coreActionHash() => r'ab110aeaef91f7ff9f2528145238091adf1463f3';
+String _$coreActionHash() => r'68e605f9663051c62b9dd606a6d408a6f458f306';
 
 abstract class _$CoreAction extends $Notifier<void> {
   void build();

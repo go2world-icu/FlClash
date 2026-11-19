@@ -48,6 +48,12 @@ final iosTunnelStatusProvider = NotifierProvider<IosTunnelStatus, String>(
   IosTunnelStatus.new,
 );
 
+bool canReportCoreNetworkChange(Ref ref) {
+  if (!system.isIOS) return true;
+  final status = ref.read(iosTunnelStatusProvider);
+  return status == 'connected' || status == 'reasserting';
+}
+
 class IosTunnelStatus extends Notifier<String> {
   @override
   String build() => 'disconnected';

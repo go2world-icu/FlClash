@@ -4,8 +4,10 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:fl_clash/xboard/features/auth/providers/xboard_user_provider.dart';
+import 'package:fl_clash/xboard/features/profile/models/import_models.dart';
 import 'package:fl_clash/xboard/features/profile/providers/profile_import_provider.dart';
 import 'package:fl_clash/xboard/features/initialization/initialization.dart';
+import 'package:fl_clash/xboard/features/shared/widgets/notice_banner.dart';
 import 'package:fl_clash/xboard/icons/xboard_glyphs.dart';
 import 'package:fl_clash/xboard/l10n/xboard_strings.dart';
 import 'package:flutter/widgets.dart';
@@ -27,6 +29,7 @@ class IosHomeTab extends ConsumerStatefulWidget {
 class _IosHomeTabState extends ConsumerState<IosHomeTab> {
   bool _switching = false;
   bool _refreshing = false;
+  bool _refreshFailed = false;
   bool _connectionFailed = false;
   bool _requestedConnect = false;
 
@@ -53,7 +56,10 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
 
   Future<void> _refresh() async {
     if (_refreshing) return;
-    setState(() => _refreshing = true);
+    setState(() {
+      _refreshing = true;
+      _refreshFailed = false;
+    });
     try {
       final initialization = ref.read(initializationProvider);
       if (!initialization.isReady) {
@@ -62,7 +68,7 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
       }
       await ref.read(xboardUserProvider.notifier).refreshSubscriptionInfo();
     } catch (_) {
-      if (mounted) setState(() => _connectionFailed = true);
+      if (mounted) setState(() => _refreshFailed = true);
     } finally {
       if (mounted) setState(() => _refreshing = false);
     }
@@ -89,8 +95,10 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
     final stopping = native == 'disconnecting';
     final canStop = connected || starting || isRunning;
     final initializing = !ref.watch(initProvider);
-    final importing = ref.watch(
-      profileImportProvider.select((state) => state.isImporting),
+    final (importing, importFailed) = ref.watch(
+      profileImportProvider.select(
+        (state) => (state.isImporting, state.status == ImportStatus.failed),
+      ),
     );
     final profile = ref.watch(iosManagedProfileProvider);
     final subscription = ref.watch(subscriptionInfoProvider);
@@ -104,6 +112,9 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
     final syncPending =
         _refreshing || importing || profile.isLoading || syncingAccount;
     final safeMode = ref.watch(safeModeProvider);
+    final showNotice = ref.watch(
+      initializationProvider.select((state) => state.isReady),
+    );
     final status = switch (native) {
       'connected' => app.connected,
       'connecting' || 'reasserting' => app.connecting,
@@ -128,6 +139,7 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
       children: [
+        if (showNotice) const NoticeBanner(),
         DecoratedBox(
           decoration: const ShapeDecoration(
             gradient: LinearGradient(
@@ -241,11 +253,22 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
         ),
         const SizedBox(height: 12),
         const IosMembershipCard(),
-        if (!syncPending && (!ready || _connectionFailed))
-          TextButton(
-            onPressed: _refresh,
-            child: Text(strings.refreshMembership),
+        if (!syncPending && (_refreshFailed || importFailed))
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              strings.membershipSyncFailed,
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: context.colorScheme.error),
+            ),
           ),
+        TextButton(
+          onPressed: syncPending ? null : _refresh,
+          child: Text(
+            syncPending ? strings.syncing : strings.refreshMembership,
+          ),
+        ),
       ],
     );
   }

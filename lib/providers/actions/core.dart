@@ -82,12 +82,16 @@ class CoreAction extends _$CoreAction {
   }
 
   Future<void> reportNetworkChange() async {
-    if (ref.read(coreStatusProvider) != CoreStatus.connected) {
+    if (ref.read(coreStatusProvider) != CoreStatus.connected ||
+        !canReportCoreNetworkChange(ref)) {
       return;
     }
     try {
       await _core.reportNetworkChange();
     } catch (error) {
+      if (isUnansweredCoreError(error) && !canReportCoreNetworkChange(ref)) {
+        return;
+      }
       commonPrint.log(
         'reportNetworkChange error: $error',
         logLevel: coreFailureLogLevel(error),

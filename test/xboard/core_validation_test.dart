@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/core/controller.dart';
 import 'package:fl_clash/core/interface.dart';
+import 'package:fl_clash/models/profile.dart';
 import 'package:fl_clash/xboard/utils/xboard_core_validation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -89,7 +92,7 @@ void main() {
           reachable: () async => true,
           isIOS: true,
         ),
-        isEmpty,
+        isNull,
       );
       expect(await source.readAsString(), _clashConfig);
       expect(await File(sharedPath).parent.exists(), isFalse);
@@ -214,7 +217,7 @@ void main() {
           reachable: () => throw StateError('age must use Core'),
           isIOS: true,
         ),
-        isEmpty,
+        isNull,
       );
       expect(await source.readAsString(), _clashConfig);
       expect(await File(sharedPath).parent.exists(), isFalse);
@@ -256,6 +259,34 @@ void main() {
   });
 
   group('core 不可达时', () {
+    test('保存合法订阅，配置无效时保留上次成功的内容', () async {
+      const profile = Profile(id: 1, autoUpdateDuration: Duration.zero);
+      Future<String?> validate(String path, String key) =>
+          xboardValidateProfileWith(
+            path,
+            key,
+            core: core,
+            reachable: () async => false,
+            isIOS: true,
+          );
+
+      final saved = await profile.saveFile(
+        utf8.encode(_clashConfig),
+        validate: validate,
+      );
+      final file = await saved.file;
+      expect(await file.readAsString(), _clashConfig);
+      await expectLater(
+        saved.saveFile(
+          utf8.encode('<html>502 Bad Gateway</html>'),
+          validate: validate,
+        ),
+        throwsA(isA<MessageException>()),
+      );
+      expect(await file.readAsString(), _clashConfig);
+      verifyNever(() => coreInterface.validateConfig(any()));
+    });
+
     test('不碰 core，合格的内容放行', () async {
       final file = File(p.join(root.path, 'valid.yaml'));
 
@@ -266,7 +297,7 @@ void main() {
         reachable: () async => false,
       );
 
-      expect(message, isEmpty);
+      expect(message, isNull);
       verifyNever(() => coreInterface.validateConfig(any()));
       verifyNever(() => coreInterface.convertProxies(any()));
     });

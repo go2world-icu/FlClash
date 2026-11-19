@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
@@ -50,9 +51,9 @@ class SubscriptionDownloader {
       validate: (bytes) async {
         final content = utf8.decode(bytes);
         final localError = xboardValidateConfigContent(content);
-        if (localError.isNotEmpty) throw FormatException(localError);
+        if (localError.isNotEmpty) throw MessageException(localError);
         final coreError = await xboardValidateConfigData(content);
-        if (coreError.isNotEmpty) throw FormatException(coreError);
+        if (coreError.isNotEmpty) throw MessageException(coreError);
       },
     );
     final profile = Profile.normal(url: url);

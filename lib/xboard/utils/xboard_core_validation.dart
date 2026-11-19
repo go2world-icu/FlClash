@@ -29,7 +29,7 @@ Future<bool> xboardCoreReachable({Service? probe}) async {
 }
 
 /// 面板交给 `Profile.saveFile(validate:)` 的校验函数。
-Future<String> xboardValidateProfile(String path, String ageSecretKey) =>
+Future<String?> xboardValidateProfile(String path, String ageSecretKey) =>
     xboardValidateProfileWith(
       path,
       ageSecretKey,
@@ -40,7 +40,7 @@ Future<String> xboardValidateProfile(String path, String ageSecretKey) =>
 /// [xboardValidateProfile] 的可注入版本，便于测试。
 ///
 /// 带 age 密钥时一律走 core：解密是 core 的事，拿不到 key 的错误也要原样抛出。
-Future<String> xboardValidateProfileWith(
+Future<String?> xboardValidateProfileWith(
   String path,
   String ageSecretKey, {
   required CoreController core,
@@ -48,16 +48,14 @@ Future<String> xboardValidateProfileWith(
   bool? isIOS,
 }) async {
   if (ageSecretKey.isNotEmpty || await reachable()) {
-    Future<String> validate(String corePath) async =>
-        (ageSecretKey.isNotEmpty
-            ? await core.validateProfile(corePath, ageSecretKey)
-            : await core.validateConfig(corePath)) ??
-        '';
+    Future<String?> validate(String corePath) => ageSecretKey.isNotEmpty
+        ? core.validateProfile(corePath, ageSecretKey)
+        : core.validateConfig(corePath);
     if (!(isIOS ?? system.isIOS)) return validate(path);
-    return _withSharedValidationFile((file) async {
+    return _withSharedValidationFile<String?>((file) async {
       await File(path).copy(file.path);
       final message = await validate(file.path);
-      if (message.isEmpty && ageSecretKey.isNotEmpty) {
+      if (message == null && ageSecretKey.isNotEmpty) {
         await file.copy(path);
       }
       return message;
@@ -96,8 +94,8 @@ Future<String> xboardValidateConfigDataWith(
   return xboardValidateConfigContent(data);
 }
 
-Future<String> _withSharedValidationFile(
-  Future<String> Function(File) validate,
+Future<T> _withSharedValidationFile<T>(
+  Future<T> Function(File) validate,
 ) async {
   final root = Directory(p.join(await appPath.homeDirPath, '.validation'));
   await root.create(recursive: true);
@@ -110,9 +108,10 @@ Future<String> _withSharedValidationFile(
 }
 
 /// 文件版的本地校验，用于 [xboardValidateProfile]。
-Future<String> xboardValidateConfigFile(String path) async {
+Future<String?> xboardValidateConfigFile(String path) async {
   try {
-    return xboardValidateConfigContent(await File(path).readAsString());
+    final issue = xboardValidateConfigContent(await File(path).readAsString());
+    return issue.isEmpty ? null : issue;
   } on FileSystemException catch (error) {
     return '无法读取配置文件: $error';
   }
