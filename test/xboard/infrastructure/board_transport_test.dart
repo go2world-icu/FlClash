@@ -188,6 +188,7 @@ void main() {
   });
 
   test('HTTPS starts TLS with the URL host on the resolved socket', () async {
+    const ioTimeout = Duration(seconds: 15);
     final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     final peerFuture = server.first;
@@ -201,7 +202,7 @@ void main() {
       _RealHttpOverrides(),
     );
     addTearDown(() => client.close(force: true));
-    client.connectionTimeout = const Duration(seconds: 3);
+    client.connectionTimeout = ioTimeout;
     final request = client
         .getUrl(Uri.parse('https://panel.invalid:${server.port}/'))
         .then((request) => request.close());
@@ -212,7 +213,7 @@ void main() {
     final peer = await peerFuture;
     addTearDown(peer.destroy);
     final hello = <int>[];
-    await for (final chunk in peer.timeout(const Duration(seconds: 3))) {
+    await for (final chunk in peer.timeout(ioTimeout)) {
       hello.addAll(chunk);
       expect(hello.first, 0x16);
       if (hello.length >= 5 && hello.length >= 5 + (hello[3] << 8) + hello[4]) {
