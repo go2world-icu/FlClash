@@ -594,8 +594,10 @@ class ServiceChannel: NSObject {
 
 private final class XBoardPhysicalDNS {
     private static let queue = DispatchQueue(label: "xboard.physical-dns")
+    private static let answerWindow = DispatchTimeInterval.milliseconds(100)
     private let monitor = NWPathMonitor()
     private var queries: [DNSServiceRef] = []
+    private var addresses: [String] = []
     private var completion: (([String]) -> Void)?
     private var started = false
 
@@ -612,10 +614,10 @@ private final class XBoardPhysicalDNS {
             {
                 lookup.start(host, interface: UInt32(interface.index))
             }
-            if lookup.queries.isEmpty { lookup.finish([]) }
+            if lookup.queries.isEmpty { lookup.finish() }
         }
         lookup.monitor.start(queue: queue)
-        queue.asyncAfter(deadline: .now() + 3) { lookup.finish([]) }
+        queue.asyncAfter(deadline: .now() + 3) { lookup.finish() }
     }
 
     private func start(_ host: String, interface: UInt32) {
@@ -634,7 +636,7 @@ private final class XBoardPhysicalDNS {
                 else { return }
                 let lookup = Unmanaged<XBoardPhysicalDNS>.fromOpaque(context)
                     .takeUnretainedValue()
-                lookup.finish([String(cString: buffer)])
+                lookup.addAddress(String(cString: buffer))
             },
             Unmanaged.passUnretained(self).toOpaque())
         guard error == kDNSServiceErr_NoError, let query else { return }
@@ -645,7 +647,15 @@ private final class XBoardPhysicalDNS {
         queries.append(query)
     }
 
-    private func finish(_ addresses: [String]) {
+    private func addAddress(_ address: String) {
+        guard completion != nil, !addresses.contains(address) else { return }
+        addresses.append(address)
+        if addresses.count == 1 {
+            Self.queue.asyncAfter(deadline: .now() + Self.answerWindow) { self.finish() }
+        }
+    }
+
+    private func finish() {
         guard let completion else { return }
         self.completion = nil
         monitor.pathUpdateHandler = nil

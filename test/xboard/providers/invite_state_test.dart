@@ -41,9 +41,12 @@ void main() {
           },
         },
       );
-      when(() => http.getRequest('/api/v1/user/invite/save')).thenAnswer((
-        _,
-      ) async {
+      when(
+        () => http.getRequest(
+          '/api/v1/user/invite/save',
+          retryOnRouteChange: false,
+        ),
+      ).thenAnswer((_) async {
         generated = true;
         return {'data': true};
       });
@@ -67,7 +70,10 @@ void main() {
       );
       expect(container.read(inviteProvider).isGenerating, isFalse);
       when(
-        () => http.getRequest('/api/v1/user/invite/save'),
+        () => http.getRequest(
+          '/api/v1/user/invite/save',
+          retryOnRouteChange: false,
+        ),
       ).thenThrow(Exception('generation refused'));
       expect(await notifier.generateInviteCode(), isNull);
       expect(container.read(inviteProvider).isGenerating, isFalse);

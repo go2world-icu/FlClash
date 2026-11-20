@@ -14,12 +14,21 @@ class DomainRacingService {
     String testPath = '',
     bool forceHttpsResult = false,
     List<String>? proxyUrls,
+    (String, String?)? excludedRoute,
   }) async {
     if (domains.isEmpty) return null;
+    final excludedOrigin = excludedRoute == null
+        ? null
+        : _origin(excludedRoute.$1);
     final routes = <(String, String?)>[
       for (final domain in domains)
-        for (final proxy in <String?>[null, ...?proxyUrls]) (domain, proxy),
+        for (final proxy in <String?>[null, ...?proxyUrls])
+          if (excludedRoute == null ||
+              proxy != excludedRoute.$2 ||
+              _origin(domain) != excludedOrigin)
+            (domain, proxy),
     ];
+    if (routes.isEmpty) return null;
     final tokens = List.generate(routes.length, (_) => CancelToken());
     final winner = Completer<DomainRacingResult?>();
     var next = 0;
@@ -178,6 +187,14 @@ class DomainRacingService {
     final uri = Uri.parse(value.contains('://') ? value : 'https://$value');
     if (uri.host.isEmpty) throw const FormatException('Invalid panel URL');
     return uri.replace(scheme: 'https');
+  }
+
+  static String? _origin(String value) {
+    try {
+      return _endpoint(value).origin;
+    } on FormatException {
+      return null;
+    }
   }
 }
 

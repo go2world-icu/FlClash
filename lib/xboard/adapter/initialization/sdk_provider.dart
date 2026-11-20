@@ -79,8 +79,11 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
       panelType: panelType,
       proxyUrl: proxyUrl,
       httpConfig: httpConfig,
-      routeResolver: () async {
-        final route = await XBoardConfig.recoverPanelRoute();
+      routeRecovery: (failed) async {
+        final route = await XBoardConfig.recoverPanelRoute(
+          failed.baseUrl,
+          failed.proxyUrl,
+        );
         if (route != null && !route.useProxy) {
           await XBoardTransport.ensureDirectRoute(Uri.parse(route.domain));
         }

@@ -7,9 +7,14 @@ import 'package:fl_clash/xboard/config/core/config_settings.dart';
 import 'package:fl_clash/xboard/config/internal/xboard_config_accessor.dart';
 import 'package:fl_clash/xboard/config/parsers/configuration_parser.dart';
 import 'package:fl_clash/xboard/config/utils/config_file_loader.dart';
+import 'package:fl_clash/xboard/config/xboard_config.dart' show XBoardConfig;
+import 'package:fl_clash/xboard/features/domain_status/services/domain_status_service.dart';
+import 'package:fl_clash/xboard/infrastructure/storage/file_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../helpers/app_paths.dart';
 
 class _HttpClient extends Mock implements HttpClient {}
 
@@ -233,6 +238,63 @@ void main() {
       expect(settings.remoteConfig.sources, isEmpty);
     });
   });
+
+  test(
+    'an unreachable configured panel does not pass the domain check',
+    () async {
+      stubAsset(_document);
+      final root = await Directory.systemTemp.createTemp('board_route_test');
+      addTearDown(() => root.delete(recursive: true));
+      await useAppPaths(root);
+      final storage = await FileStorage.shared();
+      const key = 'xboard_remote_panel_config';
+      final previous = (await storage.getString(key)).dataOrNull;
+      addTearDown(() async {
+        XBoardConfig.reset();
+        if (previous == null) {
+          await storage.remove(key);
+        } else {
+          await storage.setString(key, previous);
+        }
+      });
+      await storage.setString(
+        key,
+        jsonEncode({
+          'panelType': 'v2board',
+          'panels': {
+            'go2world': [
+              {'url': 'https://panel.invalid', 'description': 'test'},
+            ],
+          },
+        }),
+      );
+      final client = _HttpClient();
+      registerFallbackValue(Uri.parse('https://panel.invalid'));
+      when(
+        () => client.getUrl(any()),
+      ).thenThrow(const SocketException('offline'));
+
+      final status = await HttpOverrides.runWithHttpOverrides(
+        DomainStatusService().checkDomainStatus,
+        _ConfigHttpOverrides(client),
+      );
+      expect(status['success'], isFalse);
+      expect(status['domain'], isNull);
+      expect(XBoardConfig.lastRacingResult, isNull);
+      verify(
+        () => client.getUrl(
+          Uri.parse('https://panel.invalid/api/v1/guest/comm/config'),
+        ),
+      ).called(1);
+
+      final recovery = await HttpOverrides.runWithHttpOverrides(
+        () => XBoardConfig.recoverPanelRoute('https://panel.invalid/', null),
+        _ConfigHttpOverrides(client),
+      );
+      expect(recovery, isNull);
+      verifyNever(() => client.getUrl(any()));
+    },
+  );
 
   group('loadExtendedConfig', () {
     test('returns the xboard block', () async {

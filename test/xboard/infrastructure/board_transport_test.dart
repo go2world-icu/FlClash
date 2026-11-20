@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:board_sdk/flutter_xboard_sdk.dart';
@@ -7,6 +8,36 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _RealHttpOverrides extends HttpOverrides {}
+
+final class _StalledIPv6Overrides extends IOOverrides {
+  final attempted = <InternetAddress>[];
+  bool cancelled = false;
+
+  @override
+  Future<ConnectionTask<Socket>> socketStartConnect(
+    dynamic host,
+    int port, {
+    dynamic sourceAddress,
+    int sourcePort = 0,
+  }) async {
+    attempted.add(host as InternetAddress);
+    if (host == InternetAddress.loopbackIPv6) {
+      final pending = Completer<Socket>();
+      return ConnectionTask.fromSocket(pending.future, () {
+        cancelled = true;
+        pending.completeError(
+          const SocketException('cancelled by test client'),
+        );
+      });
+    }
+    return super.socketStartConnect(
+      host,
+      port,
+      sourceAddress: sourceAddress,
+      sourcePort: sourcePort,
+    );
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -88,7 +119,7 @@ void main() {
     expect(await IosBoardResolver.resolve('panel.invalid'), hasLength(1));
   });
 
-  test('HTTP dials the resolved IP while preserving the URL host', () async {
+  test('HTTP falls back to IPv4 while preserving the URL host', () async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() => server.close(force: true));
     final received = Completer<String?>();
@@ -105,7 +136,7 @@ void main() {
         config: HttpConfig(
           addressResolver: (host) async {
             hosts.add(host);
-            return [InternetAddress.loopbackIPv4];
+            return [InternetAddress.loopbackIPv6, InternetAddress.loopbackIPv4];
           },
         ),
       ),
@@ -120,6 +151,77 @@ void main() {
     expect(response.statusCode, HttpStatus.noContent);
     expect(await received.future, 'panel.invalid:${server.port}');
     expect(hosts, ['panel.invalid']);
+  });
+
+  test('a stalled IPv6 attempt is cancelled when IPv4 connects', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) => request.response.close());
+    final overrides = _StalledIPv6Overrides();
+    final client = await HttpOverrides.runWithHttpOverrides(
+      () => BoardHttpClient.create(
+        host: 'panel.invalid',
+        config: HttpConfig(
+          connectTimeoutSeconds: 3,
+          addressResolver: (_) async => [
+            InternetAddress.loopbackIPv6,
+            InternetAddress.loopbackIPv4,
+          ],
+        ),
+      ),
+      _RealHttpOverrides(),
+    );
+    addTearDown(() => client.close(force: true));
+    await IOOverrides.runWithIOOverrides(() async {
+      final request = await client.getUrl(
+        Uri.parse('http://panel.invalid:${server.port}/'),
+      );
+      final response = await request.close();
+      await response.drain<void>();
+      expect(response.statusCode, HttpStatus.ok);
+      expect(overrides.attempted, [
+        InternetAddress.loopbackIPv6,
+        InternetAddress.loopbackIPv4,
+      ]);
+      expect(overrides.cancelled, isTrue);
+    }, overrides);
+  });
+
+  test('HTTPS starts TLS with the URL host on the resolved socket', () async {
+    final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    final peerFuture = server.first;
+    final client = await HttpOverrides.runWithHttpOverrides(
+      () => BoardHttpClient.create(
+        host: 'panel.invalid',
+        config: HttpConfig(
+          addressResolver: (_) async => [InternetAddress.loopbackIPv4],
+        ),
+      ),
+      _RealHttpOverrides(),
+    );
+    addTearDown(() => client.close(force: true));
+    client.connectionTimeout = const Duration(seconds: 3);
+    final request = client
+        .getUrl(Uri.parse('https://panel.invalid:${server.port}/'))
+        .then((request) => request.close());
+    final failedHandshake = expectLater(
+      request,
+      throwsA(isA<HandshakeException>()),
+    );
+    final peer = await peerFuture;
+    addTearDown(peer.destroy);
+    final hello = <int>[];
+    await for (final chunk in peer.timeout(const Duration(seconds: 3))) {
+      hello.addAll(chunk);
+      expect(hello.first, 0x16);
+      if (hello.length >= 5 && hello.length >= 5 + (hello[3] << 8) + hello[4]) {
+        break;
+      }
+    }
+    expect(ascii.decode(hello, allowInvalid: true), contains('panel.invalid'));
+    peer.destroy();
+    await failedHandshake;
   });
 
   test('SOCKS routes resolve the proxy through the same resolver', () async {

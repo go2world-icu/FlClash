@@ -83,28 +83,7 @@ class _XBoardConfigProvider implements ConfigProviderInterface {
   }
 
   @override
-  Future<String?> getFastestPanelUrl() async {
-    final panelUrls = getAllPanelUrls();
-    if (panelUrls.isEmpty) return null;
-
-    // 获取所有代理配置
-    final proxyUrls = getAllProxyUrls();
-
-    // 始终使用竞速，即使只有一个域名（竞速会直接返回该域名）
-    // 每个域名会测试：直连 + 所有代理
-    final racingResult = await DomainRacingService.raceSelectFastestDomain(
-      panelUrls,
-      forceHttpsResult: true,
-      proxyUrls: proxyUrls,
-    );
-
-    if (racingResult == null) return panelUrls.first;
-
-    // 保存竞速结果中的代理配置（供 SDK 使用）
-    XBoardConfig._lastRacingResult = racingResult;
-
-    return racingResult.domain;
-  }
+  Future<String?> getFastestPanelUrl() => XBoardConfig.getFastestPanelUrl();
 
   @override
   List<String> getAllPanelUrls() =>
@@ -298,19 +277,13 @@ class XBoardConfig {
   static String get appWebsite => _instance?.appWebsite ?? '';
 
   // 缓存正在进行的竞速任务
-  static Future<String?>? _racingFuture;
+  static Future<DomainRacingResult?>? _racingFuture;
 
-  /// 并发竞速获取最快的面板URL
-  ///
-  /// 对当前所有可用的面板URL进行并发测试，返回响应最快的URL
-  /// 如果所有URL都失败，则返回第一个配置URL
-  /// 注意：返回的URL会强制转换为HTTPS格式，以适配SDK的私有证书配置
-  static Future<String?> getFastestPanelUrl() async {
-    // 如果已经有正在进行的竞速，直接返回该结果（请求合并）
-    if (_racingFuture != null) {
-      return _racingFuture;
-    }
+  /// 返回通过探测的 HTTPS 面板地址，全部失败时返回 null。
+  static Future<String?> getFastestPanelUrl() async =>
+      (await (_racingFuture ?? _trackRace(_selectPanelRoute())))?.domain;
 
+  static Future<DomainRacingResult?> _selectPanelRoute() async {
     final panelUrls = allPanelUrls;
     if (panelUrls.isEmpty) return null;
 
@@ -329,7 +302,7 @@ class XBoardConfig {
         )) {
           XBoardLogger.info('[XBoardConfig] 使用缓存域名: ${cached.domain}');
           _lastRacingResult = cached;
-          return cached.domain;
+          return cached;
         } else {
           XBoardLogger.info('[XBoardConfig] 缓存域名失效，回退到竞速: ${cached.domain}');
           await RacingResultCache.clear();
@@ -337,54 +310,60 @@ class XBoardConfig {
       }
     }
 
-    final fastestUrl = await _raceSelectFastest();
-    // 所有域名竞速都失败时，回退到第一个配置URL —— 与 provider 的 getFastestPanelUrl
-    // 及本方法的文档注释保持一致，避免弱网/被墙环境下直接硬失败成「无法获取可用域名」。
-    return fastestUrl ?? panelUrls.first;
+    return _raceSelectFastest();
   }
 
   /// 执行完整竞速并持久化结果。
-  static Future<String?> _raceSelectFastest() async {
+  static Future<DomainRacingResult?> _raceSelectFastest({
+    (String, String?)? excludedRoute,
+  }) async {
     final panelUrls = allPanelUrls;
     if (panelUrls.isEmpty) return null;
 
     // 获取所有代理
     final proxyUrls = allProxyUrls;
 
-    // 创建新的竞速任务
-    _racingFuture =
-        DomainRacingService.raceSelectFastestDomain(
-              panelUrls,
-              forceHttpsResult: true, // 强制返回HTTPS格式，适配SDK私有证书
-              proxyUrls: proxyUrls,
-            )
-            .then((result) {
-              if (result != null) {
-                // 保存竞速结果
-                _lastRacingResult = result;
-                // 持久化，供下次冷启动快路径使用
-                unawaited(RacingResultCache.save(result, proxyUrls: proxyUrls));
-                return result.domain;
-              }
-              return null;
-            })
-            .whenComplete(() {
-              // 任务完成后清除缓存，允许下一次新的竞速
-              _racingFuture = null;
-            });
-
-    return _racingFuture;
+    final result = await DomainRacingService.raceSelectFastestDomain(
+      panelUrls,
+      forceHttpsResult: true,
+      proxyUrls: proxyUrls,
+      excludedRoute: excludedRoute,
+    );
+    _lastRacingResult = result;
+    if (result != null) {
+      await RacingResultCache.save(result, proxyUrls: proxyUrls);
+    }
+    return result;
   }
 
-  static Future<DomainRacingResult?> recoverPanelRoute() async {
+  static Future<DomainRacingResult?> _trackRace(
+    Future<DomainRacingResult?> selection,
+  ) {
+    late final Future<DomainRacingResult?> pending;
+    pending = selection.whenComplete(() {
+      if (identical(_racingFuture, pending)) _racingFuture = null;
+    });
+    return _racingFuture = pending;
+  }
+
+  static Future<DomainRacingResult?> recoverPanelRoute(
+    String failedDomain,
+    String? failedProxy,
+  ) => _trackRace(
+    _recoverPanelRoute(_racingFuture, (failedDomain, failedProxy)),
+  );
+
+  static Future<DomainRacingResult?> _recoverPanelRoute(
+    Future<DomainRacingResult?>? pending,
+    (String, String?) excludedRoute,
+  ) async {
+    if (pending != null) await pending;
     _lastRacingResult = null;
     await RacingResultCache.clear();
-    var url = await _raceSelectFastest();
-    if (url == null) {
-      await _accessor.refreshConfiguration();
-      url = await _raceSelectFastest();
-    }
-    return url == null ? null : _lastRacingResult;
+    final result = await _raceSelectFastest(excludedRoute: excludedRoute);
+    if (result != null || _usingPersistedConfig) return result;
+    await _accessor.refreshConfiguration();
+    return _raceSelectFastest(excludedRoute: excludedRoute);
   }
 
   /// 获取第一个代理URL
