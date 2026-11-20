@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:fl_clash/common/constant.dart';
@@ -6,11 +7,27 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'log_redaction.dart';
 
 export 'package:fl_clash/enum/enum.dart' show LogLevel;
 export 'file_logger.dart';
+
+final _logWriterProvider = Provider((ref) {
+  final container = ref.container;
+  return (String text, LogLevel level) {
+    scheduleMicrotask(() {
+      if (!ref.mounted ||
+          !globalState.isAttach ||
+          !identical(container, globalState.container)) {
+        return;
+      }
+      XBoardLogger.flushPending();
+      commonPrint.log(text, logLevel: level);
+    });
+  };
+});
 
 class XBoardLogger {
   static final _pending = Queue<Log>();
@@ -61,11 +78,11 @@ class XBoardLogger {
       ].join('\n'),
     );
     if (globalState.isAttach) {
-      flushPending();
-    } else {
-      if (_pending.length == maxLogsLength) _pending.removeFirst();
-      _pending.add(Log.app('[APP] $text').copyWith(logLevel: level));
+      globalState.container.read(_logWriterProvider)(text, level);
+      return;
     }
+    if (_pending.length == maxLogsLength) _pending.removeFirst();
+    _pending.add(Log.app('[APP] $text').copyWith(logLevel: level));
     commonPrint.log(text, logLevel: level);
   }
 }

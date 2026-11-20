@@ -47,7 +47,7 @@ void main() {
 
   test(
     'startup logs flush once before later records without printing twice',
-    () {
+    () async {
       globalState.isAttach = false;
       XBoardLogger.error('early failure', StateError('offline'));
       SdkLogger.enable(eventOutput: forwardSdkLog);
@@ -56,6 +56,7 @@ void main() {
       expect(console.length, 2);
       globalState.isAttach = true;
       XBoardLogger.info('attached');
+      await Future<void>.value();
       XBoardLogger.flushPending();
       final logs = container.read(logsProvider).list;
       expect(logs.map((log) => log.logLevel), [
@@ -116,27 +117,100 @@ void main() {
     }
   });
 
-  test('file logs retain severity, exception and stack with redaction', () {
-    const logger = FileLogger('profile.dart');
-    logger.error(
-      'Import failed https://user:pass@example.test/path?token=hidden',
-      StateError('password=hidden'),
-      StackTrace.fromString('importProfile (profile.dart:42)'),
-    );
-    final log = container.read(logsProvider).list.single;
-    expect(log.logLevel, LogLevel.error);
-    expect(
-      log.payload,
-      contains('[APP] [XBoard] [profile.dart] Import failed'),
-    );
-    expect(log.payload, contains('Bad state: [redacted]'));
-    expect(log.payload, contains('importProfile (profile.dart:42)'));
-    expect(log.payload, contains('https://example.test'));
-    expect(log.payload, isNot(contains('hidden')));
-    expect(console, [log.payload]);
+  test(
+    'provider initialization can log without mutating another provider',
+    () async {
+      SdkLogger.enable(eventOutput: forwardSdkLog);
+      final sdk = FutureProvider<String>((ref) async {
+        const logger = FileLogger('sdk_provider');
+        logger.info('initializing');
+        SdkLogger.e(
+          'diagnostic',
+          StateError('offline'),
+          StackTrace.fromString('sdk:8'),
+        );
+        return 'ready';
+      });
+      expect(await container.read(sdk.future), 'ready');
+      await Future<void>.value();
+      final logs = container.read(logsProvider).list;
+      expect(logs.map((log) => log.logLevel), [LogLevel.info, LogLevel.error]);
+      expect(logs.first.payload, contains('[sdk_provider] initializing'));
+      expect(logs.last.payload, contains('sdk:8'));
+    },
+  );
+
+  testWidgets('logging while a widget builds updates its log view afterwards', (
+    tester,
+  ) async {
+    try {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: Consumer(
+            builder: (context, ref, child) {
+              final logs = ref.watch(logsProvider);
+              if (logs.length == 0) XBoardLogger.info('building');
+              return Text('${logs.length}', textDirection: TextDirection.ltr);
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.text('1'), findsOneWidget);
+      expect(console.length, 1);
+    } finally {
+      debugPrint = originalPrint;
+    }
   });
 
-  test('SDK forwards every level once and preserves error details', () {
+  test(
+    'deferred logs do not write to a disposed or replacement container',
+    () async {
+      final previous = ProviderContainer();
+      globalState.container = previous;
+      XBoardLogger.error('previous container');
+      previous.dispose();
+      await Future<void>.value();
+      globalState.container = container;
+      final replaced = ProviderContainer();
+      globalState.container = replaced;
+      XBoardLogger.info('replaced container');
+      globalState.container = container;
+      await Future<void>.value();
+      expect(container.read(logsProvider).length, 0);
+      expect(replaced.read(logsProvider).length, 0);
+      expect(console, isEmpty);
+      replaced.dispose();
+    },
+  );
+
+  test(
+    'file logs retain severity, exception and stack with redaction',
+    () async {
+      const logger = FileLogger('profile.dart');
+      logger.error(
+        'Import failed https://user:pass@example.test/path?token=hidden',
+        StateError('password=hidden'),
+        StackTrace.fromString('importProfile (profile.dart:42)'),
+      );
+      await Future<void>.value();
+      final log = container.read(logsProvider).list.single;
+      expect(log.logLevel, LogLevel.error);
+      expect(
+        log.payload,
+        contains('[APP] [XBoard] [profile.dart] Import failed'),
+      );
+      expect(log.payload, contains('Bad state: [redacted]'));
+      expect(log.payload, contains('importProfile (profile.dart:42)'));
+      expect(log.payload, contains('https://example.test'));
+      expect(log.payload, isNot(contains('hidden')));
+      expect(console, [log.payload]);
+    },
+  );
+
+  test('SDK forwards every level once and preserves error details', () async {
     SdkLogger.enable(eventOutput: forwardSdkLog);
     final rawConsole = <String>[];
     runZoned(
@@ -154,6 +228,7 @@ void main() {
         print: (self, parent, zone, line) => rawConsole.add(line),
       ),
     );
+    await Future<void>.value();
     final logs = container.read(logsProvider).list;
     expect(logs.map((log) => log.logLevel), [
       LogLevel.debug,
@@ -168,13 +243,14 @@ void main() {
     expect(rawConsole, isEmpty);
   });
 
-  test('configured level and disabled SDK suppress matching records', () {
+  test('configured level and disabled SDK suppress matching records', () async {
     XBoardLogger.configure(enabled: true, minLevel: LogLevel.warning);
     SdkLogger.enable(eventOutput: forwardSdkLog);
     SdkLogger.i('filtered');
     SdkLogger.w('visible');
     SdkLogger.enable(enabled: false, eventOutput: forwardSdkLog);
     SdkLogger.e('disabled');
+    await Future<void>.value();
     expect(
       container.read(logsProvider).list.single.payload,
       contains('visible'),
@@ -200,6 +276,7 @@ void main() {
       SdkLogger.enable(eventOutput: forwardSdkLog);
       SdkLogger.e('network failed', StateError('offline'));
       commonPrint.log('https://example.test/private?token=hidden');
+      await Future<void>.value();
       final snapshot = container.read(logsProvider).list;
       final report = encodeLogReport(snapshot);
       commonPrint.log('after snapshot');
