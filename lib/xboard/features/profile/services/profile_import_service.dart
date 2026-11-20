@@ -204,11 +204,11 @@ class XBoardProfileImportService {
       throw Exception('HTTP请求失败: ${e.message}');
     } on MessageException {
       rethrow;
-    } catch (e) {
-      if (e.toString().contains('validateConfig')) {
-        throw Exception('配置文件格式错误: $e');
-      }
-      throw Exception('下载配置失败: $e');
+    } catch (e, stackTrace) {
+      final message = e.toString().contains('validateConfig')
+          ? '配置文件格式错误: $e'
+          : '下载配置失败: $e';
+      Error.throwWithStackTrace(Exception(message), stackTrace);
     }
   }
 

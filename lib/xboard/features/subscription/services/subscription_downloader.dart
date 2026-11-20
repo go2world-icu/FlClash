@@ -19,8 +19,11 @@ class SubscriptionCancellation {
   Future<void> get whenCancelled => _cancelledSignal.future;
 
   void attach(HttpClient client) {
+    if (_cancelled) {
+      client.close(force: true);
+      return;
+    }
     _clients.add(client);
-    if (_cancelled) client.close(force: true);
   }
 
   void detach(HttpClient client) => _clients.remove(client);
@@ -28,8 +31,10 @@ class SubscriptionCancellation {
   void cancel() {
     if (_cancelled) return;
     _cancelled = true;
+    final clients = _clients.toList(growable: false);
+    _clients.clear();
     _cancelledSignal.complete();
-    for (final client in _clients) {
+    for (final client in clients) {
       client.close(force: true);
     }
   }
@@ -94,7 +99,7 @@ class SubscriptionDownloader {
     final winner = Completer<SubscriptionDownload>();
     var next = 0;
     var finished = 0;
-    Object? firstError;
+    (Object, StackTrace)? firstFailure;
 
     Future<void> worker() async {
       while (!winner.isCompleted &&
@@ -114,13 +119,14 @@ class SubscriptionDownloader {
             winner.complete(candidate);
             return;
           }
-        } catch (error) {
-          firstError ??= error;
+        } catch (error, stackTrace) {
+          firstFailure ??= (error, stackTrace);
         } finally {
           finished++;
           if (finished == routes.length && !winner.isCompleted) {
             winner.completeError(
-              firstError ?? StateError('No usable subscription'),
+              firstFailure?.$1 ?? StateError('No usable subscription'),
+              firstFailure?.$2,
             );
           }
         }

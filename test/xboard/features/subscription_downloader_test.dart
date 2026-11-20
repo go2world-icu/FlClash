@@ -58,6 +58,7 @@ class _Client extends Fake implements HttpClient {
 
   final _Request request;
   Exception? error;
+  void Function()? onClose;
   var closes = 0;
   bool? forced;
   final urls = <Uri>[];
@@ -76,6 +77,7 @@ class _Client extends Fake implements HttpClient {
   void close({bool force = false}) {
     forced = force;
     closes++;
+    onClose?.call();
   }
 }
 
@@ -186,6 +188,31 @@ void main() {
     expect(direct.urls, isEmpty);
     expect(loser.urls, isEmpty);
   });
+
+  test(
+    'a loser detaching while closed cannot discard a valid download',
+    () async {
+      final cancellation = SubscriptionCancellation();
+      final listening = Completer<void>();
+      final body = StreamController<List<int>>(onListen: listening.complete);
+      addTearDown(body.close);
+      final loser = _Client([], body: body.stream);
+      loser.onClose = () => cancellation.detach(loser);
+      final winner = _Client([1, 2, 3]);
+
+      final result = await SubscriptionDownloader.fetchSubscription(
+        url,
+        cancellation: cancellation,
+        proxyUrls: const ['socks5://proxy.invalid:1080'],
+        createClient: (_, route) async => route == null ? winner : loser,
+        validate: (_) => listening.future,
+      );
+
+      expect(result.bytes, [1, 2, 3]);
+      expect(loser.closes, 1);
+      expect(loser.forced, isTrue);
+    },
+  );
 
   test('all HTTP failures propagate and close their clients', () async {
     final client = _Client([], status: 503);
