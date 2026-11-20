@@ -81,6 +81,7 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
     final lines = ref.watch(iosManagedLinesProvider);
     final connected = ref.watch(iosTunnelStatusProvider) == 'connected';
     final options = lines?.options ?? const <Proxy>[];
+    final canTest = connected && !_testing;
     final visible = _query.isEmpty
         ? options
         : options
@@ -146,9 +147,10 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
                         child: Align(
                           alignment: AlignmentDirectional.centerEnd,
                           child: TextButton(
-                            onPressed: _testing || !connected
-                                ? null
-                                : () => _testLines(options),
+                            key: ValueKey(canTest), // Reset any active press.
+                            onPressed: canTest
+                                ? () => _testLines(options)
+                                : null,
                             child: Text(
                               _testing
                                   ? strings.testingLines
@@ -186,9 +188,7 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
                                   name: proxy.name,
                                 );
                               }),
-                        onRetest: _testing || !connected
-                            ? null
-                            : () => _testLines([proxy]),
+                        onRetest: canTest ? () => _testLines([proxy]) : null,
                       ),
                     );
                   },
@@ -252,6 +252,7 @@ class _IosLineRow extends ConsumerWidget {
     );
     final app = context.appLocalizations;
     final strings = context.iosMemberStrings;
+    final canRetest = phase == null && onRetest != null;
     final automatic = proxy.type == 'URLTest' || proxy.type == 'Fallback';
     final flag = automatic ? null : iosLineCountryFlag(proxy.name);
     final label = automatic
@@ -289,8 +290,9 @@ class _IosLineRow extends ConsumerWidget {
             ),
           ),
           IconButton(
+            key: ValueKey(canRetest),
             tooltip: app.delayTest,
-            onPressed: phase == null ? onRetest : null,
+            onPressed: canRetest ? onRetest : null,
             icon: const GlyphIcon(AppGlyphs.refresh),
           ),
           const SizedBox(width: 4),

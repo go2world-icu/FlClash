@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_clash/core/core.dart';
@@ -623,6 +624,105 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 10));
   });
+
+  testWidgets(
+    'managed lines report speed tests and can close during a retest',
+    (tester) async {
+      final core = _Core();
+      final pending = <String, Completer<Delay>>{};
+      registerFallbackValue(
+        const TestDelayParams(proxyName: '', testUrl: '', timeout: 0),
+      );
+      when(() => core.testDelay(any())).thenAnswer((invocation) {
+        final params = invocation.positionalArguments.single as TestDelayParams;
+        expect(params.testUrl, iosManagedProbeUrl);
+        return (pending[params.proxyName] = Completer<Delay>()).future;
+      });
+      const nodes = [
+        Proxy(name: 'Hong Kong 01', type: 'Shadowsocks'),
+        Proxy(name: 'Singapore 01', type: 'Shadowsocks'),
+      ];
+      const group = Group(
+        name: 'ToWorld',
+        type: GroupType.Selector,
+        all: nodes,
+        now: 'Hong Kong 01',
+      );
+      const profile = Profile(id: 42, autoUpdateDuration: Duration.zero);
+      await pumpXboard(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: prism.TextButton(
+              onPressed: () => Navigator.of(context).push<void>(
+                PageRouteBuilder<void>(
+                  pageBuilder: (_, _, _) => const IosLinePage(),
+                ),
+              ),
+              child: const Text('Open lines'),
+            ),
+          ),
+        ),
+        overrides: [
+          currentProfileProvider.overrideWithValue(profile),
+          groupsProvider.overrideWithValue([group]),
+          iosManagedProfileProvider.overrideWith((_) => profile),
+          coreHandlerProvider.overrideWithValue(CoreController.scoped(core)),
+        ],
+      );
+      tester.view.physicalSize = const Size(390, 844);
+      final container = ProviderScope.containerOf(
+        tester.element(find.text('Open lines')),
+      );
+      container.read(iosTunnelStatusProvider.notifier).update('connected');
+      await tester.tap(find.text('Open lines'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Test line response times'));
+      await tester.pump();
+      expect(find.text('Testing line latency…'), findsOneWidget);
+      expect(pending.keys, unorderedEquals(nodes.map((proxy) => proxy.name)));
+      await tester.tap(
+        find.widgetWithText(prism.TextButton, 'Testing lines…'),
+        warnIfMissed: false,
+      );
+      await tester.pump();
+      verify(() => core.testDelay(any())).called(nodes.length);
+      for (final (index, proxy) in nodes.indexed) {
+        pending
+            .remove(proxy.name)!
+            .complete(
+              Delay(
+                name: proxy.name,
+                url: iosManagedProbeUrl,
+                value: 42 + index,
+              ),
+            );
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('42 ms'), findsOneWidget);
+      expect(find.text('43 ms'), findsOneWidget);
+      expect(find.text('Testing completed.'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Delay test').first);
+      await tester.pump();
+      expect(pending.keys, ['Hong Kong 01']);
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      pending
+          .remove('Hong Kong 01')!
+          .complete(
+            const Delay(
+              name: 'Hong Kong 01',
+              url: iosManagedProbeUrl,
+              value: 45,
+            ),
+          );
+      await tester.pumpAndSettle();
+      expect(find.byType(IosLinePage), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('Chinese member copy matches the approved prototype', (
     tester,
