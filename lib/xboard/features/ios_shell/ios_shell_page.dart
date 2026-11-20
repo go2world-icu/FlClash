@@ -68,6 +68,7 @@ class _IosMemberTabsState extends ConsumerState<_IosMemberTabs> {
     return material.Scaffold(
       backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
       appBar: material.AppBar(
+        foregroundColor: context.colorScheme.onSurface,
         backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
@@ -186,6 +187,9 @@ class _IosAccountTab extends ConsumerWidget {
       appSettingProvider.select((state) => state.locale),
     );
     final app = context.appLocalizations;
+    final themeMode = ref.watch(
+      themeSettingProvider.select((state) => state.themeMode),
+    );
     final strings = context.iosMemberStrings;
     final packageInfo = globalState.packageInfo;
     return ListView(
@@ -236,6 +240,20 @@ class _IosAccountTab extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              ListItem<ThemeMode>.options(
+                leading: const GlyphIcon(AppGlyphs.sun),
+                title: Text(app.themeMode),
+                options: ThemeMode.values,
+                value: themeMode,
+                textBuilder: (mode) => switch (mode) {
+                  ThemeMode.system => app.auto,
+                  ThemeMode.light => app.light,
+                  ThemeMode.dark => app.dark,
+                },
+                onChanged: (mode) => ref
+                    .read(themeSettingProvider.notifier)
+                    .update((state) => state.copyWith(themeMode: mode)),
+              ),
               ListItem<Locale?>.options(
                 leading: const GlyphIcon(AppGlyphs.language),
                 title: Text(app.language),

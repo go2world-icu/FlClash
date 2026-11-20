@@ -9,6 +9,7 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/plugins/ios_service.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/qr_code.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/xboard/xboard_material_theme.dart';
 import 'package:fl_clash/xboard/domain/domain.dart';
 import 'package:fl_clash/xboard/features/auth/models/auth_state.dart';
@@ -92,6 +93,103 @@ class _MemberInviteNotifier extends FakeInviteNotifier {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() => AppLocalizations.load(const Locale('en')));
+
+  for (final mode in [prism.ThemeMode.light, prism.ThemeMode.dark]) {
+    testWidgets('member navigation stays readable in ${mode.name} mode', (
+      tester,
+    ) async {
+      globalState.packageInfo = PackageInfo(
+        appName: 'ToWorld',
+        packageName: 'com.toworld',
+        version: '0.9.4',
+        buildNumber: '2026111904',
+      );
+      var selectedLine = 'Hong Kong 01';
+      await tester.pumpWidget(
+        TestApp(
+          themeMode: mode,
+          overrides: [
+            ...xboardBaseOverrides(),
+            xboardUserProvider.overrideWith(
+              () => FakeUserAuthNotifier(_member),
+            ),
+            subscriptionInfoProvider.overrideWithBuild((_, _) => _plan),
+            iosManagedProfileProvider.overrideWith((_) => null),
+            iosSelectedLineProvider.overrideWith((_) => selectedLine),
+            inviteProvider.overrideWith(_MemberInviteNotifier.new),
+          ],
+          child: const XBoardMaterialTheme(child: XBoardIosShell()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(XBoardIosShell)),
+      );
+      Finder flag(String value) => find.byWidgetPredicate(
+        (widget) => widget is prism.EmojiText && widget.text == value,
+      );
+      expect(flag('🇭🇰'), findsOneWidget);
+      selectedLine = 'Singapore 01';
+      container.invalidate(iosSelectedLineProvider);
+      await tester.pumpAndSettle();
+      expect(flag('🇭🇰'), findsNothing);
+      expect(flag('🇸🇬'), findsOneWidget);
+
+      void expectReadableBar(String title) {
+        final titleContext = tester.element(find.text(title));
+        final colors = prism.Theme.of(titleContext).colorScheme;
+        final titleColor = DefaultTextStyle.of(titleContext).style.color!;
+        final back = find.descendant(
+          of: find.byTooltip('Back'),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is GlyphIcon && widget.glyph == AppGlyphs.arrowBack,
+          ),
+        );
+        expect(titleColor, colors.onSurface);
+        expect(IconTheme.of(tester.element(back)).color, colors.onSurface);
+        final foreground = titleColor.computeLuminance();
+        final background = prism.SurfaceLevel.page
+            .colorOf(colors)
+            .computeLuminance();
+        final contrast = foreground > background
+            ? (foreground + 0.05) / (background + 0.05)
+            : (background + 0.05) / (foreground + 0.05);
+        expect(contrast, greaterThanOrEqualTo(4.5));
+      }
+
+      await tester.tap(find.text('Singapore 01'));
+      await tester.pumpAndSettle();
+      expectReadableBar('Managed lines');
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('My'));
+      await tester.pumpAndSettle();
+      final app = AppLocalizations.of(
+        tester.element(find.byType(XBoardIosShell)),
+      );
+      for (final (choice, expected) in [
+        (app.dark, prism.ThemeMode.dark),
+        (app.light, prism.ThemeMode.light),
+        (app.auto, prism.ThemeMode.system),
+      ]) {
+        await tester.ensureVisible(find.text(app.themeMode));
+        await tester.tap(find.text(app.themeMode));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(choice).last);
+        await tester.pumpAndSettle();
+        expect(container.read(themeSettingProvider).themeMode, expected);
+      }
+      await tester.ensureVisible(find.text('Invite and earn'));
+      await tester.tap(find.text('Invite and earn'));
+      await tester.pumpAndSettle();
+      expectReadableBar('Invite and earn');
+      await tester.tap(find.text('Commission details'));
+      await tester.pumpAndSettle();
+      expectReadableBar('Commission details');
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   test('only an owned or matching stored subscription can start', () async {
     final home = await Directory.systemTemp.createTemp('toworld-ios-panel');

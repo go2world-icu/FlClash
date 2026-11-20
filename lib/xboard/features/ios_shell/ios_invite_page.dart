@@ -108,6 +108,7 @@ class _IosInvitePageState extends ConsumerState<IosInvitePage> {
     return material.Scaffold(
       backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
       appBar: material.AppBar(
+        foregroundColor: context.colorScheme.onSurface,
         leading: material.IconButton(
           tooltip: material.MaterialLocalizations.of(context).backButtonTooltip,
           icon: const GlyphIcon(AppGlyphs.arrowBack),
@@ -368,6 +369,7 @@ class _IosCommissionPageState extends ConsumerState<_IosCommissionPage> {
       appBar: material.AppBar(
         backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
         title: Text(context.iosMemberStrings.commissionDetails),
+        foregroundColor: context.colorScheme.onSurface,
         leading: material.IconButton(
           tooltip: material.MaterialLocalizations.of(context).backButtonTooltip,
           icon: const GlyphIcon(AppGlyphs.arrowBack),

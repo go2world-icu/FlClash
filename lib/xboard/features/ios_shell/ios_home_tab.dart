@@ -19,6 +19,7 @@ import 'package:prism_ui/prism_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'ios_line_page.dart';
+import 'ios_line_country.dart';
 import 'ios_managed_connection.dart';
 import 'ios_member_strings.dart';
 import 'ios_member_colors.dart';
@@ -110,6 +111,7 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
     final active = hasActiveIosPlan(subscription, user);
     final ready = profile.asData?.value != null && active;
     final currentLine = ref.watch(iosSelectedLineProvider);
+    final currentLineFlag = iosLineCountryFlag(currentLine ?? '');
     final (syncingAccount, accountSyncFailed) = ref.watch(
       xboardUserProvider.select(
         (state) => (state.isLoading, state.membershipRefreshFailed),
@@ -253,10 +255,21 @@ class _IosHomeTabState extends ConsumerState<IosHomeTab> {
           ),
           child: Row(
             children: [
-              GlyphIcon(
-                XBoardGlyphs.router,
-                color: context.colorScheme.primary,
-              ),
+              if (currentLineFlag != null)
+                SizedBox.square(
+                  dimension: 28,
+                  child: Center(
+                    child: EmojiText(
+                      currentLineFlag,
+                      style: AppTextStyle.title2.of(context),
+                    ),
+                  ),
+                )
+              else
+                GlyphIcon(
+                  XBoardGlyphs.router,
+                  color: context.colorScheme.primary,
+                ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

@@ -100,6 +100,7 @@ class _IosLinePageState extends ConsumerState<IosLinePage> {
       child: material.Scaffold(
         backgroundColor: SurfaceLevel.page.colorOf(context.colorScheme),
         appBar: material.AppBar(
+          foregroundColor: context.colorScheme.onSurface,
           leading: material.IconButton(
             tooltip: material.MaterialLocalizations.of(
               context,
