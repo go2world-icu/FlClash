@@ -1,182 +1,71 @@
-/// XBoard 日志模块
-///
-/// 基于 `logger` 包（v2.x）的统一日志框架，支持：
-/// - 控制台彩色输出
-/// - AES-256-CBC 加密单文件存储（通过 AppPath 管理路径）
-/// - 文件和模块级别标签
-library;
+import 'dart:collection';
 
-export 'logger_interface.dart';
+import 'package:fl_clash/common/constant.dart';
+import 'package:fl_clash/common/print.dart';
+import 'package:fl_clash/enum/enum.dart';
+import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/state.dart';
+
+import 'log_redaction.dart';
+
+export 'package:fl_clash/enum/enum.dart' show LogLevel;
 export 'file_logger.dart';
-export 'log_file_manager.dart';
 
-import 'dart:async';
-
-import 'package:logger/logger.dart' as pkg;
-
-import 'logger_interface.dart';
-import 'log_file_manager.dart';
-
-/// 全局唯一 Logger 实例（延迟初始化）
-pkg.Logger? _globalLogger;
-
-/// 加密文件输出实例（持有引用防止 GC）
-EncryptedFileLogOutput? _fileOutput;
-
-/// 日志配置
-class LoggerConfig {
-  final LogLevel minLevel;
-  final bool enableConsole;
-  final bool enableFile;
-  final String encryptionKey;
-  final String? logDir;
-
-  const LoggerConfig({
-    this.minLevel = LogLevel.info,
-    this.enableConsole = true,
-    this.enableFile = true,
-    this.encryptionKey = 'xboard_default_key',
-    this.logDir,
-  });
-
-  /// 将 LogLevel 转为 logger 包的 Level
-  pkg.Level get _packageLevel => switch (minLevel) {
-    LogLevel.debug => pkg.Level.debug,
-    LogLevel.info => pkg.Level.info,
-    LogLevel.warning => pkg.Level.warning,
-    LogLevel.error => pkg.Level.error,
-  };
-}
-
-/// XBoard 日志管理器
-///
-/// 提供全局日志实例，底层基于 `logger` 包。
-/// 兼容旧版 API，以最小化迁移成本。
 class XBoardLogger {
-  /// 获取当前全局 Logger 实例
-  static pkg.Logger get instance {
-    if (_globalLogger == null) {
-      _initDefault();
-    }
-    return _globalLogger!;
+  static final _pending = Queue<Log>();
+  static bool _enabled = true;
+  static LogLevel _minLevel = LogLevel.info;
+
+  static void configure({required bool enabled, required LogLevel minLevel}) {
+    _enabled = enabled;
+    _minLevel = minLevel;
   }
 
-  /// 获取文件输出管理器（可用于导出/分享日志）
-  static EncryptedFileLogOutput? get fileOutput => _fileOutput;
+  static void flushPending() {
+    if (!globalState.isAttach || _pending.isEmpty) return;
+    // Early records already reached the console; replay only to the log list.
+    final logs = globalState.container.read(logsProvider.notifier);
+    while (_pending.isNotEmpty) {
+      logs.add(_pending.removeFirst());
+    }
+  }
 
-  static void _initDefault() {
-    _globalLogger = pkg.Logger(
-      level: pkg.Level.trace,
-      printer: _Printer(),
-      output: _PrintLogOutput(),
+  static void debug(String message, [Object? error, StackTrace? stackTrace]) =>
+      _log(LogLevel.debug, message, error, stackTrace);
+
+  static void info(String message, [Object? error, StackTrace? stackTrace]) =>
+      _log(LogLevel.info, message, error, stackTrace);
+
+  static void warning(
+    String message, [
+    Object? error,
+    StackTrace? stackTrace,
+  ]) => _log(LogLevel.warning, message, error, stackTrace);
+
+  static void error(String message, [Object? error, StackTrace? stackTrace]) =>
+      _log(LogLevel.error, message, error, stackTrace);
+
+  static void _log(
+    LogLevel level,
+    String message,
+    Object? error,
+    StackTrace? stackTrace,
+  ) {
+    if (!_enabled || level.index < _minLevel.index) return;
+    final text = redactLogMessage(
+      [
+        '[XBoard] $message',
+        if (error != null) compactError(error),
+        if (stackTrace != null) stackTrace.toString(),
+      ].join('\n'),
     );
-  }
-
-  /// 配置并初始化 Logger
-  ///
-  /// 在应用启动时调用，建议传入自定义配置。
-  /// 调用后全局实例被替换。
-  static Future<void> configure([
-    LoggerConfig config = const LoggerConfig(),
-  ]) async {
-    final outputs = <pkg.LogOutput>[];
-
-    if (config.enableConsole) {
-      outputs.add(_PrintLogOutput());
+    if (globalState.isAttach) {
+      flushPending();
+    } else {
+      if (_pending.length == maxLogsLength) _pending.removeFirst();
+      _pending.add(Log.app('[APP] $text').copyWith(logLevel: level));
     }
-
-    // 加密文件输出
-    if (config.enableFile) {
-      _fileOutput = EncryptedFileLogOutput(appKey: config.encryptionKey);
-      await _fileOutput!.init(baseDir: config.logDir);
-      outputs.add(_fileOutput!);
-    }
-
-    if (outputs.isEmpty) {
-      // 兜底：至少有一个输出
-      outputs.add(pkg.ConsoleOutput());
-    }
-
-    final logOutput = outputs.length > 1
-        ? pkg.MultiOutput(outputs)
-        : outputs.first;
-
-    _globalLogger = pkg.Logger(
-      level: config._packageLevel,
-      printer: _Printer(),
-      output: logOutput,
-    );
+    commonPrint.log(text, logLevel: level);
   }
-
-  /// 重置为默认（控制台）实现
-  static void reset() {
-    _fileOutput = null;
-    _initDefault();
-  }
-
-  // ========== 便捷方法（兼容旧版 API） ==========
-
-  /// 记录调试日志
-  static void debug(String message, [Object? error, StackTrace? stackTrace]) {
-    instance.d(message, error: error, stackTrace: stackTrace);
-  }
-
-  /// 记录信息日志
-  static void info(String message, [Object? error, StackTrace? stackTrace]) {
-    instance.i(message, error: error, stackTrace: stackTrace);
-  }
-
-  /// 记录警告日志
-  static void warning(String message, [Object? error, StackTrace? stackTrace]) {
-    instance.w(message, error: error, stackTrace: stackTrace);
-  }
-
-  /// 记录错误日志
-  static void error(String message, [Object? error, StackTrace? stackTrace]) {
-    instance.e(message, error: error, stackTrace: stackTrace);
-  }
-}
-
-/// Writes to the Flutter console via `print()`.
-class _PrintLogOutput extends pkg.LogOutput {
-  @override
-  void output(pkg.OutputEvent event) {
-    // ignore: avoid_print
-    for (final line in event.lines) {
-      print(line);
-    }
-  }
-}
-
-/// Minimal log printer — no ANSI colours, simple timestamp.
-class _Printer extends pkg.LogPrinter {
-  @override
-  List<String> log(pkg.LogEvent event) {
-    final now = DateTime.now();
-    final ts =
-        '${now.year}-${_p(now.month)}-${_p(now.day)} '
-        '${_p(now.hour)}:${_p(now.minute)}:${_p(now.second)}';
-    return [
-      '$ts [${event.level.name.toUpperCase()}] ${_redact(event.message.toString())}',
-    ];
-  }
-
-  String _redact(String value) {
-    final urls = RegExp(r'(?:https?|socks5)://[^\s\u0022\u0027<>]+');
-    var result = value.replaceAllMapped(urls, (match) {
-      final uri = Uri.tryParse(match.group(0)!);
-      if (uri == null || uri.host.isEmpty) return '[URL]';
-      return '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
-    });
-    result = result.replaceAll(
-      RegExp(
-        r'\b(?:token|password|passwd|secret|key)=([^\s&]+)',
-        caseSensitive: false,
-      ),
-      '[redacted]',
-    );
-    return result.replaceAll(RegExp(r'\b[^\s@:]+:[^\s@]+@'), '[credentials]@');
-  }
-
-  String _p(int n) => n.toString().padLeft(2, '0');
 }

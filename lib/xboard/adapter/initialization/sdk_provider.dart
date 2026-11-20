@@ -4,6 +4,7 @@ import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart';
 import 'package:fl_clash/xboard/infrastructure/http/board_transport.dart';
 import 'package:fl_clash/xboard/core/core.dart';
+import '../sdk_logging.dart';
 
 part 'generated/sdk_provider.g.dart';
 
@@ -87,8 +88,8 @@ Future<XBoardSDK> xboardSdk(Ref ref) async {
             ? null
             : ApiRoute(route.domain, route.useProxy ? route.proxyUrl : null);
       },
-      enableLogging: false,
-      logOutput: (line) => XBoardLogger.info('[SDK] $line'),
+      enableLogging: true,
+      logEventOutput: forwardSdkLog,
     );
 
     _logger.info('[XBoardSdkProvider] SDK初始化成功');

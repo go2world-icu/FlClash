@@ -77,14 +77,12 @@ dependencies:
     path: plugins/setup
   board_sdk:
     path: lib/sdk/board_sdk
-  encrypt: ^5.0.1
   http: ^1.1.0
   flutter_markdown: ^0.7.4+1
   flutter_widget_from_html_core: ^0.17.1
   uuid: ^4.4.0
   web_socket_channel: ^3.0.3
   socks5_proxy: ^2.1.2
-  logger: ^2.0.2+1
   qr: ^4.0.0
 dev_dependencies:
   flutter_test:

@@ -84,6 +84,7 @@ Widget buildXBoardHome() {
 /// Warms the panel's storage and runs its initialization — the panel's screens
 /// assume both have happened, and neither is part of the core's own startup.
 void preloadXBoard(WidgetRef ref) {
+  XBoardLogger.flushPending();
   if (!hasXboardConfig) return;
   warmUpXBoardStorage().then((_) {
     ref.read(initializationProvider.notifier).initialize().catchError((_) {});

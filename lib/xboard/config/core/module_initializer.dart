@@ -1,12 +1,10 @@
 import 'package:board_sdk/flutter_xboard_sdk.dart';
-import 'package:fl_clash/common/common.dart';
 import 'service_locator.dart';
 import 'config_settings.dart';
 import '../parsers/configuration_parser.dart';
 import '../internal/xboard_config_accessor.dart';
 import '../../core/core.dart';
 
-// 初始化文件级日志器
 final _logger = FileLogger('module_initializer.dart');
 
 /// 模块初始化器（内部类）
@@ -32,8 +30,7 @@ class ModuleInitializer {
         throw Exception('Invalid configuration: ${errors.join(', ')}');
       }
 
-      // 配置日志（以 currentProvider 作为加密密钥）
-      await _configureLogger(config.log, config.currentProvider);
+      _configureLogger(config.log);
 
       _logger.info('Initializing XBoard Config Module V2');
       _logger.info('Current provider: ${config.currentProvider}');
@@ -70,36 +67,10 @@ class ModuleInitializer {
     };
   }
 
-  /// 配置日志
-  static Future<void> _configureLogger(
-    LogSettings logSettings, [
-    String provider = 'xboard_default_key',
-  ]) async {
-    if (!logSettings.enabled) {
-      _logger.debug('Logger 已禁用，仅保留控制台输出');
-      XBoardLogger.reset();
-      return;
-    }
-
-    final level = _parseLogLevel(logSettings.level);
-
-    // iOS: write encrypted logs into the App Group container so both
-    // the main app and the PacketTunnel extension can read/write them.
-    final logDir = system.isIOS ? await appPath.homeDirPath : null;
-
-    await XBoardLogger.configure(
-      LoggerConfig(
-        minLevel: level,
-        enableConsole: true,
-        enableFile: true,
-        encryptionKey: provider,
-        logDir: logDir,
-      ),
-    );
-
-    _logger.info(
-      'Logger 初始化完成  |  级别: ${logSettings.level}  '
-      '|  加密文件: 已启用  |  保留期限: 1 天',
+  static void _configureLogger(LogSettings settings) {
+    XBoardLogger.configure(
+      enabled: settings.enabled,
+      minLevel: _parseLogLevel(settings.level),
     );
   }
 

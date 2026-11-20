@@ -1,4 +1,6 @@
+import 'package:board_sdk/flutter_xboard_sdk.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/xboard/adapter/sdk_logging.dart';
 import 'package:fl_clash/xboard/config_check.dart';
 import 'package:rust_api/rust_api.dart';
 
@@ -10,6 +12,7 @@ import 'package:rust_api/rust_api.dart';
 /// cannot drop them quietly — the invariants test checks main.dart still calls
 /// this.
 Future<void> xboardStartup() async {
+  SdkLogger.enable(eventOutput: forwardSdkLog);
   await resolveXboardConfig();
   // rust_api has no iOS build — rquickjs-sys publishes no bindings for it — and
   // nothing on iOS reaches the bridge.

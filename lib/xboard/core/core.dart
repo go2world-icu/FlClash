@@ -6,8 +6,6 @@
 /// - Result 类型
 /// - 工具函数
 ///
-/// 本模块**零依赖**，只依赖 Dart SDK，可以被任何其他模块使用
-///
 /// 使用示例：
 /// ```dart
 /// import 'package:fl_clash/xboard/core/core.dart';
