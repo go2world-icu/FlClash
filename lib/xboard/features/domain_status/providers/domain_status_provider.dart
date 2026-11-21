@@ -38,7 +38,6 @@ class DomainStatusNotifier extends Notifier<DomainStatusState> {
   @override
   DomainStatusState build() {
     _service = ref.watch(domainStatusServiceProvider);
-    ref.onDispose(() => _service.dispose());
     return const DomainStatusState();
   }
 

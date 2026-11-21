@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_clash/plugins/service.dart';
 import 'package:fl_clash/plugins/ios_service.dart';
+import 'package:fl_clash/xboard/core/logger/logger.dart';
 import 'package:flutter/services.dart';
 
 class IosBoardResolver {
@@ -21,11 +22,11 @@ class IosBoardResolver {
     if (addresses.isEmpty) {
       throw const SocketException('XBoard physical DNS lookup failed');
     }
+    final ips = addresses.map((address) => address.address).toList();
+    XBoardLogger.debug('[PhysicalDNS] $host -> ${ips.join(', ')}');
     final update = _routeQueue.then((_) async {
       if (!await Service()
-          .setXboardDirectAddresses(
-            addresses.map((address) => address.address).toList(),
-          )
+          .setXboardDirectAddresses(ips)
           .timeout(const Duration(seconds: 3), onTimeout: () => false)) {
         throw const SocketException('XBoard physical route unavailable');
       }

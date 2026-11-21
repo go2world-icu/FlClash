@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,15 +9,23 @@ import 'package:fl_clash/xboard/config/internal/xboard_config_accessor.dart';
 import 'package:fl_clash/xboard/config/parsers/configuration_parser.dart';
 import 'package:fl_clash/xboard/config/utils/config_file_loader.dart';
 import 'package:fl_clash/xboard/config/xboard_config.dart' show XBoardConfig;
+import 'package:fl_clash/xboard/features/domain_status/providers/domain_status_provider.dart';
 import 'package:fl_clash/xboard/features/domain_status/services/domain_status_service.dart';
 import 'package:fl_clash/xboard/infrastructure/storage/file_storage.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/app_paths.dart';
 
 class _HttpClient extends Mock implements HttpClient {}
+
+class _HttpRequest extends Mock implements HttpClientRequest {}
+
+class _HttpResponse extends Mock implements HttpClientResponse {}
+
+class _HttpHeaders extends Mock implements HttpHeaders {}
 
 class _ConfigHttpOverrides extends HttpOverrides {
   _ConfigHttpOverrides(this.client);
@@ -72,6 +81,7 @@ xboard:
     obfuscation_prefix: YOUR_OBFS_PREFIX_
     user_agents:
       api_encrypted: Mozilla/5.0
+      domain_racing_test: FlClash-Test
 ''';
 
 void main() {
@@ -164,7 +174,7 @@ void main() {
       registerFallbackValue(Uri.parse('https://fallback.invalid'));
       when(() => client.openUrl('GET', any())).thenAnswer((invocation) async {
         requests.add(invocation.positionalArguments[1] as Uri);
-        throw const SocketException('request captured locally');
+        throw SocketException('Failed host lookup: ${requests.last}');
       });
       final accessor = XBoardConfigAccessor(
         remoteManager: RemoteConfigManager.fromSettings(settings.remoteConfig),
@@ -199,7 +209,11 @@ void main() {
             )
             .toString(),
       );
-      expect(accessor.lastError, contains('redirect:'));
+      expect(
+        accessor.lastError,
+        allOf(contains('redirect:'), contains('DNS 解析失败')),
+      );
+      expect(accessor.lastError, isNot(contains(uri.queryParameters['sign']!)));
     });
 
     test('a missing document falls back to the defaults', () async {
@@ -296,6 +310,101 @@ void main() {
     },
   );
 
+  test(
+    'domain checks reload the cleared panel configuration after logout',
+    () async {
+      stubAsset(_document.replaceFirst('max_retries: 5', 'max_retries: 1'));
+      final root = await Directory.systemTemp.createTemp('board_logout_test');
+      addTearDown(() => root.delete(recursive: true));
+      await useAppPaths(root);
+      final storage = await FileStorage.shared();
+      const key = 'xboard_remote_panel_config';
+      final previous = (await storage.getString(key)).dataOrNull;
+      addTearDown(() async {
+        XBoardConfig.reset();
+        if (previous == null) {
+          await storage.remove(key);
+        } else {
+          await storage.setString(key, previous);
+        }
+      });
+
+      String configuration(String domain) => jsonEncode({
+        'panelType': 'v2board',
+        'panels': {
+          'go2world': [
+            {'url': 'https://$domain', 'description': 'test'},
+          ],
+        },
+      });
+
+      await storage.setString(key, configuration('cached.invalid'));
+      final client = _HttpClient();
+      final request = _HttpRequest();
+      final response = _HttpResponse();
+      final headers = _HttpHeaders();
+      registerFallbackValue(Uri.parse('https://config.invalid'));
+      registerFallbackValue((List<int> _) {});
+      when(() => client.getUrl(any())).thenAnswer((_) async => request);
+      when(() => client.openUrl('GET', any())).thenAnswer((_) async => request);
+      when(() => request.headers).thenReturn(headers);
+      when(() => request.close()).thenAnswer((_) async => response);
+      when(() => response.headers).thenReturn(headers);
+      when(() => response.statusCode).thenReturn(HttpStatus.ok);
+      when(() => response.isRedirect).thenReturn(false);
+      when(() => response.redirects).thenReturn(const []);
+      when(() => response.reasonPhrase).thenReturn('OK');
+      when(() => response.forEach(any())).thenAnswer((_) async {});
+      when(() => response.cast<Uint8List>()).thenAnswer(
+        (_) => Stream.value(
+          Uint8List.fromList(utf8.encode(configuration('new.invalid'))),
+        ),
+      );
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(domainStatusProvider.notifier);
+      await HttpOverrides.runWithHttpOverrides(() async {
+        await notifier.checkDomain();
+        final initial = container.read(domainStatusProvider);
+        expect(
+          initial.currentDomain,
+          'https://cached.invalid',
+          reason: initial.errorMessage,
+        );
+        verifyNever(() => client.openUrl('GET', any()));
+
+        final oldProbeStarted = Completer<void>();
+        final oldProbe = Completer<HttpClientRequest>();
+        when(
+          () => client.getUrl(
+            Uri.parse('https://cached.invalid/api/v1/guest/comm/config'),
+          ),
+        ).thenAnswer((_) {
+          oldProbeStarted.complete();
+          return oldProbe.future;
+        });
+        final oldSelection = XBoardConfig.getFastestPanelUrl();
+        await oldProbeStarted.future;
+
+        await XBoardConfig.clearPersistedRemoteConfiguration();
+        XBoardConfig.reset();
+        try {
+          await notifier.checkDomain();
+        } finally {
+          oldProbe.complete(request);
+        }
+        expect(await oldSelection, isNull);
+
+        final status = container.read(domainStatusProvider);
+        expect(status.isReady, isTrue, reason: status.errorMessage);
+        expect(status.currentDomain, 'https://new.invalid');
+        expect(XBoardConfig.lastRacingResult?.domain, 'https://new.invalid');
+        verify(() => client.openUrl('GET', any())).called(1);
+      }, _ConfigHttpOverrides(client));
+    },
+  );
+
   group('loadExtendedConfig', () {
     test('returns the xboard block', () async {
       stubAsset(_document);
@@ -349,6 +458,7 @@ void main() {
     test('the user agents are flattened to strings', () async {
       expect(await ConfigFileLoaderHelper.getUserAgents(), {
         'api_encrypted': 'Mozilla/5.0',
+        'domain_racing_test': 'FlClash-Test',
       });
     });
 

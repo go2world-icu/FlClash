@@ -124,8 +124,11 @@ class DomainRacingService {
   }) async {
     final watch = Stopwatch()..start();
     HttpClient? client;
+    var stage = 'setup';
+    var host = 'invalid endpoint';
     try {
       final endpoint = _endpoint(domain);
+      host = endpoint.host;
       final path = testPath.isEmpty
           ? '/api/v1/guest/comm/config'
           : (testPath.startsWith('/') ? testPath : '/$testPath');
@@ -134,6 +137,7 @@ class DomainRacingService {
       token.attach(client);
       client.connectionTimeout = timeout;
       if (token.isCancelled) throw const HttpException('Cancelled');
+      stage = proxyUrl == null ? 'connect' : 'SOCKS/TLS connect';
       final request = await client.getUrl(uri).timeout(timeout);
       request.followRedirects = false;
       request.headers.set(
@@ -145,11 +149,13 @@ class DomainRacingService {
         ),
       );
       request.headers.set(HttpHeaders.acceptHeader, '*/*');
+      stage = 'response headers';
       final response = await request.close().timeout(timeout);
       if (token.isCancelled) throw const HttpException('Cancelled');
       if (response.statusCode != HttpStatus.ok) {
         throw HttpException('HTTP ${response.statusCode}');
       }
+      stage = 'response body';
       var size = 0;
       await response
           .forEach((chunk) {
@@ -166,10 +172,16 @@ class DomainRacingService {
         proxyUrl: proxyUrl,
       );
     } catch (error) {
-      XBoardLogger.warning(
-        '[DomainRacing] ${proxyUrl == null ? 'direct' : 'proxy'} '
-        '${Uri.tryParse(domain)?.host ?? 'invalid endpoint'} failed: $error',
-      );
+      if (!token.isCancelled) {
+        final route = proxyUrl == null ? 'direct' : _proxyLabel(proxyUrl);
+        final failedStage = error is HandshakeException
+            ? 'TLS handshake'
+            : stage;
+        XBoardLogger.warning(
+          '[DomainRacing] $route $host failed at $failedStage '
+          'after ${watch.elapsedMilliseconds}ms: $error',
+        );
+      }
       return DomainTestResult.failure(
         domain,
         error.toString(),
@@ -181,6 +193,12 @@ class DomainRacingService {
       client?.close(force: true);
       watch.stop();
     }
+  }
+
+  static String _proxyLabel(String value) {
+    final uri = Uri.tryParse(value.contains('://') ? value : 'socks5://$value');
+    if (uri == null || uri.host.isEmpty) return 'proxy';
+    return 'proxy ${uri.replace(userInfo: '').authority}';
   }
 
   static Uri _endpoint(String value) {

@@ -11,6 +11,14 @@ class XBoardTransport {
     if (Platform.isIOS) await IosBoardResolver.resolve(url.host);
   }
 
+  static Future<HttpClient> createConfigClient(Uri url) =>
+      BoardHttpClient.create(
+        host: url.host,
+        config: HttpConfig(
+          addressResolver: Platform.isIOS ? IosBoardResolver.resolve : null,
+        ),
+      );
+
   static Future<HttpConfig> config({String? proxyUrl}) async {
     final certificate = await ConfigFileLoaderHelper.getCertificateConfig();
     final enabled = certificate['enabled'] == true;

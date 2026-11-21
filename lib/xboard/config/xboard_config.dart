@@ -33,6 +33,7 @@ export 'utils/config_file_loader.dart';
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fl_clash/common/function.dart';
 import 'package:fl_clash/xboard/core/core.dart';
 
 import 'core/module_initializer.dart';
@@ -42,7 +43,6 @@ import 'models/config_entry.dart';
 import 'models/proxy_info.dart';
 import 'models/subscription_info.dart';
 import '../infrastructure/infrastructure.dart';
-import '../infrastructure/http/board_transport.dart';
 import '../infrastructure/storage/file_storage.dart';
 import 'utils/config_file_loader.dart';
 
@@ -118,6 +118,8 @@ class XBoardConfig {
   // 缓存最后一次竞速结果
   static DomainRacingResult? _lastRacingResult;
   static bool _usingPersistedConfig = false;
+  static int _configGeneration = 0;
+  static final _routeCacheTasks = SerialTaskScheduler();
 
   // 私有构造函数，防止外部实例化
   XBoardConfig._();
@@ -162,7 +164,6 @@ class XBoardConfig {
         }
       }
       if (!_usingPersistedConfig) {
-        await _prepareRemoteConfigRoutes(config);
         await accessor.refreshConfiguration();
       }
       if (!accessor.isReady || accessor.getPanelConfigList().isEmpty) {
@@ -186,22 +187,17 @@ class XBoardConfig {
     }
   }
 
-  static Future<void> _prepareRemoteConfigRoutes(ConfigSettings config) async {
-    for (final source in config.remoteConfig.sources) {
-      final uri = Uri.tryParse(source.url);
-      if (uri != null && uri.scheme == 'https' && uri.host.isNotEmpty) {
-        await XBoardTransport.ensureDirectRoute(uri);
-      }
-    }
-  }
-
   static Future<void> persistRemoteConfiguration() async {
+    final generation = _configGeneration;
     final data = _instance?.remoteConfigData;
     if (data == null) return;
-    final saved = await (await FileStorage.shared()).setString(
+    final storage = await FileStorage.shared();
+    if (generation != _configGeneration) return;
+    final saved = await storage.setString(
       _remoteConfigCacheKey,
       jsonEncode(data),
     );
+    if (generation != _configGeneration) return;
     if (saved.dataOrNull != true) {
       throw StateError('Unable to save XBoard remote configuration');
     }
@@ -209,6 +205,7 @@ class XBoardConfig {
   }
 
   static Future<void> clearPersistedRemoteConfiguration() async {
+    _invalidatePanelSelection();
     final removed = await (await FileStorage.shared()).remove(
       _remoteConfigCacheKey,
     );
@@ -238,12 +235,11 @@ class XBoardConfig {
 
   /// 重置模块
   static void reset() {
+    _invalidatePanelSelection();
     _instance?.dispose();
     _instance = null;
     _provider = null;
-    _lastRacingResult = null;
     _usingPersistedConfig = false;
-    _racingFuture = null;
     ModuleInitializer.reset();
   }
 
@@ -279,44 +275,67 @@ class XBoardConfig {
   // 缓存正在进行的竞速任务
   static Future<DomainRacingResult?>? _racingFuture;
 
-  /// 返回通过探测的 HTTPS 面板地址，全部失败时返回 null。
-  static Future<String?> getFastestPanelUrl() async =>
-      (await (_racingFuture ?? _trackRace(_selectPanelRoute())))?.domain;
+  static void _invalidatePanelSelection() {
+    _configGeneration++;
+    _lastRacingResult = null;
+    _racingFuture = null;
+  }
 
-  static Future<DomainRacingResult?> _selectPanelRoute() async {
+  static Future<void> _updateRouteCache(
+    int generation,
+    Future<void> Function() update,
+  ) => _routeCacheTasks.run(() async {
+    if (generation == _configGeneration) await update();
+  });
+
+  /// 返回通过探测的 HTTPS 面板地址，全部失败时返回 null。
+  static Future<String?> getFastestPanelUrl() async {
+    final generation = _configGeneration;
+    final result =
+        await (_racingFuture ?? _trackRace(_selectPanelRoute(generation)));
+    return generation == _configGeneration ? result?.domain : null;
+  }
+
+  static Future<DomainRacingResult?> _selectPanelRoute(int generation) async {
     final panelUrls = allPanelUrls;
     if (panelUrls.isEmpty) return null;
 
     // 冷启动快路径：本进程还没跑过竞速，先用持久化的上次竞速结果，
     // 避免每次启动都等一轮网络竞速（每域名 5s 连接 / 8s 响应）。
     if (_lastRacingResult == null) {
-      final cached = await RacingResultCache.load(
-        panelUrls: panelUrls,
-        proxyUrls: allProxyUrls,
+      final proxyUrls = allProxyUrls;
+      final cached = await _routeCacheTasks.run(
+        () =>
+            RacingResultCache.load(panelUrls: panelUrls, proxyUrls: proxyUrls),
       );
+      if (generation != _configGeneration) return null;
       if (cached != null && cached.domain.isNotEmpty) {
         // 探活：缓存域名还活着才信任它；死了就清掉缓存走正常竞速（回退）。
-        if (await DomainRacingService.probeDomain(
+        final reachable = await DomainRacingService.probeDomain(
           cached.domain,
           proxyUrl: cached.proxyUrl,
-        )) {
+        );
+        if (generation != _configGeneration) return null;
+        if (reachable) {
           XBoardLogger.info('[XBoardConfig] 使用缓存域名: ${cached.domain}');
           _lastRacingResult = cached;
           return cached;
         } else {
           XBoardLogger.info('[XBoardConfig] 缓存域名失效，回退到竞速: ${cached.domain}');
-          await RacingResultCache.clear();
+          await _updateRouteCache(generation, RacingResultCache.clear);
         }
       }
     }
 
-    return _raceSelectFastest();
+    return _raceSelectFastest(generation);
   }
 
   /// 执行完整竞速并持久化结果。
-  static Future<DomainRacingResult?> _raceSelectFastest({
+  static Future<DomainRacingResult?> _raceSelectFastest(
+    int generation, {
     (String, String?)? excludedRoute,
   }) async {
+    if (generation != _configGeneration) return null;
     final panelUrls = allPanelUrls;
     if (panelUrls.isEmpty) return null;
 
@@ -329,11 +348,15 @@ class XBoardConfig {
       proxyUrls: proxyUrls,
       excludedRoute: excludedRoute,
     );
+    if (generation != _configGeneration) return null;
     _lastRacingResult = result;
     if (result != null) {
-      await RacingResultCache.save(result, proxyUrls: proxyUrls);
+      await _updateRouteCache(
+        generation,
+        () => RacingResultCache.save(result, proxyUrls: proxyUrls),
+      );
     }
-    return result;
+    return generation == _configGeneration ? result : null;
   }
 
   static Future<DomainRacingResult?> _trackRace(
@@ -350,20 +373,29 @@ class XBoardConfig {
     String failedDomain,
     String? failedProxy,
   ) => _trackRace(
-    _recoverPanelRoute(_racingFuture, (failedDomain, failedProxy)),
+    _recoverPanelRoute(_configGeneration, _racingFuture, (
+      failedDomain,
+      failedProxy,
+    )),
   );
 
   static Future<DomainRacingResult?> _recoverPanelRoute(
+    int generation,
     Future<DomainRacingResult?>? pending,
     (String, String?) excludedRoute,
   ) async {
     if (pending != null) await pending;
+    if (generation != _configGeneration) return null;
     _lastRacingResult = null;
-    await RacingResultCache.clear();
-    final result = await _raceSelectFastest(excludedRoute: excludedRoute);
+    await _updateRouteCache(generation, RacingResultCache.clear);
+    final result = await _raceSelectFastest(
+      generation,
+      excludedRoute: excludedRoute,
+    );
+    if (generation != _configGeneration) return null;
     if (result != null || _usingPersistedConfig) return result;
     await _accessor.refreshConfiguration();
-    return _raceSelectFastest(excludedRoute: excludedRoute);
+    return _raceSelectFastest(generation, excludedRoute: excludedRoute);
   }
 
   /// 获取第一个代理URL
@@ -458,9 +490,11 @@ class XBoardConfig {
     if (!isInitialized) {
       await initialize();
     } else {
+      final generation = _configGeneration;
       await _accessor.refreshConfiguration();
-      _lastRacingResult = null;
-      await RacingResultCache.clear();
+      if (generation != _configGeneration) return;
+      _invalidatePanelSelection();
+      await _updateRouteCache(_configGeneration, RacingResultCache.clear);
     }
   }
 

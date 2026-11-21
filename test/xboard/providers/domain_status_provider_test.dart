@@ -31,9 +31,6 @@ class _DomainService extends DomainStatusService {
       'message': available ? null : 'No reachable panel',
     };
   }
-
-  @override
-  void dispose() {}
 }
 
 void main() {

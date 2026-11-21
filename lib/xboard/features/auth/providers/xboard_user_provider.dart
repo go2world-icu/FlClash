@@ -257,10 +257,9 @@ class XBoardUserAuthNotifier extends Notifier<UserAuthState> {
     try {
       _logger.info('开始登录: $email');
 
-      final success = await XBoardSDK.instance.loginWithCredentials(
-        email,
-        password,
-      );
+      final sdk = await ref.read(xboardSdkProvider.future);
+      if (!ref.mounted || epoch != _sessionEpoch) return false;
+      final success = await sdk.loginWithCredentials(email, password);
       if (epoch != _sessionEpoch) return false;
 
       if (!success) {

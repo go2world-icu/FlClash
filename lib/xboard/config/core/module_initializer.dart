@@ -4,6 +4,7 @@ import 'config_settings.dart';
 import '../parsers/configuration_parser.dart';
 import '../internal/xboard_config_accessor.dart';
 import '../../core/core.dart';
+import '../../infrastructure/http/board_transport.dart';
 
 final _logger = FileLogger('module_initializer.dart');
 
@@ -100,6 +101,7 @@ class ModuleInitializer {
       return RemoteConfigManager.fromSettings(
         config.remoteConfig,
         website: config.website,
+        createHttpClient: XBoardTransport.createConfigClient,
       );
     });
 
